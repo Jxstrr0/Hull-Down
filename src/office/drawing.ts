@@ -3,7 +3,7 @@
 // Coordinates are metres, already flipped for SVG (up is negative y).
 import { DRAWING } from '../data/drawing'
 import type { ZoneId } from '../data/materials'
-import { BARRELS, GUNS, HULLS } from '../data/parts'
+import { BARRELS, GUNS, HULLS, TURRETS } from '../data/parts'
 import { TUNING } from '../data/tuning'
 import { frameOf, type Geometry, type Interior, type ItemKind, type VehicleSpec } from '../sim/vehicle'
 import type { ControlId } from './controls'
@@ -250,6 +250,12 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
         [xc + R + m.bustle, m.bustleFloor], [xc + R * 0.92, m.bustleFloor], [xc + R * 0.92, roof],
       ])
       break
+    case 'unmanned':
+      // A low box on the ring, cut back at the front.
+      turret = outline(pen, [
+        [xc - R, roof], [xc - R * 0.85, roof + h * 0.7], [xc - R * 0.5, top], [xc + R * 0.8, top], [xc + R, roof + h * 0.6], [xc + R, roof],
+      ])
+      break
   }
   pen.path(turret, 'solid')
   pen.body.push(turret)
@@ -257,10 +263,12 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
   // Mantlet, commander's hatch, and the sight head if one is fitted.
   pen.rect(m.gunRootX - 0.05, m.gunY - h * 0.25, m.gunRootX + 0.22, m.gunY + h * 0.25, 'thin')
   const hatchX = xc + R * 0.3
-  pen.rect(hatchX - DRAWING.hatchRadiusM, top, hatchX + DRAWING.hatchRadiusM, top + DRAWING.cupolaHeightM, 'solid')
+  // A turret with nobody in it has no hatch: the sight head sits straight on its roof.
+  const cupola = TURRETS[spec.turret.shape].crewed ? DRAWING.cupolaHeightM : 0
+  if (cupola > 0) pen.rect(hatchX - DRAWING.hatchRadiusM, top, hatchX + DRAWING.hatchRadiusM, top + cupola, 'solid')
   if (spec.fireControl.commanderSight) {
     const s = DRAWING.sightHeadM
-    pen.rect(hatchX - s.width / 2, top + DRAWING.cupolaHeightM, hatchX + s.width / 2, top + DRAWING.cupolaHeightM + s.height, 'solid')
+    pen.rect(hatchX - s.width / 2, top + cupola, hatchX + s.width / 2, top + cupola + s.height, 'solid')
   }
   if (spec.protection.smokeLaunchers) {
     for (let i = 0; i < 3; i++) {
@@ -359,14 +367,26 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
         [xc + R * 0.6, R], [xc - R * 0.3, R], [xc - R, R * 0.45],
       ], 'solid')
       break
+    case 'unmanned':
+      // Narrow: only as wide as the gun and its loader need.
+      pen.poly([
+        [xc - R, -R * 0.4], [xc - R * 0.5, -R * 0.65], [xc + R * 0.8, -R * 0.65], [xc + R, -R * 0.45],
+        [xc + R, R * 0.45], [xc + R * 0.8, R * 0.65], [xc - R * 0.5, R * 0.65], [xc - R, R * 0.4],
+      ], 'solid')
+      break
   }
   const turret = pen.shapes[before]
   if (turret) pen.face(turret.d, 'turretRoof')
   pen.circle(xc, 0, spec.turret.ringMm / 2000, 'hidden')
   // The tank faces left, so its right-hand side is up the page. The commander sits on the right.
   const commanderY = R * 0.42
-  pen.circle(xc + R * 0.3, commanderY, DRAWING.hatchRadiusM, 'thin')
-  if (m.hasLoader) pen.circle(xc + R * 0.3, -commanderY, DRAWING.hatchRadiusM, 'thin')
+  if (TURRETS[spec.turret.shape].crewed) {
+    pen.circle(xc + R * 0.3, commanderY, DRAWING.hatchRadiusM, 'thin')
+    if (m.hasLoader) pen.circle(xc + R * 0.3, -commanderY, DRAWING.hatchRadiusM, 'thin')
+  } else {
+    // Nobody in the turret: the gunner's and commander's hatches are in the hull roof, either side of the driver's.
+    for (const side of [-1, 1]) pen.circle(driverX + 0.1, side * bodyHalf * 0.62, DRAWING.hatchRadiusM, 'thin')
+  }
   if (spec.fireControl.commanderSight) {
     const s = DRAWING.sightHeadM.width / 2
     pen.rect(xc + R * 0.3 - s, commanderY - s, xc + R * 0.3 + s, commanderY + s, 'thin')
@@ -414,6 +434,8 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
         return outline(pen, [[side * R, roof], [side * R * 0.72, top], [0, top], [0, roof]])
       case 'bustle':
         return outline(pen, [[side * R, roof], [side * R * 0.86, top], [0, top], [0, roof]])
+      case 'unmanned':
+        return outline(pen, [[side * R * 0.65, roof], [side * R * 0.55, top], [0, top], [0, roof]])
     }
   }
   switch (spec.turret.shape) {
@@ -429,6 +451,9 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
     case 'bustle':
       pen.poly([[-R, roof], [-R * 0.86, top], [R * 0.86, top], [R, roof]], 'solid')
       break
+    case 'unmanned':
+      pen.poly([[-R * 0.65, roof], [-R * 0.55, top], [R * 0.55, top], [R * 0.65, roof]], 'solid')
+      break
   }
   pen.face(half(-1), 'turretFrontRight')
   pen.face(half(1), 'turretFrontLeft')
@@ -443,10 +468,11 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
   pen.circle(0, m.gunY, m.calibre / 2, 'thin')
 
   const hatchX = -R * 0.42
-  pen.rect(hatchX - DRAWING.hatchRadiusM, top, hatchX + DRAWING.hatchRadiusM, top + DRAWING.cupolaHeightM, 'solid')
+  const cupola = TURRETS[spec.turret.shape].crewed ? DRAWING.cupolaHeightM : 0
+  if (cupola > 0) pen.rect(hatchX - DRAWING.hatchRadiusM, top, hatchX + DRAWING.hatchRadiusM, top + cupola, 'solid')
   if (spec.fireControl.commanderSight) {
     const s = DRAWING.sightHeadM
-    pen.rect(hatchX - s.width / 2, top + DRAWING.cupolaHeightM, hatchX + s.width / 2, top + DRAWING.cupolaHeightM + s.height, 'solid')
+    pen.rect(hatchX - s.width / 2, top + cupola, hatchX + s.width / 2, top + cupola + s.height, 'solid')
   }
   pen.line(0, -0.1, 0, top + DRAWING.cupolaHeightM + 0.35, 'centre')
 

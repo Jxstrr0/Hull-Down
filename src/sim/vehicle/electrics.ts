@@ -1,5 +1,5 @@
 // Electrical power: what the tank makes and what its systems draw.
-import { ACTIVE, ELECTRICS } from '../../data/parts'
+import { ACTIVE, ELECTRICS, TURRETS } from '../../data/parts'
 import type { VehicleSpec } from './spec'
 
 export interface Electrics {
@@ -11,7 +11,7 @@ export interface Electrics {
 
 export function electricsOf(spec: VehicleSpec): Electrics {
   return {
-    drawKw: ACTIVE[spec.protection.active].drawKw,
+    drawKw: ACTIVE[spec.protection.active].drawKw + TURRETS[spec.turret.shape].drawKw,
     supplyKw: ELECTRICS.generatorKw + (spec.powerpack.apu ? ELECTRICS.apuKw : 0),
   }
 }

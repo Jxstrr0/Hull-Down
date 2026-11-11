@@ -72,28 +72,40 @@ export interface TurretPart extends Part {
   depressionDeg: number
   /** Can carry a bustle autoloader and blow-out panels. */
   hasBustle: boolean
+  /** False when nobody sits in it: the gunner and commander are down in the hull, working it by screens. */
+  crewed: boolean
+  /** Electrical power its drives and cameras draw, kilowatts. */
+  drawKw: number
+  /** Points on the commander's workload: he cannot put his head out and look round. */
+  workload: number
 }
 
 export const TURRETS = {
   castDome: {
     massT: 0.7, volumeM3: 0, costKr: 180_000, reliability: 1,
     heightM: 0.72, volumeFactor: 0.42, sideFactor: 1.0, roofFactor: 0.75, frontSlopeDeg: 35, sideSlopeDeg: 30,
-    depressionDeg: 5, hasBustle: false,
+    depressionDeg: 5, hasBustle: false, crewed: true, drawKw: 0, workload: 0,
   },
   weldedWedge: {
     massT: 0.8, volumeM3: 0, costKr: 230_000, reliability: 1,
     heightM: 0.82, volumeFactor: 0.5, sideFactor: 1.1, roofFactor: 1.0, frontSlopeDeg: 50, sideSlopeDeg: 10,
-    depressionDeg: 7, hasBustle: false,
+    depressionDeg: 7, hasBustle: false, crewed: true, drawKw: 0, workload: 0,
   },
   lowProfile: {
     massT: 0.65, volumeM3: 0, costKr: 210_000, reliability: 1,
     heightM: 0.62, volumeFactor: 0.36, sideFactor: 0.95, roofFactor: 0.9, frontSlopeDeg: 40, sideSlopeDeg: 25,
-    depressionDeg: 4, hasBustle: false,
+    depressionDeg: 4, hasBustle: false, crewed: true, drawKw: 0, workload: 0,
   },
   bustle: {
     massT: 1.1, volumeM3: 0, costKr: 290_000, reliability: 1,
     heightM: 0.85, volumeFactor: 0.62, sideFactor: 1.35, roofFactor: 1.3, frontSlopeDeg: 15, sideSlopeDeg: 5,
-    depressionDeg: 8, hasBustle: true,
+    depressionDeg: 8, hasBustle: true, crewed: true, drawKw: 0, workload: 0,
+  },
+  // Generation three (src/data/tech.ts): a gun on a mount with nobody in it.
+  unmanned: {
+    massT: 0.9, volumeM3: 0, costKr: 480_000, reliability: 1,
+    heightM: 0.56, volumeFactor: 0.15, sideFactor: 0.85, roofFactor: 0.7, frontSlopeDeg: 35, sideSlopeDeg: 20,
+    depressionDeg: 7, hasBustle: false, crewed: false, drawKw: 4, workload: 8,
   },
 } as const satisfies Record<string, TurretPart>
 export type TurretId = keyof typeof TURRETS

@@ -4,6 +4,18 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **The unmanned turret** (0.13.3.0): a fifth turret shape on the Turret
+  tab, generation three, research Kr 10.0M after the digital computer.
+  About 0.9 t of structure, low (0.56 m), small inside, Kr 480,000,
+  draws 4 kW. Nobody sits in it: the gunner and commander move down
+  beside the driver, so a round through the turret hurts no one. My
+  picks for the price: it needs an autoloader, the engine at the back
+  and the digital computer (three new faults with Fix it); the racks and
+  fuel tanks that sat beside the driver have to go across the hull; the
+  commander carries 8 more workload points ("Sees the world only by
+  screens"); and with hard kill it takes all 16 kW an auxiliary power
+  unit and the engine make together. Rival bureaux do not use it yet.
+  Say if any number or rule feels wrong.
 - **Active protection and electrical power** (0.13.2.0): a new choice on
   the Crew and protection tab. Soft kill (generation two, research
   Kr 4.0M; 0.25 t, Kr 320,000, draws 4 kW) throws off about half the
@@ -358,6 +370,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.13.3.0, PR 13d: the unmanned turret.** `TURRETS.unmanned` (`crewed: false`, `drawKw`, `workload`), research project `unmannedTurret`, `turret.shape` now a tech field. Faults `turretNeedsAutoloader`, `turretNeedsRearEngine`, `turretNeedsComputer`. The interior seats the gunner and commander in the hull nose and moves the front rack and tank across the hull. Commander work source `screens`. Drawn in all three views with two hull hatches and no cupola. `tests/unmannedTurret.test.ts`. Phone test: in the 2016 tender, research the digital computer then the unmanned turret on the Bureau tab, pick it on the Turret tab, tap Fix it on any fault, look at Side, Top, Front and Inside, then send it to the range.
 - **0.13.2.0, PR 13c: active protection and power demands.** `protection.active` (none, soft kill, hard kill) with two research projects, an electrical power budget (`electricsOf`, fault `overPowerBudget`), and rockets and missiles marked by how they fly so `traceShot` can have active protection deal with them. The armour trial report says how many it dealt with.
 - **0.13.1.0, PR 13b: top-attack and drone threats, roof protection.** Two new threats and the generation-three trial marks: bomblets on both roofs must hold, a top-attack missile is fired for the record. The tender of 2016 uses them and its brief says so.
 - **0.13.0.0, PR 13a: the tender of 2016.** `tank2016` in

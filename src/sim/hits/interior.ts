@@ -103,9 +103,22 @@ export function interiorOf(spec: VehicleSpec, geo: Geometry): Interior {
     add(id, 'crew', 'turret', { x0: x - seat, x1: x + seat, y0: feet, y1: head, z0: z - seat, z1: z + seat }, { station: id })
   }
   const gunnerAt = f.hasLoader ? I.gunnerWithLoader : I.gunnerAlone
-  turretSeat('gunner', gunnerAt)
-  turretSeat('commander', I.commander)
+  // Nobody in the turret: the gunner and commander sit against the hull walls, either side of the driver.
+  // That needs the engine at the back; a design that breaks the rule is drawn with its crew in the turret.
+  const crewed = TURRETS[spec.turret.shape].crewed || !rearEngine
   if (f.hasLoader) turretSeat('loader', I.loader)
+  if (crewed) {
+    turretSeat('gunner', gunnerAt)
+    turretSeat('commander', I.commander)
+  } else {
+    const x = driverX + I.hullCrewBackM
+    const out = Math.max(inner - seat, 2 * seat + w)
+    const hullSeat = (id: 'gunner' | 'commander', z: number): void => {
+      add(id, 'crew', 'hull', { x0: x - seat, x1: x + seat, y0: floor, y1: ceiling, z0: z - seat, z1: z + seat }, { station: id })
+    }
+    hullSeat('gunner', -out)
+    hullSeat('commander', out)
+  }
 
   // --- Gun and sight ------------------------------------------------------
   add('breech', 'gun', 'turret', {
@@ -164,11 +177,13 @@ export function interiorOf(spec: VehicleSpec, geo: Geometry): Interior {
   const frontFrom = f.upperRun + I.besideDriverBackM
   const frontTo = Math.max(frontFrom, xc - R * I.besideDriverStopShare)
   const behindTurret = xc + R * I.besideDriverStopShare
+  // With the turret crew in the nose there is no room left beside the driver.
+  const besideTo = crewed ? frontTo : frontFrom
   const rackPlace: Box = rearEngine
-    ? { x0: frontFrom, x1: frontTo, y0: floor, y1: ceiling, z0: I.besideDriverInnerM, z1: inner }
+    ? { x0: frontFrom, x1: besideTo, y0: floor, y1: ceiling, z0: I.besideDriverInnerM, z1: inner }
     : { x0: behindTurret, x1: f.length - I.rearClearM, y0: floor, y1: ceiling, z0: w / 2, z1: inner }
   const tankPlace: Box = rearEngine
-    ? { x0: frontFrom, x1: frontTo, y0: floor, y1: ceiling, z0: -inner, z1: -I.besideDriverInnerM }
+    ? { x0: frontFrom, x1: besideTo, y0: floor, y1: ceiling, z0: -inner, z1: -I.besideDriverInnerM }
     : { x0: behindTurret, x1: f.length - I.rearClearM, y0: floor, y1: ceiling, z0: -inner, z1: -w / 2 }
   // Only with the engine at the back: the room between the turret crew and the engine.
   const acrossFrom = Math.min(behindTurret, f.bayStart - w)

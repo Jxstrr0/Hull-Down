@@ -3,7 +3,7 @@
 // soon as its generation is. Game-level numbers.
 import type { TechField } from './tech'
 
-export const RESEARCH_IDS = ['digitalComputer', 'thermalSight', 'layeredArmour', 'longRodRound', 'tandemRound', 'gunMissile', 'softKill', 'hardKill'] as const
+export const RESEARCH_IDS = ['digitalComputer', 'thermalSight', 'layeredArmour', 'longRodRound', 'tandemRound', 'gunMissile', 'softKill', 'hardKill', 'unmannedTurret'] as const
 export type ResearchId = (typeof RESEARCH_IDS)[number]
 
 export interface Project {
@@ -28,4 +28,6 @@ export const RESEARCH: Record<ResearchId, Project> = {
   // Active protection (plan 7.1): the launcher is built on the warning set.
   softKill: { field: 'protection.active', part: 'softKill', costKr: 4_000_000, needs: [] },
   hardKill: { field: 'protection.active', part: 'hardKill', costKr: 9_000_000, needs: ['softKill'] },
+  // The crew fight the turret from screens the digital computer feeds.
+  unmannedTurret: { field: 'turret.shape', part: 'unmanned', costKr: 10_000_000, needs: ['digitalComputer'] },
 }
