@@ -73,7 +73,7 @@ function zeroEnds(): Record<DuelEnd, number> {
 }
 
 /** What most slows this tank's first round: the control that would speed it up. */
-function slowestPart(tank: Combatant, ground: DuelGround): DuelFixPart {
+export function slowestPart(tank: Combatant, ground: Pick<DuelGround, 'night' | 'rangeM'>): DuelFixPart {
   if (ground.night) return 'fireControl.night'
   const t = tank.sheet.fire.times
   if (t.rangeS >= t.findS && t.rangeS >= t.layS) return 'fireControl.rangefinder'
@@ -82,7 +82,7 @@ function slowestPart(tank: Combatant, ground: DuelGround): DuelFixPart {
 }
 
 /** What most throws this tank's rounds off: the control that would steady them. */
-function wildestPart(tank: Combatant, ground: DuelGround, moving: boolean): DuelFixPart {
+export function wildestPart(tank: Combatant, ground: Pick<DuelGround, 'night' | 'rangeM'>, moving: boolean): DuelFixPart {
   if (ground.night) return 'fireControl.night'
   const round = tank.rounds[0]
   if (!round) return 'fireControl.sight'

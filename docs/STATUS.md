@@ -4,6 +4,12 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Try a battle** (0.9.1.0): Trials tab, "Send a platoon to battle".
+  Say if the two orders read clearly and feel like real choices, and if
+  the results look fair (the Type 1 as issued holds a ridge well against
+  the Warden and badly against the heavy rival, and loses to the
+  Palisade everywhere).
+
 - **How a platoon battle is fought** (0.9.0.0), decided without you and
   easy to change. You can judge these once the battle screen is in:
   - Grounds: hold a ridge (3 of yours against 4), a meeting (4 against
@@ -165,6 +171,16 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 11 November 2026).
 
 ## Log
+
+- **0.9.1.0, PR 9b: the battle screen.** Trials tab, "Send a platoon to
+  battle". Pick who it meets, the ground and the two orders; the platoon
+  fights 12 battles and the report gives won and lost, tanks lost for
+  tanks knocked out, rounds, breakdowns, the three things that decided
+  it (each with a Fix button) and any one battle told as it happened.
+  The orders are worded for the ground: holding a ridge they read "Open
+  fire at once / Hold fire" and "Stay put / Shoot and shift"; attacking,
+  "Stand off / Close in" and "By bounds / Straight on". Words only so
+  far: the map and the 3D playback come next.
 
 - **0.9.0.0, PR 9a: the platoon battle, sim only.** Nothing new on
   screen yet. Three or four tanks a side (never more than eight) on four
