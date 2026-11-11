@@ -31,6 +31,7 @@ export const ISSUE_CODES = [
   'layerThicknessOutOfRange',
   'layerNeedsPlates',
   'zoneUnarmoured',
+  'tilesNeedPlate',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -114,6 +115,8 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
       return !outer || !inner || MATERIALS[outer.material].needsPlates || MATERIALS[inner.material].needsPlates
     })
     if (loose) error('layerNeedsPlates', `armour.${zone}`)
+    // Reactive tiles bolt on to a plate.
+    if (rollup.era[zone].tiles > 0 && layers.length === 0) error('tilesNeedPlate', `armour.${zone}`)
   }
 
   // Space

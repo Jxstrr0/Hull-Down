@@ -61,6 +61,11 @@ export interface VehicleSpec {
   }
   /** Outside layer first. Up to four layers a zone. */
   armour: Record<ZoneId, ArmourLayer[]>
+  /**
+   * Reactive tiles on each zone, as one whole number: bit n is set when tile
+   * place n has a tile. The places are in `ERA_GRIDS`. Nought is no tiles.
+   */
+  era: Record<ZoneId, number>
 }
 
 /** Hard limits a design is checked against (Pact standard, later the tender). */

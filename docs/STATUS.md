@@ -14,6 +14,14 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.3.2.0, PR 3c: reactive tiles.** A "Reactive tiles" box at the bottom of
+  the Armour tab. Each zone has a grid of tile places; tap a place to fit or
+  strip a tile. Places under a hatch, a sight or the exhaust are blocked, and
+  the rear plates, belly and mantlet take none. A tile adds 250 mm against
+  shaped charges where a shot meets one, nothing against kinetic rounds, and
+  costs weight and money. The drawing shows the tiles where they are fitted,
+  each marked by how it stands up to the chosen round; the plate around them
+  keeps its own hatching. Tiles are saved with the design.
 - **0.3.1.0, PR 3b: armour zones on the drawing, ammunition and the
   protection map.** With the Armour tab open the blueprint shows each armour
   zone as a face you can tap; the Front, Side and Top views show the zones
@@ -60,8 +68,10 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   (0.2.3.0). PR 3 is then 0.3.0.0, so PR 6 lands on 0.6.0.0 as the plan says.
 - PR 3 is split the same way: 3a armour layers, protection numbers and the
   section view (0.3.0.0), 3b armour zones on the blueprint, the Pact
-  ammunition lists and the two protection maps (0.3.1.0), 3c ERA tiles and the
-  quick test shot (0.3.2.0). PR 4 is then 0.4.0.0.
+  ammunition lists and the two protection maps (0.3.1.0), 3c reactive (ERA)
+  tiles (0.3.2.0), 3d the quick test shot (0.3.3.0). PR 4 is then 0.4.0.0.
+- Reactive tiles work once in a real trial. That wear arrives with the hit
+  model in PR 6; the design office shows a fresh tile.
 - The section view shows armour only. The interior (crew, ammunition, fuel,
   engine) joins it in PR 6, when the hit model needs an interior layout.
 - Left out of the spec on purpose, to be added when their PR needs them:

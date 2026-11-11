@@ -4,7 +4,8 @@
 import { BASELINE_SPEC } from '../data/baseline'
 import { STRINGS, fill } from '../data/strings'
 import {
-  AREAS, buildStatSheet, penetrationAt, verdictsAgainst, type Issue, type Limits, type StatSheet, type VehicleSpec,
+  AREAS, buildStatSheet, penetrationAt, tiledVerdictsAgainst, tileGrid, verdictsAgainst, type Issue, type Limits,
+  type StatSheet, type VehicleSpec,
 } from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { fixed, money, signed, signedMoney } from '../ui/format'
@@ -12,12 +13,12 @@ import {
   CONTROLS, PART_TABS, fixTarget, preview, type ChoiceControl, type Control, type ControlId, type NumberControl,
   type PartTab, type Preview, type ToggleControl,
 } from './controls'
-import { DEFAULT_THREAT, THREATS, pactRounds } from '../data/ammo'
+import { DEFAULT_THREAT, THREATS, pactRounds, type Round } from '../data/ammo'
 import { ZONES, type ZoneId } from '../data/materials'
 import { GUNS } from '../data/parts'
 import { TUNING } from '../data/tuning'
 import { renderArmourTab, type ArmourTabState } from './armourTab'
-import { renderBlueprint } from './blueprint'
+import { renderBlueprint, type ZoneTiles } from './blueprint'
 import { VIEWS, ZONE_VIEW, type View } from './drawing'
 import {
   MAX_DESIGNS, addDesign, currentDesign, loadStore, openDesign, saveStore, scrapDesign, type KeyValue,
@@ -212,6 +213,17 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     return target !== undefined
   }
 
+  /** The reactive tiles to draw on the map, with how a tile stands up to the chosen round. */
+  function tilesOnDrawing(threat: Round | undefined): Partial<Record<ZoneId, ZoneTiles>> {
+    const verdicts = threat && tiledVerdictsAgainst(sheet.protection, sheet.rollup.era, threat, armourState.rangeM)
+    const tiles: Partial<Record<ZoneId, ZoneTiles>> = {}
+    for (const zone of ZONES) {
+      const grid = tileGrid(zone)
+      if (grid && sheet.rollup.era[zone].tiles > 0) tiles[zone] = { grid, fitted: spec.era[zone], verdict: verdicts?.[zone] }
+    }
+    return tiles
+  }
+
   function drawBlueprint(): void {
     VIEWS.forEach((id, index) => {
       const button = viewButtons[index]
@@ -225,6 +237,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       ? {
           selected: armourState.zone,
           verdicts: threat && verdictsAgainst(sheet.protection, threat, armourState.rangeM),
+          tiles: tilesOnDrawing(threat),
           pick: pickZone,
         }
       : undefined

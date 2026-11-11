@@ -40,4 +40,9 @@ export const BASELINE_SPEC: VehicleSpec = {
     turretRear: [{ material: 'castSteel', mm: 60 }],
     turretRoof: [{ material: 'castSteel', mm: 35 }],
   },
+  // The licence-built tank comes with no reactive tiles.
+  era: {
+    upperGlacis: 0, lowerGlacis: 0, hullSideFront: 0, hullSideRear: 0, hullRear: 0, hullRoof: 0, belly: 0,
+    turretFrontLeft: 0, turretFrontRight: 0, mantlet: 0, turretSides: 0, turretRear: 0, turretRoof: 0,
+  },
 }
