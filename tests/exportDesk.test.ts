@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
-import { CUSTOMER_IDS, CUSTOMERS, NEED_IDS, NEED_KINDS } from '../src/data/export'
+import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_IDS, NEED_KINDS } from '../src/data/export'
 import { STRINGS } from '../src/data/strings'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import { newCareer, type Adopted } from '../src/sim/career/career'
-import { customerChecks, exportOpen, suits } from '../src/sim/career/exportDesk'
+import { customerChecks, exportOpen, saleBlock, saleFeeKr, secrets, sell, suits } from '../src/sim/career/exportDesk'
+import { cleanCareer } from '../src/persist/careerCodec'
 import { buildStatSheet, type VehicleSpec } from '../src/sim/vehicle'
 
 const sheetOf = (spec: VehicleSpec) => buildStatSheet(spec, PACT_LIMITS_GEN1)
@@ -55,5 +56,66 @@ describe('the export desk', () => {
     const checks = customerChecks('dahrat', desert, sheetOf(desert))
     expect(checks.filter((check) => !check.met).map((check) => check.need)).toEqual([])
     expect(suits(desert, sheetOf(desert))).toContain('dahrat')
+  })
+})
+
+describe('selling abroad', () => {
+  const desert = (): VehicleSpec => {
+    const spec = structuredClone(BASELINE_SPEC)
+    spec.powerpack.cooling = 'heavyDuty'
+    spec.powerpack.fuelL = 1400
+    return spec
+  }
+  const withTank = (spec: VehicleSpec, production: Adopted['production'] = { rate: 'steady', quality: 'standard' }) => {
+    const tank: Adopted = {
+      designation: 'Model 81', name: '', year: 1981, tender: 'improvedType1', spec, production, years: 0, contract: null, upgrades: [],
+    }
+    return { ...newCareer(3), adopted: [tank] }
+  }
+
+  it('sells a tank that suits: the fee is paid, the ministry is pleased and the customer orders once', () => {
+    const career = withTank(desert())
+    expect(saleBlock(career, 0, 'dahrat')).toBeNull()
+    const after = sell(career, 0, 'dahrat')
+    const fee = saleFeeKr(CUSTOMERS.dahrat.tanks, sheetOf(desert()).unitCostKr)
+    expect(fee).toBeGreaterThan(0)
+    expect(fee % 1000).toBe(0)
+    expect(after.budgetKr).toBe(career.budgetKr + fee)
+    expect(after.reputation.ministry).toBe(career.reputation.ministry + EXPORT_DESK.saleMinistry)
+    expect(after.sales).toEqual([{ customer: 'dahrat', designation: 'Model 81', tanks: CUSTOMERS.dahrat.tanks, feeKr: fee }])
+    expect(saleBlock(after, 0, 'dahrat')).toBe('sold')
+    expect(() => sell(after, 0, 'dahrat')).toThrow()
+    expect(career.sales).toEqual([])
+  })
+
+  it('does not sell a tank that falls short, or one with no production line', () => {
+    expect(saleBlock(withTank(structuredClone(BASELINE_SPEC)), 0, 'dahrat')).toBe('needs')
+    expect(saleBlock(withTank(desert(), null), 0, 'dahrat')).toBe('noLine')
+    expect(saleBlock(newCareer(3), 0, 'dahrat')).toBe('closed')
+  })
+
+  it('is refused a licence for a tank carrying the bureau\'s research', () => {
+    const spec = desert()
+    spec.ammo.shaped = 'tandem'
+    expect(secrets(spec)).toEqual(['tandemRound'])
+    expect(secrets(desert())).toEqual([])
+    const career = withTank(spec)
+    expect(customerChecks('dahrat', spec, sheetOf(spec)).every((check) => check.met)).toBe(true)
+    expect(saleBlock(career, 0, 'dahrat')).toBe('secret')
+  })
+
+  it('is refused a licence by a ministry that thinks little of the bureau', () => {
+    const career = withTank(desert())
+    const low = { ...career, reputation: { ...career.reputation, ministry: EXPORT_DESK.ministryStanding - 1 } }
+    expect(saleBlock(low, 0, 'dahrat')).toBe('standing')
+  })
+
+  it('keeps its orders through a save, one a customer', () => {
+    const after = sell(withTank(desert()), 0, 'dahrat')
+    const back = cleanCareer(JSON.parse(JSON.stringify(after)))
+    expect(back?.sales).toEqual(after.sales)
+    const doubled = cleanCareer({ ...JSON.parse(JSON.stringify(after)), sales: [...after.sales, ...after.sales, { customer: 'nowhere' }] })
+    expect(doubled?.sales).toEqual(after.sales)
+    expect(cleanCareer({ seed: 1 })?.sales).toEqual([])
   })
 })

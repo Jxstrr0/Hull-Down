@@ -4,6 +4,18 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Export sales** (0.12.1.0): a tank in service that suits a customer can
+  now be sold from the Export desk card. Each customer orders once. The
+  bureau's fee is 3% of the order at the tank's own unit cost (a Kr 2.27M
+  tank sold to Dahrat's 120 pays Kr 8.16M) and goes straight into the
+  budget; the
+  ministry thinks 3 better of the bureau for each sale. The ministry
+  refuses the licence in two cases: the tank carries anything the bureau
+  researched (digital fire control, thermal sight, layered armour, the
+  bureau's own rounds), or the ministry's opinion of the bureau is under
+  40. All of these rules and numbers are my picks. The "no research
+  abroad" rule is there to give the "simpler sights" variants of the next
+  slice a reason; say if you would rather the ministry decided another way.
 - **Export customers** (0.12.0.0): the export desk opens on the Bureau tab
   once the army has adopted a tank. Three customers, all working names:
   "Emirate of Dahrat" (desert: heavy-duty cooling, 450 km range, at most
@@ -288,6 +300,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.12.1.0, PR 12b: export sales.** `saleBlock`, `sell`, `secrets` and
+  `saleFeeKr` in `src/sim/career/exportDesk.ts`; `Career.sales` (kept in
+  saves, one order a customer); fee share, the ministry's standing bar and
+  its thanks in `src/data/export.ts`. The Export desk card gets a sell
+  button, the ministry's refusal in words, and a stamp once ordered.
 - **0.12.0.0, PR 12a: the export desk opens.** Customers and their needs
   in `src/data/export.ts`; `src/sim/career/exportDesk.ts` checks a tank
   against them; a card on the Bureau tab, once a tank is adopted, lists

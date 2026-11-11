@@ -3,13 +3,13 @@
 // design office's panel and keeps the career between visits.
 import { ADVISOR_MODES, type AdvisorMode } from '../data/advisor'
 import { BODIES } from '../data/career'
-import { CUSTOMER_IDS, CUSTOMERS, NEED_KINDS, type NeedId } from '../data/export'
+import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_KINDS, type NeedId } from '../data/export'
 import { RESEARCH } from '../data/research'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { STRINGS, fill } from '../data/strings'
 import { SCORE_AXES, SCORING, TENDER_IDS, TENDER_RULES, type Tender } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
-import { customerChecks, exportOpen } from '../sim/career/exportDesk'
+import { customerChecks, exportOpen, saleBlock, saleFeeKr, secrets, sell } from '../sim/career/exportDesk'
 import { intelFiles } from '../sim/career/intel'
 import {
   buildBlock, buildPrototype, enterTender, research, researchBlock, researchOpen, fitUpgrade, newCareer, nextTender, tendersLeft, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
@@ -687,9 +687,9 @@ export function createBureau(options: BureauOptions): Bureau {
     const box = el('section', 'bu')
     box.dataset.key = 'export'
     box.append(el('h3', 'ds-group-title', X.heading), el('p', 'ctl-note', X.about))
-    const tanks = career.adopted.map((tank) => {
+    const tanks = career.adopted.map((tank, index) => {
       const spec = serviceSpec(tank)
-      return { name: serviceDesignation(tank), spec, sheet: buildStatSheet(spec, TENDERS[tank.tender].limits) }
+      return { index, name: serviceDesignation(tank), spec, sheet: buildStatSheet(spec, TENDERS[tank.tender].limits) }
     }).reverse()
     for (const id of CUSTOMER_IDS) {
       const customer = CUSTOMERS[id]
@@ -700,12 +700,36 @@ export function createBureau(options: BureauOptions): Bureau {
       const first = tanks[0]
       if (first) for (const check of customerChecks(id, first.spec, first.sheet)) row(rows, X.needs[check.need], needText(check.need, check.want))
       box.append(rows)
+      const order = career.sales.find((sale) => sale.customer === id)
+      if (order) {
+        box.append(el('p', 'bu-stamp', X.licensed))
+        box.append(el('p', 'bu-proto-sum', fill(X.sold, { n: String(order.tanks), tank: order.designation, fee: money(order.feeKr) })))
+        continue
+      }
       const list = el('ul', 'sv-lines')
       for (const tank of tanks) {
         const checks = customerChecks(id, tank.spec, tank.sheet)
         const missed = checks.filter((check) => !check.met)
         if (missed.length === 0) {
-          list.append(el('li', 'sv-line', fill(X.suits, { tank: tank.name })))
+          const item = el('li', 'sv-line', fill(X.suits, { tank: tank.name }))
+          const block = saleBlock(career, tank.index, id)
+          if (block === 'noLine') item.append(el('p', 'ctl-issue', fill(X.noLine, { tank: tank.name })))
+          else if (block === 'secret') {
+            const names = secrets(tank.spec).map((project) => C.research.projects[project].name).join(', ')
+            item.append(el('p', 'ctl-issue', fill(X.secret, { tank: tank.name, names })))
+          } else if (block === 'standing') {
+            item.append(el('p', 'ctl-issue', fill(X.standing, { have: String(career.reputation.ministry), want: String(EXPORT_DESK.ministryStanding) })))
+          } else if (block === null) {
+            const fee = money(saleFeeKr(customer.tanks, tank.sheet.unitCostKr))
+            const go = button(`bureau:sell:${id}:${tank.index}`, fill(X.sell, { tank: tank.name, fee }), 'btn btn-go')
+            go.addEventListener('click', () => {
+              if (saleBlock(career, tank.index, id)) return
+              keep(sell(career, tank.index, id))
+              options.redraw()
+            })
+            item.append(go)
+          }
+          list.append(item)
           continue
         }
         const item = el('li', 'sv-line', fill(X.short, { tank: tank.name, n: String(missed.length), of: String(checks.length) }))

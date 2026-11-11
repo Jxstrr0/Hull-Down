@@ -1,9 +1,13 @@
 // The export desk: which customers abroad a tank of the bureau's would suit.
 // It opens with the first tank the army adopts.
 import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_IDS, NEED_KINDS, type CustomerId, type NeedId } from '../../data/export'
+import { TENDERS } from '../../data/tenders'
+import { RESEARCH, RESEARCH_IDS, type ResearchId } from '../../data/research'
+import { buildStatSheet } from '../vehicle/stats'
 import type { StatSheet } from '../vehicle/stats'
 import type { VehicleSpec } from '../vehicle/spec'
-import type { Career } from './career'
+import { partKey, unresearched } from '../vehicle/tech'
+import { serviceDesignation, serviceSpec, withStanding, type Career, type Sale } from './career'
 
 /** True once the bureau may look for customers abroad. */
 export function exportOpen(career: Career): boolean {
@@ -49,4 +53,52 @@ export function customerChecks(customer: CustomerId, spec: VehicleSpec, sheet: S
 /** The customers a tank suits as it stands. */
 export function suits(spec: VehicleSpec, sheet: StatSheet): CustomerId[] {
   return CUSTOMER_IDS.filter((customer) => customerChecks(customer, spec, sheet).every((check) => check.met))
+}
+
+/** The research a tank carries the fruit of. The ministry lets none of it out of the country. */
+export function secrets(spec: VehicleSpec): ResearchId[] {
+  return RESEARCH_IDS.filter((id) => unresearched(spec, [partKey(RESEARCH[id].field, RESEARCH[id].part)]).length > 0)
+}
+
+/** The bureau's fee on an order of this many tanks at this unit cost, to the nearest thousand. */
+export function saleFeeKr(tanks: number, unitCostKr: number): number {
+  return Math.round((tanks * unitCostKr * EXPORT_DESK.feeShare) / 1000) * 1000
+}
+
+export const SALE_BLOCKS = ['closed', 'sold', 'noLine', 'needs', 'secret', 'standing'] as const
+/** Why a tank cannot be sold to a customer. */
+export type SaleBlock = (typeof SALE_BLOCKS)[number]
+
+/**
+ * What stops a tank in service, as the army has it now, being sold to a
+ * customer, or null when nothing does. The customer's own needs come first;
+ * the last two are the ministry refusing the export licence.
+ */
+export function saleBlock(career: Career, index: number, customer: CustomerId): SaleBlock | null {
+  const tank = career.adopted[index]
+  if (!exportOpen(career) || !tank) return 'closed'
+  if (career.sales.some((sale) => sale.customer === customer)) return 'sold'
+  if (!tank.production) return 'noLine'
+  const spec = serviceSpec(tank)
+  const sheet = buildStatSheet(spec, TENDERS[tank.tender].limits)
+  if (customerChecks(customer, spec, sheet).some((check) => !check.met)) return 'needs'
+  if (secrets(spec).length > 0) return 'secret'
+  if (career.reputation.ministry < EXPORT_DESK.ministryStanding) return 'standing'
+  return null
+}
+
+/**
+ * Sells a tank in service to a customer: the ministry signs the licence,
+ * the customer orders once, and the bureau's fee goes into its budget.
+ * Throws when it cannot be sold: ask `saleBlock` first.
+ */
+export function sell(career: Career, index: number, customer: CustomerId): Career {
+  const block = saleBlock(career, index, customer)
+  if (block) throw new Error(`tank cannot be sold: ${block}`)
+  const tank = career.adopted[index]!
+  const unitKr = buildStatSheet(serviceSpec(tank), TENDERS[tank.tender].limits).unitCostKr
+  const tanks = CUSTOMERS[customer].tanks
+  const sale: Sale = { customer, designation: serviceDesignation(tank), tanks, feeKr: saleFeeKr(tanks, unitKr) }
+  const { reputation } = withStanding(career, { army: 0, ministry: EXPORT_DESK.saleMinistry, pact: 0 })
+  return { ...career, reputation, budgetKr: career.budgetKr + sale.feeKr, sales: [...career.sales, sale] }
 }

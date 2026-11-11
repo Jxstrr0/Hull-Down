@@ -4,6 +4,7 @@
 // choices always come out the same.
 import { BASELINE_SPEC } from '../../data/baseline'
 import { BODIES, CAREER, STANDARD_PARTS, type Body, type StandardPart } from '../../data/career'
+import type { CustomerId } from '../../data/export'
 import { BUREAU_IDS, type BureauId } from '../../data/opponents'
 import { RESEARCH, RESEARCH_IDS, type ResearchId } from '../../data/research'
 import { SERVICE, type Production } from '../../data/service'
@@ -70,6 +71,18 @@ export interface Career {
   adopted: Adopted[]
   /** Research the bureau has paid for, in the order it was done. It is kept from tender to tender. */
   researched: ResearchId[]
+  /** Orders from abroad, oldest first. A customer orders once. */
+  sales: Sale[]
+}
+
+/** An export order the ministry licensed. */
+export interface Sale {
+  customer: CustomerId
+  /** What the army called the tank when it was sold. */
+  designation: string
+  tanks: number
+  /** The bureau's fee, paid when the order was signed. */
+  feeKr: number
 }
 
 /** A tank of the bureau's in the army's hands. */
@@ -123,6 +136,7 @@ export function newCareer(seed: number): Career {
     outcome: null,
     adopted: [],
     researched: [],
+    sales: [],
   }
   career.budgetKr = tenderOf(career).grantKr
   return career
@@ -350,7 +364,7 @@ function adoptedAt(career: Career, index: number): Adopted {
   return tank
 }
 
-function withStanding(career: Career, change: Record<Body, number>): { reputation: Record<Body, number>; standing: Record<Body, number> } {
+export function withStanding(career: Career, change: Record<Body, number>): { reputation: Record<Body, number>; standing: Record<Body, number> } {
   const reputation = { ...career.reputation }
   const standing = { ...change }
   for (const body of BODIES) {
