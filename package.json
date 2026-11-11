@@ -1,7 +1,7 @@
 {
   "name": "hull-down",
   "private": true,
-  "version": "0.13.3",
+  "version": "0.13.4",
   "type": "module",
   "description": "A tank design game. Run a state design bureau, send the prototype to trial, read why it failed. A Longlight Interactive game.",
   "scripts": {

@@ -7,7 +7,7 @@
 import type { KineticIssue, ShapedIssue, ThreatId } from './ammo'
 import type { MaterialId, ZoneId } from './materials'
 import type {
-  BarrelId, ComfortId, ComputerId, EngineId, GunId, HullId, LoadingId, NightSightId, RangefinderId, RecoilId,
+  ActiveId, BarrelId, ComfortId, ComputerId, EngineId, GunId, HullId, LoadingId, NightSightId, RangefinderId, RecoilId,
   SightId, StabiliserId, StowageId, SuspensionId, TurretId,
 } from './parts'
 import type { Limits, VehicleSpec } from '../sim/vehicle/spec'
@@ -50,6 +50,10 @@ export interface LaterPicks {
   night?: NightSightId
   kinetic?: KineticIssue
   shaped?: ShapedIssue
+  turret?: TurretId
+  active?: ActiveId
+  /** True when the bureau fits the auxiliary power unit. */
+  apu?: boolean
   materials?: Partial<Record<MaterialId, MaterialId>>
 }
 
@@ -115,7 +119,11 @@ export const BUREAUS = {
       fireSuppression: [true, true],
     },
     // By 2000: the new layers at the front, a thermal sight, and a warhead for reactive tiles.
-    later: { 2: { night: 'thermal', shaped: 'tandem', materials: { compositeInsert: 'layeredComposite' } } },
+    // By 2016: hard kill on the roof, and the auxiliary power unit to feed it.
+    later: {
+      2: { night: 'thermal', shaped: 'tandem', materials: { compositeInsert: 'layeredComposite' } },
+      3: { active: 'hardKill', apu: true },
+    },
     massShare: 1,
     armour: {
       upperGlacis: 1.4, lowerGlacis: 1.3, hullSideFront: 1, hullSideRear: 0.9, hullRear: 0.8, hullRoof: 1, belly: 1,
@@ -149,7 +157,8 @@ export const BUREAUS = {
       fireSuppression: [true, false],
     },
     // By 2000: nothing dear. A hand-loaded tank takes the long rod, and the new warhead costs little.
-    later: { 2: { kinetic: 'longRod', shaped: 'tandem' } },
+    // By 2016: soft kill, the cheap answer to a missile.
+    later: { 2: { kinetic: 'longRod', shaped: 'tandem' }, 3: { active: 'softKill' } },
     massShare: 0.75,
     armour: {
       upperGlacis: 1, lowerGlacis: 0.9, hullSideFront: 0.8, hullSideRear: 0.8, hullRear: 0.9, hullRoof: 1, belly: 1,
@@ -183,7 +192,11 @@ export const BUREAUS = {
       fireSuppression: [true, true],
     },
     // By 2000: the digital computer, a thermal sight, and a missile down the barrel.
-    later: { 2: { computer: 'digital', night: 'thermal', shaped: 'gunMissile' } },
+    // By 2016: the turret with nobody in it, a machine to load it, and soft kill.
+    later: {
+      2: { computer: 'digital', night: 'thermal', shaped: 'gunMissile' },
+      3: { turret: 'unmanned', loading: 'carousel', active: 'softKill' },
+    },
     massShare: 0.95,
     armour: {
       upperGlacis: 1, lowerGlacis: 1, hullSideFront: 0.9, hullSideRear: 0.9, hullRear: 1, hullRoof: 1, belly: 1,
