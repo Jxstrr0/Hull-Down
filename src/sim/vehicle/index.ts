@@ -16,7 +16,7 @@ export {
   verdictsAgainst, worthAgainst,
   type Verdict, type ZoneProtection,
 } from './protection'
-export { paperLine, paperShot, type Line } from '../hits/aim'
+export { lineAt, paperLine, paperShot, plateOf, type Line, type Plate } from '../hits/aim'
 export { FACES, shellOf, tilePlaceAt, zoneAt, type FaceId, type Shell, type Vec } from '../hits/shell'
 export {
   OUTCOMES, directionOf, targetOf, tileKey, traceShot,

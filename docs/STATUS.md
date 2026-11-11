@@ -59,6 +59,17 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   a spall liner). A track in the way takes 20 mm off a kinetic round and
   60 mm off a shaped charge, and breaks 60% of the time. Say if any of
   these feel too harsh or too kind once you can play the armour trial.
+- **The armour trial's pass marks and the berm** (0.6.2.0): picked so the
+  Radan baseline passes, and all in `src/data/range.ts`. Must hold: upper
+  glacis and turret front against the Accord 105 mm sabot at 2000 m; upper
+  glacis against the 105 mm shaped charge; turret front against the
+  infantry rocket; front hull sides and turret sides against the 25 mm
+  autocannon. Fired for the record only: lower glacis, mantlet, rear hull
+  sides, hull rear, and the turret front against the shaped charge (the
+  baseline is weak at all of them). Three rounds a serial. The berm is a
+  rounded ridge 100 m in radius; the mark is 1.9 m showing over the crest
+  (the baseline shows 1.80 m with its 5.25° of dip). A tender will set its
+  own marks later; say if these defaults look wrong.
 - **Watch a shoot in 3D** (0.5.6.0): Trials tab, any of the three gunnery
   cards, "Watch the run". Three things were decided without you: the long
   waits (finding, ranging, laying, loading) are cut to about a second and a
@@ -81,6 +92,15 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.6.2.0, PR 6c: the armour trial and the hull-down berm.** Two new
+  tests on the range, so a visit is now nine tests. The armour trial fires
+  three real rounds at each named plate: they land where they land, what a
+  round goes through varies a little, and a reactive tile works once. The
+  plates that must hold decide the pass; the rest are fired for the record
+  and show where the tank is weak, each with a link back to that zone on
+  the Armour tab. The berm test noses the tank up the back of a ridge and
+  measures how much shows over the crest with the gun laid level: more gun
+  depression, less tank showing. A side-on picture shows what is hidden.
 - **0.6.1.0, PR 6b: a shot followed all the way.** The hit model itself.
   A shot is now a line that strikes the tank at a real angle, goes through
   the layers of whichever zone it meets, and then carries on inside to
