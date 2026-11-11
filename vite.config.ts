@@ -31,6 +31,8 @@ export default defineConfig({
     __BUILD_DATE__: JSON.stringify(buildDate),
     __GAME_VERSION__: JSON.stringify(gameVersion),
   },
+  // The proving ground's worker is a module, like the page.
+  worker: { format: 'es' },
   build: {
     target: 'es2022',
     // scripts/check-bundle.mjs reads the manifest to tell the first load from what is fetched later.

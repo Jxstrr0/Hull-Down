@@ -492,6 +492,7 @@ export const STRINGS = {
     title: 'Proving ground',
     back: 'Design office',
     backLabel: 'Back to the design office',
+    running: 'The range is running the tests…',
     subject: 'Project {n} · {name} · {mass} t',
     summary: 'Passed {passes} of {tests} tests.',
     pass: 'Pass',

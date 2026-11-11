@@ -5,13 +5,14 @@ import { GROUNDS, RANGE, RUN_PART_IDS, type RunPartId } from '../data/range'
 import { RENDER } from '../data/render'
 import { STRINGS, fill } from '../data/strings'
 import {
-  runProvingGround, type AccelerationRun, type EnduranceEvent, type EnduranceRun, type ObstacleResult, type RangeReport,
+  type AccelerationRun, type EnduranceEvent, type EnduranceRun, type ObstacleResult, type RangeReport,
 } from '../sim/trials'
-import type { StatSheet, VehicleSpec } from '../sim/vehicle'
+import type { Limits, StatSheet, VehicleSpec } from '../sim/vehicle'
 import { VIEWS, type ViewId } from '../render/director'
 import type { RangeView, RunSource } from '../render/rangeScene'
 import { el } from './dom'
 import { fixed } from './format'
+import { runRange } from './rangeRunner'
 
 const R = STRINGS.range
 const SVG = 'http://www.w3.org/2000/svg'
@@ -30,6 +31,8 @@ const ENDURANCE_FIX: Record<RunPartId, FixPart | null> = {
 
 export interface RangeScreenArgs {
   spec: VehicleSpec
+  /** The limits the design was built to. The range builds the tank again from the design. */
+  limits: Limits
   sheet: StatSheet
   projectNo: number
   back(): void
@@ -151,7 +154,6 @@ function runChart(run: EnduranceRun): HTMLElement {
 
 export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   const { sheet } = args
-  const report: RangeReport = runProvingGround(sheet, { seed: args.projectNo })
   const root = el('section', 'range')
   root.setAttribute('aria-label', R.label)
   root.tabIndex = -1
@@ -353,155 +355,168 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   )
   head.append(back, titles)
 
-  const summary = el('p', `rg-summary ${report.passes === report.tests ? 'rg-pass' : 'rg-fail'}`,
-    fill(R.summary, { passes: String(report.passes), tests: String(report.tests) }))
+  const waiting = el('p', 'rg-waiting', R.running)
+  waiting.setAttribute('role', 'status')
+  root.append(head, waiting)
 
-  /** One test: a title, a stamp, and whatever the test has to show. */
-  const card = (title: string, about: string, passed: boolean): HTMLElement => {
-    const box = el('section', 'rg-card')
-    const top = el('div', 'rg-card-head')
-    top.append(el('h3', 'rg-card-title', title), verdict(passed, true))
-    box.append(top, el('p', 'ctl-note', about))
-    return box
-  }
+  const drawReport = (report: RangeReport): void => {
+    const summary = el('p', `rg-summary ${report.passes === report.tests ? 'rg-pass' : 'rg-fail'}`,
+      fill(R.summary, { passes: String(report.passes), tests: String(report.tests) }))
 
-  /** One measured thing: its name, what it came to, the mark, and a fix when it failed. */
-  const line = (name: string, words: string[], passed: boolean, fix?: HTMLButtonElement): HTMLElement => {
-    const item = el('li', `rg-line-item${passed ? '' : ' rg-line-failed'}`)
-    const top = el('div', 'rg-line-head')
-    top.append(el('span', 'rg-line-name', name), verdict(passed))
-    item.append(top)
-    for (const text of words) item.append(el('p', 'rg-line-text', text))
-    if (!passed && fix) item.append(fix)
-    return item
-  }
+    /** One test: a title, a stamp, and whatever the test has to show. */
+    const card = (title: string, about: string, passed: boolean): HTMLElement => {
+      const box = el('section', 'rg-card')
+      const top = el('div', 'rg-card-head')
+      top.append(el('h3', 'rg-card-title', title), verdict(passed, true))
+      box.append(top, el('p', 'ctl-note', about))
+      return box
+    }
 
-  // --- Acceleration and top speed -----------------------------------------
-  const a = report.acceleration
-  const A = R.acceleration
-  const accel = card(A.title, fill(A.about, { strip: String(RANGE.acceleration.stripM) }), a.passed)
-  const accelLines = el('ul', 'rg-lines')
-  accelLines.append(
-    line(
-      fill(A.sprint, { kmh: String(RANGE.acceleration.sprintKmh) }),
-      [
-        a.sprintS === null ? A.sprintNever : fill(A.sprintValue, { n: fixed(a.sprintS, 1) }),
-        fill(A.sprintMark, { n: String(report.marks.sprintS) }),
-      ],
-      a.sprintPassed, fixButton('powerpack.engine', 'sprint'),
-    ),
-    line(
-      A.top,
-      [fill(A.topValue, { n: fixed(a.topKmh, 0) }), fill(A.topMark, { n: String(report.marks.topKmh) })],
-      a.topPassed, fixButton(a.gearLimited ? 'powerpack.transmission' : 'powerpack.engine', 'top'),
-    ),
-  )
-  const accelNotes = [sheet.drive.shiftS > 0 ? fill(A.shifts, { n: String(a.shifts) }) : A.noShifts]
-  if (a.gearLimited) accelNotes.push(fill(A.gearHeld, { n: fixed(a.topKmh, 0) }))
-  accel.append(...watch({ test: 'acceleration', record: a.trace }), speedChart(a, report.marks.topKmh), accelLines, ...accelNotes.map((text) => el('p', 'ctl-note rg-note', text)))
+    /** One measured thing: its name, what it came to, the mark, and a fix when it failed. */
+    const line = (name: string, words: string[], passed: boolean, fix?: HTMLButtonElement): HTMLElement => {
+      const item = el('li', `rg-line-item${passed ? '' : ' rg-line-failed'}`)
+      const top = el('div', 'rg-line-head')
+      top.append(el('span', 'rg-line-name', name), verdict(passed))
+      item.append(top)
+      for (const text of words) item.append(el('p', 'rg-line-text', text))
+      if (!passed && fix) item.append(fix)
+      return item
+    }
 
-  // --- Obstacle course ----------------------------------------------------
-  const O = R.obstacles
-  const c = RANGE.course
-  const cm = (metres: number): string => fixed(metres * 100, 0)
-  const obstacleLine = (result: ObstacleResult): HTMLElement => {
-    const slots = {
-      have: fixed(result.have, result.id === 'mud' || result.id === 'slope' ? 1 : 2),
-      need: fixed(result.need, result.id === 'mud' || result.id === 'slope' ? 1 : 2),
-      time: fixed(result.timeS, 0),
-      reached: fixed(result.reachedM, 0),
-      sink: cm(result.sinkM),
-      clearance: cm(sheet.drive.clearanceM),
-    }
-    const sagging = sheet.stress.suspension > 1
-    if (result.id === 'trench') {
-      return line(fill(O.names.trench, { n: fixed(c.trench.widthM, 1) }), [fill(result.passed ? O.trenchPass : O.trenchFail, slots)],
-        result.passed, fixButton('hull.size', 'trench'))
-    }
-    if (result.id === 'step') {
-      const words = [fill(result.passed ? O.stepPass : O.stepFail, slots)]
-      if (!result.passed && sagging) words.push(O.stepSag)
-      return line(fill(O.names.step, { n: fixed(c.step.heightM, 1) }), words, result.passed,
-        fixButton(sagging ? 'runningGear.suspension' : 'hull.size', 'step'))
-    }
-    if (result.id === 'mud') {
-      const failed = result.cause === 'belly' ? O.mudBelly : result.cause === 'pull' ? O.mudPull : O.mudTracks
-      const words = [fill(result.passed ? O.mudPass : failed, slots)]
-      words.push(fill(O.mudPressure, { pressure: fixed(sheet.drive.pressureKgCm2, 2), bearing: fixed(GROUNDS.mud.bearingKgCm2, 1) }))
-      return line(fill(O.names.mud, { n: String(c.mud.lengthM) }), words, result.passed,
-        fixButton(result.cause === 'pull' ? 'powerpack.engine' : 'runningGear.trackWidthMm', 'mud'))
-    }
-    return line(
-      fill(O.names.slope, { n: String(c.slope.angleDeg) }),
-      [fill(result.passed ? O.slopePass : result.cause === 'grip' ? O.slopeGrip : O.slopePull, slots)],
-      result.passed, result.cause === 'grip' ? undefined : fixButton('powerpack.engine', 'slope'),
+    // --- Acceleration and top speed -----------------------------------------
+    const a = report.acceleration
+    const A = R.acceleration
+    const accel = card(A.title, fill(A.about, { strip: String(RANGE.acceleration.stripM) }), a.passed)
+    const accelLines = el('ul', 'rg-lines')
+    accelLines.append(
+      line(
+        fill(A.sprint, { kmh: String(RANGE.acceleration.sprintKmh) }),
+        [
+          a.sprintS === null ? A.sprintNever : fill(A.sprintValue, { n: fixed(a.sprintS, 1) }),
+          fill(A.sprintMark, { n: String(report.marks.sprintS) }),
+        ],
+        a.sprintPassed, fixButton('powerpack.engine', 'sprint'),
+      ),
+      line(
+        A.top,
+        [fill(A.topValue, { n: fixed(a.topKmh, 0) }), fill(A.topMark, { n: String(report.marks.topKmh) })],
+        a.topPassed, fixButton(a.gearLimited ? 'powerpack.transmission' : 'powerpack.engine', 'top'),
+      ),
     )
-  }
-  const course = card(O.title, O.about, report.obstacles.passed)
-  const courseLines = el('ul', 'rg-lines')
-  courseLines.append(...report.obstacles.results.map(obstacleLine))
-  course.append(...watch({ test: 'obstacles', record: report.obstacles.trace }), courseLines)
+    const accelNotes = [sheet.drive.shiftS > 0 ? fill(A.shifts, { n: String(a.shifts) }) : A.noShifts]
+    if (a.gearLimited) accelNotes.push(fill(A.gearHeld, { n: fixed(a.topKmh, 0) }))
+    accel.append(...watch({ test: 'acceleration', record: a.trace }), speedChart(a, report.marks.topKmh), accelLines, ...accelNotes.map((text) => el('p', 'ctl-note rg-note', text)))
 
-  // --- Endurance run ------------------------------------------------------
-  const E = R.endurance
-  const e = report.endurance
-  const tonnes = (id: RunPartId): boolean => id !== 'engine'
-  const eventText = (event: EnduranceEvent): string => {
-    const load = e.loads[event.part]
-    const slots = {
-      part: E.parts[event.part],
-      km: String(event.km),
-      leg: E.legs[event.leg],
-      time: hours(event.haltH),
-      ...(load.rated === null ? {} : loadPair(load.have, load.rated, tonnes(event.part) ? 1 : 0)),
+    // --- Obstacle course ----------------------------------------------------
+    const O = R.obstacles
+    const c = RANGE.course
+    const cm = (metres: number): string => fixed(metres * 100, 0)
+    const obstacleLine = (result: ObstacleResult): HTMLElement => {
+      const slots = {
+        have: fixed(result.have, result.id === 'mud' || result.id === 'slope' ? 1 : 2),
+        need: fixed(result.need, result.id === 'mud' || result.id === 'slope' ? 1 : 2),
+        time: fixed(result.timeS, 0),
+        reached: fixed(result.reachedM, 0),
+        sink: cm(result.sinkM),
+        clearance: cm(sheet.drive.clearanceM),
+      }
+      const sagging = sheet.stress.suspension > 1
+      if (result.id === 'trench') {
+        return line(fill(O.names.trench, { n: fixed(c.trench.widthM, 1) }), [fill(result.passed ? O.trenchPass : O.trenchFail, slots)],
+          result.passed, fixButton('hull.size', 'trench'))
+      }
+      if (result.id === 'step') {
+        const words = [fill(result.passed ? O.stepPass : O.stepFail, slots)]
+        if (!result.passed && sagging) words.push(O.stepSag)
+        return line(fill(O.names.step, { n: fixed(c.step.heightM, 1) }), words, result.passed,
+          fixButton(sagging ? 'runningGear.suspension' : 'hull.size', 'step'))
+      }
+      if (result.id === 'mud') {
+        const failed = result.cause === 'belly' ? O.mudBelly : result.cause === 'pull' ? O.mudPull : O.mudTracks
+        const words = [fill(result.passed ? O.mudPass : failed, slots)]
+        words.push(fill(O.mudPressure, { pressure: fixed(sheet.drive.pressureKgCm2, 2), bearing: fixed(GROUNDS.mud.bearingKgCm2, 1) }))
+        return line(fill(O.names.mud, { n: String(c.mud.lengthM) }), words, result.passed,
+          fixButton(result.cause === 'pull' ? 'powerpack.engine' : 'runningGear.trackWidthMm', 'mud'))
+      }
+      return line(
+        fill(O.names.slope, { n: String(c.slope.angleDeg) }),
+        [fill(result.passed ? O.slopePass : result.cause === 'grip' ? O.slopeGrip : O.slopePull, slots)],
+        result.passed, result.cause === 'grip' ? undefined : fixButton('powerpack.engine', 'slope'),
+      )
     }
-    const broke: Partial<Record<RunPartId, string>> = E.broke
-    return fill((event.load > 1 && broke[event.part]) || E.fault, slots)
-  }
-  const long = card(E.title, fill(E.about, { km: String(e.lengthKm) }), e.passed)
-  const longLines = el('ul', 'rg-lines')
-  const last = e.events.find((event) => event.ended)
-  longLines.append(
-    line(
-      E.distance,
-      last
-        ? [fill(E.ended, { km: String(e.reachedKm), total: String(e.lengthKm) }), eventText(last)]
-        : [fill(E.finished, { km: String(e.lengthKm), time: hours(e.movingH), speed: fixed(e.lengthKm / e.movingH, 0) })],
-      e.finished,
-    ),
-    line(
-      E.stopsName,
-      [
-        e.stops === 0 ? E.noStops : fill(e.stops === 1 ? E.stopsOne : E.stopsMany, { n: String(e.stops), time: hours(e.haltedH) }),
-        ...e.events.filter((event) => !event.ended).map(eventText),
-        fill(E.stopsMark, { n: String(report.marks.enduranceStops) }),
-      ],
-      e.stops <= report.marks.enduranceStops,
-    ),
-  )
-  // Every overloaded part is listed with its fix, whether or not it broke this time.
-  const over = RUN_PART_IDS.filter((id) => e.loads[id].load > 1)
-  for (const id of over) {
-    const load = e.loads[id]
-    const item = el('li', 'rg-line-item rg-line-failed')
-    const names: Partial<Record<RunPartId, string>> = E.overName
-    const top = el('div', 'rg-line-head')
-    top.append(
-      el('span', 'rg-line-name', names[id] ?? E.parts[id]),
-      el('span', 'rg-verdict rg-fail', fill(E.overMark, { pct: String(Math.max(101, Math.round(load.load * 100))) })),
-    )
-    const words: Partial<Record<RunPartId, string>> = E.over
-    item.append(top, el('p', 'rg-line-text', fill(words[id] ?? '', {
-      leg: E.legs[load.leg], ...loadPair(load.have, load.rated ?? 0, tonnes(id) ? 1 : 0),
-    })))
-    const part = ENDURANCE_FIX[id]
-    if (part) item.append(fixButton(part, `endurance-${id}`))
-    longLines.append(item)
-  }
-  long.append(...watch({ test: 'endurance', run: e }), runChart(e), longLines)
-  if (over.length === 0) long.append(el('p', 'ctl-note rg-note', E.allWithin))
-  long.append(el('p', 'ctl-note rg-note', E.note))
+    const course = card(O.title, O.about, report.obstacles.passed)
+    const courseLines = el('ul', 'rg-lines')
+    courseLines.append(...report.obstacles.results.map(obstacleLine))
+    course.append(...watch({ test: 'obstacles', record: report.obstacles.trace }), courseLines)
 
-  root.append(head, summary, accel, course, long, el('p', 'ds-note', R.note))
+    // --- Endurance run ------------------------------------------------------
+    const E = R.endurance
+    const e = report.endurance
+    const tonnes = (id: RunPartId): boolean => id !== 'engine'
+    const eventText = (event: EnduranceEvent): string => {
+      const load = e.loads[event.part]
+      const slots = {
+        part: E.parts[event.part],
+        km: String(event.km),
+        leg: E.legs[event.leg],
+        time: hours(event.haltH),
+        ...(load.rated === null ? {} : loadPair(load.have, load.rated, tonnes(event.part) ? 1 : 0)),
+      }
+      const broke: Partial<Record<RunPartId, string>> = E.broke
+      return fill((event.load > 1 && broke[event.part]) || E.fault, slots)
+    }
+    const long = card(E.title, fill(E.about, { km: String(e.lengthKm) }), e.passed)
+    const longLines = el('ul', 'rg-lines')
+    const last = e.events.find((event) => event.ended)
+    longLines.append(
+      line(
+        E.distance,
+        last
+          ? [fill(E.ended, { km: String(e.reachedKm), total: String(e.lengthKm) }), eventText(last)]
+          : [fill(E.finished, { km: String(e.lengthKm), time: hours(e.movingH), speed: fixed(e.lengthKm / e.movingH, 0) })],
+        e.finished,
+      ),
+      line(
+        E.stopsName,
+        [
+          e.stops === 0 ? E.noStops : fill(e.stops === 1 ? E.stopsOne : E.stopsMany, { n: String(e.stops), time: hours(e.haltedH) }),
+          ...e.events.filter((event) => !event.ended).map(eventText),
+          fill(E.stopsMark, { n: String(report.marks.enduranceStops) }),
+        ],
+        e.stops <= report.marks.enduranceStops,
+      ),
+    )
+    // Every overloaded part is listed with its fix, whether or not it broke this time.
+    const over = RUN_PART_IDS.filter((id) => e.loads[id].load > 1)
+    for (const id of over) {
+      const load = e.loads[id]
+      const item = el('li', 'rg-line-item rg-line-failed')
+      const names: Partial<Record<RunPartId, string>> = E.overName
+      const top = el('div', 'rg-line-head')
+      top.append(
+        el('span', 'rg-line-name', names[id] ?? E.parts[id]),
+        el('span', 'rg-verdict rg-fail', fill(E.overMark, { pct: String(Math.max(101, Math.round(load.load * 100))) })),
+      )
+      const words: Partial<Record<RunPartId, string>> = E.over
+      item.append(top, el('p', 'rg-line-text', fill(words[id] ?? '', {
+        leg: E.legs[load.leg], ...loadPair(load.have, load.rated ?? 0, tonnes(id) ? 1 : 0),
+      })))
+      const part = ENDURANCE_FIX[id]
+      if (part) item.append(fixButton(part, `endurance-${id}`))
+      longLines.append(item)
+    }
+    long.append(...watch({ test: 'endurance', run: e }), runChart(e), longLines)
+    if (over.length === 0) long.append(el('p', 'ctl-note rg-note', E.allWithin))
+    long.append(el('p', 'ctl-note rg-note', E.note))
+    root.append(summary, accel, course, long, el('p', 'ds-note', R.note))
+  }
+
+  // The tests run on another thread, so a long trial never freezes the page.
+  void runRange({ spec: args.spec, limits: args.limits, setup: { seed: args.projectNo } }).then((report) => {
+    // The player may have gone back to the office before the range answered.
+    if (!root.isConnected) return
+    waiting.remove()
+    drawReport(report)
+  })
   return root
 }
