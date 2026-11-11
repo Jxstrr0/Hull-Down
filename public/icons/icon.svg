@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Hull Down icon: a turret showing over a ridge line, drawn in blueprint ink. -->
+  <rect width="64" height="64" rx="12" fill="#e9ece6"/>
+  <path d="M0 16h64M0 32h64M0 48h64M16 0v64M32 0v64M48 0v64" stroke="#c9d0c8" stroke-width="1"/>
+  <path d="M22 38l3-9h14l3 9" fill="none" stroke="#1f3558" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M40 32h16" stroke="#1f3558" stroke-width="3" stroke-linecap="round"/>
+  <path d="M4 46q14-9 28-8t28 8" fill="none" stroke="#b23a2e" stroke-width="3" stroke-linecap="round"/>
+</svg>

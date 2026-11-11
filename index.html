@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" data-theme="paper">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#141413" />
+    <meta name="description" content="Hull Down: a tank design game. Run a state design bureau, send the prototype to trial, and read why it failed. A Longlight Interactive game." />
+    <title>Hull Down</title>
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <script>
+      // Before first paint: use the saved look so the sheet never flashes the wrong colour.
+      try {
+        if (localStorage.getItem('hulldown.theme') === 'blueprint') document.documentElement.dataset.theme = 'blueprint'
+      } catch (e) {}
+    </script>
+    <style>
+      /* Studio splash: inline so it paints on the first frame, before the bundle.
+         A studio piece, so it uses the Longlight brand only. Driven by src/ui/loading.ts. */
+      html, body { margin: 0; height: 100%; }
+      #loading {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 28px;
+        padding: 24px;
+        background: #141413;
+        color: #faf9f5;
+        font-family: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        transition: opacity 0.4s ease;
+      }
+      #loading.ld-out { opacity: 0; pointer-events: none; }
+      .ld-logo { width: min(280px, 72vw); height: auto; }
+      .ld-bar { position: relative; width: min(200px, 56vw); height: 4px; overflow: hidden; border-radius: 2px; background: rgba(250, 249, 245, 0.14); }
+      .ld-fill { position: absolute; top: 0; bottom: 0; width: 35%; background: #d97757; animation: ld-slide 1.3s ease-in-out infinite; }
+      @keyframes ld-slide { from { left: -35%; } to { left: 100%; } }
+      .ld-credit { margin: 0; font-size: 12px; font-weight: 500; letter-spacing: 0.04em; color: #b48ce8; }
+      .ld-error { text-align: center; }
+      .ld-error-text { margin: 0 0 12px; font-size: 14px; line-height: 1.4; }
+      .ld-reload { min-height: 44px; padding: 0 22px; border: 0; border-radius: 8px; background: #d97757; color: #141413; font: inherit; font-weight: 700; cursor: pointer; }
+      #loading.ld-failed .ld-bar { display: none; }
+      @media (prefers-reduced-motion: reduce) {
+        #loading { transition: none; }
+        .ld-fill { animation: none; left: 0; opacity: 0.5; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading" role="status" aria-busy="true" aria-label="Loading Hull Down">
+      <img class="ld-logo" src="/brand/longlight-logo-dark.svg" width="1043" height="336" alt="Longlight Interactive" />
+      <div class="ld-bar" aria-hidden="true"><span class="ld-fill"></span></div>
+      <div class="ld-error" hidden>
+        <p class="ld-error-text">Part of the game did not download. Check the connection and reload.</p>
+        <button class="ld-reload" type="button">Reload</button>
+      </div>
+      <p class="ld-credit">&copy; 2026 Kelbo / Longlight Interactive</p>
+    </div>
+    <script>
+      // Before the bundle runs: Reload works, and a script that fails to download shows the error line.
+      ;(function () {
+        var root = document.getElementById('loading')
+        root.querySelector('.ld-reload').addEventListener('click', function () {
+          location.reload()
+        })
+        window.addEventListener(
+          'error',
+          function (e) {
+            var t = e.target
+            if (!t || t.tagName !== 'SCRIPT' || !document.getElementById('loading')) return
+            root.classList.add('ld-failed')
+            root.querySelector('.ld-error').hidden = false
+          },
+          true,
+        )
+      })()
+    </script>
+    <main id="app"></main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
