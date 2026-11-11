@@ -58,6 +58,30 @@ export const DUEL = {
     /** Seconds to find the target again once it clears. */
     refindS: 4,
   },
+  /** Duels fought on each ground for the report. */
+  runs: 20,
+  /** What the report takes to be worth saying. Each is a share, 0..1. */
+  report: {
+    /** The other tank shot first in at least this share of the duels, or this one did. */
+    shotFirst: 0.6,
+    /** Duels this tank lost without firing a round. */
+    neverFired: 0.15,
+    /** This tank's rounds hit this much less often than the other's. */
+    missingBy: 0.15,
+    /** Hits that did nothing, of all hits: this tank's on the other, or the other's on this one. */
+    bounced: 0.5,
+    /** Hits that got through, of all hits. */
+    gotThrough: 0.6,
+    /** Of the duels lost, those lost to the ammunition going up, and to fire. */
+    magazine: 0.4,
+    burned: 0.2,
+    /** One plate took at least this share of everything that got through. */
+    onePlate: 0.4,
+    /** Fewer rounds than this is too few to say anything about. */
+    fewest: 4,
+    /** How many things the report names. */
+    findings: 3,
+  },
   grounds: {
     // Two tanks come over a rise and see each other across open ground.
     meeting: { rangeM: 1500, night: false, postures: ['halted', 'halted'] },
