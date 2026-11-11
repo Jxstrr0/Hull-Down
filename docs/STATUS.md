@@ -145,6 +145,17 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.8.3.0, PR 8d: the save code.** No screen yet. A whole save (the
+  career and the plan chest) packs into one line of text that starts
+  `HD1:`: deflated, base64url, with a checksum, so a code spoiled in
+  copying is caught and spaces or line breaks picked up on the way do
+  not matter. Anything read back is cleaned part by part
+  (`src/persist/careerCodec.ts`); a decision that does not add up is
+  dropped and the army decides again. Saves carry a format number with a
+  ladder of migrations, and `tests/fixtures/save-v1.txt` holds codes
+  written by format 1 that every later version must still load. The
+  split of PR 8 now runs: 8e save slots, backup file and reminder, 8f
+  the chief engineer, 8g the career screens.
 - **0.8.2.0, PR 8c: the career itself.** Sim and data only.
   `src/sim/career/career.ts` is the bureau's run as a plain value that
   can be saved: the tender it is on, the ministry's grant, three
