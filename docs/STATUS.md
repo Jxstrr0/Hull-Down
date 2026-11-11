@@ -172,6 +172,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.9.2.0, PR 9c: the battle map.** "One battle, as it happened" now
+  opens with a map of the ground from above, your platoon at the
+  bottom. Play, pause and a slider; a battle plays back at eight times
+  its speed. Yours are solid, theirs hollow, a tank out of the fight is
+  crossed out and one in smoke is ringed, and the count is written
+  underneath.
+
 - **0.9.1.0, PR 9b: the battle screen.** Trials tab, "Send a platoon to
   battle". Pick who it meets, the ground and the two orders; the platoon
   fights 12 battles and the report gives won and lost, tanks lost for

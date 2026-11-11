@@ -1010,6 +1010,26 @@ body {
 .duel-results { display: flex; flex-direction: column; gap: 16px; }
 .bt-line { font-size: 0.8rem; font-weight: 400; color: var(--ink-dim); }
 .bt-orders { display: flex; flex-direction: column; gap: 4px; }
+.bm { margin: 8px 0; }
+.bm-svg { display: block; width: 100%; max-width: 340px; margin: 0 auto; border: 1.5px solid var(--ink); }
+.bm-ground { fill: var(--paper); }
+.bm-hatch { stroke: var(--ink-dim); stroke-width: 8; }
+.bm-wood { stroke: var(--ink-dim); stroke-width: 8; }
+.bm-ridge { fill: none; stroke: var(--ink-dim); stroke-width: 10; stroke-linecap: round; }
+.bm-hull { stroke: var(--ink); stroke-width: 14; }
+.bm-gun { stroke: var(--ink); stroke-width: 16; stroke-linecap: round; }
+.bm-tank-mine .bm-hull { fill: var(--ink); }
+.bm-tank-theirs .bm-hull { fill: var(--paper); }
+.bm-no { fill: var(--ink); font-family: var(--font-mono); font-size: 90px; font-weight: 700; }
+.bm-smoke { fill: none; stroke: var(--ink); stroke-width: 10; stroke-dasharray: 24 20; }
+.bm-cross { fill: none; stroke: var(--pencil); stroke-width: 18; stroke-linecap: round; }
+.bm-tank-out .bm-hull, .bm-tank-out .bm-gun { opacity: 0.45; }
+.bm-round { stroke: var(--pencil); stroke-width: 12; stroke-linecap: round; }
+.bm-controls { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }
+.bm-play { flex: none; min-width: 104px; min-height: 44px; }
+.bm-slider { flex: 1; min-width: 0; height: 44px; accent-color: var(--ink); }
+.bm-status { margin: 0; font-family: var(--font-mono); font-size: 0.82rem; }
+.bm-key { margin: 4px 0 0; }
 .bt-order .duel-pick { grid-template-columns: 1fr; }
 .duel-score { margin: 0 0 4px; font-family: var(--font-mono); font-weight: 600; }
 .duel-bar { display: flex; height: 14px; margin: 4px 0 8px; border: 1.5px solid var(--ink); }

@@ -56,7 +56,8 @@ export interface BattleGround {
 export const BATTLE_GROUND_IDS = ['defend', 'meeting', 'advance', 'night'] as const
 export type BattleGroundId = (typeof BATTLE_GROUND_IDS)[number]
 
-/** How far up the ground goes, metres. The other platoon's places are the mirror of these. */
+/** The size of the ground, metres. The other platoon's places are the mirror of the first's. */
+const WIDTH_M = 2000
 const DEPTH_M = 3000
 
 function post(x: number, y: number, cover = false): Post {
@@ -100,6 +101,7 @@ const NIGHT: readonly Lane[] = [
 ]
 
 export const BATTLE = {
+  field: { widthM: WIDTH_M, depthM: DEPTH_M },
   /** The fight is worked out in steps this long, seconds. */
   stepS: 0.1,
   /** With neither platoon beaten by now it is called off, seconds. */
@@ -156,6 +158,8 @@ export const BATTLE = {
   wearFactor: 30,
   /** The tanks' places are kept this often for the playback, seconds. */
   trackS: 1,
+  /** The map plays a battle back this many times faster than it was fought. */
+  playbackSpeed: 8,
   /** Battles fought on a ground for the report. */
   runs: 12,
   /** What the report takes to be worth saying. Each is a share, 0..1, unless it says otherwise. */
