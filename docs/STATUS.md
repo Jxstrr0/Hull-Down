@@ -4,7 +4,8 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
-- **Releases (0.18.2.0).** From this version on, every merge that bumps the version publishes a GitHub Release by itself, so the studio site can show the current version. The first one will be v0.18.2.0. Say if you would rather releases start at 1.0.0.0 only.
+- **Hull Down 1.0 (1.0.0.0).** Bumped to 1.0 as you asked, at the end of stage 18. Still yours: the cover, from the prompt Claude wrote. Not done: a short card clip recorded from the live game; Claude can record one with a test browser if you want it, say where it should go.
+- **Releases (0.18.2.0).** Every merge that bumps the version now publishes a GitHub Release by itself. The first, v0.18.2.0, was published on 11 November; v1.0.0.0 follows with this merge. Old releases can be deleted on GitHub if you only want 1.0 and later listed.
 - **Credits (0.18.1.0).** Claude put the credits at the foot of the Saves tab, folded shut, next to the offline line. Say if you would rather have them somewhere else.
 - **Launch (0.18.0.0).** Kelbo's answers: 1.0.0.0 at the end of stage 18 without asking again; the cover is made by Kelbo from a prompt Claude wrote; the studio site listing already exists, so no PR there.
 - **Challenge screen (0.17.5.0).** I chose: it sits at the top of the Bureau tab, above the sandbox; trials on the Trials tab use the day's pass marks while it is on; the shared text carries no name. Say if you want it somewhere else, or a streak count added.
@@ -468,6 +469,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.0.0.0, PR 18: Hull Down 1.0.** The launch version. Crash screen, credits, brand check and releases (PR 18a to 18c) are in; the studio site already lists the game. This merge publishes the v1.0.0.0 release.
 - **0.18.2.0, PR 18c: brand check and releases.** `tests/brand.test.ts` holds the studio pieces to the Longlight brand: the official logo files unchanged, the splash in brand colours and Space Grotesk, the credit line, the full studio name and the studio link. `publish-release.yml` publishes a GitHub Release (`v<VERSION>`) each time the version changes on `main`, with that version's line from this log as its notes; a test now fails if a version has no log line.
 - **0.18.1.0, PR 18b: credits in the game.** A folded Credits list at the foot of the Saves tab: the studio line, then every font, sound and library with its maker, licence and a link to its source. A test keeps it in step with `CREDITS.md`.
 - **0.18.0.0, PR 18a: the crash screen.** If the game breaks, the page is replaced by a plain account, the save code read from what the browser last kept (copy or backup file), a button to start again, and a short fault report (version, fault, browser; nothing about the player). Harmless browser complaints do not trigger it. Add `#crash-test` to the address to see it.
