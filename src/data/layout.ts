@@ -41,6 +41,8 @@ export const INTERIOR = {
   driverBackM: 0.45,
   driverClearOfTurretM: 0.35,
   driverOffsetShare: -0.5,
+  /** With nobody in the turret, the gunner and commander sit either side of the driver: this far behind him. */
+  hullCrewBackM: 0.1,
   /** The gun breech: where it starts behind the mantlet, where it ends as a share of the radius, and its half thickness. */
   breechStartM: 0.25,
   breechEndShare: 0.25,

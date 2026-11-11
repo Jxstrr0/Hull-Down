@@ -406,6 +406,7 @@ export const STRINGS = {
       weldedWedge: { name: 'Welded wedge', note: 'Flat plates welded to shape. Roomier, and the gun dips further.' },
       lowProfile: { name: 'Low-profile', note: 'The smallest target. Very cramped, and the gun barely dips.' },
       bustle: { name: 'Bustle turret', note: 'A long overhang at the back. Heavy, but takes a bustle autoloader and blow-out panels.' },
+      unmanned: { name: 'Unmanned turret', note: 'Nobody in it: small and light, and the whole crew sits in the hull. Needs an autoloader, a digital computer and the engine at the back. Draws 4 kW, and the commander sees only by screens.' },
     },
     guns: {
       rifled100: { name: '100 mm rifled', note: 'The old standard. Light and handy, short on punch.' },
@@ -627,6 +628,7 @@ export const STRINGS = {
       },
       sources: {
         noLoader: 'No loader to share the radio and the lookout',
+        screens: 'Sees the world only by screens',
         commanderSight: 'Own sight',
         rangefinder: 'Rangefinder',
         sight: 'Sight',
@@ -673,7 +675,10 @@ export const STRINGS = {
     notResearched: 'The bureau has not researched this yet. Pay for the work on the Bureau tab, or fit something else.',
     rodTooLongForCarousel: 'The long rod is too long for a carousel autoloader. Fit a bustle autoloader or a loader, or carry the Pact round.',
     missileNeedsSmoothbore: 'A gun-launched missile cannot be fired from a rifled gun: the spin would wreck it. Fit a smoothbore.',
-    overPowerBudget: 'The systems fitted draw {value} kW and the tank makes {limit} kW. Fit the auxiliary power unit, or a lighter system.',
+    turretNeedsAutoloader: 'There is nobody in an unmanned turret to load the gun. Fit an autoloader.',
+    turretNeedsRearEngine: 'With an unmanned turret the crew sit together in the nose. The engine has to go at the back.',
+    turretNeedsComputer: 'The crew fight an unmanned turret by screens. It needs the digital computer.',
+    overPowerBudget: 'The systems fitted draw {value} kW and the tank makes {limit} kW. Fit the auxiliary power unit, or something that draws less.',
     missileNeedsComputer: 'A gun-launched missile is steered by the digital computer. Fit one, or carry another round.',
   },
   materials: {
@@ -1560,6 +1565,7 @@ export const STRINGS = {
         longRodRound: { name: 'Long-rod round', about: 'A kinetic round of the bureau\'s own: a longer dart that goes through a quarter more.' },
         tandemRound: { name: 'Tandem warhead', about: 'A shaped-charge round of the bureau\'s own, with a first charge to set off reactive tiles.' },
         softKill: { name: 'Soft-kill protection', about: 'Unlocks soft-kill active protection: sensors, smoke and jammers that throw guided missiles off.' },
+        unmannedTurret: { name: 'Unmanned turret', about: 'Unlocks the unmanned turret: a small turret with nobody in it, worked from the hull.' },
         hardKill: { name: 'Hard-kill protection', about: 'Unlocks hard-kill active protection: it shoots down rockets and missiles on their way in.' },
         gunMissile: { name: 'Gun-launched missile', about: 'A guided missile fired from the gun. Needs a smoothbore and the digital computer.' },
       },

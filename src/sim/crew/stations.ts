@@ -4,7 +4,7 @@
 import { CREW, type ComfortSource, type StationId, type WorkSource } from '../../data/crew'
 import { GUNNERY } from '../../data/gunnery'
 import {
-  COMFORT, COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, TRANSMISSIONS,
+  COMFORT, COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, TRANSMISSIONS, TURRETS,
 } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import type { VehicleSpec } from '../vehicle/spec'
@@ -82,6 +82,7 @@ export function stationsOf(spec: VehicleSpec): Station[] {
     ['commander', [
       { source: 'noLoader', points: fourth ? 0 : CREW.noLoader },
       { source: 'commanderSight', points: fc.commanderSight ? COMMANDER_SIGHT.workload : 0 },
+      { source: 'screens', points: TURRETS[spec.turret.shape].workload },
       ...(ranger === 'commander' ? [ranging] : []),
     ]],
     ['gunner', [

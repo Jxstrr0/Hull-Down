@@ -11,7 +11,7 @@ export const GENERATIONS: readonly Generation[] = [1, 2, 3]
 export const GENERATION_FROM_YEAR = { 1: 1980, 2: 2000, 3: 2016 } as const satisfies Record<Generation, number>
 
 /** The spec fields that take a part from a list, by the path the checks name them. */
-export const TECH_FIELDS = ['fireControl.computer', 'fireControl.night', 'ammo.kinetic', 'ammo.shaped', 'material', 'protection.active'] as const
+export const TECH_FIELDS = ['fireControl.computer', 'fireControl.night', 'ammo.kinetic', 'ammo.shaped', 'material', 'protection.active', 'turret.shape'] as const
 export type TechField = (typeof TECH_FIELDS)[number]
 
 /** The parts that came after generation one, and the generation each came with. */
@@ -22,4 +22,5 @@ export const LATER_PARTS: Record<TechField, Readonly<Record<string, Generation>>
   'ammo.shaped': { tandem: 2, gunMissile: 2 },
   material: { layeredComposite: 2 },
   'protection.active': { softKill: 2, hardKill: 3 },
+  'turret.shape': { unmanned: 3 },
 }

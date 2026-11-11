@@ -42,6 +42,9 @@ export const ISSUE_CODES = [
   'missileNeedsSmoothbore',
   'missileNeedsComputer',
   'overPowerBudget',
+  'turretNeedsAutoloader',
+  'turretNeedsRearEngine',
+  'turretNeedsComputer',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -101,10 +104,17 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
     if (spec.fireControl.computer !== 'digital') error('missileNeedsComputer', 'ammo.shaped')
   }
 
+  // A turret with nobody in it: a machine loads, the crew sit together in the nose, and they fight by screens
+  if (!turret.crewed) {
+    if (loading.crew > 3) error('turretNeedsAutoloader', 'loading')
+    if (spec.hull.engineAt === 'front') error('turretNeedsRearEngine', 'hull.engineAt')
+    if (spec.fireControl.computer !== 'digital') error('turretNeedsComputer', 'fireControl.computer')
+  }
+
   // Electrical power: what is fitted cannot draw more than the tank makes
   const electrics = electricsOf(spec)
   if (electrics.drawKw > electrics.supplyKw) {
-    error('overPowerBudget', spec.powerpack.apu ? 'protection.active' : 'powerpack.apu', electrics.drawKw, electrics.supplyKw)
+    error('overPowerBudget', !spec.powerpack.apu ? 'powerpack.apu' : spec.protection.active !== 'none' ? 'protection.active' : 'turret.shape', electrics.drawKw, electrics.supplyKw)
   }
 
   // Things that need a bustle turret

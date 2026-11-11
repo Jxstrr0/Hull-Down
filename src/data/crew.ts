@@ -8,7 +8,7 @@ export type StationId = (typeof STATION_IDS)[number]
 
 /** Where a station's work comes from. */
 export const WORK_SOURCES = [
-  'noLoader', 'commanderSight', 'rangefinder', 'sight', 'stabiliser', 'computer', 'night', 'transmission', 'rounds', 'comfort',
+  'noLoader', 'commanderSight', 'rangefinder', 'sight', 'stabiliser', 'computer', 'night', 'transmission', 'rounds', 'comfort', 'screens',
 ] as const
 export type WorkSource = (typeof WORK_SOURCES)[number]
 
