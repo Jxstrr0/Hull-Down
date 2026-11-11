@@ -3,7 +3,7 @@
 import type { Limits } from '../sim/vehicle/spec'
 import type { ThreatTankId } from './opponents'
 import { MARKS_GEN1, MARKS_GEN2, type Marks } from './range'
-import { PACT_LIMITS_GEN1 } from './tuning'
+import { PACT_LIMITS_GEN1, PACT_LIMITS_GEN3 } from './tuning'
 
 export const SCORE_AXES = ['protection', 'firepower', 'mobility', 'reliability', 'cost'] as const
 export type ScoreAxis = (typeof SCORE_AXES)[number]
@@ -23,7 +23,7 @@ export interface Tender {
   grantKr: number
 }
 
-export const TENDER_IDS = ['improvedType1', 'tank2001'] as const
+export const TENDER_IDS = ['improvedType1', 'tank2001', 'tank2016'] as const
 export type TenderId = (typeof TENDER_IDS)[number]
 
 export const TENDERS: Record<TenderId, Tender> = {
@@ -51,6 +51,18 @@ export const TENDERS: Record<TenderId, Tender> = {
     threats: ['palisade', 'palisadeB'],
     weights: { protection: 30, firepower: 30, mobility: 10, reliability: 15, cost: 15 },
     grantKr: 40_000_000,
+  },
+  /**
+   * Fifteen years on again: generation three. The Pact's bridges carry
+   * more, the army will pay more, and protection counts for most.
+   */
+  tank2016: {
+    year: 2016,
+    limits: { ...PACT_LIMITS_GEN3, generation: 3, maxUnitCostKr: 8_000_000 },
+    marks: MARKS_GEN2,
+    threats: ['palisadeB'],
+    weights: { protection: 35, firepower: 25, mobility: 10, reliability: 15, cost: 15 },
+    grantKr: 60_000_000,
   },
 }
 

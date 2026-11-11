@@ -1,3 +1,4 @@
+import { STRINGS } from '../src/data/strings'
 // Moving the career on from one tender to the next.
 import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
@@ -27,7 +28,7 @@ describe('the tender of 2001', () => {
   const T = TENDERS.tank2001
 
   it('comes after the first, twenty years on, with generation two allowed', () => {
-    expect(TENDER_IDS).toEqual(['improvedType1', 'tank2001'])
+    expect(TENDER_IDS.slice(0, 2)).toEqual(['improvedType1', 'tank2001'])
     expect(T.year).toBe(2001)
     expect(T.limits.generation).toBe(2)
     expect(T.marks).toBe(MARKS_GEN2)
@@ -43,6 +44,24 @@ describe('the tender of 2001', () => {
     expect(late(TENDERS.improvedType1.limits)).toHaveLength(1)
     expect(late(T.limits)).toEqual([])
   })
+})
+
+describe('the tender of 2016', () => {
+  const T = TENDERS.tank2016
+
+  it('comes last, with generation three allowed and a heavier bridge class', () => {
+    expect(TENDER_IDS[TENDER_IDS.length - 1]).toBe('tank2016')
+    expect(T.year).toBe(2016)
+    expect(T.limits.generation).toBe(3)
+    expect(T.limits.maxMassT).toBeGreaterThan(TENDERS.tank2001.limits.maxMassT)
+    expect(T.limits.maxUnitCostKr).toBeGreaterThan(TENDERS.tank2001.limits.maxUnitCostKr)
+    expect(Object.values(T.weights).reduce((sum, each) => sum + each, 0)).toBe(100)
+    expect(STRINGS.tenders.tank2016.name).not.toBe('')
+  })
+
+  it('lets every rival bureau put in a legal bid', () => {
+    for (const bureau of BUREAU_IDS) expect(rivalBid(bureau, T, 5).score.legal, bureau).toBe(true)
+  }, SLOW)
 })
 
 describe('going on to the next tender', () => {
@@ -69,9 +88,12 @@ describe('going on to the next tender', () => {
   }, SLOW)
 
   it('stops at the last tender', () => {
-    const next = onward(decided)
-    expect(tendersLeft(next)).toBe(false)
-    const done = enterTender(buildPrototype(next, THERMAL), 1)
+    const second = onward(decided)
+    expect(tendersLeft(second)).toBe(true)
+    const third = nextTender(enterTender(buildPrototype(second, THERMAL), 1))
+    expect(tenderIdOf(third)).toBe('tank2016')
+    expect(tendersLeft(third)).toBe(false)
+    const done = enterTender(buildPrototype(third, THERMAL), 1)
     expect(() => nextTender(done)).toThrow()
   }, SLOW)
 

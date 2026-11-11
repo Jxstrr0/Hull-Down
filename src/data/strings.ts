@@ -1399,6 +1399,10 @@ export const STRINGS = {
     note: 'Each battle is fought {n} times, each with its own luck. The same design, opponent, ground and orders always give the same battles, so a change in the result is a change in the tank or in the orders.',
   },
   tenders: {
+    tank2016: {
+      name: 'A tank for a watched battlefield',
+      brief: 'Fifteen years on. The Palisade B is still what the Accord fields, but the army has watched what small wars abroad do to tanks, and wants above all a tank that comes back. The Pact has rebuilt its bridges to carry 48 t, and the ministry will pay more than it ever has. Generation three parts are allowed as the bureau works them up.',
+    },
     tank2001: {
       name: 'A tank for the new century',
       brief: 'Twenty years on. The Accord has rebuilt its Palisade around a long-rod round and a thermal sight, and its infantry carry tandem warheads that set off reactive tiles before the main charge arrives. The army wants a tank that can meet both, shoots as well by night as by day, and still crosses a Pact bridge. Generation two parts are allowed.',
