@@ -39,6 +39,13 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   through 495 mm, not 460; a short one saves 0.3 t and manages 419 mm. The
   long-stroke mount lets the 125 mm gun sit in a 1900 mm ring (2050 as
   standard); the short-stroke mount needs 2150.
+- **Watch a shoot in 3D** (0.5.6.0): Trials tab, any of the three gunnery
+  cards, "Watch the run". Three things were decided without you: the long
+  waits (finding, ranging, laying, loading) are cut to about a second and a
+  half each so a shoot takes 20 to 40 seconds to watch; the director's
+  camera jumps to the board when a round is a third of the way there; a
+  board that is hit drops flat half a second later. Say if the pace, the
+  cuts and the board read well on your phone.
 - **Say how the endurance run should treat luck.** As built: every part
   within its rating gives trouble about one run in five, mended at the
   roadside, and one stop is allowed. A part 10 % over its rating breaks in
@@ -54,6 +61,17 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.5.6.0, PR 5g: the shoots in 3D.** Each gunnery card on the range
+  (halted, on the move, night) has a "Watch the run" button. It plays the
+  shoot the tank really fired, target by target: the board stands at its
+  range, the gun flashes, the round flies for as long as it really flew and
+  leaves a mark where it landed, and a board that is hit goes down. A line
+  under the picture says what is happening ("Miss: 1.2 m left.", "Not seen.
+  Past the reach of the night sight."). On the move the tank drives, or
+  halts for each shot if it has no stabiliser; at night the range is dark.
+  Same grey boxes, cameras, Play and scrubber as the driving tests, and
+  three.js is still only fetched on the first watch. This finishes plan
+  stage PR 5.
 - **0.5.5.0, PR 5f: barrel length and recoil mount.** Two new choices on
   the Gun tab. Barrel length (short, standard, long): a longer barrel
   throws every round faster, so rounds fly flatter and kinetic rounds go
@@ -249,7 +267,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   the loading drill and turret parts that fail in a shoot (0.5.2.0), 5d crew
   stations and their workload (0.5.3.0), 5e comfort and fatigue (0.5.4.0),
   5f barrel length and recoil mount (0.5.5.0), 5g the gunnery tests played
-  back in 3D. PR 6 is then 0.6.0.0.
+  back in 3D (0.5.6.0). All seven are done. PR 6 is then 0.6.0.0.
 - 5d retuned three numbers. The first-shot mark went from 21 s to 20 s,
   because the gunner is no longer slowed by the commander's extra jobs (the
   baseline now fires in 18 s; stadia lines and no computer still miss the

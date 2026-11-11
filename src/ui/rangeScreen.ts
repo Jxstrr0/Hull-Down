@@ -5,13 +5,15 @@ import { GROUNDS, RANGE, RUN_PART_IDS, type RunPartId } from '../data/range'
 import { RENDER } from '../data/render'
 import { STRINGS, fill } from '../data/strings'
 import {
-  type AccelerationRun, type EnduranceEvent, type EnduranceRun, type ObstacleResult, type RangeReport,
+  type AccelerationRun, type EnduranceEvent, type EnduranceRun, type GunneryRun, type ObstacleResult, type RangeReport,
 } from '../sim/trials'
 import type { Limits, StatSheet, VehicleSpec } from '../sim/vehicle'
 import { VIEWS, type ViewId } from '../render/director'
 import type { RangeView, RunSource } from '../render/rangeScene'
+import type { ReelFrame } from '../render/shootReel'
 import { el } from './dom'
 import { fixed } from './format'
+import { placeOf } from './gunneryAdvice'
 import { gunneryCards } from './gunneryCards'
 import { runRange } from './rangeRunner'
 
@@ -172,6 +174,26 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     })
   }
 
+  /** What is happening in a shoot, in a few words, for the caption on the 3D view. */
+  const shootText = (run: GunneryRun, reel: ReelFrame): string => {
+    const W = V.shoot
+    if (reel.done) return fill(W.done, { hits: String(run.hits), n: String(run.targets.length) })
+    const shot = run.targets[reel.targetIndex]?.shots[reel.shotIndex]
+    if (reel.phase === 'unseen') return W.unseen
+    if (reel.phase === 'tooSlow') return W.tooSlow
+    if (reel.phase === 'working') {
+      if (shot?.jammed) return W.jam
+      if (reel.shotIndex > 0) return W.loading
+      return run.halted ? W.workingHalt : W.working
+    }
+    if (reel.phase === 'strike' && shot) {
+      if (shot.hit) return W.hit
+      const fell = placeOf(shot)
+      return fill(W.miss, { dist: fixed(fell.distM, 1), place: R.gunnery.place[fell.place] })
+    }
+    return ''
+  }
+
   const openView = async (source: RunSource, slot: HTMLElement, opener: HTMLButtonElement): Promise<void> => {
     closeView()
     const test = source.test
@@ -295,6 +317,18 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
             readout.textContent = fill(V.lapseReadout, { time: hours(lapse.hours), km, leg: R.endurance.legShort[leg.id] })
             scrub.setAttribute('aria-valuetext', fill(V.lapseValue, { km, total: String(source.run.lengthKm) }))
             const words = lapse.event ? haltText(lapse.event) : lapse.done && source.run.finished ? fill(V.lapseDone, { km }) : ''
+            if (caption.textContent !== words) caption.textContent = words
+            caption.hidden = words === ''
+            return
+          }
+          if ('fire' in source && frame.shoot) {
+            const reel = frame.shoot
+            const run = source.run
+            const target = run.targets[reel.targetIndex]
+            const slots = { n: String(reel.targetIndex + 1), total: String(run.targets.length) }
+            readout.textContent = fill(V.shootReadout, { ...slots, range: String(target?.rangeM ?? 0), time: fixed(reel.clockS, 0) })
+            scrub.setAttribute('aria-valuetext', fill(V.shootValue, slots))
+            const words = shootText(run, reel)
             if (caption.textContent !== words) caption.textContent = words
             caption.hidden = words === ''
             return
@@ -511,7 +545,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     long.append(el('p', 'ctl-note rg-note', E.note))
     root.append(
       summary, accel, course, long,
-      ...gunneryCards(report, sheet, args.spec, { card, line, fixButton }),
+      ...gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch }),
       el('p', 'ds-note', R.note),
     )
   }
