@@ -4,6 +4,7 @@ import { GUNNERY } from '../data/gunnery'
 import { GUNNERY_TEST_IDS, RANGE, type GunneryTestId } from '../data/range'
 import { STRINGS, fill } from '../data/strings'
 import { RANGE_DAY, fatigueOf, firstShotS, sustainedRpm, type Fire, type Shoot } from '../sim/gunnery/fire'
+import type { RunSource } from '../render/rangeScene'
 import type { DrillRun, GunneryResult, RangeReport, TargetResult } from '../sim/trials'
 import type { StatSheet, VehicleSpec } from '../sim/vehicle'
 import { el } from './dom'
@@ -21,6 +22,8 @@ export interface CardKit {
   card(title: string, about: string, passed: boolean): HTMLElement
   line(name: string, words: string[], passed: boolean, fix?: HTMLButtonElement): HTMLElement
   fixButton(part: FixPart, key: string): HTMLButtonElement
+  /** A button that opens the 3D view of a run, and the place the view goes. */
+  watch(source: RunSource): HTMLElement[]
 }
 
 function svg(tag: string, attrs: Record<string, string>): SVGElement {
@@ -141,7 +144,7 @@ function gunneryCard(id: GunneryTestId, report: RangeReport, sheet: StatSheet, s
   const blind = spec.fireControl.night === 'none' || run.fault === 'night'
   for (const target of run.targets) targets.append(targetLine(target, fire, blind))
 
-  box.append(lines)
+  box.append(...kit.watch({ test: id, run, fire }), lines)
   if (run.roundsFired > 0) box.append(board(run))
   box.append(targets)
   const notes: string[] = []

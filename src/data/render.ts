@@ -17,6 +17,14 @@ export const RENDER = {
     rut: '#77724f',
     smoke: '#2c2c2a',
     sun: '#ffffff',
+    /** The firing range: the target board, a round in the air, the flash at the muzzle, and where a round landed. */
+    board: '#e9ece6',
+    boardMark: '#2f3429',
+    tracer: '#ffd98a',
+    flash: '#fff3c4',
+    strikeHit: '#1f2320',
+    strikeMiss: '#c2ad84',
+    nightSky: '#232a36',
   },
   light: {
     /** An overcast sky: soft light from above, a little from the ground, a weak sun. */
@@ -26,7 +34,7 @@ export const RENDER = {
     sunFrom: { x: -30, y: 60, z: 40 },
   },
   /** Seconds of the run played for each second watched. */
-  playRate: { acceleration: 4, obstacles: 2, endurance: 1 },
+  playRate: { acceleration: 4, obstacles: 2, endurance: 1, shoot: 1 },
   /** The scrub bar moves in steps of this many seconds of the run. */
   scrubStepS: 0.1,
   /** The picture is never drawn finer than this many screen dots for each CSS pixel. */
@@ -62,6 +70,12 @@ export const RENDER = {
       obstacles: { upM: 3, sideM: 16, sidePerM: 0.3, holdM: 5, after: 'behind' },
       /** On the endurance run the director gives each leg one travelling camera. */
       endurance: { road: 'behind', tracks: 'front', hills: 'side', rough: 'side' },
+      /**
+       * On a shoot the director stays with the tank until a round is `cutShare`
+       * of the way to the target, then cuts to a camera standing by the board:
+       * this far short of it, this high and this far to the side.
+       */
+      shoot: { seat: 'behind', cutShare: 0.35, shortM: 11, upM: 2.8, sideM: 6.5 },
     },
   },
   fog: { nearM: 120, farM: 520 },
@@ -123,6 +137,53 @@ export const RENDER = {
      * deck, `deckShare` of the hull's length from its middle, and spread as they go.
      */
     smoke: { puffs: 5, riseM: 6, everyS: 1.8, fromM: 0.35, toM: 1.7, driftM: 1.5, opacity: 0.6, sides: 8, deckShare: 0.3 },
+  },
+  /**
+   * A firing test is shown target by target. The waits are cut short: the
+   * crew's work before each shot takes `waitS` to watch however long it
+   * really took. A round's flight is shown as long as it really was, held
+   * between `flightMinS` and `flightMaxS`. The picture then holds on the
+   * strike for `strikeS`. A target that drew no shot goes by in `passS`.
+   */
+  shoot: {
+    waitS: 1.4,
+    flightMinS: 0.6,
+    flightMaxS: 1.8,
+    strikeS: 1.4,
+    passS: 1.8,
+    /** How fast the tank is seen to drive in the test on the move. */
+    driveKmh: 25,
+    /**
+     * The ground under the whole range runs from `fromM` behind the start to
+     * `toM` past it. The lane the tank fires from stops at `laneToM`; the
+     * boards stand in open ground beyond it.
+     */
+    laneWidthM: 10,
+    fromM: -400,
+    laneToM: 400,
+    toM: 3400,
+    /** The ground is laid in pieces this long. */
+    pieceM: 100,
+    /** Marker posts beside the lane, this far apart and this many each way from the tank. */
+    postEveryM: 50,
+    postsEachWay: 6,
+    /** The board stands this far clear of the ground and is this thick. A dark square marks its middle. */
+    boardFootM: 0.3,
+    boardThickM: 0.12,
+    boardMarkM: 0.6,
+    /** A board that is hit stays up this long, so the hit is seen, and then goes down. */
+    fallAfterS: 0.55,
+    /** A round in the air is drawn as a bright bar this long and this thick. */
+    tracerLongM: 2.4,
+    tracerThickM: 0.16,
+    /** The flash at the muzzle: how big it starts and how long it lasts. */
+    flashM: 1.5,
+    flashS: 0.16,
+    /** The mark where a round landed. One that fell short is drawn on the ground. */
+    markM: 0.24,
+    markFloorM: 0.15,
+    /** At night the sky and the fog go dark and the lights are turned down to this share. */
+    nightLight: 0.22,
   },
   /** The open ground lies a hair under the lane, so the two never fight over a pixel. */
   ground: { sizeM: 1400, underM: 0.03 },

@@ -1,5 +1,6 @@
 // Where the camera stands and what it looks at. Plain numbers, no three.js,
 // so the choice of view can be tested without a 3D surface.
+import type { GunneryTestId } from '../data/range'
 import { RENDER } from '../data/render'
 import { courseLayout } from '../sim/trials'
 import { pointAt, type Path, type Pose } from './path'
@@ -9,7 +10,7 @@ import type { LegId } from './terrain'
 export const VIEWS = ['director', 'side', 'behind', 'above'] as const
 export type ViewId = (typeof VIEWS)[number]
 
-export type RangeTest = 'acceleration' | 'obstacles' | 'endurance'
+export type RangeTest = 'acceleration' | 'obstacles' | 'endurance' | GunneryTestId
 
 /** A place on the range: x along the run, y up, z across it towards the camera side. */
 export interface Vec {
@@ -65,11 +66,18 @@ export type Scene =
   | { test: 'obstacles'; s: number; path: Path }
   /** The ground of an endurance leg repeats, so only a camera that travels with the tank will do. */
   | { test: 'endurance'; leg: LegId }
+  /** A firing test: the middle of the board, and whether a round is near it or has just landed. */
+  | { test: 'shoot'; board: Vec; onTarget: boolean }
 
 /** The camera for a view, with the tank sitting at `pose`. */
 export function shotAt(view: ViewId, scene: Scene, pose: Pose): Shot {
   if (view !== 'director') return travelling(view, pose)
   if (scene.test === 'acceleration') return travelling(stripSeat(scene.s), pose)
   if (scene.test === 'obstacles') return courseShot(scene.path, pose, scene.s)
+  if (scene.test === 'shoot') {
+    const d = RENDER.camera.director.shoot
+    if (!scene.onTarget) return travelling(d.seat, pose)
+    return { from: { x: scene.board.x - d.shortM, y: d.upM, z: d.sideM }, to: scene.board }
+  }
   return travelling(RENDER.camera.director.endurance[scene.leg], pose)
 }

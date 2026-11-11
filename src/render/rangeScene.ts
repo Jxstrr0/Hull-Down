@@ -3,26 +3,34 @@
 // when the player first asks to watch a run, never before.
 import {
   BoxGeometry, BufferGeometry, Color, CylinderGeometry, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, Fog,
-  Group, HemisphereLight, Mesh, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, Scene, Shape, SphereGeometry,
-  WebGLRenderer, type Material,
+  Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, Scene, Shape,
+  SphereGeometry, WebGLRenderer, type Material,
 } from 'three'
-import { RANGE } from '../data/range'
+import { GUNNERY } from '../data/gunnery'
+import { RANGE, type GunneryTestId } from '../data/range'
 import { RENDER } from '../data/render'
+import type { Fire } from '../sim/gunnery/fire'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
-import type { EnduranceRun } from '../sim/trials'
+import type { EnduranceRun, GunneryRun } from '../sim/trials'
 import { shotAt, type RangeTest, type Scene as Where, type ViewId } from './director'
 import { courseOutline, coursePath, mudPatch, trenchPit, poseAt, stripPath, type Path, type Point, type Pose } from './path'
 import { frameAt, lengthS, type RunRecord } from './playback'
+import { reelOf, type ReelFrame } from './shootReel'
 import { tankShapeOf, type TankShape } from './tankShape'
 import { legGround, placeOnLeg, type LegGround } from './terrain'
 import { puffAt, timelapseOf, type LapseFrame } from './timelapse'
 
 export type { RangeTest, ViewId }
 
-/** The run to play: a recorded drive down the strip or over the course, or the endurance run as a time-lapse. */
+/**
+ * The run to play: a recorded drive down the strip or over the course, the
+ * endurance run as a time-lapse, or a firing test target by target. `fire`
+ * is the tank as it shot, without any part that failed before the shoot.
+ */
 export type RunSource =
   | { test: 'acceleration' | 'obstacles'; record: RunRecord }
   | { test: 'endurance'; run: EnduranceRun }
+  | { test: GunneryTestId; run: GunneryRun; fire: Fire }
 
 export interface ViewFrame {
   /** Seconds into the run. For the endurance run, seconds into the time-lapse. */
@@ -32,6 +40,8 @@ export interface ViewFrame {
   distanceM: number
   /** Where the endurance run has got to. Only set for that run. */
   lapse?: LapseFrame
+  /** Where a firing test has got to. Only set for a shoot. */
+  shoot?: ReelFrame
 }
 
 export interface RangeViewArgs {
@@ -89,6 +99,18 @@ class Kit {
   mesh(geometry: BufferGeometry, colour: string, opacity = 1): Mesh {
     this.geometries.push(geometry)
     return new Mesh(geometry, this.paint(colour, opacity))
+  }
+
+  /** A shape that shines by itself, whatever the light: a round in the air, the flash at the muzzle. */
+  glow(geometry: BufferGeometry, colour: string): Mesh {
+    this.geometries.push(geometry)
+    const key = `glow/${colour}`
+    let material = this.materials.get(key)
+    if (!material) {
+      material = new MeshBasicMaterial({ color: new Color(colour), fog: false })
+      this.materials.set(key, material)
+    }
+    return new Mesh(geometry, material)
   }
 
   /** A strip of ground that follows a line seen from the side, this wide across the range. */
@@ -317,6 +339,121 @@ function enduranceShow(kit: Kit, scene: Scene, run: EnduranceRun, shape: TankSha
 }
 
 /**
+ * A firing test, target by target: the board comes up down the range, each
+ * round is seen to leave the gun and land, and a board that is hit goes down.
+ */
+function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: TankShape): Show {
+  const k = RENDER.shoot
+  const c = RENDER.colours
+  const reel = reelOf(run, fire)
+  // The range is long: it is laid in short pieces, so no one piece reaches from behind a camera to far ahead of it.
+  const line: Point[] = []
+  for (let x = k.fromM; x <= k.toM; x += k.pieceM) line.push({ x, y: 0 })
+  scene.add(
+    kit.ribbon(line, RENDER.ground.sizeM, -RENDER.ground.underM, c.ground),
+    kit.ribbon(line.filter((point) => point.x <= k.laneToM), k.laneWidthM, 0, run.moving ? c.earth : c.concrete),
+  )
+
+  // The posts keep pace with the tank a step at a time, so there are always some beside it to show it moving.
+  const posts = new Group()
+  const post = RENDER.strip
+  for (let n = -k.postsEachWay; n <= k.postsEachWay; n++) {
+    for (const side of [-1, 1]) {
+      const mark = kit.box(post.postWidthM, post.postHeightM, post.postWidthM, c.post)
+      mark.position.set(n * k.postEveryM, post.postHeightM / 2, side * (k.laneWidthM / 2 + post.postOffM))
+      posts.add(mark)
+    }
+  }
+  scene.add(posts)
+
+  const wide = GUNNERY.target.widthM
+  const high = GUNNERY.target.heightM
+  const centreY = k.boardFootM + high / 2
+  // The board turns about its foot, so it can be laid on its back when it is hit.
+  const board = new Group()
+  const face = kit.box(k.boardThickM, high, wide, c.board)
+  face.position.set(0, high / 2, 0)
+  const middle = kit.box(k.boardThickM, k.boardMarkM, k.boardMarkM, c.boardMark)
+  middle.position.set(-k.boardThickM / 2, high / 2, 0)
+  board.add(face, middle)
+  scene.add(board)
+  const dot = new SphereGeometry(k.markM, 8, 8)
+  const marks = Array.from({ length: RANGE.gunnery.shotsPerTarget }, () => ({
+    hit: kit.mesh(dot, c.strikeHit),
+    miss: kit.mesh(dot, c.strikeMiss),
+  }))
+  for (const mark of marks) scene.add(mark.hit, mark.miss)
+  const tracer = kit.glow(new BoxGeometry(k.tracerLongM, k.tracerThickM, k.tracerThickM), c.tracer)
+  const flash = kit.glow(new SphereGeometry(1, 8, 8), c.flash)
+  scene.add(tracer, flash)
+
+  const reach = RANGE.gunnery.plotM
+  const clamp = (m: number): number => Math.max(-reach, Math.min(reach, m))
+  const muzzleX = shape.gun.rootXM + shape.gun.lengthM
+
+  return {
+    lengthS: reel.lengthS,
+    rate: RENDER.playRate.shoot,
+    at(timeS) {
+      const frame = reel.at(timeS)
+      const target = run.targets[frame.targetIndex]
+      posts.position.x = Math.round(frame.tankM / k.postEveryM) * k.postEveryM
+
+      board.position.set(frame.boardM, frame.fallen ? k.boardThickM : k.boardFootM, 0)
+      board.rotation.z = frame.fallen ? -Math.PI / 2 : 0
+      board.visible = target !== undefined
+
+      // Where each round that has landed went. One that fell short is a mark on the ground in front of the board.
+      const place = (index: number): { x: number; y: number; z: number } => {
+        const shot = target?.shots[index]
+        return {
+          x: frame.boardM - k.boardThickM,
+          y: Math.max(k.markFloorM, centreY + clamp(shot?.upM ?? 0)),
+          z: clamp(shot?.acrossM ?? 0),
+        }
+      }
+      marks.forEach((mark, index) => {
+        const shot = target?.shots[index]
+        const shown = shot !== undefined && index < frame.landed
+        // The mark of a hit goes down with the board.
+        mark.hit.visible = shown && shot.hit && !frame.fallen
+        mark.miss.visible = shown && !shot.hit
+        const at = place(index)
+        mark.hit.position.set(at.x, at.y, at.z)
+        mark.miss.position.set(at.x, at.y, at.z)
+      })
+
+      const muzzle = { x: frame.tankM + muzzleX, y: shape.gun.yM, z: 0 }
+      tracer.visible = frame.flightShare !== null
+      if (frame.flightShare !== null) {
+        const to = place(frame.shotIndex)
+        const share = frame.flightShare
+        tracer.position.set(muzzle.x + (to.x - muzzle.x) * share, muzzle.y + (to.y - muzzle.y) * share, muzzle.z + (to.z - muzzle.z) * share)
+      }
+      const fresh = frame.sinceFiredS !== null && frame.sinceFiredS < k.flashS
+      flash.visible = fresh
+      if (fresh) {
+        flash.position.set(muzzle.x, muzzle.y, muzzle.z)
+        flash.scale.setScalar(k.flashM * (1 - frame.sinceFiredS! / k.flashS) + 0.01)
+      }
+
+      const cut = RENDER.camera.director.shoot.cutShare
+      return {
+        pose: { x: frame.tankM, y: 0, pitchRad: 0 },
+        sinkM: 0,
+        where: {
+          test: 'shoot',
+          board: { x: frame.boardM, y: centreY, z: 0 },
+          onTarget: frame.phase === 'strike' || (frame.flightShare !== null && frame.flightShare >= cut),
+        },
+        frame: { speedKmh: frame.speedKmh, distanceM: frame.tankM, shoot: frame },
+        done: frame.done,
+      }
+    },
+  }
+}
+
+/**
  * Opens the 3D view in `host` and starts playing. Throws when the device
  * cannot give it a 3D drawing surface.
  */
@@ -324,19 +461,26 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   const renderer = new WebGLRenderer({ antialias: true, powerPreference: 'low-power' })
   const kit = new Kit()
   const scene = new Scene()
-  scene.background = new Color(RENDER.colours.sky)
-  scene.fog = new Fog(new Color(RENDER.colours.sky), RENDER.fog.nearM, RENDER.fog.farM)
-  scene.add(new HemisphereLight(new Color(RENDER.colours.sky), new Color(RENDER.light.groundTint), RENDER.light.skyStrength))
-  const sun = new DirectionalLight(new Color(RENDER.colours.sun), RENDER.light.sunStrength)
+  const source = args.source
+  // The night shoot is lit by what little there is.
+  const dark = source.test === 'night'
+  const sky = dark ? RENDER.colours.nightSky : RENDER.colours.sky
+  const light = dark ? RENDER.shoot.nightLight : 1
+  scene.background = new Color(sky)
+  scene.fog = new Fog(new Color(sky), RENDER.fog.nearM, RENDER.fog.farM)
+  scene.add(new HemisphereLight(new Color(sky), new Color(RENDER.light.groundTint), RENDER.light.skyStrength * light))
+  const sun = new DirectionalLight(new Color(RENDER.colours.sun), RENDER.light.sunStrength * light)
   sun.position.set(RENDER.light.sunFrom.x, RENDER.light.sunFrom.y, RENDER.light.sunFrom.z)
   scene.add(sun)
 
   const shape = tankShapeOf(args.spec, args.geometry)
   const tank = buildTank(kit, shape)
   scene.add(tank)
-  const show = args.source.test === 'endurance'
-    ? enduranceShow(kit, scene, args.source.run, shape, args.spec.hull.engineAt)
-    : driveShow(kit, scene, args.source.test, args.source.record, shape)
+  const show = source.test === 'endurance'
+    ? enduranceShow(kit, scene, source.run, shape, args.spec.hull.engineAt)
+    : 'record' in source
+      ? driveShow(kit, scene, source.test, source.record, shape)
+      : shootShow(kit, scene, source.run, source.fire, shape)
 
   const cam = RENDER.camera
   let view = args.view
