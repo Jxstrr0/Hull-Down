@@ -121,6 +121,17 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.7.2.0, PR 7c: a duel fought many times, and what decided it.** The
+  last piece with nothing on screen. A duel is fought 20 times on each
+  ground and the results added up: won, lost and drawn; who got the first
+  round off; rounds fired, hit and through for each tank; which of the
+  tank's plates were holed. From those the report names up to three things
+  that decided it, heaviest first, each with a duel that shows it and the
+  control or plate that would change it: shot first or outdrawn, never got
+  a round off, missing, hits doing nothing, one plate letting most of it
+  through, the ammunition going up, fire; and on the good side shooting
+  first, the armour holding, and getting through. The thresholds are in
+  `src/data/duel.ts`.
 - **0.7.1.0, PR 7b: the one-against-one fight.** Still nothing new on
   screen. Two tanks meet at a set range on set ground and fight it out:
   each crew finds the other, ranges, lays and fires as it does on the
