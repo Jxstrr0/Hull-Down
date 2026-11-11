@@ -4,6 +4,15 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **The glossary** (0.14.1.0): my pick for "tap-to-explain". At the
+  bottom of every tab of the design office there is a row called "Words
+  on this page": one button for each term on that tab that a newcomer
+  might not know. Tap one and its meaning opens under the row. "Show
+  every word" lists all 43. I chose a row of buttons over underlined
+  words inside the text because most of the text sits inside buttons
+  already, and a word in a sentence is too small to tap. The 43 entries
+  are my wording, in `STRINGS.glossary.terms`: say if any reads wrong,
+  or if a word is missing. The trial reports do not have the row yet.
 - **What the rivals fit in 2016** (0.13.4.0): my picks. The heavy bureau
   fits hard kill and an auxiliary power unit. The light bureau fits soft
   kill. The firepower bureau builds the unmanned turret with soft kill.
@@ -377,6 +386,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.14.1.0, PR 14b: the glossary.** `STRINGS.glossary` (43 entries, each with the word beginnings it explains), `src/ui/glossaryWords.ts` (`termsIn`), `src/ui/glossary.ts` (the row of buttons), drawn at the foot of every design office tab. `tests/glossary.test.ts` checks every entry is used by the game and every control has a word explained. Phone test: open the Hull tab, scroll to "Words on this page", tap Glacis, read it, tap it again to close; change the hull and the open word stays open; tap "Show every word".
 - **0.14.0.0, PR 14a: the hard-coded-text test.** First slice of plan PR 14 (Teaching). `tests/hardCodedText.test.ts` reads every source file outside `src/data/` and fails on anything that looks like English for the player. It found two: the korona format (`STRINGS.money`) and the army designation "Model 81" (`STRINGS.career.designation`), both now in the string table. Nothing changes on screen. Phone test: money still reads "Kr 2.60M" and an adopted tank is still "Model 81".
 - **0.13.4.0, PR 13e: the rivals in generation three.** `LaterPicks` gains `turret`, `active` and `apu`; each bureau has a `later[3]`. The designer can repair `overPowerBudget`, `turretNeedsAutoloader` and `turretNeedsComputer`. `tests/rivalsGen3.test.ts`. Plan PR 13 is complete. Phone test: play to the 2016 tender, send a tank to the range, win or lose the decision, and read the rival tanks on the Bureau tab: one has an unmanned turret, all have active protection.
 - **0.13.3.0, PR 13d: the unmanned turret.** `TURRETS.unmanned` (`crewed: false`, `drawKw`, `workload`), research project `unmannedTurret`, `turret.shape` now a tech field. Faults `turretNeedsAutoloader`, `turretNeedsRearEngine`, `turretNeedsComputer`. The interior seats the gunner and commander in the hull nose and moves the front rack and tank across the hull. Commander work source `screens`. Drawn in all three views with two hull hatches and no cupola. `tests/unmannedTurret.test.ts`. Phone test: in the 2016 tender, research the digital computer then the unmanned turret on the Bureau tab, pick it on the Turret tab, tap Fix it on any fault, look at Side, Top, Front and Inside, then send it to the range.
