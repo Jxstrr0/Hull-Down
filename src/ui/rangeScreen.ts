@@ -19,6 +19,7 @@ import { sound } from '../audio/gameSound'
 import { afterActionCard } from './afterAction'
 import { armourCards } from './armourCards'
 import { el } from './dom'
+import { onHold } from './hold'
 import { fixed } from './format'
 import { placeOf } from './gunneryAdvice'
 import { gunneryCards } from './gunneryCards'
@@ -291,8 +292,12 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     let playing = false
     /** True while a finger holds the scrub bar, and the run was playing when it took hold. */
     let heldWhilePlaying = false
+    const unhold = onHold(() => {
+      if (!closed && playing) view?.pause()
+    })
     closeView = (): void => {
       closed = true
+      unhold()
       view?.dispose()
       sound.still()
       slot.replaceChildren()

@@ -12,6 +12,7 @@ import type { GraphicsLink } from './rangeScreen'
 import type { BattleResult } from '../sim/battle/battle'
 import { tankName } from './battleWords'
 import { el } from './dom'
+import { onHold } from './hold'
 import { fixed } from './format'
 
 const W = STRINGS.battle.watch
@@ -36,8 +37,10 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
   const voices = [voiceOf(mine.spec), voiceOf(theirs.spec)] as const
   const calibres = [voices[0].calibreMm, voices[1].calibreMm] as const
 
+  let unhold = (): void => {}
   const stop = (): void => {
     closed = true
+    unhold()
     view?.dispose()
     sound.still()
     view = undefined
@@ -114,6 +117,10 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
 
     let playing = false
     let held = false
+    unhold()
+    unhold = onHold(() => {
+      if (!closed && playing) view?.pause()
+    })
     toggle.addEventListener('click', () => {
       held = false
       sound.wake()

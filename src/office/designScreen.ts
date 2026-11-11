@@ -77,7 +77,16 @@ function deltaText(change: Preview): string {
   return fill(O.delta, { mass, cost })
 }
 
-export function renderDesignScreen(first: Tender): HTMLElement {
+/** What the page's menu may ask of the office. */
+export interface Office {
+  root: HTMLElement
+  /** Open a tab, as if it had been tapped. */
+  openTab: (tab: 'trials' | 'bureau' | 'saves') => void
+  /** Throw the career away and start a new one, then show the bureau. Designs are kept. */
+  restartCareer: () => void
+}
+
+export function renderDesignScreen(first: Tender): Office {
   // The tender the bureau is on sets the limits and the proving ground's marks. It changes when the career moves on.
   let limits: Limits = first.limits
   let marks: Marks = first.marks
@@ -1252,5 +1261,22 @@ export function renderDesignScreen(first: Tender): HTMLElement {
   drawTop()
   drawTabs()
   drawPanel()
-  return root
+
+  function openTab(id: 'trials' | 'bureau' | 'saves'): void {
+    tab = id
+    panel.scrollTop = 0
+    drawBlueprint()
+    drawTabs()
+    drawPanel()
+    showTab()
+  }
+
+  return {
+    root,
+    openTab,
+    restartCareer: () => {
+      bureau.restart()
+      openTab('bureau')
+    },
+  }
 }
