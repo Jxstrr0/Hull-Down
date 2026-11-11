@@ -1408,6 +1408,28 @@ export const STRINGS = {
       weighsAbout: 'Every bid goes through the same proving ground and the same duels. Each of the five counts is marked out of 100 and weighed as below. Every range test failed takes {n} marks off the total. A design that breaks a limit is thrown out.',
       weight: '{n} in 100',
     },
+    intel: {
+      heading: 'Intelligence files',
+      about: 'What is known of the Accord tanks this tender expects to meet. A new file is an estimate; it sharpens with every prototype built and every tender that passes. The tank itself does not change.',
+      file: '{name} · {grade}',
+      grades: { rumour: 'Rumour', report: 'Report', assessed: 'Assessed', confirmed: 'Confirmed' },
+      gradeNotes: {
+        rumour: 'Second-hand talk and one blurred photograph. Treat every figure as a guess.',
+        report: 'Seen on exercise and measured from photographs.',
+        assessed: 'Watched closely for some time. The figures are near the truth.',
+        confirmed: 'Known for certain.',
+      },
+      facts: {
+        gunMm: 'Gun goes through, at 2000 m',
+        glacisMm: 'Glacis is worth, against sabot',
+        turretMm: 'Turret front is worth, against sabot',
+        massT: 'Weight',
+        speedKmh: 'Top speed',
+      },
+      units: { gunMm: 'mm', glacisMm: 'mm', turretMm: 'mm', massT: 't', speedKmh: 'km/h' },
+      range: '{low} to {high} {unit}',
+      exact: '{n} {unit}',
+    },
     axes: {
       protection: 'Protection',
       firepower: 'Firepower',
