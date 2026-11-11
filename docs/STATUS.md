@@ -4,6 +4,15 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Export customers** (0.12.0.0): the export desk opens on the Bureau tab
+  once the army has adopted a tank. Three customers, all working names:
+  "Emirate of Dahrat" (desert: heavy-duty cooling, 450 km range, at most
+  Kr 2.60M; 120 tanks), "Republic of Ilandu" (jungle: at most 38 t and
+  0.82 kg/cm², at most Kr 2.00M; 60 tanks), "Kingdom of Tolmar" (mountain:
+  20 hp/t, 7° of gun depression, at most Kr 2.80M; 80 tanks). Names, what
+  each asks and the order sizes are my picks. The Type 1 as issued suits
+  none of them, on purpose. The desk only reports for now: sales, ministry
+  approval, variants and export trials are the next slices.
 - **Rivals in the tender of 2001** (0.11.6.0): the three rival bureaus now
   fit generation-two parts there. The heavy bureau takes layered armour, a
   thermal sight and the tandem warhead; the light one the long rod and the
@@ -279,6 +288,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.12.0.0, PR 12a: the export desk opens.** Customers and their needs
+  in `src/data/export.ts`; `src/sim/career/exportDesk.ts` checks a tank
+  against them; a card on the Bureau tab, once a tank is adopted, lists
+  each customer, what it asks, and where each tank in service falls short.
+  No sales yet.
 - **0.11.6.0, PR 11g: rivals fit generation-two parts.** Each bureau's
   philosophy names the newer parts it moves on to (`later` in
   `src/data/opponents.ts`); the bot designer fits them when the tender's
