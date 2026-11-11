@@ -31,4 +31,6 @@ export const REPORT = {
   },
   /** A plate that held with less than this share of the round's reach to spare was a close call. */
   closeCallShare: 0.12,
+  /** The round's path on the cutaway, in metres: how far out the line starts, how far past the far side it runs, and the room left round it. */
+  picture: { leadInM: 1.6, exitM: 0.7, padM: 0.25 },
 } as const

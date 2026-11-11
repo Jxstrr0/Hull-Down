@@ -5,7 +5,7 @@ import { GROUNDS, RANGE, RUN_PART_IDS, type RunPartId } from '../data/range'
 import { RENDER } from '../data/render'
 import { STRINGS, fill } from '../data/strings'
 import {
-  type AccelerationRun, type EnduranceEvent, type EnduranceRun, type GunneryRun, type ObstacleResult, type RangeReport,
+  afterAction, type AccelerationRun, type EnduranceEvent, type EnduranceRun, type GunneryRun, type ObstacleResult, type RangeReport,
 } from '../sim/trials'
 import type { ZoneId } from '../data/materials'
 import type { Limits, StatSheet, VehicleSpec } from '../sim/vehicle'
@@ -19,6 +19,7 @@ import { fixed } from './format'
 import { placeOf } from './gunneryAdvice'
 import { gunneryCards } from './gunneryCards'
 import { runRange } from './rangeRunner'
+import { cardFacts, shareBlock } from './shareCard'
 
 const R = STRINGS.range
 const SVG = 'http://www.w3.org/2000/svg'
@@ -564,8 +565,12 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
       ...gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch }),
       ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }),
     )
-    const debrief = afterActionCard(report, sheet, args.spec, { fixButton, fixZone })
-    if (debrief) root.append(debrief)
+    const after = afterAction(report.armour, args.spec)
+    const debrief = afterActionCard(after, sheet, args.spec, { fixButton, fixZone })
+    if (debrief) {
+      debrief.append(shareBlock(() => ({ facts: cardFacts(report, after, sheet, args.spec, args.projectNo), sheet, spec: args.spec })))
+      root.append(debrief)
+    }
     root.append(el('p', 'ds-note', R.note))
   }
 
