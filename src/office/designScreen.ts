@@ -9,6 +9,7 @@ import {
   type StatSheet, type VehicleSpec,
 } from '../sim/vehicle'
 import { el } from '../ui/dom'
+import { pageTextOf, renderGlossary, type GlossaryState } from '../ui/glossary'
 import { fixed, money, signed, signedMoney } from '../ui/format'
 import {
   CONTROLS, PART_TABS, fixTarget, preview, type ChoiceControl, type Control, type ControlId, type NumberControl,
@@ -88,6 +89,8 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     zone: 'upperGlacis', zonesScroll: 0, threat: DEFAULT_THREAT, rangeM: TUNING.protection.defaultRangeM, mapOpen: false,
     angleDeg: 0, atTile: true,
   }
+
+  const glossaryState: GlossaryState = { open: undefined, all: false }
 
   const root = el('section', 'office')
   root.setAttribute('aria-label', O.label)
@@ -985,6 +988,9 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       if (tab === 'gun' || tab === 'fireControl') parts.push(renderGunnery(sheet))
       if (tab === 'crew' || tab === 'fireControl') parts.push(renderStations(sheet))
     }
+    // The words on this page that want explaining, for someone new to tanks.
+    const words = renderGlossary(pageTextOf(parts), glossaryState)
+    if (words) parts.push(words)
     panel.replaceChildren(...parts)
     panel.setAttribute('aria-label', O.tabs[tab])
     panel.scrollTop = scroll
