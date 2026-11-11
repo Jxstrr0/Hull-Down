@@ -6,6 +6,7 @@ import { ACCORD_LIMITS, BUREAUS, BUREAU_IDS, THREAT_TANKS, THREAT_TANK_IDS } fro
 import { STRINGS } from '../src/data/strings'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import { designRival } from '../src/sim/ai/designer'
+import { tooNew } from '../src/sim/vehicle/tech'
 import { buildStatSheet, type StatSheet } from '../src/sim/vehicle'
 
 const SEEDS = Array.from({ length: 40 }, (_, i) => i + 1)
@@ -87,6 +88,54 @@ describe('the bot designers', () => {
         const sheet = buildStatSheet(designRival(bureau, tight, seed), tight)
         expect(sheet.issues.filter((issue) => issue.severity === 'error')).toEqual([])
       }
+    }
+  })
+})
+
+describe('the bot designers in a generation-two tender', () => {
+  const NEW = { ...LIMITS, generation: 2 as const }
+
+  it('fit nothing newer than a generation-one tender allows', () => {
+    for (const bureau of BUREAU_IDS) {
+      for (const seed of SEEDS.slice(0, 10)) expect(tooNew(designRival(bureau, LIMITS, seed), 1)).toEqual([])
+    }
+  })
+
+  it('still enter a tank that can be built', () => {
+    for (const bureau of BUREAU_IDS) {
+      for (const seed of SEEDS) {
+        const sheet = buildStatSheet(designRival(bureau, NEW, seed), NEW)
+        expect(sheet.issues.filter((issue) => issue.severity === 'error'), `${bureau} ${seed}`).toEqual([])
+        expect(sheet.massT).toBeLessThanOrEqual(NEW.maxMassT)
+      }
+    }
+  })
+
+  it('move each bureau on to the newer parts it likes', () => {
+    for (const seed of SEEDS.slice(0, 10)) {
+      const heavy = designRival('heavy', NEW, seed)
+      expect(heavy.fireControl.night).toBe('thermal')
+      expect(heavy.ammo.shaped).toBe('tandem')
+      expect(heavy.armour.upperGlacis.map((layer) => layer.material)).toContain('layeredComposite')
+      expect(heavy.armour.upperGlacis.map((layer) => layer.material)).not.toContain('compositeInsert')
+
+      const light = designRival('light', NEW, seed)
+      expect(light.ammo).toMatchObject({ kinetic: 'longRod', shaped: 'tandem' })
+      expect(light.fireControl.night).not.toBe('thermal')
+
+      const firepower = designRival('firepower', NEW, seed)
+      expect(firepower.fireControl).toMatchObject({ computer: 'digital', night: 'thermal' })
+      expect(firepower.ammo.shaped).toBe('gunMissile')
+    }
+  })
+
+  it('go back to the Pact round when the tank cannot fire the new one', () => {
+    const rifled = { ...NEW, allowedCalibresMm: [100] }
+    for (const seed of SEEDS.slice(0, 10)) {
+      const spec = designRival('firepower', rifled, seed)
+      expect(spec.gun).toBe('rifled100')
+      expect(spec.ammo.shaped).toBe('supplied')
+      expect(buildStatSheet(spec, rifled).issues.filter((issue) => issue.severity === 'error')).toEqual([])
     }
   })
 })

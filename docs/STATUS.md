@@ -4,6 +4,16 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Rivals in the tender of 2001** (0.11.6.0): the three rival bureaus now
+  fit generation-two parts there. The heavy bureau takes layered armour, a
+  thermal sight and the tandem warhead; the light one the long rod and the
+  tandem warhead; the firepower one the digital computer, a thermal sight
+  and the gun-launched missile. Which bureau takes what is my pick. **To
+  know:** this makes them look and fight like tanks of 2001, but it barely
+  moves their marks (38 to 60 out of 100, as before), because the new parts
+  cost about as many marks as they earn. If the tender of 2001 is too easy
+  to win, that is a numbers question (how the army weighs cost against the
+  new parts) for the balance pass: tell me how it feels.
 - **The bureau's own ammunition** (0.11.5.0): three rounds to research and
   then pick on the Gun tab. "Long rod" (Kr 5.00M to research; goes through
   a quarter more, loses less with range; too long for a carousel
@@ -269,6 +279,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.11.6.0, PR 11g: rivals fit generation-two parts.** Each bureau's
+  philosophy names the newer parts it moves on to (`later` in
+  `src/data/opponents.ts`); the bot designer fits them when the tender's
+  generation allows and goes back to the Pact round where the tank cannot
+  fire the new one. Generation-one tenders are untouched.
 - **0.11.5.0, PR 11f: the bureau's own ammunition.** Long rod, tandem
   warhead and gun-launched missile: three research projects, two new
   choices on the Gun tab, three new faults (rod and carousel, missile and
