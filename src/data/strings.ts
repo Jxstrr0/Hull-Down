@@ -57,7 +57,7 @@ export const STRINGS = {
     },
     trials: {
       title: 'Proving ground',
-      about: 'The range runs the prototype through its tests: a standing start down the strip, a trench, a step, a mud pit and a slope, then a long endurance run to see what breaks. The numbers in the design office are estimates. The range has the final word.',
+      about: 'The range runs the prototype through its tests: a standing start down the strip, a trench, a step, a mud pit and a slope, then a long endurance run to see what breaks. The numbers in the design office are estimates. The range has the final word. You can watch the first two tests played back in 3D.',
       send: 'Send it to the range',
       blocked: 'The shop cannot build this design yet. Fix the faults first.',
       toFaults: 'Go to the faults',
@@ -581,6 +581,18 @@ export const STRINGS = {
       note: 'A part within its rating still gives trouble now and then, and the crew mends it at the roadside. An overloaded part gives a great deal more, and an overloaded engine or transmission breaks for good.',
       chartLabel: 'The run laid out leg by leg. The tank got to km {km} of {total}, with {n} breakdowns marked.',
       chartEnd: '{n} km',
+    },
+    view: {
+      watch: 'Watch the run',
+      again: 'Watch again',
+      close: 'Close',
+      loading: 'Setting up the range…',
+      failed: 'This device could not open the 3D range. Everything it would show is in the report below.',
+      readout: '{time} s · {speed} km/h · {dist} m',
+      label: {
+        acceleration: 'The acceleration run played back in 3D. The report has the same facts in words.',
+        obstacles: 'The obstacle course played back in 3D. The report has the same facts in words.',
+      },
     },
     note: 'Pact standard marks for a generation-one tank. A tender will set its own.',
   },

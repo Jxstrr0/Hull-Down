@@ -1,12 +1,14 @@
 // The proving ground report: what the range found, test by test, with a link
-// back to the part that would fix each failure. The 3D range joins this
-// screen later; for now it is the numbers and a speed chart.
+// back to the part that would fix each failure. A run can be watched in 3D;
+// that code is only fetched when the player asks for it.
 import { GROUNDS, RANGE, RUN_PART_IDS, type RunPartId } from '../data/range'
 import { STRINGS, fill } from '../data/strings'
 import {
   runProvingGround, type AccelerationRun, type EnduranceEvent, type EnduranceRun, type ObstacleResult, type RangeReport,
 } from '../sim/trials'
-import type { StatSheet } from '../sim/vehicle'
+import type { StatSheet, VehicleSpec } from '../sim/vehicle'
+import type { RunRecord } from '../render/playback'
+import type { RangeTest, RangeView } from '../render/rangeScene'
 import { el } from './dom'
 import { fixed } from './format'
 
@@ -26,6 +28,7 @@ const ENDURANCE_FIX: Record<RunPartId, FixPart | null> = {
 }
 
 export interface RangeScreenArgs {
+  spec: VehicleSpec
   sheet: StatSheet
   projectNo: number
   back(): void
@@ -152,11 +155,94 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   root.setAttribute('aria-label', R.label)
   root.tabIndex = -1
 
+  // --- The 3D view ----------------------------------------------------------
+  // One run is watched at a time. The 3D code is fetched the first time it is asked for.
+  const V = R.view
+  let closeView = (): void => {}
+
+  const openView = async (test: RangeTest, record: RunRecord, slot: HTMLElement, opener: HTMLButtonElement): Promise<void> => {
+    closeView()
+    const box = el('div', 'rg-view')
+    const stage = el('div', 'rg-view-stage')
+    const status = el('p', 'rg-view-status', V.loading)
+    const bar = el('div', 'rg-view-bar')
+    const readout = el('span', 'rg-view-readout')
+    const again = el('button', 'btn', V.again)
+    again.type = 'button'
+    again.dataset.key = `range-again:${test}`
+    again.hidden = true
+    const close = el('button', 'btn', V.close)
+    close.type = 'button'
+    close.dataset.key = `range-close:${test}`
+    stage.append(status)
+    bar.append(readout, again, close)
+    box.append(stage, bar)
+    slot.replaceChildren(box)
+    opener.hidden = true
+
+    let view: RangeView | undefined
+    let closed = false
+    closeView = (): void => {
+      closed = true
+      view?.dispose()
+      slot.replaceChildren()
+      opener.hidden = false
+      closeView = (): void => {}
+    }
+    close.addEventListener('click', () => {
+      closeView()
+      opener.focus({ preventScroll: true })
+    })
+    again.addEventListener('click', () => {
+      again.hidden = true
+      view?.replay()
+    })
+    box.scrollIntoView({ block: 'nearest' })
+
+    try {
+      const { openRangeView } = await import('../render/rangeScene')
+      if (closed) return
+      view = openRangeView({
+        host: stage,
+        label: V.label[test],
+        test,
+        spec: args.spec,
+        geometry: sheet.geometry,
+        record,
+        onFrame: (frame) => {
+          readout.textContent = fill(V.readout, {
+            time: fixed(frame.timeS, 1), speed: fixed(frame.speedKmh, 0), dist: fixed(frame.distanceM, 0),
+          })
+        },
+        onEnd: () => {
+          again.hidden = false
+        },
+      })
+      status.remove()
+    } catch {
+      // No 3D on this device, or the code could not be fetched. The report still says it all.
+      if (!closed) status.textContent = V.failed
+    }
+  }
+
+  /** A button that opens the 3D view of a run, and the place the view goes. */
+  const watch = (test: RangeTest, record: RunRecord): HTMLElement[] => {
+    const slot = el('div', 'rg-view-slot')
+    const button = el('button', 'btn rg-watch', V.watch)
+    button.type = 'button'
+    button.dataset.key = `range-watch:${test}`
+    button.addEventListener('click', () => void openView(test, record, slot, button))
+    return [button, slot]
+  }
+
   const fixButton = (part: FixPart, key: string): HTMLButtonElement => {
     const button = el('button', 'fix rg-fix', fill(R.fix, { part: STRINGS.controls[part].label }))
     button.type = 'button'
     button.dataset.key = `range-fix:${key}`
-    button.addEventListener('click', () => args.fix(part))
+    button.addEventListener('click', () => {
+      closeView()
+      args.fix(part)
+    })
     return button
   }
 
@@ -166,7 +252,10 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   back.type = 'button'
   back.dataset.key = 'range-back'
   back.setAttribute('aria-label', R.backLabel)
-  back.addEventListener('click', () => args.back())
+  back.addEventListener('click', () => {
+    closeView()
+    args.back()
+  })
   const titles = el('div', 'rg-titles')
   titles.append(
     el('h2', 'rg-title', R.title),
@@ -219,7 +308,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   )
   const accelNotes = [sheet.drive.shiftS > 0 ? fill(A.shifts, { n: String(a.shifts) }) : A.noShifts]
   if (a.gearLimited) accelNotes.push(fill(A.gearHeld, { n: fixed(a.topKmh, 0) }))
-  accel.append(speedChart(a, report.marks.topKmh), accelLines, ...accelNotes.map((text) => el('p', 'ctl-note rg-note', text)))
+  accel.append(...watch('acceleration', a.trace), speedChart(a, report.marks.topKmh), accelLines, ...accelNotes.map((text) => el('p', 'ctl-note rg-note', text)))
 
   // --- Obstacle course ----------------------------------------------------
   const O = R.obstacles
@@ -261,7 +350,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   const course = card(O.title, O.about, report.obstacles.passed)
   const courseLines = el('ul', 'rg-lines')
   courseLines.append(...report.obstacles.results.map(obstacleLine))
-  course.append(courseLines)
+  course.append(...watch('obstacles', report.obstacles.trace), courseLines)
 
   // --- Endurance run ------------------------------------------------------
   const E = R.endurance

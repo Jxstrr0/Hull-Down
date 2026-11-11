@@ -454,6 +454,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
 
   function openRange(): void {
     const screen = renderRangeScreen({
+      spec,
       sheet,
       projectNo: design.projectNo,
       back: () => {
