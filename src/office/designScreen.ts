@@ -3,6 +3,7 @@
 // The blueprint on top is drawn from the same spec, and tapping it opens a part.
 import { SANDBOX, SANDBOX_LIMIT_IDS } from '../data/sandbox'
 import { loadSandbox, saveSandbox } from '../persist/sandboxStore'
+import { createDaily, type Daily } from './dailyBox'
 import { sandboxLimits } from '../sim/vehicle/sandbox'
 import { officeSound } from '../audio/gameSound'
 import { changeCue } from '../audio/office'
@@ -90,7 +91,26 @@ export function renderDesignScreen(first: Tender): HTMLElement {
   // The sandbox: every part, no money, and a weight limit of the player's choosing. The career waits meanwhile.
   const sandbox = loadSandbox(storage)
   /** The limits the office works to: the sandbox's while it is on, the career's otherwise. */
-  const limitsNow = (career: Limits): Limits => (sandbox.on ? sandboxLimits(sandbox.limit) : career)
+  const limitsNow = (career: Limits): Limits => (daily.on() ? daily.limits() : sandbox.on ? sandboxLimits(sandbox.limit) : career)
+  /** The proving ground's marks: the day's while the challenge is on, the career tender's otherwise. */
+  const marksNow = (career: Marks): Marks => (daily.on() ? daily.marks() : career)
+  // The challenge of the day: one tender for today's date. The career waits meanwhile, as for the sandbox.
+  const daily: Daily = createDaily({
+    storage,
+    spec: () => spec,
+    changed: () => {
+      if (daily.on() && sandbox.on) {
+        sandbox.on = false
+        saveSandbox(storage, sandbox)
+      }
+      limits = limitsNow(careerLimits(bureau.career()))
+      marks = marksNow(tenderOf(bureau.career()).marks)
+      commit(() => undefined)
+    },
+    redraw: () => {
+      if (tab === 'bureau') drawPanel()
+    },
+  })
   let design = currentDesign(store)
   let spec: VehicleSpec = design.spec
   limits = limitsNow(limits)
@@ -242,7 +262,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     },
     tender: (tender) => {
       limits = limitsNow(careerLimits(bureau.career()))
-      marks = tender.marks
+      marks = marksNow(tender.marks)
       sheet = buildStatSheet(spec, limits)
       drawTop()
       drawTabs()
@@ -366,7 +386,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
 
   function drawTitle(): void {
     const project = fill(O.project, { n: String(design.projectNo) })
-    projectLine.textContent = sandbox.on ? fill(O.sandbox.project, { project }) : project
+    projectLine.textContent = daily.on() ? fill(STRINGS.daily.project, { project }) : sandbox.on ? fill(O.sandbox.project, { project }) : project
     nameLine.textContent = spec.name || X.unnamed
   }
 
@@ -1084,7 +1104,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
   /** The first-contract guide, for the top of the page. Null after the first tender. */
   function drawGuide(): HTMLElement | null {
     const faults = sheet.issues.filter((issue) => issue.severity === 'error').length
-    const state = sandbox.on ? null : bureau.guide(spec, faults)
+    const state = sandbox.on || daily.on() ? null : bureau.guide(spec, faults)
     if (!state) return null
     return renderGuide(state, {
       hidden: guideHidden,
@@ -1117,7 +1137,10 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     const change = (next: () => void): void => {
       next()
       saveSandbox(storage, sandbox)
+      // One or the other: the sandbox takes the office off the challenge.
+      if (sandbox.on) daily.stop()
       limits = limitsNow(careerLimits(bureau.career()))
+      marks = marksNow(tenderOf(bureau.career()).marks)
       commit(() => undefined)
     }
     const toggle = optionButton('sandbox-switch', sandbox.on, X.switch, undefined)
@@ -1158,7 +1181,10 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     else if (tab === 'faults') parts.push(drawFaults())
     else if (tab === 'designs') parts.push(drawDesigns())
     else if (tab === 'trials') parts.push(drawTrials())
-    else if (tab === 'bureau') parts.push(drawSandbox(), sandbox.on ? el('p', 'ctl-note', O.sandbox.waits) : bureau.draw())
+    else if (tab === 'bureau') {
+      parts.push(daily.draw(), drawSandbox())
+      parts.push(daily.on() ? el('p', 'ctl-note', STRINGS.daily.waits) : sandbox.on ? el('p', 'ctl-note', O.sandbox.waits) : bureau.draw())
+    }
     else if (tab === 'saves') parts.push(saves.draw())
     else if (tab === 'armour') {
       parts.push(renderArmourTab({
@@ -1221,7 +1247,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
   // A saved career may be on a later tender than the first.
   const now = tenderOf(bureau.career())
   limits = limitsNow(careerLimits(bureau.career()))
-  marks = now.marks
+  marks = marksNow(now.marks)
   sheet = buildStatSheet(spec, limits)
   drawTop()
   drawTabs()
