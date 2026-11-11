@@ -1,5 +1,6 @@
 // The full readouts: every number on the stat sheet, grouped for a phone.
 import { ZONES } from '../data/materials'
+import { RANGE } from '../data/range'
 import { STRINGS, fill } from '../data/strings'
 import { AREAS, type Issue, type IssueCode, type Limits, type StatSheet } from '../sim/vehicle'
 import { el } from '../ui/dom'
@@ -83,6 +84,10 @@ export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
       [r.topSpeed, unit(m.gearLimited ? u.kmhGearLimited : u.kmh, m.topSpeedKmh, 0)],
       [r.range, unit(u.km, m.rangeKm, 0)],
       [r.groundPressure, unit(u.kgCm2, m.groundPressureKgCm2, 2)],
+      [r.maxSlope, fill(u.slope, { n: fixed(Math.floor(m.maxSlopeDeg), 0), mark: String(RANGE.course.slope.angleDeg) })],
+      [r.trench, fill(u.trench, { n: fixed(m.trenchM, 2), mark: fixed(RANGE.course.trench.widthM, 1) })],
+      [r.step, fill(u.step, { n: fixed(m.stepM, 2), mark: fixed(RANGE.course.step.heightM, 1) })],
+      [r.clearance, unit(u.metres, m.clearanceM, 2)],
     ]),
     group(D.groups.firepower, [
       [r.gun, unit(u.mm, f.calibreMm, 0)],

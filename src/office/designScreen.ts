@@ -25,12 +25,13 @@ import {
 } from '../persist/designs'
 import { NAME_MAX, cleanName, cleanSpec } from '../persist/specCodec'
 import { issueText, renderReadouts } from './readouts'
+import { renderRangeScreen } from '../ui/rangeScreen'
 
 const O = STRINGS.office
 const D = STRINGS.dataSheet
 const X = STRINGS.office.designs
 
-const TABS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults', 'designs'] as const
+const TABS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults', 'trials', 'designs'] as const
 type Tab = (typeof TABS)[number]
 
 /** The weight bar is drawn a little longer than the limit, so going over shows. */
@@ -155,7 +156,9 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     tabList.append(button)
   }
 
-  root.append(top, tabList, panel)
+  /** The proving ground takes over the whole screen while it is open. */
+  const range = el('div', 'range-holder')
+  root.append(top, tabList, panel, range)
 
   // --- Drawing ------------------------------------------------------------
   function issuesFor(id: string): Issue[] {
@@ -444,6 +447,54 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     return box
   }
 
+  function closeRange(): void {
+    root.classList.remove('office-away')
+    range.replaceChildren()
+  }
+
+  function openRange(): void {
+    const screen = renderRangeScreen({
+      sheet,
+      projectNo: design.projectNo,
+      back: () => {
+        closeRange()
+        panel.querySelector<HTMLElement>('[data-key="to-range"]')?.focus({ preventScroll: true })
+      },
+      fix: (part) => {
+        closeRange()
+        goToPart(part)
+      },
+    })
+    range.replaceChildren(screen)
+    root.classList.add('office-away')
+    screen.focus({ preventScroll: true })
+  }
+
+  /** The way to the proving ground. A design the shop cannot build does not go. */
+  function drawTrials(): HTMLElement {
+    const T = O.trials
+    const box = el('div', 'trials')
+    box.append(el('h3', 'ds-group-title', T.title), el('p', 'ctl-note', T.about))
+    if (sheet.issues.some((issue) => issue.severity === 'error')) {
+      const toFaults = actionButton('to-faults', T.toFaults)
+      toFaults.addEventListener('click', () => {
+        tab = 'faults'
+        panel.scrollTop = 0
+        drawTabs()
+        drawPanel()
+        showTab()
+      })
+      box.append(el('p', 'ctl-issue', T.blocked), toFaults)
+    } else {
+      const send = actionButton('to-range', T.send)
+      send.classList.add('btn-go')
+      send.addEventListener('click', openRange)
+      box.append(send)
+    }
+    box.append(el('p', 'ctl-note', T.more))
+    return box
+  }
+
   /** The rounds the fitted gun fires. Read only for now: the load for a trial is chosen later. */
   function drawAmmo(): HTMLElement {
     const R = STRINGS.ammo
@@ -605,6 +656,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     if (tab === 'readouts') parts.push(renderReadouts(sheet, limits))
     else if (tab === 'faults') parts.push(drawFaults())
     else if (tab === 'designs') parts.push(drawDesigns())
+    else if (tab === 'trials') parts.push(drawTrials())
     else if (tab === 'armour') {
       parts.push(renderArmourTab({
         spec, sheet, state: armourState, commit, goTo, pickZone,

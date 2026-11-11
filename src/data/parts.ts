@@ -277,21 +277,26 @@ export interface TransmissionPart extends Part {
   efficiency: number
   /** Top speed the gearing allows, km/h. */
   gearedKmh: number
+  /** Speed in bottom gear at full power, km/h. Lower is a harder pull up a slope. */
+  lowGearKmh: number
+  gears: number
+  /** Seconds without drive at each gear change. */
+  shiftS: number
   workload: number
 }
 
 export const TRANSMISSIONS = {
   manual38: {
     massT: 1.4, volumeM3: 0.9, costKr: 70_000, reliability: 0.95,
-    ratedT: 38, efficiency: 0.8, gearedKmh: 50, workload: 3,
+    ratedT: 38, efficiency: 0.8, gearedKmh: 50, lowGearKmh: 6.5, gears: 5, shiftS: 0.9, workload: 3,
   },
   manual44: {
     massT: 1.7, volumeM3: 1.0, costKr: 95_000, reliability: 0.945,
-    ratedT: 44, efficiency: 0.82, gearedKmh: 60, workload: 3,
+    ratedT: 44, efficiency: 0.82, gearedKmh: 60, lowGearKmh: 7, gears: 5, shiftS: 0.8, workload: 3,
   },
   hydro50: {
     massT: 2.0, volumeM3: 1.2, costKr: 185_000, reliability: 0.93,
-    ratedT: 50, efficiency: 0.78, gearedKmh: 65, workload: -3,
+    ratedT: 50, efficiency: 0.78, gearedKmh: 65, lowGearKmh: 5.5, gears: 4, shiftS: 0, workload: -3,
   },
 } as const satisfies Record<string, TransmissionPart>
 export type TransmissionId = keyof typeof TRANSMISSIONS
@@ -320,16 +325,18 @@ export interface SuspensionPart extends Part {
   costPerStationKr: number
   /** Tank weight each wheel station is built for. */
   ratedPerStationT: number
+  /** Ground to belly, metres, at or under the rated weight. */
+  clearanceM: number
 }
 
 export const SUSPENSIONS = {
   torsionBar: {
     massT: 0, volumeM3: 0, costKr: 0, reliability: 0.97,
-    massPerStationT: 0.09, volumePerStationM3: 0.035, costPerStationKr: 6_000, ratedPerStationT: 3.6,
+    massPerStationT: 0.09, volumePerStationM3: 0.035, costPerStationKr: 6_000, ratedPerStationT: 3.6, clearanceM: 0.43,
   },
   hydropneumatic: {
     massT: 0, volumeM3: 0, costKr: 0, reliability: 0.94,
-    massPerStationT: 0.12, volumePerStationM3: 0, costPerStationKr: 17_000, ratedPerStationT: 3.9,
+    massPerStationT: 0.12, volumePerStationM3: 0, costPerStationKr: 17_000, ratedPerStationT: 3.9, clearanceM: 0.48,
   },
 } as const satisfies Record<string, SuspensionPart>
 export type SuspensionId = keyof typeof SUSPENSIONS
