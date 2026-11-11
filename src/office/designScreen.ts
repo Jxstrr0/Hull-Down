@@ -3,17 +3,22 @@
 // The blueprint on top is drawn from the same spec, and tapping it opens a part.
 import { BASELINE_SPEC } from '../data/baseline'
 import { STRINGS, fill } from '../data/strings'
-import { AREAS, buildStatSheet, type Issue, type Limits, type StatSheet, type VehicleSpec } from '../sim/vehicle'
+import {
+  AREAS, buildStatSheet, penetrationAt, verdictsAgainst, type Issue, type Limits, type StatSheet, type VehicleSpec,
+} from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { fixed, money, signed, signedMoney } from '../ui/format'
 import {
   CONTROLS, PART_TABS, fixTarget, preview, type ChoiceControl, type Control, type ControlId, type NumberControl,
   type PartTab, type Preview, type ToggleControl,
 } from './controls'
+import { DEFAULT_THREAT, THREATS, pactRounds } from '../data/ammo'
 import { ZONES, type ZoneId } from '../data/materials'
+import { GUNS } from '../data/parts'
+import { TUNING } from '../data/tuning'
 import { renderArmourTab, type ArmourTabState } from './armourTab'
 import { renderBlueprint } from './blueprint'
-import { VIEWS, type View } from './drawing'
+import { VIEWS, ZONE_VIEW, type View } from './drawing'
 import {
   MAX_DESIGNS, addDesign, currentDesign, loadStore, openDesign, saveStore, scrapDesign, type KeyValue,
 } from '../persist/designs'
@@ -57,7 +62,9 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
   /** A control to scroll to and mark after the next panel draw. */
   let flagged: ControlId | undefined
   let view: View = 'side'
-  const armourState: ArmourTabState = { zone: 'upperGlacis', zonesScroll: 0 }
+  const armourState: ArmourTabState = {
+    zone: 'upperGlacis', zonesScroll: 0, threat: DEFAULT_THREAT, rangeM: TUNING.protection.defaultRangeM, mapOpen: false,
+  }
 
   const root = el('section', 'office')
   root.setAttribute('aria-label', O.label)
@@ -135,7 +142,10 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     button.setAttribute('role', 'tab')
     button.addEventListener('click', () => {
       tab = id
+      // The armour's drawing is the protection map: turn it to the zone being worked on.
+      if (id === 'armour') view = ZONE_VIEW[armourState.zone] ?? view
       panel.scrollTop = 0
+      drawBlueprint()
       drawTabs()
       drawPanel()
     })
@@ -162,9 +172,18 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     if (!target) return
     tab = target.tab
     flagged = target.id
+    drawBlueprint()
     drawTabs()
     drawPanel()
     showTab()
+  }
+
+  /** Work on an armour zone, turning the blueprint to the view that shows it square on. */
+  function pickZone(zone: ZoneId): void {
+    armourState.zone = zone
+    view = ZONE_VIEW[zone] ?? view
+    drawBlueprint()
+    drawPanel()
   }
 
   /** The armour zone a fault's part names, if it names one. `armour` alone means the armour as a whole. */
@@ -179,7 +198,9 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     if (zone) {
       if (zone !== 'any') armourState.zone = zone
       tab = 'armour'
+      view = ZONE_VIEW[armourState.zone] ?? view
       panel.scrollTop = 0
+      drawBlueprint()
       drawTabs()
       drawPanel()
       showTab()
@@ -198,7 +219,16 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       button.classList.toggle('view-on', id === view)
       button.setAttribute('aria-pressed', id === view ? 'true' : 'false')
     })
-    blueprint.replaceChildren(...renderBlueprint(spec, sheet.geometry, view, goTo))
+    // While the armour is being worked on, the drawing is the protection map.
+    const threat = armourState.threat === 'none' ? undefined : THREATS[armourState.threat]
+    const map = tab === 'armour'
+      ? {
+          selected: armourState.zone,
+          verdicts: threat && verdictsAgainst(sheet.protection, threat, armourState.rangeM),
+          pick: pickZone,
+        }
+      : undefined
+    blueprint.replaceChildren(...renderBlueprint(spec, sheet.geometry, view, goTo, map))
   }
 
   function drawTitle(): void {
@@ -400,6 +430,30 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     return box
   }
 
+  /** The rounds the fitted gun fires. Read only for now: the load for a trial is chosen later. */
+  function drawAmmo(): HTMLElement {
+    const R = STRINGS.ammo
+    const gun = GUNS[spec.gun]
+    const supplied = limits.allowedCalibresMm.includes(gun.calibreMm)
+    const box = el('section', 'ctl')
+    box.append(el('h3', 'ctl-label', supplied ? R.title : R.ownTitle))
+    if (!supplied) box.append(el('p', 'ctl-note', R.notSupplied))
+    const list = el('dl', 'ds-rows')
+    for (const { id, round } of pactRounds(spec.gun)) {
+      const row = el('div', 'ammo')
+      const line = round.kind === 'kinetic'
+        ? fill(R.kinetic, {
+            kind: R.kinds.kinetic, speed: String(round.speedMs), pen: fixed(round.penMm, 0),
+            far: fixed(penetrationAt(round, 2000), 0),
+          })
+        : fill(R.shaped, { kind: R.kinds.shaped, speed: String(round.speedMs), pen: fixed(round.penMm, 0) })
+      row.append(el('dt', 'opt-name', STRINGS.rounds[id]), el('dd', 'ammo-line', line))
+      list.append(row)
+    }
+    box.append(list, el('p', 'ctl-note', R.note))
+    return box
+  }
+
   /** A button that acts on the second tap, so a slip of the thumb does not lose a design. */
   function twoTap(button: HTMLButtonElement, label: string, confirm: string, action: () => void): void {
     let armed = false
@@ -539,7 +593,11 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     else if (tab === 'designs') parts.push(drawDesigns())
     else if (tab === 'armour') {
       parts.push(renderArmourTab({
-        spec, sheet, state: armourState, commit, goTo, redraw: drawPanel,
+        spec, sheet, state: armourState, commit, goTo, pickZone,
+        refresh: () => {
+          drawBlueprint()
+          drawPanel()
+        },
         nudge: (change) => {
           change(spec)
           sheet = buildStatSheet(spec, limits)
@@ -556,6 +614,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
         else if (control.kind === 'number') parts.push(drawNumber(control))
         else parts.push(drawToggle(control))
       }
+      if (tab === 'gun') parts.push(drawAmmo())
     }
     panel.replaceChildren(...parts)
     panel.setAttribute('aria-label', O.tabs[tab])

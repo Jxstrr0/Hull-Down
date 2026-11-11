@@ -7,6 +7,7 @@
   --ink-dim: #5b6b85;
   --pencil: #b23a2e;
   --stamp: #3d6b4f;
+  --amber: #9a6a0c;
   --font-head: 'Archivo Narrow', 'Arial Narrow', sans-serif;
   --font-ui: 'Archivo', system-ui, sans-serif;
   --font-mono: 'Spline Sans Mono', ui-monospace, 'Courier New', monospace;
@@ -20,6 +21,7 @@
   --ink-dim: #8fa6c4;
   --pencil: #f0a59c;
   --stamp: #a9d6b8;
+  --amber: #e8b24a;
   color-scheme: dark;
 }
 
@@ -425,6 +427,69 @@ body {
 .layer-note { margin: 6px 0 0; font-family: var(--font-mono); font-size: 0.8rem; }
 .layer-about { font-family: var(--font-ui); font-size: 0.88rem; color: var(--ink-dim); }
 .armour .btn { margin-top: 10px; }
+
+/* Protection map: the faces on the blueprint, its key, and its settings. */
+.bp-face { fill: transparent; stroke: none; vector-effect: non-scaling-stroke; }
+.bp-face-holds { fill: color-mix(in srgb, var(--stamp) 30%, var(--paper)); }
+.bp-face-on { stroke: var(--ink); stroke-width: 3; }
+.map-ground { fill: var(--paper); }
+.map-fails line { stroke: var(--pencil); }
+.map-marginal line { stroke: var(--amber); }
+.bp-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 10px; }
+.bp-key { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); }
+.bp-swatch { width: 12px; height: 12px; border: 1px solid var(--ink); }
+.bp-swatch-holds { background: color-mix(in srgb, var(--stamp) 30%, var(--paper)); }
+.bp-swatch-marginal { background: repeating-linear-gradient(135deg, var(--amber) 0 1px, transparent 1px 4px); }
+.bp-swatch-fails {
+  background:
+    repeating-linear-gradient(135deg, var(--pencil) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(45deg, var(--pencil) 0 1px, transparent 1px 4px);
+}
+.verdict-holds { color: var(--stamp); }
+.verdict-marginal { color: var(--amber); }
+.verdict-fails { color: var(--pencil); }
+
+.mapbox { border: 1.5px solid var(--ink-dim); border-radius: 2px; }
+.mapbox-head {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 48px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.mapbox-head:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+.mapbox-now { font-size: 0.95rem; font-weight: 600; }
+.mapbox[open] { padding: 0 10px 10px; }
+.mapbox[open] .mapbox-head { margin: 0 -10px 6px; border-bottom: 1px solid var(--grid); }
+.mapbox .layer-material { display: block; width: 100%; margin: 4px 0 8px; }
+.maprange { margin: 4px 0; }
+.maprange-value { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.num-step:disabled { opacity: 0.4; cursor: default; }
+.zrows { display: flex; flex-direction: column; margin: 8px 0; border-top: 1px solid var(--grid); }
+.zrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 2px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--grid);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
+}
+.zrow-on { font-weight: 700; }
+.zrow:focus-visible { outline: 3px solid var(--pencil); outline-offset: -3px; }
+.zrow-mark { flex: none; width: 1.2em; font-weight: 700; text-align: center; }
+.zrow-name { flex: 1; min-width: 0; }
+.zrow-value { flex: none; font-family: var(--font-mono); font-size: 0.82rem; }
+.prot-verdict { margin: 0; font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ammo { padding: 7px 0; border-bottom: 1px solid var(--grid); }
+.ammo-line { margin: 2px 0 0; font-size: 0.88rem; color: var(--ink-dim); }
 
 /* Readouts: the stat sheet's numbers, one group after another. */
 .ds { display: flex; flex-direction: column; gap: 18px; }

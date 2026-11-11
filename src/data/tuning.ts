@@ -43,6 +43,13 @@ export const TUNING = {
     trackStepMm: 20,
     fuelStepL: 50,
   },
+  protection: {
+    /** Armour within this share of what a round goes through, either way, is marginal. */
+    marginShare: 0.12,
+    /** Ranges the protection map can be set to, metres. */
+    mapRangesM: [500, 1000, 1500, 2000, 3000],
+    defaultRangeM: 1000,
+  },
   mass: {
     /** Tonnes per litre of fuel, with its tank. */
     fuelTPerL: 0.00088,

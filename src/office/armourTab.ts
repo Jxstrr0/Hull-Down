@@ -1,10 +1,13 @@
 // The Armour tab: pick a zone, see what it stops, and build its stack of
 // layers. A section view shows the layers to scale with a level shot.
+import { THREATS, THREAT_IDS, type RoundKind, type ThreatId } from '../data/ammo'
 import { SECTION } from '../data/drawing'
 import { MATERIALS, MATERIAL_IDS, ZONES, ZONE_FACING, type MaterialId, type ZoneId } from '../data/materials'
 import { STRINGS, fill } from '../data/strings'
 import { TUNING } from '../data/tuning'
-import { layerWorth, type StatSheet, type VehicleSpec } from '../sim/vehicle'
+import {
+  layerWorth, penetrationAt, verdictOf, worthAgainst, type StatSheet, type VehicleSpec, type Verdict,
+} from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { fixed, money } from '../ui/format'
 import {
@@ -22,6 +25,11 @@ export interface ArmourTabState {
   zone: ZoneId
   /** How far the row of zones has been scrolled sideways. */
   zonesScroll: number
+  /** The round the protection map is drawn against. */
+  threat: ThreatId | 'none'
+  rangeM: number
+  /** Whether the protection map's settings are unfolded. */
+  mapOpen: boolean
 }
 
 export interface ArmourTabHost {
@@ -32,8 +40,10 @@ export interface ArmourTabHost {
   commit(change: (spec: VehicleSpec) => void): void
   /** Apply a change and redraw everything but this panel. Gives back the new stat sheet. */
   nudge(change: (spec: VehicleSpec) => void): StatSheet
-  /** Redraw this panel without changing the design. */
-  redraw(): void
+  /** Redraw this panel and the blueprint without changing the design. */
+  refresh(): void
+  /** Work on another zone, and turn the blueprint to the view that shows it. */
+  pickZone(zone: ZoneId): void
   goTo(id: ControlId): void
 }
 
@@ -100,6 +110,108 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
   tiles.append(hatchDefs('sw', 1))
   root.append(tiles)
 
+  // --- The round the map is drawn against ----------------------------------
+  const threat = state.threat === 'none' ? undefined : THREATS[state.threat]
+  const pen = threat ? penetrationAt(threat, state.rangeM) : 0
+  /** How a zone stands against the chosen round, on the numbers in `sheet`. */
+  const verdictFor = (id: ZoneId): Verdict | undefined =>
+    threat ? verdictOf(worthAgainst(sheet.protection[id], threat.kind), pen) : undefined
+
+  const mapBox = el('details', 'mapbox')
+  mapBox.open = state.mapOpen
+  mapBox.addEventListener('toggle', () => {
+    state.mapOpen = mapBox.open
+  })
+  const mapHead = el('summary', 'mapbox-head')
+  mapHead.dataset.key = 'map-head'
+  const threatName = state.threat === 'none' ? A.mapOff : STRINGS.threats[state.threat].name
+  mapHead.append(
+    el('span', 'layer-name', A.mapTitle),
+    el('span', 'mapbox-now', threat?.kind === 'kinetic'
+      ? fill(A.mapKinetic, { round: threatName, range: String(state.rangeM) })
+      : fill(A.mapShaped, { round: threatName })),
+  )
+  mapBox.append(mapHead)
+
+  const pickLabel = el('label', 'layer-name', A.threatLabel)
+  pickLabel.htmlFor = 'map-threat'
+  const pickThreat = el('select', 'layer-material')
+  pickThreat.id = 'map-threat'
+  pickThreat.dataset.key = 'map-threat'
+  const none = el('option', '', A.mapOff)
+  none.value = 'none'
+  none.selected = state.threat === 'none'
+  pickThreat.append(none)
+  for (const [kind, title] of [['kinetic', A.kineticGroup], ['shaped', A.shapedGroup]] as [RoundKind, string][]) {
+    const group = el('optgroup', '')
+    group.label = title
+    for (const id of THREAT_IDS) {
+      if (THREATS[id].kind !== kind) continue
+      const option = el('option', '', STRINGS.threats[id].name)
+      option.value = id
+      option.selected = id === state.threat
+      group.append(option)
+    }
+    pickThreat.append(group)
+  }
+  pickThreat.addEventListener('change', () => {
+    state.threat = THREAT_IDS.find((id) => id === pickThreat.value) ?? 'none'
+    host.refresh()
+  })
+  mapBox.append(pickLabel, pickThreat)
+
+  if (threat && state.threat !== 'none') {
+    mapBox.append(el('p', 'ctl-note', STRINGS.threats[state.threat].note))
+    if (threat.kind === 'kinetic') {
+      const ranges: readonly number[] = TUNING.protection.mapRangesM
+      const at = ranges.indexOf(state.rangeM)
+      const row = el('div', 'num maprange')
+      const step = (direction: number, sign: string, label: string): HTMLButtonElement => {
+        const button = el('button', 'num-step', sign)
+        button.type = 'button'
+        button.dataset.key = `map-range:${direction}`
+        button.setAttribute('aria-label', label)
+        const next = ranges[at + direction]
+        button.disabled = next === undefined
+        button.addEventListener('click', () => {
+          if (next === undefined) return
+          state.rangeM = next
+          host.refresh()
+        })
+        return button
+      }
+      const shown = el('output', 'maprange-value')
+      shown.append(el('span', 'layer-name', A.rangeLabel), el('span', 'num-value', fill(A.rangeValue, { n: String(state.rangeM) })))
+      row.append(step(-1, '−', A.nearer), shown, step(1, '+', A.further))
+      mapBox.append(row)
+    }
+    mapBox.append(
+      el('p', 'layer-note', fill(threat.kind === 'kinetic' ? A.goesThrough : A.goesThroughShaped, { mm: mm(pen) })),
+      el('p', 'ctl-note', fill(A.mapNote, { pct: fixed(TUNING.protection.marginShare * 100, 0) })),
+    )
+    const list = el('div', 'zrows')
+    list.setAttribute('role', 'group')
+    list.setAttribute('aria-label', A.mapZones)
+    for (const id of ZONES) {
+      const verdict = verdictFor(id)
+      if (!verdict) continue
+      const row = el('button', id === zone ? 'zrow zrow-on' : 'zrow')
+      row.type = 'button'
+      row.dataset.key = `zrow:${id}`
+      row.append(
+        el('span', `zrow-mark verdict-${verdict}`, A.verdictMarks[verdict]),
+        el('span', 'zrow-name', STRINGS.zones[id].name),
+        el('span', 'zrow-value', fill(A.zoneRow, {
+          mm: mm(worthAgainst(sheet.protection[id], threat.kind)), verdict: A.verdicts[verdict],
+        })),
+      )
+      row.addEventListener('click', () => host.pickZone(id))
+      list.append(row)
+    }
+    mapBox.append(list, el('p', 'ctl-note', A.notOnDrawing))
+  }
+  root.append(mapBox)
+
   // --- The row of zones ---------------------------------------------------
   const zones = el('div', 'zones')
   zones.setAttribute('role', 'group')
@@ -107,15 +219,15 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
   for (const id of ZONES) {
     const name = STRINGS.zones[id].name
     const faulty = sheet.issues.some((issue) => issue.part === `armour.${id}`)
-    const button = el('button', id === zone ? 'zone zone-on' : 'zone', faulty ? `${name} !` : name)
+    const verdict = verdictFor(id)
+    const shown = verdict ? `${A.verdictMarks[verdict]} ${name}` : name
+    const button = el('button', id === zone ? 'zone zone-on' : 'zone', faulty ? `${shown} !` : shown)
     button.type = 'button'
     button.dataset.key = `zone:${id}`
     button.setAttribute('aria-pressed', id === zone ? 'true' : 'false')
     if (faulty) button.setAttribute('aria-label', fill(A.zoneHasFaults, { name }))
-    button.addEventListener('click', () => {
-      state.zone = id
-      host.redraw()
-    })
+    else if (verdict) button.setAttribute('aria-label', fill(A.zoneVerdict, { name, verdict: A.verdicts[verdict] }))
+    button.addEventListener('click', () => host.pickZone(id))
     zones.append(button)
   }
   zones.addEventListener('scroll', () => {
@@ -139,15 +251,21 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
   }
 
   const values = el('dl', 'prot')
-  const value = (label: string): HTMLElement => {
+  /** The line under a number that says how it stands against the chosen round. */
+  let standing: HTMLElement | undefined
+  const value = (label: string, kind: RoundKind): HTMLElement => {
     const box = el('div', 'prot-box')
     const number = el('dd', 'prot-value')
     box.append(el('dt', 'chip-label', label), number)
+    if (threat?.kind === kind) {
+      standing = el('dd', 'prot-verdict')
+      box.append(standing)
+    }
     values.append(box)
     return number
   }
-  const kinetic = value(A.kinetic)
-  const shaped = value(A.shaped)
+  const kinetic = value(A.kinetic, 'kinetic')
+  const shaped = value(A.shaped, 'shaped')
   // The two numbers sit between the sections so they can stay in view while the layers scroll.
   const detail = el('section', 'ctl')
   detail.append(el('p', 'ctl-note', fill(A.worth, { from: A.from[ZONE_FACING[zone]] })))
@@ -180,6 +298,11 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
     weight.textContent = fill(A.zoneWeight, { n: fixed(sheet.rollup.zoneMassT[zone], 2) })
     kinetic.textContent = fill(D.units.mm, { n: mm(protection.keMm) })
     shaped.textContent = fill(D.units.mm, { n: mm(protection.ceMm) })
+    const verdict = verdictFor(zone)
+    if (standing && verdict) {
+      standing.className = `prot-verdict verdict-${verdict}`
+      standing.textContent = `${A.verdictMarks[verdict]} ${fill(A.against, { verdict: A.verdicts[verdict], mm: mm(pen) })}`
+    }
 
     const section = sectionOf(layers, protection.slopeDeg)
     const { box, shot } = section

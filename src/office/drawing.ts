@@ -2,6 +2,7 @@
 // zones that lead to a control. No DOM in here, so it can be tested.
 // Coordinates are metres, already flipped for SVG (up is negative y).
 import { DRAWING } from '../data/drawing'
+import type { ZoneId } from '../data/materials'
 import { GUNS, HULLS, LOADING, TURRETS } from '../data/parts'
 import { TUNING } from '../data/tuning'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
@@ -11,12 +12,17 @@ export const VIEWS = ['side', 'top', 'front'] as const
 export type View = (typeof VIEWS)[number]
 
 /** Line styles, in the manner of a technical drawing. */
-export type LineStyle = 'solid' | 'thin' | 'hidden' | 'centre' | 'ground'
+export type LineStyle = 'solid' | 'thin' | 'hidden' | 'centre' | 'ground' | 'face'
 
 export interface Shape {
   /** SVG path data. */
   d: string
   line: LineStyle
+  /**
+   * Set on a face: the armour zone this patch of the drawing shows square on.
+   * Faces sit in drawing order, so whatever is drawn in front still covers them.
+   */
+  zone?: ZoneId
 }
 
 export interface Zone {
@@ -28,10 +34,34 @@ export interface Zone {
   go: ControlId
 }
 
+/** A tap zone used while the armour is being worked on: it picks an armour zone. */
+export interface ArmourTap {
+  x: number
+  y: number
+  w: number
+  h: number
+  zone: ZoneId
+}
+
+/** The view that shows each armour zone square on. The rear and the belly are on none of them. */
+export const ZONE_VIEW: Partial<Record<ZoneId, View>> = {
+  upperGlacis: 'front',
+  lowerGlacis: 'front',
+  turretFrontLeft: 'front',
+  turretFrontRight: 'front',
+  mantlet: 'front',
+  hullSideFront: 'side',
+  hullSideRear: 'side',
+  turretSides: 'side',
+  hullRoof: 'top',
+  turretRoof: 'top',
+}
+
 export interface Drawing {
   box: { x: number; y: number; w: number; h: number }
   shapes: Shape[]
   zones: Zone[]
+  armourTaps: ArmourTap[]
   /** Hull length, length with the gun forward, width and height, for the caption. */
   hullLengthM: number
   overallLengthM: number
@@ -49,6 +79,7 @@ function round(value: number): number {
 class Pen {
   readonly shapes: Shape[] = []
   readonly zones: Zone[] = []
+  readonly armourTaps: ArmourTap[] = []
   minX = Infinity
   maxX = -Infinity
   minY = Infinity
@@ -97,6 +128,25 @@ class Pen {
   zone(x0: number, y0: number, x1: number, y1: number, go: ControlId): void {
     this.zones.push({ x: round(x0), y: round(-y1), w: round(x1 - x0), h: round(y1 - y0), go })
   }
+
+  /** A patch of armour seen square on, as path data. */
+  face(d: string, zone: ZoneId): void {
+    this.shapes.push({ d, line: 'face', zone })
+  }
+
+  facePoly(points: readonly Point[], zone: ZoneId): void {
+    this.face(`${points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${this.p(x, y)}`).join(' ')} Z`, zone)
+  }
+
+  /** A tap zone that picks an armour zone, given in drawing space (y up). */
+  armourTap(x0: number, y0: number, x1: number, y1: number, zone: ZoneId): void {
+    this.armourTaps.push({ x: round(x0), y: round(-y1), w: round(x1 - x0), h: round(y1 - y0), zone })
+  }
+}
+
+/** A closed outline through the points, as path data. */
+function outline(pen: Pen, points: readonly Point[]): string {
+  return `${points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${pen.p(x, y)}`).join(' ')} Z`
 }
 
 function tanDeg(deg: number): number {
@@ -157,33 +207,40 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
   pen.poly([
     [0, belly + m.lowerH], [m.upperRun, roof], [L, roof], [L - DRAWING.rearUndercutM, belly], [m.lowerRun, belly],
   ], 'solid')
+  // The hull side is two armour zones, split half way along.
+  const mid = L / 2
+  pen.facePoly([[0, belly + m.lowerH], [m.upperRun, roof], [mid, roof], [mid, belly], [m.lowerRun, belly]], 'hullSideFront')
+  pen.facePoly([[mid, roof], [L, roof], [L - DRAWING.rearUndercutM, belly], [mid, belly]], 'hullSideRear')
   pen.rect(m.bayStart, belly + 0.08, m.bayEnd - DRAWING.rearUndercutM, roof - 0.08, 'hidden')
 
   // Gun first, so the turret covers its root.
   barrel(pen, m, m.gunY)
 
-  // Turret, by shape.
+  // Turret, by shape. Its side is one armour zone.
   const p = pen.p
+  let turret: string
   switch (spec.turret.shape) {
     case 'castDome':
     case 'lowProfile':
-      pen.path(
+      turret =
         `M${p(xc - R, roof)} Q${p(xc - R * 0.92, top)} ${p(xc - R * 0.25, top)} L${p(xc + R * 0.35, top)} ` +
-        `Q${p(xc + R * 0.97, top)} ${p(xc + R, roof)} Z`, 'solid')
+        `Q${p(xc + R * 0.97, top)} ${p(xc + R, roof)} Z`
       break
     case 'weldedWedge':
-      pen.poly([
+      turret = outline(pen, [
         [xc - R, roof], [xc - R * 0.8, roof + h * 0.55], [xc - R * 0.25, top], [xc + R * 0.7, top],
         [xc + R, roof + h * 0.5], [xc + R, roof],
-      ], 'solid')
+      ])
       break
     case 'bustle':
-      pen.poly([
+      turret = outline(pen, [
         [xc - R, roof], [xc - R * 0.82, roof + h * 0.6], [xc - R * 0.3, top], [xc + R + m.bustle, top],
         [xc + R + m.bustle, roof + h * 0.3], [xc + R * 0.92, roof + h * 0.3], [xc + R * 0.92, roof],
-      ], 'solid')
+      ])
       break
   }
+  pen.path(turret, 'solid')
+  pen.face(turret, 'turretSides')
   // Mantlet, commander's hatch, and the sight head if one is fitted.
   pen.rect(m.gunRootX - 0.05, m.gunY - h * 0.25, m.gunRootX + 0.22, m.gunY + h * 0.25, 'thin')
   const hatchX = xc + R * 0.3
@@ -234,6 +291,10 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
   pen.zone(m.muzzleX - DRAWING.marginM, ground, third, roof, 'hull.glacisAngleDeg')
   pen.zone(third, ground, 2 * third, roof, 'runningGear.roadWheels')
   pen.zone(2 * third, ground, rear, roof, engineFirst ? 'hull.engineAt' : 'powerpack.engine')
+
+  pen.armourTap(m.muzzleX - DRAWING.marginM, roof, rear, sky, 'turretSides')
+  pen.armourTap(m.muzzleX - DRAWING.marginM, ground, mid, roof, 'hullSideFront')
+  pen.armourTap(mid, ground, rear, roof, 'hullSideRear')
 }
 
 function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
@@ -242,6 +303,7 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
 
   // Deck outline, with the tracks under the fenders shown as hidden lines.
   pen.rect(0, -W, L, W, 'solid')
+  pen.facePoly([[m.upperRun, -bodyHalf], [L, -bodyHalf], [L, bodyHalf], [m.upperRun, bodyHalf]], 'hullRoof')
   pen.line(DRAWING.trackInsetFrontM, W - m.trackWidth, L - DRAWING.trackInsetRearM, W - m.trackWidth, 'hidden')
   pen.line(DRAWING.trackInsetFrontM, -(W - m.trackWidth), L - DRAWING.trackInsetRearM, -(W - m.trackWidth), 'hidden')
   pen.line(m.upperRun, -bodyHalf, m.upperRun, bodyHalf, 'thin')
@@ -262,6 +324,8 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
   barrel(pen, m, 0)
 
   // Turret outline, by shape, then the ring under it and the hatches on it.
+  // Its roof is one armour zone.
+  const before = pen.shapes.length
   switch (spec.turret.shape) {
     case 'castDome':
       pen.circle(xc, 0, R, 'solid')
@@ -283,12 +347,16 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
       ], 'solid')
       break
   }
+  const turret = pen.shapes[before]
+  if (turret) pen.face(turret.d, 'turretRoof')
   pen.circle(xc, 0, spec.turret.ringMm / 2000, 'hidden')
-  pen.circle(xc + R * 0.3, -R * 0.42, DRAWING.hatchRadiusM, 'thin')
-  if (m.hasLoader) pen.circle(xc + R * 0.3, R * 0.42, DRAWING.hatchRadiusM, 'thin')
+  // The tank faces left, so its right-hand side is up the page. The commander sits on the right.
+  const commanderY = R * 0.42
+  pen.circle(xc + R * 0.3, commanderY, DRAWING.hatchRadiusM, 'thin')
+  if (m.hasLoader) pen.circle(xc + R * 0.3, -commanderY, DRAWING.hatchRadiusM, 'thin')
   if (spec.fireControl.commanderSight) {
     const s = DRAWING.sightHeadM.width / 2
-    pen.rect(xc + R * 0.3 - s, -R * 0.42 - s, xc + R * 0.3 + s, -R * 0.42 + s, 'thin')
+    pen.rect(xc + R * 0.3 - s, commanderY - s, xc + R * 0.3 + s, commanderY + s, 'thin')
   }
 
   pen.line(m.muzzleX - 0.15, 0, L + 0.15, 0, 'centre')
@@ -299,6 +367,10 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
   pen.zone(0, -edge, xc - R, edge, 'hull.size')
   pen.zone(xc - R, -edge, xc + R, edge, 'turret.ringMm')
   pen.zone(xc + R, -edge, L + DRAWING.marginM, edge, frontEngine ? 'hull.engineAt' : 'powerpack.engine')
+
+  pen.armourTap(m.muzzleX - DRAWING.marginM, -edge, xc - R, edge, 'hullRoof')
+  pen.armourTap(xc - R, -edge, xc + R, edge, 'turretRoof')
+  pen.armourTap(xc + R, -edge, L + DRAWING.marginM, edge, 'hullRoof')
 }
 
 function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
@@ -310,11 +382,27 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
   // Lower hull between the tracks, upper hull over them, and the glacis break.
   pen.rect(-bodyHalf, belly, bodyHalf, fender, 'solid')
   pen.rect(-W + 0.03, fender, W - 0.03, roof, 'solid')
+  pen.facePoly([[-bodyHalf, belly], [bodyHalf, belly], [bodyHalf, belly + m.lowerH], [-bodyHalf, belly + m.lowerH]], 'lowerGlacis')
+  pen.facePoly([[-bodyHalf, belly + m.lowerH], [bodyHalf, belly + m.lowerH], [bodyHalf, roof], [-bodyHalf, roof]], 'upperGlacis')
   pen.line(-bodyHalf, belly + m.lowerH, bodyHalf, belly + m.lowerH, 'thin')
   pen.rect(-W, 0, -W + m.trackWidth, m.trackTop, 'solid')
   pen.rect(W - m.trackWidth, 0, W, m.trackTop, 'solid')
 
+  // The turret front is two armour zones, one each side of the gun. Seen
+  // from the front, the tank's left is on the right of the page.
   const p = pen.p
+  /** One half of the turret outline; `side` is -1 for the page's left, 1 for its right. */
+  const half = (side: number): string => {
+    switch (spec.turret.shape) {
+      case 'castDome':
+      case 'lowProfile':
+        return `M${p(side * R, roof)} Q${p(side * R * 0.9, top)} ${p(side * R * 0.4, top)} L${p(0, top)} L${p(0, roof)} Z`
+      case 'weldedWedge':
+        return outline(pen, [[side * R, roof], [side * R * 0.72, top], [0, top], [0, roof]])
+      case 'bustle':
+        return outline(pen, [[side * R, roof], [side * R * 0.86, top], [0, top], [0, roof]])
+    }
+  }
   switch (spec.turret.shape) {
     case 'castDome':
     case 'lowProfile':
@@ -329,8 +417,14 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
       pen.poly([[-R, roof], [-R * 0.86, top], [R * 0.86, top], [R, roof]], 'solid')
       break
   }
+  pen.face(half(-1), 'turretFrontRight')
+  pen.face(half(1), 'turretFrontLeft')
   const mantletHalf = TUNING.geometry.mantletWidthM / 2
   const h = geo.turretHeightM
+  pen.facePoly([
+    [-mantletHalf, m.gunY - h * 0.25], [mantletHalf, m.gunY - h * 0.25],
+    [mantletHalf, m.gunY + h * 0.25], [-mantletHalf, m.gunY + h * 0.25],
+  ], 'mantlet')
   pen.rect(-mantletHalf, m.gunY - h * 0.25, mantletHalf, m.gunY + h * 0.25, 'thin')
   pen.circle(0, m.gunY, m.barrelHalf, 'solid')
   pen.circle(0, m.gunY, m.calibre / 2, 'thin')
@@ -352,6 +446,10 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
   pen.zone(-edge, ground, -inner, roof, 'runningGear.trackWidthMm')
   pen.zone(-inner, ground, inner, roof, 'hull.size')
   pen.zone(inner, ground, edge, roof, 'runningGear.trackWidthMm')
+
+  pen.armourTap(-edge, roof, 0, sky, 'turretFrontRight')
+  pen.armourTap(0, roof, edge, sky, 'turretFrontLeft')
+  pen.armourTap(-edge, ground, edge, roof, 'upperGlacis')
 }
 
 export function drawingOf(spec: VehicleSpec, geo: Geometry, view: View): Drawing {
@@ -377,6 +475,7 @@ export function drawingOf(spec: VehicleSpec, geo: Geometry, view: View): Drawing
     box: { x: round(minX - pad), y: round(minY - pad), w: round(maxX - minX + 2 * pad), h: round(maxY - minY + 2 * pad) },
     shapes: pen.shapes,
     zones: pen.zones,
+    armourTaps: pen.armourTaps,
     hullLengthM: m.length,
     overallLengthM: m.length - Math.min(0, m.muzzleX),
     widthM: geo.widthM,

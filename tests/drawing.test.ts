@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { GUNS, HULLS, TURRETS } from '../src/data/parts'
 import { fixTarget } from '../src/office/controls'
-import { VIEWS, drawingOf, type Drawing, type View } from '../src/office/drawing'
+import { ZONES } from '../src/data/materials'
+import { VIEWS, ZONE_VIEW, drawingOf, type Drawing, type View } from '../src/office/drawing'
 import { geometryOf, type VehicleSpec } from '../src/sim/vehicle'
 
 function draw(view: View, change?: (spec: VehicleSpec) => void): Drawing {
@@ -82,6 +83,38 @@ describe('blueprint drawing', () => {
         const scale = Math.min((360 - 32) / d.box.w, 150 / d.box.h)
         for (const zone of d.zones) {
           expect(Math.min(zone.w, zone.h) * scale, `${view} ${zone.go}`).toBeGreaterThanOrEqual(44)
+        }
+      }
+    }
+  })
+
+  it('shows each armour zone as a face on the view that sees it square on', () => {
+    for (const view of VIEWS) {
+      const wanted = ZONES.filter((zone) => ZONE_VIEW[zone] === view).sort()
+      for (const change of VARIANTS) {
+        const faces = draw(view, change).shapes.filter((shape) => shape.zone !== undefined)
+        expect(faces.map((face) => face.zone).sort(), view).toEqual(wanted)
+        for (const face of faces) {
+          expect(face.line).toBe('face')
+          expect(face.d.endsWith('Z')).toBe(true)
+        }
+      }
+    }
+    // The rear plates and the belly are on none of the three views.
+    expect(ZONES.filter((zone) => ZONE_VIEW[zone] === undefined)).toEqual(['hullRear', 'belly', 'turretRear'])
+  })
+
+  it('keeps every armour tap zone at least 44 px and on a zone that view shows', () => {
+    for (const view of VIEWS) {
+      for (const change of VARIANTS) {
+        const d = draw(view, change)
+        const scale = Math.min((360 - 32) / d.box.w, 150 / d.box.h)
+        expect(d.armourTaps.length).toBeGreaterThan(0)
+        for (const tap of d.armourTaps) {
+          expect(ZONE_VIEW[tap.zone], `${view} ${tap.zone}`).toBe(view)
+          expect(Math.min(tap.w, tap.h) * scale, `${view} ${tap.zone}`).toBeGreaterThanOrEqual(44)
+          expect(tap.x).toBeGreaterThanOrEqual(d.box.x - 1e-6)
+          expect(tap.x + tap.w).toBeLessThanOrEqual(d.box.x + d.box.w + 1e-6)
         }
       }
     }
