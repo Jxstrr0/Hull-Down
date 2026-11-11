@@ -146,3 +146,32 @@ describe('the stage at a moment', () => {
     kit.dispose()
   })
 })
+
+describe('a built tank', () => {
+  it('is a handful of meshes, with exactly the triangles its parts list says', async () => {
+    const { Mesh } = await import('three')
+    const { buildTank, TURRET } = await import('../src/render/tankModel')
+    const { tankShapeOf, tankTriangles } = await import('../src/render/tankShape')
+    const { allTiles } = await import('../src/sim/vehicle/era')
+    const { ZONES } = await import('../src/data/materials')
+    const { buildStatSheet } = await import('../src/sim/vehicle')
+    for (const tiles of [false, true]) {
+      const spec = structuredClone(BASELINE_SPEC)
+      if (tiles) for (const zone of ZONES) spec.era[zone] = allTiles(zone)
+      const shape = tankShapeOf(spec, buildStatSheet(spec, PACT_LIMITS_GEN1).geometry)
+      const kit = new Kit()
+      const tank = buildTank(kit, shape)
+      let meshes = 0
+      let triangles = 0
+      tank.traverse((node) => {
+        if (!(node instanceof Mesh)) return
+        meshes++
+        triangles += node.geometry.getAttribute('position').count / 3
+      })
+      expect(meshes).toBeLessThanOrEqual(6)
+      expect(triangles).toBe(tankTriangles(shape))
+      expect(tank.getObjectByName(TURRET)).toBeTruthy()
+      kit.dispose()
+    }
+  })
+})

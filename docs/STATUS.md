@@ -4,6 +4,21 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **The tank on the range** (0.15.0.0): first slice of the art pass. You
+  chose: parts made in code first (Blender later if it still looks
+  plain), paint as a cosmetic pick, graphics tiers automatic with a
+  switch, and the tank first. The tank at the trials and in battles now
+  has a track loop with cut corners, a sprocket and idler, track guards,
+  an engine grille, a mantlet, a fume extractor, the commander's hatch
+  and sight head, smoke launchers, and a different shape for each of the
+  five turrets. Reactive tiles show where the design carries them: a
+  panel on the glacis, panels hung over the tracks, blocks beside the
+  gun and strips along the turret. The turret shapes and all the sizes
+  are my picks, in `RENDER.tank`. A tank is at most 1,100 triangles and
+  six meshes, so eight still fit on a phone. Say if any turret looks
+  wrong against its blueprint. Still to come in PR 15: paint and
+  camouflage, the ranges and props, graphics tiers and the frame-rate
+  check.
 - **The guided first contract** (0.14.2.0): Kelbo chose "guide plus
   gentler rivals". The guide is a card at the top of every tab during
   the first tender: fix the night sight, build the prototype, read the
@@ -370,6 +385,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.15.0.0, PR 15a: the tank on the range.** First slice of plan PR 15 (art pass), made in code as Kelbo chose. `tankShapeOf` now gives a list of parts (boxes, drums, slabs and a lofted turret) and `src/render/tankModel.ts` joins them into one mesh per colour. Five turret shapes in `RENDER.tank.turrets`; tiles drawn from `spec.era`. `tankTriangles` and a test hold a tank to 1,100 triangles.
 - **0.14.2.0, PR 14: the guided first contract.** A guide card on every tab walks a newcomer through the first tender (night sight, prototype, report, enter), and the rival bureaus make no revisions on that tender. Kelbo confirmed the glossary, the unmanned turret and the rivals' 2016 picks as built. This finishes plan PR 14.
 - **0.14.1.0, PR 14b: the glossary.** `STRINGS.glossary` (43 entries, each with the word beginnings it explains), `src/ui/glossaryWords.ts` (`termsIn`), `src/ui/glossary.ts` (the row of buttons), drawn at the foot of every design office tab. `tests/glossary.test.ts` checks every entry is used by the game and every control has a word explained. Phone test: open the Hull tab, scroll to "Words on this page", tap Glacis, read it, tap it again to close; change the hull and the open word stays open; tap "Show every word".
 - **0.14.0.0, PR 14a: the hard-coded-text test.** First slice of plan PR 14 (Teaching). `tests/hardCodedText.test.ts` reads every source file outside `src/data/` and fails on anything that looks like English for the player. It found two: the korona format (`STRINGS.money`) and the army designation "Model 81" (`STRINGS.career.designation`), both now in the string table. Nothing changes on screen. Phone test: money still reads "Kr 2.60M" and an adopted tank is still "Model 81".
