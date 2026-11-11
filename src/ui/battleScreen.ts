@@ -13,6 +13,7 @@ import {
   battleFindingText, battleFixText, battleGroundText, battleLines, battleResultWord, battleSeriesLines, orderChoices,
   type OrderChoice,
 } from './battleWords'
+import { createBattleMap, type BattleMap } from './battleMap'
 import { el } from './dom'
 import { card, scoreBar } from './duelScreen'
 import { opponentsFor, seriesScore, type Opponent } from './duelWords'
@@ -153,9 +154,12 @@ export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
     fold.append(el('summary', 'cmp-fold-title', B.oneBattle))
     const body = el('div', 'duel-one')
     fold.append(body)
+    let map: BattleMap | null = null
     const drawBattle = (): void => {
       const battle = series.battles[at]
       if (!battle) return
+      map?.stop()
+      map = createBattleMap(battle, at + 1)
       const nav = el('div', 'duel-nav')
       const step = (key: string, label: string, aria: string, to: number): HTMLButtonElement => {
         const button = el('button', 'btn duel-step', label)
@@ -184,7 +188,7 @@ export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
         item.append(el('span', 'duel-line-time', fill(D.time, { n: fixed(line.atS, 0) })), el('span', 'duel-line-text', line.text))
         lines.append(item)
       }
-      body.replaceChildren(nav, lines)
+      body.replaceChildren(nav, map.root, lines)
     }
     drawBattle()
 
