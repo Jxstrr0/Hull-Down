@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_IDS, NEED_KINDS } from '../src/data/export'
+import { CLIMATES } from '../src/data/range'
 import { STRINGS } from '../src/data/strings'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import { newCareer, type Adopted } from '../src/sim/career/career'
-import { customerChecks, exportOpen, saleBlock, saleFeeKr, secrets, sell, sellVariant, suits, variantBlock, variantCostKr, variantDesignation } from '../src/sim/career/exportDesk'
+import { customerChecks, exportOpen, exportTrial, orderOf, saleBlock, saleFeeKr, secrets, sell, sellVariant, strained, suits, variantBlock, variantCostKr, variantDesignation } from '../src/sim/career/exportDesk'
 import { cleanCareer } from '../src/persist/careerCodec'
 import { buildStatSheet, type VehicleSpec } from '../src/sim/vehicle'
 
@@ -77,12 +78,14 @@ describe('selling abroad', () => {
     const career = withTank(desert())
     expect(saleBlock(career, 0, 'dahrat')).toBeNull()
     const after = sell(career, 0, 'dahrat')
-    const fee = saleFeeKr(CUSTOMERS.dahrat.tanks, sheetOf(desert()).unitCostKr)
+    const trial = exportTrial(career, 'dahrat', sheetOf(desert()))
+    const tanks = orderOf('dahrat', trial)
+    const fee = saleFeeKr(tanks, sheetOf(desert()).unitCostKr)
     expect(fee).toBeGreaterThan(0)
     expect(fee % 1000).toBe(0)
     expect(after.budgetKr).toBe(career.budgetKr + fee)
     expect(after.reputation.ministry).toBe(career.reputation.ministry + EXPORT_DESK.saleMinistry)
-    expect(after.sales).toEqual([{ customer: 'dahrat', designation: 'Model 81', tanks: CUSTOMERS.dahrat.tanks, feeKr: fee, variant: null }])
+    expect(after.sales).toEqual([{ customer: 'dahrat', designation: 'Model 81', tanks, feeKr: fee, variant: null, trial }])
     expect(saleBlock(after, 0, 'dahrat')).toBe('sold')
     expect(() => sell(after, 0, 'dahrat')).toThrow()
     expect(career.sales).toEqual([])
@@ -130,7 +133,6 @@ describe('selling abroad', () => {
     expect(sale.designation).not.toBe('Model 81')
     expect(sale.variant?.powerpack.cooling).toBe('heavyDuty')
     expect(after.budgetKr).toBe(career.budgetKr - variantCostKr(career, tank, desert()) + sale.feeKr)
-    expect(sale.feeKr).toBeGreaterThan(variantCostKr(career, tank, desert()))
     expect(variantBlock(after, 0, 'dahrat', desert())).toBe('sold')
     expect(cleanCareer(JSON.parse(JSON.stringify(after)))?.sales).toEqual(after.sales)
   })
@@ -156,5 +158,44 @@ describe('selling abroad', () => {
     const marks = CUSTOMER_IDS.map((id) => CUSTOMERS[id].mark)
     expect(new Set(marks).size).toBe(marks.length)
     for (const mark of marks) expect(mark).not.toBe('')
+  })
+
+  it('tries the tank on the customer\'s ground, the same way every time', () => {
+    const career = withTank(desert())
+    const sheet = sheetOf(desert())
+    const trial = exportTrial(career, 'dahrat', sheet)
+    expect(exportTrial(career, 'dahrat', sheet)).toEqual(trial)
+    expect(trial.tanks).toBe(EXPORT_DESK.trial.tanks)
+    expect(strained('dahrat', sheet)).toEqual([])
+    expect(trial.towed).toBe(0)
+  })
+
+  it('breaks a tank down where the ground works it past its rating, and the order is cut', () => {
+    const sheet = sheetOf(BASELINE_SPEC)
+    // Standard cooling in the heat; a heavy tank on soft ground; a long climb.
+    expect(strained('dahrat', sheet)).toContain('engine')
+    expect(strained('ilandu', sheet)).toContain('suspension')
+    expect(strained('tolmar', sheet)).toContain('engine')
+    for (const id of CUSTOMER_IDS) {
+      const trial = exportTrial(newCareer(5), id, sheet)
+      expect(trial.verdict).toBe('bad')
+      expect(trial.worst).not.toBeNull()
+      expect(orderOf(id, trial)).toBe(Math.round(CUSTOMERS[id].tanks * EXPORT_DESK.trial.badShare))
+    }
+    expect(orderOf('dahrat', { tanks: 12, stops: 0, towed: 0, worst: null, verdict: 'good' })).toBe(CUSTOMERS.dahrat.tanks)
+    expect(orderOf('dahrat', { tanks: 12, stops: 5, towed: 0, worst: 'engine', verdict: 'poor' })).toBe(Math.round(CUSTOMERS.dahrat.tanks * EXPORT_DESK.trial.cutShare))
+  })
+
+  it('is at home in a temperate climate: the home endurance run is not changed', () => {
+    expect(CLIMATES.temperate).toEqual({ cooling: 1, drive: 1, ride: 1 })
+  })
+
+  it('keeps the trial through a save, and reads an order from before there were trials', () => {
+    const after = sell(withTank(desert()), 0, 'dahrat')
+    const raw = JSON.parse(JSON.stringify(after))
+    expect(cleanCareer(raw)?.sales[0]?.trial).toEqual(after.sales[0]!.trial)
+    delete raw.sales[0].trial
+    expect(cleanCareer(raw)?.sales[0]?.trial).toBeNull()
+    expect(cleanCareer(raw)?.sales[0]?.tanks).toBe(after.sales[0]!.tanks)
   })
 })

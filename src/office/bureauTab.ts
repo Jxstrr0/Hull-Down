@@ -3,13 +3,13 @@
 // design office's panel and keeps the career between visits.
 import { ADVISOR_MODES, type AdvisorMode } from '../data/advisor'
 import { BODIES } from '../data/career'
-import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_KINDS, type NeedId } from '../data/export'
+import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_KINDS, type CustomerId, type NeedId } from '../data/export'
 import { RESEARCH } from '../data/research'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { STRINGS, fill } from '../data/strings'
 import { SCORE_AXES, SCORING, TENDER_IDS, TENDER_RULES, type Tender } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
-import { customerChecks, exportOpen, saleBlock, saleFeeKr, secrets, sell, sellVariant, variantBlock, variantCostKr, variantDesignation, variantFixed } from '../sim/career/exportDesk'
+import { customerChecks, exportOpen, saleBlock, strained, saleFeeKr, secrets, sell, sellVariant, variantBlock, variantCostKr, variantDesignation, variantFixed } from '../sim/career/exportDesk'
 import { intelFiles } from '../sim/career/intel'
 import {
   buildBlock, buildPrototype, enterTender, research, researchBlock, researchOpen, fitUpgrade, newCareer, nextTender, tendersLeft, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
@@ -19,7 +19,7 @@ import {
 import type { BidScore, Trialled } from '../sim/career/score'
 import { fileRecord, serviceRecord, type ServiceRecord } from '../sim/career/record'
 import type { FieldReport } from '../sim/career/service'
-import { buildStatSheet, type VehicleSpec } from '../sim/vehicle'
+import { buildStatSheet, type StatSheet, type VehicleSpec } from '../sim/vehicle'
 import { TENDERS } from '../data/tenders'
 import { loadArchive, saveArchive } from '../persist/archiveStore'
 import { loadAdvisorMode, loadCareer, saveAdvisorMode, saveCareer } from '../persist/careerStore'
@@ -681,6 +681,16 @@ export function createBureau(options: BureauOptions): Bureau {
   }
 
   /** The customers abroad, what each asks, and how the bureau's tanks in service measure up. */
+  /** What the customer's ground would do to a tank, said before it is sold. */
+  function strainLine(id: CustomerId, sheet: StatSheet): HTMLElement {
+    const X = C.exportDesk
+    const ground = X.grounds[CUSTOMERS[id].climate]
+    const parts = strained(id, sheet).map((part) => STRINGS.range.endurance.parts[part].toLowerCase())
+    return parts.length === 0
+      ? el('p', 'ctl-note', fill(X.strainNone, { ground }))
+      : el('p', 'ctl-issue', fill(X.strain, { ground, parts: parts.join(', ') }))
+  }
+
   function drawExport(board: VehicleSpec): HTMLElement | null {
     if (!exportOpen(career)) return null
     const X = C.exportDesk
@@ -724,6 +734,14 @@ export function createBureau(options: BureauOptions): Bureau {
       if (order) {
         box.append(el('p', 'bu-stamp', X.licensed))
         box.append(el('p', 'bu-proto-sum', fill(order.variant ? X.soldVariant : X.sold, { n: String(order.tanks), tank: order.designation, fee: money(order.feeKr) })))
+        if (order.trial) {
+          const t = order.trial
+          const ground = X.grounds[customer.climate]
+          let line = fill(X.trial, { ground, tanks: String(t.tanks), stops: String(t.stops), towed: String(t.towed) })
+          if (t.worst) line += ` ${fill(X.trialWorst, { part: STRINGS.range.endurance.parts[t.worst].toLowerCase() })}`
+          box.append(el('p', 'ctl-note', line))
+          box.append(el('p', t.verdict === 'good' ? 'sv-said' : 'ctl-issue', fill(X.verdicts[t.verdict], { n: String(order.tanks), of: String(customer.tanks) })))
+        }
         continue
       }
       const list = el('ul', 'sv-lines')
@@ -740,6 +758,7 @@ export function createBureau(options: BureauOptions): Bureau {
           } else if (block === 'standing') {
             item.append(el('p', 'ctl-issue', fill(X.standing, { have: String(career.reputation.ministry), want: String(EXPORT_DESK.ministryStanding) })))
           } else if (block === null) {
+            item.append(strainLine(id, tank.sheet))
             const fee = money(saleFeeKr(customer.tanks, tank.sheet.unitCostKr))
             const go = button(`bureau:sell:${id}:${tank.index}`, fill(X.sell, { tank: tank.name, fee }), 'btn btn-go')
             go.addEventListener('click', () => {
@@ -800,6 +819,7 @@ export function createBureau(options: BureauOptions): Bureau {
             part.append(el('p', 'ctl-issue', fill(X.standing, { have: String(career.reputation.ministry), want: String(EXPORT_DESK.ministryStanding) })))
           } else if (block === 'noMoney') part.append(el('p', 'ctl-issue', fill(X.variantBlocks.noMoney, { cost })))
           else if (block === null) {
+            part.append(strainLine(id, sheet))
             part.append(el('p', 'bu-proto-sum', fill(X.variantCost, { cost, fee: money(saleFeeKr(customer.tanks, sheet.unitCostKr)) })))
             const go = button(`bureau:variant:${id}:${tank.index}`, fill(X.sellVariant, { designation: variantDesignation(adopted, id) }), 'btn btn-go')
             go.addEventListener('click', () => {

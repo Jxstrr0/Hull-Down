@@ -56,4 +56,19 @@ export const EXPORT_DESK = {
   variantWorkUnits: 1,
   /** What a version may change that a package for a tank already built may not: it is built new. */
   variantFree: ['powerpack.cooling'] as readonly string[],
+  /**
+   * The customer's own trial before it orders: this many tanks over the
+   * endurance run, on its ground. A good trial keeps the whole order; a
+   * poor one leaves `cutShare` of it, a bad one `badShare`.
+   */
+  trial: {
+    tanks: 12,
+    /** At or under this many stops a tank, with none towed in, the trial is good. */
+    goodStops: 0.35,
+    /** At or over this many stops a tank, or this share towed in, it is bad. */
+    badStops: 0.6,
+    badTowedShare: 0.15,
+    cutShare: 0.5,
+    badShare: 0.25,
+  },
 } as const

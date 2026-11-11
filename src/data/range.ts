@@ -29,13 +29,20 @@ export type ObstacleId = (typeof OBSTACLES)[number]
 export interface Climate {
   /** Share of its home rating a cooling system manages here. */
   cooling: number
+  /** How much harder the ground here works what pulls the tank along, and what carries it. */
+  drive: number
+  ride: number
 }
 
 export const CLIMATES = {
   /** Tarnovia and its neighbours. Parts are rated for this. */
-  temperate: { cooling: 1 },
+  temperate: { cooling: 1, drive: 1, ride: 1 },
   /** A hot export range. */
-  desert: { cooling: 0.85 },
+  desert: { cooling: 0.85, drive: 1, ride: 1 },
+  /** Soft, rutted ground. */
+  jungle: { cooling: 1, drive: 1, ride: 1.1 },
+  /** Long climbs in cool air. */
+  mountain: { cooling: 1, drive: 1.1, ride: 1 },
 } as const satisfies Record<string, Climate>
 export type ClimateId = keyof typeof CLIMATES
 
