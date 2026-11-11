@@ -889,3 +889,33 @@ body {
 .rg-berm-hidden polygon { stroke: var(--ink-dim); stroke-dasharray: 2 2; fill: none; }
 .rg-berm-hidden .rg-berm-gun { stroke: var(--ink-dim); stroke-dasharray: 2 2; }
 .rg-berm-shown polygon { fill: var(--ink); fill-opacity: 0.18; }
+/* The after-action report. Stopped and through are told apart by where the mark sits and by its shape, not by colour. */
+.aa-tally { margin: 0 0 4px; font-weight: 600; }
+.aa-findings { margin: 4px 0 0; padding: 0 0 0 22px; }
+.aa-finding { padding: 8px 0; border-bottom: 1px solid var(--grid); }
+.aa-finding-text { margin: 0; }
+.aa-finding-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.aa-finding-buttons .rg-fix { margin-top: 0; }
+.aa-strip { margin-top: 6px; }
+.aa-timeline { cursor: pointer; touch-action: manipulation; }
+.aa-stopped { fill: var(--ink); }
+.aa-through { fill: var(--pencil); }
+.aa-picked { fill: none; stroke: var(--ink); stroke-width: 1; }
+.aa-caret { fill: var(--ink); }
+.aa-key { margin: 4px 0 0; font-size: 0.8rem; }
+.aa-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.aa-step { flex: none; min-width: 44px; padding: 0; font-size: 1.3rem; text-align: center; }
+.aa-position { font-family: var(--font-mono); font-size: 0.9rem; }
+.aa-worst { margin-top: 8px; }
+.aa-shot { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--grid); }
+.aa-shot-title { margin: 0; font-family: var(--font-ui); font-size: 1rem; font-weight: 600; }
+.aa-picture { margin-top: 8px; padding: 6px; }
+.aa-svg { max-height: 200px; }
+.aa-marks { pointer-events: none; }
+.aa-path { fill: none; stroke: var(--pencil); stroke-width: 2.4; stroke-linecap: round; }
+.aa-path-in { stroke-dasharray: 5 4; }
+.aa-head { fill: var(--pencil); stroke: var(--pencil); stroke-width: 1; }
+.aa-bar, .aa-cross { fill: none; stroke: var(--pencil); stroke-width: 3; stroke-linecap: round; }
+.aa-reach { fill: var(--paper); stroke: var(--pencil); stroke-width: 2; }
+.aa-result { margin: 8px 0 0; font-weight: 700; }
+.aa .shot-step-value { flex: 0 1 auto; text-align: right; }

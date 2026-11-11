@@ -12,6 +12,7 @@ import type { Limits, StatSheet, VehicleSpec } from '../sim/vehicle'
 import { VIEWS, type ViewId } from '../render/director'
 import type { RangeView, RunSource } from '../render/rangeScene'
 import type { ReelFrame } from '../render/shootReel'
+import { afterActionCard } from './afterAction'
 import { armourCards } from './armourCards'
 import { el } from './dom'
 import { fixed } from './format'
@@ -562,8 +563,10 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
       summary, accel, course, long,
       ...gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch }),
       ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }),
-      el('p', 'ds-note', R.note),
     )
+    const debrief = afterActionCard(report, sheet, args.spec, { fixButton, fixZone })
+    if (debrief) root.append(debrief)
+    root.append(el('p', 'ds-note', R.note))
   }
 
   // The tests run on another thread, so a long trial never freezes the page.

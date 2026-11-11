@@ -59,6 +59,13 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   a spall liner). A track in the way takes 20 mm off a kinetic round and
   60 mm off a shaped charge, and breaks 60% of the time. Say if any of
   these feel too harsh or too kind once you can play the armour trial.
+- **What the after-action report calls decisive** (0.6.3.0): it names
+  three things, ranked in this order: a plate that had to hold and did
+  not; the ammunition exploding; a fire nobody put out; rounds finding
+  bare plate between reactive tiles; fragments catching crew with no spall
+  liner; the weakest plate fired on for the record; blow-out panels or
+  fire suppression saving the tank; a plate that only just held (under 12%
+  to spare); nothing getting through. Say if the order should change.
 - **The armour trial's pass marks and the berm** (0.6.2.0): picked so the
   Radan baseline passes, and all in `src/data/range.ts`. Must hold: upper
   glacis and turret front against the Accord 105 mm sabot at 2000 m; upper
@@ -92,6 +99,19 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.6.3.0, PR 6d: the after-action report.** A new card at the end of
+  the range, after the armour trial and the berm. It opens with a count
+  (rounds fired, stopped, through, tracks broken) and "What decided it":
+  the three things that mattered most, each with a button to see the round
+  that shows it and a fix link to the plate or part to change. Then every
+  round on one strip (a tick above the line was stopped, a bar below went
+  through, longer for worse), stepped through with two buttons or by
+  tapping the strip. The picked round's path is drawn on the cutaway, from
+  the side or from above, with what it met: the angle, each layer and
+  whether it held, each thing reached inside and what became of it,
+  fragments, fire. Last come the crew by station and the parts hit. The
+  weights that rank the findings are in `src/data/report.ts`; the analysis
+  is `src/sim/trials/afterAction.ts`.
 - **0.6.2.0, PR 6c: the armour trial and the hull-down berm.** Two new
   tests on the range, so a visit is now nine tests. The armour trial fires
   three real rounds at each named plate: they land where they land, what a
@@ -330,8 +350,10 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 - PR 6 is split too: 6a what is inside the armour and the cutaway
   (0.6.0.0), 6b a shot followed through the armour and the inside, with the
   damage it does and the protection systems, 6c the armour trial and the
-  hull-down berm on the range, 6d the after-action report, 6e revision
-  history and the comparison view. The plan calls the first playable
+  hull-down berm on the range, 6d the after-action report (0.6.3.0), 6e
+  the report's share card, 6f revision history and the comparison view.
+  (The share card was first folded into 6d; it is its own small PR so the
+  report stays readable on a phone.) The plan calls the first playable
   0.6.0.0; with the split it is the last of these, and that is where to
   stop for Kelbo to play and decide on voice.
 - 6a moved the measurements the blueprint shares with the 3D range (turret
