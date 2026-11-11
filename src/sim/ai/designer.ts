@@ -226,7 +226,7 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   spec.barrel = pick('barrel')
   spec.recoil = pick('recoil')
   spec.loading = pick('loading')
-  spec.ammo = { rounds: philosophy.rounds, stowage: pick('stowage') }
+  spec.ammo = { rounds: philosophy.rounds, stowage: pick('stowage'), kinetic: 'supplied', shaped: 'supplied' }
   spec.fireControl = {
     sight: pick('sight'),
     rangefinder: pick('rangefinder'),

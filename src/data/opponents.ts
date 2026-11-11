@@ -218,7 +218,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
       barrel: 'long',
       recoil: 'standard',
       loading: 'loader',
-      ammo: { rounds: 55, stowage: 'plainRacks' },
+      ammo: { rounds: 55, stowage: 'plainRacks', kinetic: 'supplied', shaped: 'supplied' },
       fireControl: {
         sight: 'improvedDaySight', rangefinder: 'coincidence', stabiliser: 'twoPlane', computer: 'mechanical',
         night: 'activeInfrared', commanderSight: true,
@@ -257,7 +257,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
       barrel: 'standard',
       recoil: 'standard',
       loading: 'loader',
-      ammo: { rounds: 42, stowage: 'armouredBins' },
+      ammo: { rounds: 42, stowage: 'armouredBins', kinetic: 'supplied', shaped: 'supplied' },
       fireControl: {
         sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'electronic',
         night: 'imageIntensifier', commanderSight: true,
@@ -308,7 +308,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
       barrel: 'standard',
       recoil: 'standard',
       loading: 'loader',
-      ammo: { rounds: 40, stowage: 'armouredBins' },
+      ammo: { rounds: 40, stowage: 'armouredBins', kinetic: 'supplied', shaped: 'supplied' },
       fireControl: {
         sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'digital',
         night: 'thermal', commanderSight: true,

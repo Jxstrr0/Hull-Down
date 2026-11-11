@@ -1,6 +1,6 @@
 // Technology generations: what a tender's year allows.
 import { describe, expect, it } from 'vitest'
-import { THREATS } from '../src/data/ammo'
+import { OWN_ROUNDS, THREATS } from '../src/data/ammo'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { ERA_TILE } from '../src/data/era'
 import { GUNNERY } from '../src/data/gunnery'
@@ -29,7 +29,10 @@ const late = (spec: VehicleSpec, limits: Limits) =>
 
 describe('technology generations', () => {
   it('lists only parts that exist', () => {
-    const tables = { 'fireControl.computer': COMPUTERS, 'fireControl.night': NIGHT_SIGHTS, material: MATERIALS }
+    const tables = {
+      'fireControl.computer': COMPUTERS, 'fireControl.night': NIGHT_SIGHTS, material: MATERIALS,
+      'ammo.kinetic': OWN_ROUNDS, 'ammo.shaped': OWN_ROUNDS,
+    }
     for (const field of TECH_FIELDS) {
       for (const id of Object.keys(LATER_PARTS[field])) expect(Object.keys(tables[field])).toContain(id)
     }

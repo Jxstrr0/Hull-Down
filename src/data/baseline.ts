@@ -10,7 +10,7 @@ export const BASELINE_SPEC: VehicleSpec = {
   barrel: 'standard',
   recoil: 'standard',
   loading: 'carousel',
-  ammo: { rounds: 39, stowage: 'plainRacks' },
+  ammo: { rounds: 39, stowage: 'plainRacks', kinetic: 'supplied', shaped: 'supplied' },
   fireControl: {
     sight: 'daySight',
     rangefinder: 'coincidence',

@@ -37,6 +37,9 @@ export const ISSUE_CODES = [
   'tilesNeedPlate',
   'notYetAvailable',
   'notResearched',
+  'rodTooLongForCarousel',
+  'missileNeedsSmoothbore',
+  'missileNeedsComputer',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -88,6 +91,13 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   if (ring > hull.maxRingMm) error('ringTooBigForHull', 'turret.ringMm', ring, hull.maxRingMm)
   if (ring < loading.minRingMm) error('ringTooSmallForLoader', 'turret.ringMm', ring, loading.minRingMm)
   if (ring % lim.ringStepMm !== 0) error('ringOffStep', 'turret.ringMm', ring, lim.ringStepMm)
+
+  // The bureau's own rounds ask something of the tank that fires them
+  if (spec.ammo.kinetic === 'longRod' && spec.loading === 'carousel') error('rodTooLongForCarousel', 'ammo.kinetic')
+  if (spec.ammo.shaped === 'gunMissile') {
+    if (gun.bore !== 'smoothbore') error('missileNeedsSmoothbore', 'ammo.shaped')
+    if (spec.fireControl.computer !== 'digital') error('missileNeedsComputer', 'ammo.shaped')
+  }
 
   // Things that need a bustle turret
   if (loading.needsBustle && !turret.hasBustle) error('loaderNeedsBustle', 'loading')

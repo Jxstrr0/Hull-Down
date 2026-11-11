@@ -29,6 +29,8 @@ export function tooNew(spec: VehicleSpec, generation: Generation): TooNew[] {
   }
   look('fireControl.computer', spec.fireControl.computer)
   look('fireControl.night', spec.fireControl.night)
+  look('ammo.kinetic', spec.ammo.kinetic)
+  look('ammo.shaped', spec.ammo.shaped)
   for (const zone of ZONES) {
     let newest: Generation = 1
     for (const layer of spec.armour[zone]) {
@@ -51,6 +53,8 @@ export function unresearched(spec: VehicleSpec, locked: readonly string[]): stri
   const found: string[] = []
   if (locked.includes(partKey('fireControl.computer', spec.fireControl.computer))) found.push('fireControl.computer')
   if (locked.includes(partKey('fireControl.night', spec.fireControl.night))) found.push('fireControl.night')
+  if (locked.includes(partKey('ammo.kinetic', spec.ammo.kinetic))) found.push('ammo.kinetic')
+  if (locked.includes(partKey('ammo.shaped', spec.ammo.shaped))) found.push('ammo.shaped')
   for (const zone of ZONES) {
     if (spec.armour[zone].some((layer) => locked.includes(partKey('material', layer.material)))) found.push(`armour.${zone}`)
   }

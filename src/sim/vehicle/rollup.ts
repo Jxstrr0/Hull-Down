@@ -1,4 +1,5 @@
 // Adds up weight, space and cost from the spec, grouped by area of the tank.
+import { LOAD_SHARE, OWN_ROUNDS } from '../../data/ammo'
 import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
 import {
   APU, BARRELS, COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, HULLS, LOADING,
@@ -99,6 +100,9 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
   massT.firepower += spec.ammo.rounds * gun.roundMassT + stowedRounds * stowage.massPerRoundT
   volumeM3.firepower += stowedRounds * gun.roundVolumeM3 * stowage.volumeFactor
   costKr.firepower += stowedRounds * stowage.costPerRoundKr
+  // The bureau's own rounds cost more than the Pact's, for the share of the load they make up.
+  if (spec.ammo.kinetic !== 'supplied') costKr.firepower += spec.ammo.rounds * LOAD_SHARE.kinetic * OWN_ROUNDS[spec.ammo.kinetic].costPerRoundKr
+  if (spec.ammo.shaped !== 'supplied') costKr.firepower += spec.ammo.rounds * LOAD_SHARE.shaped * OWN_ROUNDS[spec.ammo.shaped].costPerRoundKr
 
   // Fire control
   const fc = spec.fireControl

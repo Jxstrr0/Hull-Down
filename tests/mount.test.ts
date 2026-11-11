@@ -39,7 +39,7 @@ describe('barrel length', () => {
 
   it('leaves every gun as the Pact quotes it with the standard barrel', () => {
     for (const gun of Object.keys(GUNS) as GunId[]) {
-      expect(gunRounds({ gun, barrel: 'standard' })).toEqual(pactRounds(gun))
+      expect(gunRounds({ gun, barrel: 'standard' }).map(({ id, round }) => ({ id, round }))).toEqual(pactRounds(gun))
     }
     expect(BASELINE_SPEC.barrel).toBe('standard')
   })

@@ -52,6 +52,29 @@ export function pactRounds(gun: GunId): { id: PactRoundId; round: Round }[] {
   return Object.entries(PACT_ROUNDS[gun]).map(([id, round]) => ({ id: id as PactRoundId, round }))
 }
 
+/** The kinetic round a tank carries: the Pact's, or one of the bureau's own. */
+export const KINETIC_ISSUES = ['supplied', 'longRod'] as const
+export type KineticIssue = (typeof KINETIC_ISSUES)[number]
+/** The shaped-charge round a tank carries. */
+export const SHAPED_ISSUES = ['supplied', 'tandem', 'gunMissile'] as const
+export type ShapedIssue = (typeof SHAPED_ISSUES)[number]
+
+/**
+ * The bureau's own rounds, each made from the Pact round of the same kind
+ * for the gun fitted. The factors are multiples of the Pact round's figures;
+ * a missile flies at its own speed and steers itself, whatever the gun.
+ */
+export const OWN_ROUNDS = {
+  // A longer, thinner dart: it goes through more and keeps its speed, and it is too long for a carousel.
+  longRod: { penFactor: 1.25, speedFactor: 0.98, lossFactor: 0.75, spreadFactor: 1, costPerRoundKr: 1500 },
+  // Two charges: the first sets off a reactive tile, the second does the work.
+  tandem: { penFactor: 1.1, speedFactor: 1, lossFactor: 1, spreadFactor: 1, costPerRoundKr: 1000 },
+  // Fired from the gun and steered to the target: slow, dear, and very hard to miss with.
+  gunMissile: { penFactor: 1.3, speedMs: 370, spreadM: 0.2, costPerRoundKr: 6000 },
+} as const
+/** The share of the load each kind of round makes up, for costing. */
+export const LOAD_SHARE = { kinetic: 0.5, shaped: 0.5 } as const
+
 /** What the other side fires. */
 export const THREATS = {
   accord105Sabot: { kind: 'kinetic', speedMs: 1480, spreadM: 0.4, penMm: 400, lossPerKmMm: 35 },

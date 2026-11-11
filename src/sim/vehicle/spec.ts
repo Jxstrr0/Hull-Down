@@ -1,5 +1,6 @@
 // The vehicle spec: everything the player chooses. Plain data, safe to save
 // as JSON. The stat sheet (stats.ts) is worked out from it.
+import type { KineticIssue, ShapedIssue } from '../../data/ammo'
 import type { MaterialId, ZoneId } from '../../data/materials'
 import type { Generation } from '../../data/tech'
 import type {
@@ -32,6 +33,9 @@ export interface VehicleSpec {
   ammo: {
     rounds: number
     stowage: StowageId
+    /** Which kinetic and which shaped-charge round it carries (src/data/ammo.ts). */
+    kinetic: KineticIssue
+    shaped: ShapedIssue
   }
   fireControl: {
     sight: SightId

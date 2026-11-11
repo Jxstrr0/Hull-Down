@@ -89,7 +89,8 @@ describe('research in a career', () => {
   it('carries into upgrades and through a save', () => {
     let career = secondTender()
     career = research(research(career, 'digitalComputer'), 'thermalSight')
-    expect(lockedParts(career)).toEqual([partKey('material', 'layeredComposite')])
+    expect(lockedParts(career)).toContain(partKey('material', 'layeredComposite'))
+    expect(lockedParts(career)).not.toContain(partKey('fireControl.night', 'thermal'))
     const served = { tender: 'improvedType1' } as Career['adopted'][number]
     expect(upgradeLimits(career, served).locked).toEqual(lockedParts(career))
     expect(cleanCareer(JSON.parse(JSON.stringify(career)))).toEqual(career)
