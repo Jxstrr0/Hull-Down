@@ -3,9 +3,9 @@ import { ZONES } from '../data/materials'
 import { GUNNERY } from '../data/gunnery'
 import { RANGE } from '../data/range'
 import { STRINGS, fill } from '../data/strings'
-import { AREAS, type Issue, type IssueCode, type Limits, type StatSheet } from '../sim/vehicle'
+import { AREAS, busiestOf, type Issue, type IssueCode, type Limits, type StatSheet } from '../sim/vehicle'
 import { el } from '../ui/dom'
-import { fixed, money, plain } from '../ui/format'
+import { fixed, money, plain, signed } from '../ui/format'
 
 const D = STRINGS.dataSheet
 const ISSUE_TEXT: Record<IssueCode, string> = STRINGS.issues
@@ -107,6 +107,39 @@ function weightGroup(sheet: StatSheet): HTMLElement {
   return box
 }
 
+/** The crew, one bar a station: how hard each is to work, what that slows, and where the work comes from. */
+export function renderStations(sheet: StatSheet): HTMLElement {
+  const T = D.stations
+  const box = el('section', 'ds-group')
+  box.dataset.key = 'stations'
+  box.append(el('h3', 'ds-group-title', D.groups.stations))
+  const list = el('ul', 'ds-bars')
+  const noLoader = !sheet.crew.some((station) => station.id === 'loader')
+  for (const station of sheet.crew) {
+    const item = el('li', 'ds-bar ds-station')
+    const head = el('div', 'ds-bar-head')
+    const value = fixed(station.workload, 0)
+    head.append(el('span', 'ds-label', T.names[station.id]), el('span', 'ds-value', fill(T.value, { n: value })))
+    const track = el('div', 'ds-bar-track')
+    track.setAttribute('role', 'img')
+    track.setAttribute('aria-label', fill(T.barLabel, { name: T.names[station.id], n: value }))
+    const bar = el('div', 'ds-bar-fill')
+    bar.style.width = `${fixed(station.workload, 1)}%`
+    track.append(bar)
+    const jobs = station.id === 'commander' ? (station.ranges ? T.jobs.commanderRanges : T.jobs.commander)
+      : station.id === 'gunner' ? (station.ranges ? T.jobs.gunnerRanges : T.jobs.gunner)
+        : T.jobs[station.id]
+    const words = station.id === 'commander' && noLoader ? `${jobs} ${T.noLoaderJobs}` : jobs
+    const shares = station.shares.length === 0
+      ? T.nothing
+      : station.shares.map((share) => fill(T.share, { name: T.sources[share.source], points: signed(share.points, 0) })).join(' · ')
+    item.append(head, track, el('p', 'ds-station-jobs', words), el('p', 'ds-station-shares', shares))
+    list.append(item)
+  }
+  box.append(list, el('p', 'ds-table-note', T.note))
+  return box
+}
+
 export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
   const r = D.rows
   const u = D.units
@@ -142,9 +175,10 @@ export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
       [r.depression, unit(u.degrees, f.gunDepressionDeg, 1)],
     ]),
     renderGunnery(sheet),
+    renderStations(sheet),
     group(D.groups.condition, [
       [r.reliability, unit(u.outOf100, sheet.reliabilityIndex, 0)],
-      [r.workload, unit(u.outOf100, sheet.crewWorkload, 0)],
+      [r.workload, fill(u.busiest, { name: D.stations.names[busiestOf(sheet.crew).id], n: fixed(sheet.crewWorkload, 0) })],
     ]),
     group(D.groups.growth, [
       [r.spareMass, unit(u.tonnes, sheet.growth.massT, 1)],

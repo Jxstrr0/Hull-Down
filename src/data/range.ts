@@ -184,7 +184,7 @@ export const MARKS_GEN1 = {
   /** Targets hit in each firing test, at least. */
   hits: { halted: 4, onTheMove: 3, night: 3 },
   /** Seconds from a target showing to the first shot, halted and by day, on average, at most. */
-  firstShotS: 21,
+  firstShotS: 20,
   /** Rounds a minute kept up through the loading drill, at least. */
   drillRpm: 3.7,
 } as const

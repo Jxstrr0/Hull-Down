@@ -95,8 +95,8 @@ export const GUNNERY = {
     laser: { errorShare: 0.004, minErrorM: 8, rangeS: 1.5, nightFactor: 1 },
   } satisfies Record<RangefinderId, RangefinderGunnery>,
   stabilisers: {
-    none: { halts: true, acrossMil: 0.5, upMil: 0.5, moveS: 7, relayS: 6 },
-    singlePlane: { halts: false, acrossMil: 2, upMil: 0.9, moveS: 2.5, relayS: 4.5 },
+    none: { halts: true, acrossMil: 1, upMil: 1, moveS: 7, relayS: 6 },
+    singlePlane: { halts: false, acrossMil: 1.5, upMil: 0.8, moveS: 2.5, relayS: 4.5 },
     twoPlane: { halts: false, acrossMil: 0.6, upMil: 0.6, moveS: 0.8, relayS: 3.5 },
   } satisfies Record<StabiliserId, StabiliserGunnery>,
   computers: {

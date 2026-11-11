@@ -1,12 +1,13 @@
 // The stat sheet: every design-office readout worked out from a spec.
 // These are estimates. The proving ground has the final word.
 import {
-  COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, LOADING, NIGHT_SIGHTS,
+  COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, LOADING, NIGHT_SIGHTS,
   RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU,
 } from '../../data/parts'
 import type { ZoneId } from '../../data/materials'
 import { GROUNDS, RUN_PART_IDS } from '../../data/range'
 import { TUNING } from '../../data/tuning'
+import { busiestOf, stationsOf, type Station } from '../crew/stations'
 import { fireOf, quoteOf, turretFallbacks, type Fire, type GunneryQuote, type TurretPart } from '../gunnery/fire'
 import { driveOf, maxSlopeDeg, topSpeedOf, type Drive } from '../mobility/drive'
 import { survivalOf, type Wear } from '../reliability/wear'
@@ -68,7 +69,9 @@ export interface StatSheet {
   wear: Wear
   /** 0..100. Chance of getting through an endurance run with nothing giving trouble. */
   reliabilityIndex: number
-  /** 10..100. Higher is a harder tank to fight. */
+  /** The crew, commander first, and how hard each station is to work. */
+  crew: Station[]
+  /** 10..100. The workload of the busiest station. Higher is a harder tank to fight. */
   crewWorkload: number
   /** Room left for future upgrades. */
   growth: {
@@ -86,19 +89,6 @@ export interface StatSheet {
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value
-}
-
-/** How hard the tank is to fight, 10..100, from the work its fire control, gearbox and fittings leave the crew. */
-function workloadOf(spec: VehicleSpec): number {
-  const c = TUNING.crew
-  const fc = spec.fireControl
-  const workload =
-    c.workloadBase[LOADING[spec.loading].crew] +
-    SIGHTS[fc.sight].workload + RANGEFINDERS[fc.rangefinder].workload + STABILISERS[fc.stabiliser].workload +
-    COMPUTERS[fc.computer].workload + NIGHT_SIGHTS[fc.night].workload +
-    (fc.commanderSight ? COMMANDER_SIGHT.workload : 0) +
-    TRANSMISSIONS[spec.powerpack.transmission].workload + COMFORT[spec.crew.comfort].workload
-  return clamp(workload, c.workloadMin, c.workloadMax)
 }
 
 export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
@@ -153,11 +143,11 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
   if (spec.powerpack.apu) reliability *= APU.reliability
   if (spec.protection.fireSuppression) reliability *= FIRE_SUPPRESSION.reliability
 
-  const crewWorkload = workloadOf(spec)
-  const fire = fireOf(spec, crewWorkload)
+  const crew = stationsOf(spec)
+  const fire = fireOf(spec)
   // How it would shoot with each turret part out of action: the crew is busier, too.
   const turretParts = turretFallbacks(spec).map((part) => ({
-    id: part.id, reliability: part.reliability, without: fireOf(part.spec, workloadOf(part.spec)),
+    id: part.id, reliability: part.reliability, without: fireOf(part.spec),
   }))
 
   const massCeilingT = Math.min(transmission.ratedT, suspensionRatedT, trackRatedT, limits.maxMassT)
@@ -193,7 +183,8 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     stress,
     wear,
     reliabilityIndex: reliability * 100,
-    crewWorkload,
+    crew,
+    crewWorkload: busiestOf(crew).workload,
     growth: {
       massT: massCeilingT - massT,
       volumeM3: rollup.capacityM3 - rollup.usedM3,

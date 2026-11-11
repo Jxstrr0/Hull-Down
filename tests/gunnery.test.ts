@@ -155,7 +155,7 @@ describe('shooting on the move', () => {
     expect(miss.acrossM).toBeGreaterThan(miss.upM * 1.5)
   })
 
-  it('halts a tank with no stabiliser, which costs it time and not aim', () => {
+  it('halts a tank with no stabiliser, which costs it time more than aim', () => {
     expect(none.fire.moving.halts).toBe(true)
     expect(two.fire.moving.halts).toBe(false)
     expect(dart(none, 1000, MOVING)).toBeGreaterThan(dart(one, 1000, MOVING))
@@ -277,7 +277,7 @@ describe('loader against autoloader', () => {
   it('cannot shoot faster than the gun can be laid again', () => {
     const { fire } = build()
     const slow: Fire = { ...fire, times: { ...fire.times, relayS: 30 } }
-    expect(cycleS(slow, 0, RANGE_DAY)).toBeCloseTo(30 * fire.pace, 9)
+    expect(cycleS(slow, 0, RANGE_DAY)).toBeCloseTo(30 * fire.pace.gunner, 9)
   })
 })
 
