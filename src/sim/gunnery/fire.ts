@@ -1,7 +1,7 @@
 // The gunnery model: how a design finds, ranges, lays and loads, boiled down
 // to the few numbers a shot needs. The design office quotes from it and the
 // range shoots by it. Game-level abstractions, not engineering data.
-import type { PactRoundId, RoundKind } from '../../data/ammo'
+import type { PactRoundId, Round, RoundKind } from '../../data/ammo'
 import { CREW, type StationId } from '../../data/crew'
 import { CREWS, GUNNERY, type CrewId } from '../../data/gunnery'
 import {
@@ -24,6 +24,9 @@ export interface FireRound {
   /** Metres over which it loses about two thirds of its speed. */
   dragM: number
 }
+
+/** What the flight of a round turns on. */
+export type Ballistics = Omit<FireRound, 'id'>
 
 /** How the gun is fed. */
 export interface Feed {
@@ -87,6 +90,11 @@ export const RANGE_DAY: Shoot = { moving: false, night: false, crew: 'cadre', ho
 
 const G = GUNNERY
 
+/** A round as the gunnery model sees it in flight. */
+export function ballisticsOf(round: Round): Ballistics {
+  return { kind: round.kind, speedMs: round.speedMs, scatterMil: round.spreadM * G.scatterShare, dragM: G.dragM[round.kind] }
+}
+
 export function fireOf(spec: VehicleSpec): Fire {
   const fc = spec.fireControl
   const sight = G.sights[fc.sight]
@@ -106,13 +114,7 @@ export function fireOf(spec: VehicleSpec): Fire {
     1 + (workloadAt(stations, station) - G.pace.referenceWorkload) * G.pace.perPoint
 
   return {
-    rounds: gunRounds(spec).map(({ id, round }) => ({
-      id,
-      kind: round.kind,
-      speedMs: round.speedMs,
-      scatterMil: round.spreadM * G.scatterShare,
-      dragM: G.dragM[round.kind],
-    })),
+    rounds: gunRounds(spec).map(({ id, round }) => ({ id, ...ballisticsOf(round) })),
     carried: spec.ammo.rounds,
     layMil: sight.layMil,
     ranging: { errorShare: rangefinder.errorShare, minErrorM: rangefinder.minErrorM, nightFactor: rangefinder.nightFactor },
@@ -186,7 +188,7 @@ export function turretFallbacks(spec: VehicleSpec): { id: TurretPartId; reliabil
 }
 
 /** How long a round takes to reach a range, and how fast it is going when it gets there. */
-export function flightOf(round: FireRound, rangeM: number): { timeS: number; speedMs: number } {
+export function flightOf(round: Ballistics, rangeM: number): { timeS: number; speedMs: number } {
   const share = detExp(rangeM / round.dragM)
   return { timeS: (round.dragM / round.speedMs) * (share - 1), speedMs: round.speedMs / share }
 }
@@ -223,7 +225,7 @@ export interface ShotErrors {
   shakeUpM: number
 }
 
-export function errorsOf(fire: Fire, round: FireRound, rangeM: number, shoot: Shoot): ShotErrors {
+export function errorsOf(fire: Fire, round: Ballistics, rangeM: number, shoot: Shoot): ShotErrors {
   const crew = CREWS[shoot.crew]
   const km = rangeM / 1000
   const flight = flightOf(round, rangeM)
@@ -245,7 +247,7 @@ export function errorsOf(fire: Fire, round: FireRound, rangeM: number, shoot: Sh
 }
 
 /** How far a first shot is likely to land from the middle of the target, metres: across, and up or down. */
-export function missOf(fire: Fire, round: FireRound, rangeM: number, shoot: Shoot): { acrossM: number; upM: number } {
+export function missOf(fire: Fire, round: Ballistics, rangeM: number, shoot: Shoot): { acrossM: number; upM: number } {
   const e = errorsOf(fire, round, rangeM, shoot)
   const base = sq(e.layM) + sq(e.scatterM)
   return {
@@ -263,7 +265,7 @@ export function seenShare(fire: Fire, rangeM: number, shoot: Shoot): number {
 }
 
 /** Chance of a first-round hit on the range target, 0..1. */
-export function hitChance(fire: Fire, round: FireRound, rangeM: number, shoot: Shoot): number {
+export function hitChance(fire: Fire, round: Ballistics, rangeM: number, shoot: Shoot): number {
   const miss = missOf(fire, round, rangeM, shoot)
   return seenShare(fire, rangeM, shoot) *
     within(G.target.widthM / 2, miss.acrossM) * within(G.target.heightM / 2, miss.upM)

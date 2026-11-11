@@ -4,6 +4,13 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **How a duel is fought** (0.7.1.0), decided without you and easy to
+  change: the five grounds and their ranges; a fight is called off as a
+  draw after 4 minutes; crews have been in the tank 2 hours; a hull-down
+  tank hides as much as its gun depression allows (the berm test's sum);
+  smoke blinds both tanks for 25 s, once a duel; a tank is out of the
+  fight when it blows up, burns, loses its gun or sight, or loses both
+  commander and gunner. You can judge these once the duel screen is in.
 - **Names for the opponents** (0.7.0.0), all working names: the rival
   bureaus "Heavy Machine Plant No. 2", "Tractor Works No. 7" and "Ordnance
   Institute No. 4", and the Accord tanks "Warden" and "Palisade". Say if
@@ -114,6 +121,18 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.7.1.0, PR 7b: the one-against-one fight.** Still nothing new on
+  screen. Two tanks meet at a set range on set ground and fight it out:
+  each crew finds the other, ranges, lays and fires as it does on the
+  range, and each round that lands is followed through the armour and the
+  inside as in the armour trial. Five grounds: a meeting at 1500 m, the
+  same at 2500 m, attacking a tank behind a ridge, holding the ridge, and
+  a meeting at night at 900 m. The tank's own sense is simple: after two
+  hits on one part that do nothing the gunner tries the other part, after
+  three in all the crew changes round, and a tank that is holed and can
+  still fight fires its smoke once. Losing crew slows the rest. The same
+  tanks, ground and seed always give the same fight. Numbers are in
+  `src/data/duel.ts`.
 - **0.7.0.0, PR 7a: who the tank is measured against.** Nothing new on
   screen yet; this is the groundwork for duels. Three rival bureaus each
   have a way of thinking (heavy and well protected; light and cheap;
