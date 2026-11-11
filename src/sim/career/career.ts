@@ -7,6 +7,7 @@ import { BODIES, CAREER, STANDARD_PARTS, type Body, type StandardPart } from '..
 import type { CustomerId } from '../../data/export'
 import { BUREAU_IDS, type BureauId } from '../../data/opponents'
 import { RESEARCH, RESEARCH_IDS, type ResearchId } from '../../data/research'
+import type { RunPartId } from '../../data/range'
 import { SERVICE, type Production } from '../../data/service'
 import { TENDER_IDS, TENDER_RULES, TENDERS, type ScoreAxis, type Tender, type TenderId } from '../../data/tenders'
 import { hash32 } from '../rng'
@@ -85,6 +86,22 @@ export interface Sale {
   feeKr: number
   /** The version built for the customer. Null when it took the tank as the army has it. */
   variant: VehicleSpec | null
+  /** How the customer's own trial went. Null for an order from before there were trials. */
+  trial: ExportTrial | null
+}
+
+export const TRIAL_VERDICTS = ['good', 'poor', 'bad'] as const
+export type TrialVerdict = (typeof TRIAL_VERDICTS)[number]
+
+/** The customer's trial of the tank on its own ground. */
+export interface ExportTrial {
+  tanks: number
+  /** Stops for repairs, all the tanks together, and tanks towed in. */
+  stops: number
+  towed: number
+  /** The part that gave most trouble. Null when nothing did. */
+  worst: RunPartId | null
+  verdict: TrialVerdict
 }
 
 /** A tank of the bureau's in the army's hands. */

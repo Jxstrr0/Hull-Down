@@ -53,7 +53,7 @@ export function legLoad(id: RunPartId, part: PartWear, leg: Leg, climate: Climat
   const works = RUN_PARTS[id].works
   const rated = ratedIn(id, part, climate)
   if (works === null || rated === null) return 0
-  return (part.have / rated) * leg[works]
+  return (part.have / rated) * leg[works] * CLIMATES[climate][works]
 }
 
 /** Share of the run's wear that has built up by a distance. */

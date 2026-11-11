@@ -4,6 +4,18 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Export trials** (0.12.3.0): before it orders, a customer runs twelve
+  of the tank over the endurance run on its own ground. Desert: cooling
+  manages 85% of its rating. Jungle: the ground pounds the suspension and
+  tracks 10% harder. Mountain: the climbs work the engine and transmission
+  10% harder. A good trial (about a stop for every three tanks or fewer,
+  none towed in) keeps the whole order; a poor one halves it; a bad one
+  leaves a quarter. The desk says, before you sell, which parts would be
+  worked past their rating there, so a cut order is never a surprise. All
+  the numbers are my picks. The trial is a report in words, not a 3D
+  scene: say if you want the customer's ground as a watchable trial with
+  its own light, which the plan mentions and which would be a bigger job.
+  This finishes plan PR 12; next is PR 13, generation three.
 - **Export variants** (0.12.2.0): the design on the drawing board can be
   sold to a customer as a version of a tank in service. It keeps the
   tank's hull, turret, gun, loading and running gear (the same line builds
@@ -310,6 +322,12 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.12.3.0, PR 12d: export trials.** `exportTrial`, `strained` and
+  `orderOf` in `src/sim/career/exportDesk.ts`; jungle and mountain join
+  desert in `CLIMATES` (`src/data/range.ts`), each with how hard its ground
+  works the drive and the ride; `Sale.trial` is kept in saves. The Export
+  desk card warns of strained parts before a sale and reports the trial
+  after it. Plan PR 12 is complete.
 - **0.12.2.0, PR 12c: export variants.** `variantBlock`, `sellVariant`,
   `variantCostKr`, `variantFixed` and `variantDesignation` in
   `src/sim/career/exportDesk.ts`; `Sale.variant` keeps the version's

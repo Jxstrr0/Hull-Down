@@ -5,10 +5,11 @@ import { BODIES, CAREER, type Body } from '../data/career'
 import { CUSTOMER_IDS } from '../data/export'
 import { ZONES } from '../data/materials'
 import { BUREAU_IDS } from '../data/opponents'
+import { RUN_PART_IDS } from '../data/range'
 import { RESEARCH_IDS } from '../data/research'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { SCORE_AXES, TENDER_IDS, TENDER_RULES, TENDERS, type ScoreAxis } from '../data/tenders'
-import { CAREER_FORMAT, type BidLine, type Bidder, type Career, type Outcome, type Prototype, type Sale } from '../sim/career/career'
+import { CAREER_FORMAT, TRIAL_VERDICTS, type BidLine, type ExportTrial, type Bidder, type Career, type Outcome, type Prototype, type Sale } from '../sim/career/career'
 import { UPGRADE_ASK_KINDS, type Upgrade, type UpgradeAsk } from '../sim/career/upgrade'
 import { cleanName, cleanSpec } from './specCodec'
 
@@ -139,6 +140,17 @@ function cleanAdopted(raw: unknown): Career['adopted'] {
   return kept
 }
 
+function cleanTrial(raw: unknown): ExportTrial | null {
+  if (!isObject(raw)) return null
+  const verdict = TRIAL_VERDICTS.find((each) => each === raw.verdict)
+  const tanks = whole(raw.tanks, 0, 1000, 0)
+  if (!verdict || tanks === 0) return null
+  return {
+    tanks, stops: whole(raw.stops, 0, 100_000, 0), towed: whole(raw.towed, 0, tanks, 0),
+    worst: RUN_PART_IDS.find((id) => id === raw.worst) ?? null, verdict,
+  }
+}
+
 /** Each customer orders once. An order with no tank named, or no tanks, is dropped. */
 function cleanSales(raw: unknown): Sale[] {
   if (!Array.isArray(raw)) return []
@@ -149,7 +161,7 @@ function cleanSales(raw: unknown): Sale[] {
     const designation = cleanName(item.designation)
     const tanks = whole(item.tanks, 0, 100_000, 0)
     if (!customer || !designation || tanks === 0 || kept.some((sale) => sale.customer === customer)) continue
-    kept.push({ customer, designation, tanks, feeKr: whole(item.feeKr, 0, 1e12, 0), variant: isObject(item.variant) ? cleanSpec(item.variant) : null })
+    kept.push({ customer, designation, tanks, feeKr: whole(item.feeKr, 0, 1e12, 0), variant: isObject(item.variant) ? cleanSpec(item.variant) : null, trial: cleanTrial(item.trial) })
   }
   return kept
 }

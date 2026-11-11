@@ -1,13 +1,17 @@
 // The export desk: which customers abroad a tank of the bureau's would suit.
 // It opens with the first tank the army adopts.
 import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_IDS, NEED_KINDS, type CustomerId, type NeedId } from '../../data/export'
+import { RANGE, RUN_PART_IDS, type RunPartId } from '../../data/range'
+import { legLoad } from '../reliability/wear'
 import { TENDERS } from '../../data/tenders'
+import { hash32 } from '../rng'
+import { runEndurance } from '../trials/endurance'
 import { RESEARCH, RESEARCH_IDS, type ResearchId } from '../../data/research'
 import { buildStatSheet } from '../vehicle/stats'
 import type { StatSheet } from '../vehicle/stats'
 import type { VehicleSpec } from '../vehicle/spec'
 import { partKey, unresearched } from '../vehicle/tech'
-import { sameTank, serviceDesignation, serviceSpec, upgradeLimits, withStanding, type Adopted, type Career, type Sale } from './career'
+import { sameTank, serviceDesignation, serviceSpec, upgradeLimits, withStanding, type Adopted, type Career, type ExportTrial, type Sale } from './career'
 import type { FixedPart } from '../../data/service'
 import { fixedPartsChanged } from './upgrade'
 
@@ -67,6 +71,50 @@ export function saleFeeKr(tanks: number, unitCostKr: number): number {
   return Math.round((tanks * unitCostKr * EXPORT_DESK.feeShare) / 1000) * 1000
 }
 
+// Names the roll that gives each customer's trial its own luck.
+const EXPORT_TRIAL = 173
+
+/**
+ * The customer's own trial of a tank before it orders: a troop of them
+ * over the endurance run, on the customer's ground. The same career, the
+ * same customer and the same tank always go the same way.
+ */
+export function exportTrial(career: Career, customer: CustomerId, sheet: StatSheet): ExportTrial {
+  const T = EXPORT_DESK.trial
+  const climate = CUSTOMERS[customer].climate
+  const seed = hash32(career.seed, EXPORT_TRIAL, CUSTOMER_IDS.indexOf(customer))
+  const trial: ExportTrial = { tanks: T.tanks, stops: 0, towed: 0, worst: null, verdict: 'good' }
+  const byPart = new Map<(typeof RUN_PART_IDS)[number], number>()
+  for (let tank = 0; tank < T.tanks; tank++) {
+    const run = runEndurance(sheet.drive, sheet.wear, { seed: hash32(seed, tank), climate })
+    trial.stops += run.stops
+    if (!run.finished) trial.towed++
+    for (const event of run.events) byPart.set(event.part, (byPart.get(event.part) ?? 0) + 1)
+  }
+  for (const id of RUN_PART_IDS) {
+    const times = byPart.get(id) ?? 0
+    if (times > 0 && (trial.worst === null || times > (byPart.get(trial.worst) ?? 0))) trial.worst = id
+  }
+  const stops = trial.stops / T.tanks
+  if (stops >= T.badStops || trial.towed / T.tanks >= T.badTowedShare) trial.verdict = 'bad'
+  else if (stops > T.goodStops || trial.towed > 0) trial.verdict = 'poor'
+  return trial
+}
+
+/** The parts of a tank that would be worked past their rating on the customer's ground, hardest worked first. */
+export function strained(customer: CustomerId, sheet: StatSheet): RunPartId[] {
+  const climate = CUSTOMERS[customer].climate
+  const worst = (id: RunPartId) => Math.max(...RANGE.endurance.legs.map((leg) => legLoad(id, sheet.wear[id], leg, climate)))
+  return RUN_PART_IDS.filter((id) => worst(id) > 1).sort((a, b) => worst(b) - worst(a))
+}
+
+/** Tanks the customer orders after a trial like this: the whole order, or what is left of it. */
+export function orderOf(customer: CustomerId, trial: ExportTrial): number {
+  const T = EXPORT_DESK.trial
+  const share = trial.verdict === 'good' ? 1 : trial.verdict === 'poor' ? T.cutShare : T.badShare
+  return Math.round(CUSTOMERS[customer].tanks * share)
+}
+
 export const SALE_BLOCKS = ['closed', 'sold', 'noLine', 'needs', 'secret', 'standing'] as const
 /** Why a tank cannot be sold to a customer. */
 export type SaleBlock = (typeof SALE_BLOCKS)[number]
@@ -98,9 +146,10 @@ export function sell(career: Career, index: number, customer: CustomerId): Caree
   const block = saleBlock(career, index, customer)
   if (block) throw new Error(`tank cannot be sold: ${block}`)
   const tank = career.adopted[index]!
-  const unitKr = buildStatSheet(serviceSpec(tank), TENDERS[tank.tender].limits).unitCostKr
-  const tanks = CUSTOMERS[customer].tanks
-  const sale: Sale = { customer, designation: serviceDesignation(tank), tanks, feeKr: saleFeeKr(tanks, unitKr), variant: null }
+  const sheet = buildStatSheet(serviceSpec(tank), TENDERS[tank.tender].limits)
+  const trial = exportTrial(career, customer, sheet)
+  const tanks = orderOf(customer, trial)
+  const sale: Sale = { customer, designation: serviceDesignation(tank), tanks, feeKr: saleFeeKr(tanks, sheet.unitCostKr), variant: null, trial }
   const { reputation } = withStanding(career, { army: 0, ministry: EXPORT_DESK.saleMinistry, pact: 0 })
   return { ...career, reputation, budgetKr: career.budgetKr + sale.feeKr, sales: [...career.sales, sale] }
 }
@@ -156,10 +205,11 @@ export function sellVariant(career: Career, index: number, customer: CustomerId,
   const block = variantBlock(career, index, customer, spec)
   if (block) throw new Error(`version cannot be sold: ${block}`)
   const tank = career.adopted[index]!
-  const unitKr = buildStatSheet(spec, upgradeLimits(career, tank)).unitCostKr
-  const tanks = CUSTOMERS[customer].tanks
+  const sheet = buildStatSheet(spec, upgradeLimits(career, tank))
+  const trial = exportTrial(career, customer, sheet)
+  const tanks = orderOf(customer, trial)
   const sale: Sale = {
-    customer, designation: variantDesignation(tank, customer), tanks, feeKr: saleFeeKr(tanks, unitKr), variant: structuredClone(spec),
+    customer, designation: variantDesignation(tank, customer), tanks, feeKr: saleFeeKr(tanks, sheet.unitCostKr), variant: structuredClone(spec), trial,
   }
   const { reputation } = withStanding(career, { army: 0, ministry: EXPORT_DESK.saleMinistry, pact: 0 })
   return { ...career, reputation, budgetKr: career.budgetKr - variantCostKr(career, tank, spec) + sale.feeKr, sales: [...career.sales, sale] }

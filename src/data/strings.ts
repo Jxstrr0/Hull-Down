@@ -1473,7 +1473,7 @@ export const STRINGS = {
     },
     exportDesk: {
       heading: 'Export desk',
-      about: 'With a tank in army service, the bureau may look for customers abroad. Each asks something of the tank that the army did not, and orders once. The ministry must license every sale, and the bureau\'s fee goes into its budget. A tank that falls short can be reworked on the drawing board and sold as a version built for the customer.',
+      about: 'With a tank in army service, the bureau may look for customers abroad. Each asks something of the tank that the army did not, and orders once. The ministry must license every sale, and the bureau\'s fee goes into its budget. A tank that falls short can be reworked on the drawing board and sold as a version built for the customer. Before it orders, the customer tries the tank on its own ground, and orders fewer of one that breaks down.',
       customers: {
         dahrat: { name: 'Emirate of Dahrat', line: 'Desert: heat, dust and long distances between fuel dumps.' },
         ilandu: { name: 'Republic of Ilandu', line: 'Jungle: soft ground, light bridges and a small budget.' },
@@ -1499,7 +1499,7 @@ export const STRINGS = {
       short: '{tank}: falls short on {n} of {of}.',
       has: '{need}: has {have}',
       lacks: '{need}: not fitted',
-      sell: 'Sell the {tank} (fee {fee})',
+      sell: 'Sell the {tank} (fee up to {fee})',
       sold: 'Ordered: {n} of the {tank}. Fee paid: {fee}.',
       licensed: 'Export licence signed',
       noLine: '{tank}: production has not started, so there is nothing to sell.',
@@ -1510,7 +1510,7 @@ export const STRINGS = {
       board: 'On the drawing board, as a version of the {tank}:',
       boardSuits: 'It suits this customer.',
       boardShort: 'It falls short on {n} of {of}.',
-      variantCost: 'Work-up {cost}, fee {fee}.',
+      variantCost: 'Work-up {cost}, fee up to {fee}.',
       sellVariant: 'Sell it as the {designation}',
       variantBlocks: {
         fixed: 'A version is built on the same line. It cannot change: {parts}.',
@@ -1518,6 +1518,16 @@ export const STRINGS = {
         noMoney: 'The bureau cannot pay for the work-up ({cost}).',
       },
       soldVariant: 'Ordered: {n} of the {tank}, a version built for the customer. Fee paid: {fee}.',
+      grounds: { desert: 'in the desert heat', jungle: 'on soft jungle ground', mountain: 'on the mountain roads' },
+      strainNone: 'Its trial {ground}: nothing is worked past its rating there.',
+      strain: 'Its trial {ground}: worked past its rating there: {parts}. Expect breakdowns and a smaller order.',
+      trial: 'Trial {ground}: {tanks} tanks, {stops} stops for repairs, {towed} towed in.',
+      trialWorst: 'Most trouble: {part}.',
+      verdicts: {
+        good: 'The customer was satisfied and took the whole order.',
+        poor: 'The customer was not impressed and cut the order to {n} of {of}.',
+        bad: 'The customer was dismayed and took only {n} of {of}.',
+      },
     },
     research: {
       heading: 'Research',
