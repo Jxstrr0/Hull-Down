@@ -1860,6 +1860,18 @@ export const STRINGS = {
   },
   // Tap-to-explain: plain words for someone who knows nothing about tanks. `find` lists the
   // beginnings of the words on screen that each entry explains, in small letters.
+  paint: {
+    title: 'Paint shop',
+    about: 'Paint is for looks only. It changes no mark, no weight and no cost. The prototype wears it in the 3D views on the range and in battles.',
+    listLabel: 'Paint scheme',
+    worn: 'Worn',
+    schemes: {
+      green: { name: 'Plain green', note: 'One flat olive coat. The bureau standard.' },
+      sand: { name: 'Sand', note: 'One flat coat for dry, open country.' },
+      threeColour: { name: 'Three colour', note: 'Green with brown and black patches.' },
+      winter: { name: 'Winter whitewash', note: 'White brushed over the green, which shows through in places.' },
+    },
+  },
   guide: {
     heading: 'Your first contract',
     step: 'Step {n} of {of}',

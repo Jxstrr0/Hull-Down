@@ -4,6 +4,14 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **The paint shop** (0.15.1.0): four schemes to start, picked on the
+  Trials tab: Plain green, Sand, Three colour, Winter whitewash. Looks
+  only, as you chose: no mark, weight or cost changes, and a repaint is
+  not a new revision. The names, the colours and the list itself are my
+  working picks; say if you want others (a desert two-tone, a digital
+  pattern, a parade finish). The enemy keeps its own tan in battles so
+  the two sides never look alike. The office drawings stay ink on paper.
+
 - **The tank on the range** (0.15.0.0): first slice of the art pass. You
   chose: parts made in code first (Blender later if it still looks
   plain), paint as a cosmetic pick, graphics tiers automatic with a
@@ -385,6 +393,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.15.1.0, PR 15b: the paint shop.** Second slice of plan PR 15. Four cosmetic paint schemes in `src/data/paint.ts`, picked on the Trials tab and kept beside the design (`SavedDesign.paint`), so a repaint is never a new build. Two are camouflage: `src/render/camo.ts` makes a small repeating pattern in code (no image files), the same on every device, and the tank's plate is painted with it in the range and battle 3D views. No more meshes or triangles than a plain tank. First load 758 KB.
 - **0.15.0.0, PR 15a: the tank on the range.** First slice of plan PR 15 (art pass), made in code as Kelbo chose. `tankShapeOf` now gives a list of parts (boxes, drums, slabs and a lofted turret) and `src/render/tankModel.ts` joins them into one mesh per colour. Five turret shapes in `RENDER.tank.turrets`; tiles drawn from `spec.era`. `tankTriangles` and a test hold a tank to 1,100 triangles.
 - **0.14.2.0, PR 14: the guided first contract.** A guide card on every tab walks a newcomer through the first tender (night sight, prototype, report, enter), and the rival bureaus make no revisions on that tender. Kelbo confirmed the glossary, the unmanned turret and the rivals' 2016 picks as built. This finishes plan PR 14.
 - **0.14.1.0, PR 14b: the glossary.** `STRINGS.glossary` (43 entries, each with the word beginnings it explains), `src/ui/glossaryWords.ts` (`termsIn`), `src/ui/glossary.ts` (the row of buttons), drawn at the foot of every design office tab. `tests/glossary.test.ts` checks every entry is used by the game and every control has a word explained. Phone test: open the Hull tab, scroll to "Words on this page", tap Glacis, read it, tap it again to close; change the hull and the open word stays open; tap "Show every word".

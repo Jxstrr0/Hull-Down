@@ -4,6 +4,7 @@
 // is words and numbers, never a colour alone.
 import { BATTLE, BATTLE_GROUND_IDS, type BattleGroundId, type Orders } from '../data/battle'
 import type { ZoneId } from '../data/materials'
+import type { PaintId } from '../data/paint'
 import type { TankLook } from '../render/battleScene'
 import { STRINGS, fill } from '../data/strings'
 import { DEFAULT_ORDERS } from '../sim/battle/battle'
@@ -30,6 +31,8 @@ export interface BattleScreenArgs {
   projectNo: number
   /** The design's name, as the office shows it. */
   name: string
+  /** The paint the design wears in the 3D view. */
+  paint: PaintId
   back(): void
   /** Leave the battles and open the control that would change a result. */
   fix(part: BattleFixPart): void
@@ -169,7 +172,7 @@ export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
       map?.stop()
       watch?.stop()
       map = createBattleMap(battle, at + 1)
-      watch = createBattleWatch(battle, at + 1, lookOf(me), lookOf(foe))
+      watch = createBattleWatch(battle, at + 1, { ...lookOf(me), paint: args.paint }, lookOf(foe))
       const nav = el('div', 'duel-nav')
       const step = (key: string, label: string, aria: string, to: number): HTMLButtonElement => {
         const button = el('button', 'btn duel-step', label)

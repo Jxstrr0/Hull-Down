@@ -6,13 +6,14 @@ import {
   PlaneGeometry, Scene, SphereGeometry, WebGLRenderer, type Object3D,
 } from 'three'
 import { BATTLE } from '../data/battle'
+import type { PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import type { BattleResult } from '../sim/battle/battle'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
 import { momentOf, type BattleMoment } from '../ui/battleReplay'
 import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot } from './battleDirector'
 import { Kit } from './rangeScene'
-import { THEIR_TONES, TURRET, buildTank } from './tankModel'
+import { THEIR_TONES, TURRET, buildTank, tonesOf } from './tankModel'
 import { tankShapeOf } from './tankShape'
 
 const K = RENDER.battle
@@ -22,6 +23,8 @@ const { widthM: W, depthM: H } = BATTLE.field
 export interface TankLook {
   spec: VehicleSpec
   geometry: Geometry
+  /** The paint it wears. The other side keeps its own colours whatever this says. */
+  paint?: PaintId
 }
 
 /** Across the ground is x; up the ground is away from the camera's start, so it is minus z. */
@@ -93,7 +96,7 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
   const shapes = [tankShapeOf(mine.spec, mine.geometry), tankShapeOf(theirs.spec, theirs.geometry)] as const
   const tanks = battle.tanks.map((tank): TankParts => {
     const shape = shapes[tank.side]
-    const group = tank.side === 0 ? buildTank(kit, shape) : buildTank(kit, shape, THEIR_TONES)
+    const group = tank.side === 0 ? buildTank(kit, shape, mine.paint ? tonesOf(mine.paint) : undefined) : buildTank(kit, shape, THEIR_TONES)
     const turret = group.getObjectByName(TURRET) ?? null
     const flash = kit.glow(new SphereGeometry(K.flashM, 6, 4), c.flash)
     flash.position.set(shape.gun.rootXM - shape.turret.xM + shape.gun.lengthM, shape.gun.yM, 0)

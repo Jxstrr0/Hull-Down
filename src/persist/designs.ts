@@ -1,6 +1,7 @@
 // The plan chest: the designs kept on this device. They live in localStorage
 // for now because they are small. Careers (PR 8) move to IndexedDB.
 import { BASELINE_SPEC } from '../data/baseline'
+import { cleanPaint, DEFAULT_PAINT, type PaintId } from '../data/paint'
 import type { VehicleSpec } from '../sim/vehicle'
 import { cleanSpec } from './specCodec'
 
@@ -24,6 +25,19 @@ export interface SavedDesign {
   spec: VehicleSpec
   /** The prototypes built from it, oldest first. */
   revisions: Revision[]
+  /** The paint it wears. Looks only, so it is kept beside the spec and a repaint is not a new build. Left out means the default. */
+  paint?: PaintId
+}
+
+/** The paint a design wears. */
+export function paintOf(design: SavedDesign): PaintId {
+  return design.paint ?? DEFAULT_PAINT
+}
+
+/** Repaint a design. The default is not written down, so old saves and new ones read alike. */
+export function setPaint(design: SavedDesign, paint: PaintId): void {
+  if (paint === DEFAULT_PAINT) delete design.paint
+  else design.paint = paint
 }
 
 export interface DesignStore {
@@ -158,10 +172,12 @@ export function cleanStore(raw: unknown): DesignStore {
   for (const item of designs as unknown[]) {
     if (kept.length >= MAX_DESIGNS) break
     if (typeof item !== 'object' || item === null) continue
-    const { projectNo, spec, revisions } = item as { projectNo?: unknown; spec?: unknown; revisions?: unknown }
+    const { projectNo, spec, revisions, paint } = item as { projectNo?: unknown; spec?: unknown; revisions?: unknown; paint?: unknown }
     if (!wholeNumber(projectNo) || seen.has(projectNo)) continue
     seen.add(projectNo)
-    kept.push({ projectNo, spec: cleanSpec(spec), revisions: cleanRevisions(revisions) })
+    const design: SavedDesign = { projectNo, spec: cleanSpec(spec), revisions: cleanRevisions(revisions) }
+    setPaint(design, cleanPaint(paint))
+    kept.push(design)
   }
   if (kept.length === 0) return newStore()
 

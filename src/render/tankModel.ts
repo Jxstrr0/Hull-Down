@@ -2,15 +2,24 @@
 // Parts of one colour are joined into one mesh, so a tank is a handful of
 // meshes however much detail it carries.
 import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Group, Shape } from 'three'
+import { PAINT, type PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
+import { camoOf, camoPlaces, type Camo } from './camo'
 import type { Kit } from './rangeScene'
 import type { LoftPart, Mount, TankPart, TankShape, Tone } from './tankShape'
 
 /** The name of the part of a built tank that turns with the gun. */
 export const TURRET = 'turret'
 
-/** The three colours a tank is painted in. */
-export type Tones = Record<Tone, string>
+/** The three colours a tank is painted in, and the pattern over its plate if it wears one. */
+export type Tones = Record<Tone, string> & { camo?: Camo }
+
+/** The colours of a paint scheme. */
+export function tonesOf(paint: PaintId): Tones {
+  const scheme = PAINT[paint]
+  const camo = camoOf(paint)
+  return { body: scheme.body, dark: scheme.dark, tile: scheme.tile, ...(camo ? { camo } : {}) }
+}
 
 export const OUR_TONES: Tones = { body: RENDER.colours.tank, dark: RENDER.colours.tankDark, tile: RENDER.colours.tankTile }
 export const THEIR_TONES: Tones = { body: RENDER.battle.theirTank, dark: RENDER.battle.theirTankDark, tile: RENDER.battle.theirTankTile }
@@ -122,7 +131,11 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
     const geometry = new BufferGeometry()
     geometry.setAttribute('position', new Float32BufferAttribute(pile.corners, 3))
     geometry.computeVertexNormals()
-    const mesh = kit.mesh(geometry, tones[pile.tone])
+    let mesh
+    if (pile.tone === 'body' && tones.camo) {
+      geometry.setAttribute('uv', new Float32BufferAttribute(camoPlaces(pile.corners, tones.camo.tileM), 2))
+      mesh = kit.patterned(geometry, tones.camo)
+    } else mesh = kit.mesh(geometry, tones[pile.tone])
     ;(pile.mount === 'turret' ? top : tank).add(mesh)
   }
   return tank

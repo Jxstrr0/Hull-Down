@@ -2,6 +2,7 @@
 // back to the part that would fix each failure. A run can be watched in 3D;
 // that code is only fetched when the player asks for it.
 import { GROUNDS, RANGE, RUN_PART_IDS, type Marks, type RunPartId } from '../data/range'
+import type { PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import { STRINGS, fill } from '../data/strings'
 import {
@@ -44,6 +45,8 @@ export interface RangeScreenArgs {
   marks: Marks
   sheet: StatSheet
   projectNo: number
+  /** The paint the prototype wears in the 3D views. */
+  paint: PaintId
   back(): void
   /** Leave the range and open the control that fixes a failure. */
   fix(part: FixPart): void
@@ -315,6 +318,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
         view: chosen,
         spec: args.spec,
         geometry: sheet.geometry,
+        paint: args.paint,
         onFrame: (frame) => {
           // The bar follows the run, except under a finger.
           if (!heldWhilePlaying) scrub.value = String(frame.timeS)
