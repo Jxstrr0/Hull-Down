@@ -191,6 +191,14 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       drawPanel()
       showTab()
     },
+    load: (from) => {
+      // The service tank takes the board, under the name the design there has.
+      const name = spec.name
+      design.spec = cleanSpec(from)
+      design.spec.name = name
+      spec = design.spec
+      commit(() => undefined)
+    },
     redraw: () => {
       if (tab === 'bureau') drawPanel()
     },

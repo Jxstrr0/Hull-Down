@@ -4,6 +4,12 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Try an upgrade** (0.10.3.0): with a tank in service, read the year 1
+  report. If the army opens a contract, tap "Put the service tank on the
+  drawing board" twice, change something that answers it (Crew tab,
+  Improved comfort eases the crew's work), come back to Bureau and fit it.
+  The loaded tank replaces the design on the board, keeping its name. Say
+  if you would rather it opened as a new design.
 - **Upgrade contract numbers** (0.10.2.0): my picks, yours to change. A
   package costs one tank's price to work up, pays 4,000,000 kr, gives army
   +3 and ministry +1. It must add 4 reliability points, or 10% on the plate
@@ -210,6 +216,12 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.10.3.0, PR 10d: upgrade contracts on the Bureau tab.** A tank in
+  service now shows its upgrade contract: what the army asks for, the
+  design on the drawing board judged against it (the figure asked about,
+  weight, cooling, cost, fee), and why it cannot be fitted if it cannot.
+  "Put the service tank on the drawing board" loads it to work from; "Fit
+  it as the Model 81A" fits the package. Both take two taps.
 - **0.10.2.0, PR 10c: upgrade contract rules (no screen yet).** After a
   year of service the army can open one upgrade contract on a tank, on what
   the year showed: breakdowns, a plate that was holed, a slow first shot,

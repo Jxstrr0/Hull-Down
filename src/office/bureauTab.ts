@@ -8,8 +8,9 @@ import { STRINGS, fill } from '../data/strings'
 import { SCORE_AXES, SCORING, TENDER_RULES } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
 import {
-  buildBlock, buildPrototype, enterTender, newCareer, prototypeCostKr, prototypeTrial, reportOf, serviceYear, serviceYearsLeft,
-  startProduction, tenderIdOf, tenderOf, type Adopted, type Career,
+  buildBlock, buildPrototype, enterTender, fitUpgrade, newCareer, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
+  serviceSpec, serviceYear, serviceYearsLeft, startProduction, tenderIdOf, tenderOf, upgradeBlock, upgradesLeft, type Adopted,
+  type Career,
 } from '../sim/career/career'
 import type { BidScore, Trialled } from '../sim/career/score'
 import type { FieldReport } from '../sim/career/service'
@@ -23,8 +24,8 @@ import {
 } from '../ui/careerWords'
 import { el } from '../ui/dom'
 import {
-  complaintText, exerciseLine, feeLine, fleetLine, lessonLines, productionLines, productionSummary, rateLine, reportStanding,
-  runningLines, serviceTitle, shootLine, yearsLeftLine,
+  askText, complaintText, exerciseLine, feeLine, fittedLine, fleetLine, lessonLines, productionLines, productionSummary,
+  rateLine, reportStanding, runningLines, serviceTitle, shootLine, upgradeCheck, yearsLeftLine,
 } from '../ui/serviceWords'
 import { fixed, money } from '../ui/format'
 
@@ -40,6 +41,8 @@ export interface BureauOptions {
   goToPart: (part: string) => void
   /** Open the list of faults. */
   toFaults: () => void
+  /** Put a tank on the drawing board in place of the design that is there. */
+  load: (spec: VehicleSpec) => void
   /** Draw the panel again: something here has changed. */
   redraw: () => void
 }
@@ -83,6 +86,8 @@ export function createBureau(options: BureauOptions): Bureau {
   let reports = new Map<string, FieldReport>()
   /** The tank whose next report has been asked for. */
   let reporting: number | null = null
+  /** The upgrade button that has been tapped once: "load:0" or "fit:0". */
+  let upgradeArmed = ''
 
   function keep(next: Career): void {
     career = next
@@ -144,7 +149,7 @@ export function createBureau(options: BureauOptions): Bureau {
     const money_ = el('dl', 'bu-rows')
     row(money_, B.budget, money(career.budgetKr))
     for (const tank of career.adopted) {
-      row(money_, B.adopted, fill(B.adoptedLine, { designation: tank.designation, name: tank.name || STRINGS.office.designs.unnamed }))
+      row(money_, B.adopted, fill(B.adoptedLine, { designation: serviceDesignation(tank), name: tank.name || STRINGS.office.designs.unnamed }))
     }
     box.append(money_, el('h4', 'bu-sub', B.standingHeading))
     const standing = el('dl', 'bu-rows')
@@ -470,15 +475,79 @@ export function createBureau(options: BureauOptions): Bureau {
     return out
   }
 
+  /** The contract the army has open on a tank, the board judged against it, and the packages fitted so far. */
+  function drawUpgrade(tank: Adopted, index: number, spec: VehicleSpec): HTMLElement[] {
+    const U = V.upgrade
+    const out: HTMLElement[] = [el('h4', 'bu-sub', U.heading)]
+    if (tank.upgrades.length > 0) {
+      const list = el('ul', 'sv-lines')
+      list.setAttribute('aria-label', U.fitted)
+      for (const upgrade of tank.upgrades) list.append(el('li', 'sv-line', fittedLine(tank, upgrade)))
+      out.push(list)
+    }
+    const check = upgradeCheck(career, index, spec)
+    if (!tank.contract || !check) {
+      if (upgradesLeft(tank) === 0) out.push(el('p', 'ctl-note', fill(U.spent, { n: String(SERVICE.upgrade.letters.length) })))
+      else if (serviceYearsLeft(tank) > 0) out.push(el('p', 'ctl-note', U.none))
+      return out.length > 1 ? out : []
+    }
+    out.push(
+      el('p', 'bu-said', askText(tank.contract)),
+      el('p', 'ctl-note', U.rules),
+      el('p', 'bu-board', fill(U.board, { name: spec.name || STRINGS.office.designs.unnamed })),
+    )
+    const rows = el('dl', 'bu-rows')
+    for (const line of check.rows) row(rows, line.label, line.value)
+    out.push(rows, el('p', check.met ? 'sv-said' : 'ctl-note', check.met ? `✓ ${U.met}` : `✗ ${U.notMet}`))
+    if (check.block) {
+      out.push(el('p', 'ctl-issue', check.blockText))
+      if (check.block === 'illegal') {
+        const faults = button(`upgrade:faults:${index}`, C.build.toFaults)
+        faults.addEventListener('click', options.toFaults)
+        out.push(faults)
+      }
+    }
+    const acts = el('div', 'sv-actions')
+    const loadKey = `load:${index}`
+    const load = button(`upgrade:${loadKey}`, upgradeArmed === loadKey ? U.loadConfirm : U.load, upgradeArmed === loadKey ? 'btn btn-armed' : 'btn')
+    load.addEventListener('click', () => {
+      if (upgradeArmed !== loadKey) {
+        upgradeArmed = loadKey
+        options.redraw()
+        return
+      }
+      upgradeArmed = ''
+      options.load(serviceSpec(career.adopted[index]!))
+    })
+    if (check.block !== 'same') acts.append(load)
+    if (!check.block) {
+      const fitKey = `fit:${index}`
+      const on = upgradeArmed === fitKey
+      const fit = button(`upgrade:${fitKey}`, on ? U.fitConfirm : fill(U.fit, { designation: check.designation }), on ? 'btn btn-armed' : 'btn btn-go')
+      fit.addEventListener('click', () => {
+        if (upgradeArmed !== fitKey) upgradeArmed = fitKey
+        else {
+          upgradeArmed = ''
+          const now = options.spec()
+          if (upgradeBlock(career, index, now) === null) keep(fitUpgrade(career, index, now))
+        }
+        options.redraw()
+      })
+      acts.append(fit)
+    }
+    out.push(acts)
+    return out
+  }
+
   /** One section for each tank the army has adopted, the newest first. */
-  function drawService(): HTMLElement[] {
+  function drawService(spec: VehicleSpec): HTMLElement[] {
     return career.adopted.map((tank, index) => {
       const box = el('section', 'bu sv')
       box.dataset.key = `service:${index}`
-      box.append(el('h3', 'ds-group-title', fill(V.heading, { designation: tank.designation })))
+      box.append(el('h3', 'ds-group-title', fill(V.heading, { designation: serviceDesignation(tank) })))
       if (tank.name) box.append(el('p', 'bu-board', serviceTitle(tank)))
       box.append(...drawProduction(tank, index))
-      if (tank.production) box.append(...drawYears(tank, index))
+      if (tank.production) box.append(...drawUpgrade(tank, index, spec), ...drawYears(tank, index))
       return box
     }).reverse()
   }
@@ -500,6 +569,7 @@ export function createBureau(options: BureauOptions): Bureau {
       reports = new Map()
       reporting = null
       startArmed = false
+      upgradeArmed = ''
       picked = { ...SERVICE.defaultProduction }
       read = null
       askedKey = ''
@@ -515,7 +585,7 @@ export function createBureau(options: BureauOptions): Bureau {
     const box = el('div', 'bureau')
     const decision = drawDecision()
     if (decision) box.append(decision)
-    box.append(...drawService())
+    box.append(...drawService(spec))
     box.append(drawTender(), drawBureau(), drawAdvisor(spec), drawShop(spec), drawPrototypes(), drawRestart())
     return box
   }

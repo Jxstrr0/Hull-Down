@@ -4,7 +4,12 @@ import { BODIES, type Body } from '../data/career'
 import { SERVICE, type Production } from '../data/service'
 import { STRINGS, fill } from '../data/strings'
 import { TENDERS } from '../data/tenders'
-import { productionStanding, type Adopted } from '../sim/career/career'
+import {
+  serviceSpec, upgradeBlock, upgradeCostKr, type Adopted, type Career, type UpgradeBlock, productionStanding,
+} from '../sim/career/career'
+import { askMeasure, fixedPartsChanged, massCeilingT, type Upgrade, type UpgradeAsk } from '../sim/career/upgrade'
+import type { VehicleSpec } from '../sim/vehicle/spec'
+import { buildStatSheet } from '../sim/vehicle/stats'
 import { serviceFaults, serviceUnitCostKr, type Complaint, type FieldReport } from '../sim/career/service'
 import type { StatSheet } from '../sim/vehicle/stats'
 import { battleFindingText, battleGroundText } from './battleWords'
@@ -145,4 +150,70 @@ export function yearsLeftLine(tank: Adopted): string {
   const left = SERVICE.years - tank.years
   if (left <= 0) return fill(S.years.closed, { n: String(SERVICE.years) })
   return left === 1 ? S.years.oneLeft : fill(S.years.left, { n: String(left) })
+}
+
+const U = S.upgrade
+
+function zoneOf(ask: UpgradeAsk): string {
+  return ask.zone ? STRINGS.zones[ask.zone].name.toLowerCase() : ''
+}
+
+/** What the army asks for, as a sentence. */
+export function askText(ask: UpgradeAsk): string {
+  return fill(U.asks[ask.kind], { zone: zoneOf(ask) })
+}
+
+/** "Model 81A · after year 2 · less work for the crew". */
+export function fittedLine(tank: Pick<Adopted, 'designation'>, upgrade: Upgrade): string {
+  return fill(U.fittedLine, {
+    designation: `${tank.designation}${upgrade.letter}`, n: String(upgrade.afterYear),
+    ask: fill(U.askShort[upgrade.ask.kind], { zone: zoneOf(upgrade.ask) }),
+  })
+}
+
+export interface UpgradeCheck {
+  /** The figures a package is judged by. */
+  rows: { label: string; value: string }[]
+  /** Whether the board gives the army what it asked for. */
+  met: boolean
+  block: UpgradeBlock | null
+  /** Why it cannot be fitted, in words. Empty when it can. */
+  blockText: string
+  /** The designation it would carry. */
+  designation: string
+}
+
+/** The design on the board, judged as the next package for a tank with a contract open. Null when none is. */
+export function upgradeCheck(career: Career, index: number, spec: VehicleSpec): UpgradeCheck | null {
+  const tank = career.adopted[index]
+  const ask = tank?.contract
+  if (!tank || !ask) return null
+  const limits = TENDERS[tank.tender].limits
+  const before = buildStatSheet(serviceSpec(tank), limits)
+  const after = buildStatSheet(spec, limits)
+  const measure = askMeasure(ask, before, after)
+  const places = ask.kind === 'firstShot' ? 1 : 0
+  const ceiling = massCeilingT(buildStatSheet(tank.spec, limits))
+  const rows = [
+    {
+      label: fill(U.measures[ask.kind], { zone: ask.zone ? STRINGS.zones[ask.zone].name : '' }),
+      value: fill(U.measureValue, {
+        was: fixed(measure.was, places), now: fixed(measure.now, places), need: fixed(measure.need, places), unit: U.units[ask.kind],
+        way: measure.need >= measure.was ? U.orMore : U.orLess,
+      }),
+    },
+    { label: U.weight, value: fill(U.weightValue, { now: fixed(after.massT, 1), max: fixed(ceiling, 1) }) },
+    { label: U.cooling, value: fill(U.coolingValue, { n: fixed(after.growth.coolingHp, 0) }) },
+    { label: U.cost, value: money(upgradeCostKr(tank, spec)) },
+    { label: U.fee, value: money(SERVICE.upgrade.feeKr) },
+  ]
+  const block = upgradeBlock(career, index, spec)
+  const blockText = block === null ? '' : fill(U.blocks[block], {
+    parts: fixedPartsChanged(tank.spec, spec).map((part) => STRINGS.controls[part].label.toLowerCase()).join(', '),
+    over: fixed(Math.max(0.1, after.massT - ceiling), 1),
+  })
+  return {
+    rows, met: measure.met, block, blockText,
+    designation: `${tank.designation}${SERVICE.upgrade.letters[tank.upgrades.length] ?? ''}`,
+  }
 }
