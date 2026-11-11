@@ -2,13 +2,14 @@
 // finished: nothing here decides a result. This file and three.js are loaded
 // when the player first asks to watch a run, never before.
 import {
-  BoxGeometry, BufferGeometry, Color, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, Fog,
-  Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, Scene, Shape,
-  SphereGeometry, WebGLRenderer, type Material,
+  BoxGeometry, BufferGeometry, Color, DataTexture, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, Fog,
+  Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, RepeatWrapping,
+  Scene, Shape, SphereGeometry, SRGBColorSpace, WebGLRenderer, type Material, type Texture,
 } from 'three'
 import { GUNNERY } from '../data/gunnery'
 import { RANGE, type GunneryTestId } from '../data/range'
 import { RENDER } from '../data/render'
+import type { PaintId } from '../data/paint'
 import type { Fire } from '../sim/gunnery/fire'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
 import type { EnduranceRun, GunneryRun } from '../sim/trials'
@@ -16,7 +17,8 @@ import { shotAt, type RangeTest, type Scene as Where, type ViewId } from './dire
 import { courseOutline, coursePath, mudPatch, trenchPit, poseAt, stripPath, type Path, type Point, type Pose } from './path'
 import { frameAt, lengthS, type RunRecord } from './playback'
 import { reelOf, type ReelFrame } from './shootReel'
-import { buildTank } from './tankModel'
+import type { Camo } from './camo'
+import { buildTank, tonesOf } from './tankModel'
 import { tankShapeOf, type TankShape } from './tankShape'
 import { legGround, placeOnLeg, type LegGround } from './terrain'
 import { puffAt, timelapseOf, type LapseFrame } from './timelapse'
@@ -54,6 +56,8 @@ export interface RangeViewArgs {
   view: ViewId
   spec: VehicleSpec
   geometry: Geometry
+  /** The paint the tank wears. */
+  paint: PaintId
   /** Called with every picture drawn. */
   onFrame(frame: ViewFrame): void
   /** Called when the run starts playing, is paused, or reaches its end. */
@@ -83,6 +87,7 @@ export interface RangeView {
 export class Kit {
   private readonly geometries: BufferGeometry[] = []
   private readonly materials = new Map<string, Material>()
+  private readonly textures: Texture[] = []
 
   /** A flat colour. `opacity` under 1 makes it see-through, for smoke. */
   paint(colour: string, opacity = 1): Material {
@@ -100,6 +105,25 @@ export class Kit {
   mesh(geometry: BufferGeometry, colour: string, opacity = 1): Mesh {
     this.geometries.push(geometry)
     return new Mesh(geometry, this.paint(colour, opacity))
+  }
+
+  /** A shape painted with a pattern that repeats over it. The shape says where on the pattern each corner falls. */
+  patterned(geometry: BufferGeometry, camo: Camo): Mesh {
+    this.geometries.push(geometry)
+    const key = `camo/${camo.key}`
+    let material = this.materials.get(key)
+    if (!material) {
+      const texture = new DataTexture(camo.pixels, camo.sizePx, camo.sizePx)
+      texture.wrapS = RepeatWrapping
+      texture.wrapT = RepeatWrapping
+      texture.colorSpace = SRGBColorSpace
+      texture.generateMipmaps = true
+      texture.needsUpdate = true
+      this.textures.push(texture)
+      material = new MeshLambertMaterial({ map: texture, flatShading: true })
+      this.materials.set(key, material)
+    }
+    return new Mesh(geometry, material)
   }
 
   /** A shape that shines by itself, whatever the light: a round in the air, the flash at the muzzle. */
@@ -149,6 +173,7 @@ export class Kit {
   dispose(): void {
     for (const geometry of this.geometries) geometry.dispose()
     for (const material of this.materials.values()) material.dispose()
+    for (const texture of this.textures) texture.dispose()
   }
 }
 
@@ -440,7 +465,7 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   scene.add(sun)
 
   const shape = tankShapeOf(args.spec, args.geometry)
-  const tank = buildTank(kit, shape)
+  const tank = buildTank(kit, shape, tonesOf(args.paint))
   scene.add(tank)
   const show = source.test === 'endurance'
     ? enduranceShow(kit, scene, source.run, shape, args.spec.hull.engineAt)

@@ -27,9 +27,10 @@ import { renderArmourTab, type ArmourTabState } from './armourTab'
 import { renderBlueprint, type ZoneTiles } from './blueprint'
 import { VIEWS, ZONE_VIEW, type View } from './drawing'
 import {
-  MAX_DESIGNS, addDesign, currentDesign, keepRevision, lastRevision, loadStore, openDesign, restoreRevision, sameBuild, saveStore,
-  scrapDesign,
+  MAX_DESIGNS, addDesign, currentDesign, keepRevision, lastRevision, loadStore, openDesign, paintOf, restoreRevision, sameBuild,
+  saveStore, scrapDesign, setPaint,
 } from '../persist/designs'
+import { PAINT, PAINT_IDS } from '../data/paint'
 import { NAME_MAX, cleanName, cleanSpec } from '../persist/specCodec'
 import { issueText, renderGunnery, renderReadouts, renderStations } from './readouts'
 import { renderRangeScreen } from '../ui/rangeScreen'
@@ -576,6 +577,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       marks,
       sheet,
       projectNo: design.projectNo,
+      paint: paintOf(design),
       back: () => {
         closeRange()
         panel.querySelector<HTMLElement>('[data-key="to-range"]')?.focus({ preventScroll: true })
@@ -626,6 +628,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       limits,
       projectNo: design.projectNo,
       name: spec.name || X.unnamed,
+      paint: paintOf(design),
       back: () => {
         closeRange()
         panel.querySelector<HTMLElement>('[data-key="to-battles"]')?.focus({ preventScroll: true })
@@ -685,7 +688,53 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       battles.append(toBattles)
     }
     box.append(battles)
+    box.append(drawPaint())
     box.append(drawPrototypes())
+    return box
+  }
+
+  /** The paint shop. Paint is looks only: picking one changes nothing but the 3D views. */
+  function drawPaint(): HTMLElement {
+    const P = STRINGS.paint
+    const box = el('section', 'protos')
+    box.append(el('h3', 'ds-group-title', P.title), el('p', 'ctl-note', P.about))
+    const group = el('div', 'paints')
+    group.setAttribute('role', 'radiogroup')
+    group.setAttribute('aria-label', P.listLabel)
+    const worn = paintOf(design)
+    for (const id of PAINT_IDS) {
+      const on = id === worn
+      const button = el('button', on ? 'opt opt-on' : 'opt')
+      button.type = 'button'
+      button.dataset.key = `paint:${id}`
+      button.setAttribute('role', 'radio')
+      button.setAttribute('aria-checked', on ? 'true' : 'false')
+      const headRow = el('span', 'opt-head')
+      headRow.append(el('span', 'opt-name', P.schemes[id].name))
+      if (on) headRow.append(el('span', 'opt-tag', P.worn))
+      // A strip of the colours, in the shares the scheme wears them.
+      const strip = el('span', 'paint-strip')
+      strip.setAttribute('aria-hidden', 'true')
+      const scheme = PAINT[id]
+      let rest = 1
+      for (const patch of scheme.patches) rest -= patch.share
+      for (const part of [{ colour: scheme.body, share: rest }, ...scheme.patches]) {
+        const chip = el('span', 'paint-chip')
+        chip.style.background = part.colour
+        chip.style.flexGrow = String(part.share)
+        strip.append(chip)
+      }
+      button.append(headRow, strip, el('span', 'opt-note', P.schemes[id].note))
+      button.addEventListener('click', () => {
+        if (id === paintOf(design)) return
+        setPaint(design, id)
+        kept = saveStore(storage, store)
+        drawPanel()
+        panel.querySelector<HTMLElement>(`[data-key="paint:${id}"]`)?.focus({ preventScroll: true })
+      })
+      group.append(button)
+    }
+    box.append(group)
     return box
   }
 
@@ -908,7 +957,12 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     copy.addEventListener('click', () => {
       const from = structuredClone(spec)
       if (from.name) from.name = fill(X.copyName, { name: from.name })
-      if (addDesign(store, from)) showCurrent()
+      const paint = paintOf(design)
+      if (addDesign(store, from)) {
+        // A copy is painted like the design it was copied from.
+        setPaint(currentDesign(store), paint)
+        showCurrent()
+      }
     })
     const scrap = actionButton('design-scrap', X.scrap)
     const scrapNo = design.projectNo
