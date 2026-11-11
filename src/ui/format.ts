@@ -17,3 +17,17 @@ export function plain(value: number): string {
   if (Number.isInteger(value)) return String(value)
   return value.toFixed(Math.abs(value) < 10 ? 2 : 1)
 }
+
+/** A change in a number, with its sign: `+0.8`, `−0.4`, `0.0`. */
+export function signed(value: number, places: number): string {
+  const text = Math.abs(value).toFixed(places)
+  if (Number(text) === 0) return text
+  return (value > 0 ? '+' : '−') + text
+}
+
+/** A change in korona, with its sign: `+Kr 35k`, `−Kr 12k`. */
+export function signedMoney(kr: number): string {
+  const text = money(Math.abs(kr))
+  if (Math.abs(kr) < 500) return money(0)
+  return (kr > 0 ? '+' : '−') + text
+}

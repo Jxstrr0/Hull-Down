@@ -6,12 +6,9 @@ import '@fontsource/spline-sans-mono/latin-400.css'
 import '@fontsource/spline-sans-mono/latin-500.css'
 import '@fontsource/space-grotesk/latin-500.css'
 import './style.css'
-import { BASELINE_SPEC } from './data/baseline'
 import { STRINGS, fill } from './data/strings'
 import { PACT_LIMITS_GEN1 } from './data/tuning'
-import { renderDataSheet } from './office/dataSheet'
-import { renderSheet } from './office/sheet'
-import { buildStatSheet } from './sim/vehicle'
+import { renderDesignScreen } from './office/designScreen'
 import { finishLoading } from './ui/loading'
 import { applyTheme, loadTheme, otherTheme, type Theme } from './ui/theme'
 
@@ -60,9 +57,7 @@ function mount(): void {
   build.textContent = `v${__GAME_VERSION__} · ${__BUILD_SHA__} · ${__BUILD_DATE__}`
   footer.append(studio, build)
 
-  // PR 1: show the reference tank's data sheet. PR 2 replaces this with the design office.
-  const stats = buildStatSheet(BASELINE_SPEC, PACT_LIMITS_GEN1)
-  app.append(header, renderSheet(stats.name, renderDataSheet(stats, PACT_LIMITS_GEN1)), footer)
+  app.append(header, renderDesignScreen(PACT_LIMITS_GEN1), footer)
 }
 
 mount()

@@ -1,4 +1,4 @@
-// A read-only data sheet: the stat sheet for one design, laid out for a phone.
+// The full readouts: every number on the stat sheet, grouped for a phone.
 import { STRINGS, fill } from '../data/strings'
 import { AREAS, type Issue, type IssueCode, type Limits, type StatSheet } from '../sim/vehicle'
 import { el } from '../ui/dom'
@@ -58,43 +58,13 @@ function weightGroup(sheet: StatSheet): HTMLElement {
   return box
 }
 
-function faultsGroup(issues: Issue[]): HTMLElement {
-  const box = el('section', 'ds-group')
-  box.append(el('h3', 'ds-group-title', D.groups.faults))
-  if (issues.length === 0) {
-    box.append(el('p', 'ds-clear', D.noFaults))
-    return box
-  }
-  const list = el('ul', 'ds-faults')
-  for (const issue of issues) {
-    const item = el('li', `ds-fault ds-fault-${issue.severity}`)
-    item.append(
-      el('span', 'ds-fault-kind', issue.severity === 'error' ? D.error : D.warning),
-      el('span', 'ds-fault-text', issueText(issue)),
-    )
-    list.append(item)
-  }
-  box.append(list)
-  return box
-}
-
-export function renderDataSheet(sheet: StatSheet, limits: Limits): HTMLElement {
+export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
   const r = D.rows
   const u = D.units
-  const root = el('article', 'ds')
-
-  const head = el('header', 'ds-head')
-  const titles = el('div', 'ds-titles')
-  titles.append(el('h2', 'ds-name', sheet.name), el('p', 'ds-intro', D.intro))
-  head.append(titles, el('p', 'sheet-stamp', D.stamp))
-
-  const weight = el('p', 'ds-weight', fill(D.weightLine, { mass: fixed(sheet.massT, 1), limit: fixed(limits.maxMassT, 1) }))
-
+  const root = el('div', 'ds')
   const m = sheet.mobility
   const f = sheet.firepower
   root.append(
-    head,
-    weight,
     group(D.groups.general, [
       [r.mass, unit(u.tonnes, sheet.massT, 1)],
       [r.cost, money(sheet.unitCostKr)],
@@ -124,7 +94,6 @@ export function renderDataSheet(sheet: StatSheet, limits: Limits): HTMLElement {
       [r.spareCooling, unit(u.hp, sheet.growth.coolingHp, 0)],
     ]),
     weightGroup(sheet),
-    faultsGroup(sheet.issues),
     el('p', 'ds-note', D.note),
   )
   return root
