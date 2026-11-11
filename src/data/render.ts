@@ -24,6 +24,8 @@ export const RENDER = {
   },
   /** Seconds of the run played for each second watched. */
   playRate: { acceleration: 4, obstacles: 2 },
+  /** The scrub bar moves in steps of this many seconds of the run. */
+  scrubStepS: 0.1,
   /** The picture is never drawn finer than this many screen dots for each CSS pixel. */
   maxPixelRatio: 2,
   /** Longest stretch of time one drawn frame may cover, seconds. A phone that stalls does not skip the run. */
@@ -34,9 +36,28 @@ export const RENDER = {
     farM: 700,
     /** Height above the tank's tracks that the camera looks at. */
     lookUpM: 1.3,
-    /** Where the camera sits from the tank: behind it, above it and off to its right. */
-    acceleration: { backM: 12, upM: 4.5, sideM: 9 },
-    obstacles: { backM: 2, upM: 3.2, sideM: 21 },
+    /** Cameras that travel with the tank. Each sits this far behind it, above it and off to its right. */
+    seats: {
+      behind: { backM: 12, upM: 4.5, sideM: 9 },
+      side: { backM: 2, upM: 3.2, sideM: 21 },
+      above: { backM: 5, upM: 36, sideM: 0 },
+      front: { backM: -13, upM: 3, sideM: 10 },
+    },
+    director: {
+      /** On the strip the director cuts to a travelling camera at each of these distances. */
+      acceleration: [
+        { fromM: 0, seat: 'front' },
+        { fromM: 120, seat: 'behind' },
+        { fromM: 700, seat: 'side' },
+        { fromM: 1150, seat: 'front' },
+      ],
+      /**
+       * On the course a camera stands beside each obstacle: this high, this far
+       * off plus a share of the obstacle's length. It keeps the tank for `holdM`
+       * past the obstacle, and a travelling camera takes the run-out.
+       */
+      obstacles: { upM: 3, sideM: 16, sidePerM: 0.3, holdM: 5, after: 'behind' },
+    },
   },
   fog: { nearM: 120, farM: 520 },
   strip: {

@@ -2,13 +2,15 @@
 // back to the part that would fix each failure. A run can be watched in 3D;
 // that code is only fetched when the player asks for it.
 import { GROUNDS, RANGE, RUN_PART_IDS, type RunPartId } from '../data/range'
+import { RENDER } from '../data/render'
 import { STRINGS, fill } from '../data/strings'
 import {
   runProvingGround, type AccelerationRun, type EnduranceEvent, type EnduranceRun, type ObstacleResult, type RangeReport,
 } from '../sim/trials'
 import type { StatSheet, VehicleSpec } from '../sim/vehicle'
 import type { RunRecord } from '../render/playback'
-import type { RangeTest, RangeView } from '../render/rangeScene'
+import { VIEWS, type RangeTest, type ViewId } from '../render/director'
+import type { RangeView } from '../render/rangeScene'
 import { el } from './dom'
 import { fixed } from './format'
 
@@ -165,23 +167,65 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     const box = el('div', 'rg-view')
     const stage = el('div', 'rg-view-stage')
     const status = el('p', 'rg-view-status', V.loading)
-    const bar = el('div', 'rg-view-bar')
+
+    // Play or pause, and the bar that shows how far through the run it is.
+    const scrubRow = el('div', 'rg-view-row')
+    const toggle = el('button', 'btn rg-view-toggle', V.pause)
+    toggle.type = 'button'
+    toggle.dataset.key = `range-toggle:${test}`
+    const scrub = el('input', 'rg-view-scrub')
+    scrub.type = 'range'
+    scrub.min = '0'
+    scrub.step = String(RENDER.scrubStepS)
+    scrub.value = '0'
+    scrub.dataset.key = `range-scrub:${test}`
+    scrub.setAttribute('aria-label', V.scrub)
+    scrubRow.append(toggle, scrub)
+
+    const bar = el('div', 'rg-view-row')
     const readout = el('span', 'rg-view-readout')
-    const again = el('button', 'btn', V.again)
-    again.type = 'button'
-    again.dataset.key = `range-again:${test}`
-    again.hidden = true
     const close = el('button', 'btn', V.close)
     close.type = 'button'
     close.dataset.key = `range-close:${test}`
+    bar.append(readout, close)
+
+    // Which camera. The chosen one is marked by weight and by aria-pressed, not by colour alone.
+    let chosen: ViewId = 'director'
+    const views = el('div', 'seg rg-view-views')
+    views.setAttribute('role', 'group')
+    views.setAttribute('aria-label', V.cameraLabel)
+    const viewButtons = VIEWS.map((id) => {
+      const button = el('button', 'seg-item', V.camera[id])
+      button.type = 'button'
+      button.dataset.key = `range-view:${test}:${id}`
+      button.addEventListener('click', () => {
+        chosen = id
+        markViews()
+        view?.setView(id)
+      })
+      views.append(button)
+      return { id, button }
+    })
+    const markViews = (): void => {
+      for (const each of viewButtons) {
+        each.button.classList.toggle('seg-on', each.id === chosen)
+        each.button.setAttribute('aria-pressed', String(each.id === chosen))
+      }
+    }
+    markViews()
+
+    const controls = [toggle, scrub, ...viewButtons.map((each) => each.button)]
+    for (const control of controls) control.disabled = true
     stage.append(status)
-    bar.append(readout, again, close)
-    box.append(stage, bar)
+    box.append(stage, scrubRow, bar, views)
     slot.replaceChildren(box)
     opener.hidden = true
 
     let view: RangeView | undefined
     let closed = false
+    let playing = false
+    /** True while a finger holds the scrub bar, and the run was playing when it took hold. */
+    let heldWhilePlaying = false
     closeView = (): void => {
       closed = true
       view?.dispose()
@@ -193,10 +237,27 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
       closeView()
       opener.focus({ preventScroll: true })
     })
-    again.addEventListener('click', () => {
-      again.hidden = true
-      view?.replay()
+    toggle.addEventListener('click', () => {
+      heldWhilePlaying = false
+      if (playing) view?.pause()
+      else view?.play()
     })
+    // Dragging the bar holds the run still under the finger, then lets it go on.
+    const letGo = (): void => {
+      if (!heldWhilePlaying) return
+      heldWhilePlaying = false
+      view?.play()
+    }
+    scrub.addEventListener('pointerdown', () => {
+      if (!playing) return
+      heldWhilePlaying = true
+      view?.pause()
+      // The finger may come up anywhere, and a tap that moves nothing sends no `change`.
+      window.addEventListener('pointerup', letGo, { once: true })
+      window.addEventListener('pointercancel', letGo, { once: true })
+    })
+    scrub.addEventListener('change', letGo)
+    scrub.addEventListener('input', () => view?.seek(Number(scrub.value)))
     box.scrollIntoView({ block: 'nearest' })
 
     try {
@@ -206,18 +267,25 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
         host: stage,
         label: V.label[test],
         test,
+        view: chosen,
         spec: args.spec,
         geometry: sheet.geometry,
         record,
         onFrame: (frame) => {
-          readout.textContent = fill(V.readout, {
-            time: fixed(frame.timeS, 1), speed: fixed(frame.speedKmh, 0), dist: fixed(frame.distanceM, 0),
-          })
+          const time = fixed(frame.timeS, 1)
+          readout.textContent = fill(V.readout, { time, speed: fixed(frame.speedKmh, 0), dist: fixed(frame.distanceM, 0) })
+          // The bar follows the run, except under a finger.
+          if (!heldWhilePlaying) scrub.value = String(frame.timeS)
+          scrub.setAttribute('aria-valuetext', fill(V.scrubValue, { time, length: fixed(Number(scrub.max), 1) }))
         },
-        onEnd: () => {
-          again.hidden = false
+        onState: (state) => {
+          playing = state.playing
+          if (heldWhilePlaying) return
+          toggle.textContent = state.playing ? V.pause : state.ended ? V.again : V.play
         },
       })
+      scrub.max = String(view.lengthS)
+      for (const control of controls) control.disabled = false
       status.remove()
     } catch {
       // No 3D on this device, or the code could not be fetched. The report still says it all.
