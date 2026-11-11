@@ -28,8 +28,8 @@ export interface Sound {
   setOn(on: boolean): void
   /** Call from a tap: makes the sound ready, which a browser only allows then. */
   wake(): void
-  /** A short sound, now. `calibreMm` shapes the gun. */
-  cue(id: CueId, calibreMm?: number): void
+  /** A short sound, now. `calibreMm` shapes the gun; `gain` turns it down for being far off. */
+  cue(id: CueId, how?: { calibreMm?: number; gain?: number }): void
   /**
    * The engine and tracks of a tank, as they are this instant. Call it with
    * every picture drawn: when the calls stop, the tank goes quiet by itself.
@@ -161,12 +161,13 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     source.stop(end)
   }
 
-  function cue(id: CueId, calibreMm?: number): void {
+  function cue(id: CueId, how: { calibreMm?: number; gain?: number } = {}): void {
+    const calibreMm = how.calibreMm
     if (!enabled) return
     const ctx = ready()
     if (!ctx || !master || ctx.state !== 'running') return
     const shape = id === 'gun' && calibreMm ? gunShape(calibreMm) : { pitch: 1, stretch: 1 }
-    const gain = AUDIO.cueGain * (id === 'gun' ? 1 : AUDIO.farGain)
+    const gain = AUDIO.cueGain * (how.gain ?? (id === 'gun' ? 1 : AUDIO.farGain))
     const recordings: Partial<Record<CueId, { gain: number; synthGain: number }>> = AUDIO.recordings
     const recording = recordings[id]
     const tape = taped.get(id)

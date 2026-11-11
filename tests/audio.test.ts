@@ -208,7 +208,7 @@ describe('the synth', () => {
     const sound = createSound(true, () => null)
     expect(() => {
       sound.wake()
-      sound.cue('gun', 115)
+      sound.cue('gun', { calibreMm: 115 })
       sound.drone(VOICE, droneAt(VOICE, 20))
       sound.still()
       sound.setOn(false)

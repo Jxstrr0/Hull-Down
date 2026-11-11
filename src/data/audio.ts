@@ -48,7 +48,7 @@ export interface CueLayer {
   delayS?: number
 }
 
-export const CUE_IDS = ['gun', 'hit', 'miss', 'short'] as const
+export const CUE_IDS = ['gun', 'hit', 'miss', 'short', 'ricochet', 'held', 'pierce'] as const
 export type CueId = (typeof CUE_IDS)[number]
 
 export const AUDIO = {
@@ -162,5 +162,37 @@ export const AUDIO = {
       { kind: 'noise', filter: 'lowpass', q: 0.7, fromHz: 500, toHz: 90, attackS: 0.005, decayS: 0.4, gain: 0.8 },
       { kind: 'noise', filter: 'bandpass', q: 1, fromHz: 1800, toHz: 900, attackS: 0.06, decayS: 0.5, gain: 0.18, delayS: 0.08 },
     ],
+    // In a battle. A round that skids off the plate: a clang and a whine that falls away.
+    ricochet: [
+      { kind: 'noise', filter: 'bandpass', q: 3, fromHz: 3600, toHz: 2800, attackS: 0.001, decayS: 0.03, gain: 0.6 },
+      { kind: 'tone', wave: 'sine', fromHz: 1900, toHz: 1880, attackS: 0.002, decayS: 0.18, gain: 0.3 },
+      { kind: 'tone', wave: 'triangle', fromHz: 2600, toHz: 700, attackS: 0.01, decayS: 0.55, gain: 0.3, delayS: 0.03 },
+    ],
+    // A hit the armour holds: a heavy, dead knock with no ring to it.
+    held: [
+      { kind: 'noise', filter: 'bandpass', q: 1.5, fromHz: 1400, toHz: 700, attackS: 0.001, decayS: 0.07, gain: 0.7 },
+      { kind: 'tone', wave: 'triangle', fromHz: 210, toHz: 150, attackS: 0.002, decayS: 0.22, gain: 0.7 },
+      { kind: 'noise', filter: 'lowpass', q: 0.7, fromHz: 600, toHz: 150, attackS: 0.004, decayS: 0.3, gain: 0.5 },
+    ],
+    // A round that goes through: a sharp crack, then the boom from inside.
+    pierce: [
+      { kind: 'noise', filter: 'highpass', q: 0.7, fromHz: 2400, toHz: 1200, attackS: 0.001, decayS: 0.05, gain: 0.7 },
+      { kind: 'tone', wave: 'sine', fromHz: 110, toHz: 30, attackS: 0.006, decayS: 0.8, gain: 1, delayS: 0.05 },
+      { kind: 'noise', filter: 'lowpass', q: 0.7, fromHz: 1200, toHz: 90, attackS: 0.01, decayS: 1.3, gain: 0.8, delayS: 0.05 },
+    ],
   } satisfies Record<CueId, CueLayer[]>,
+
+  /** A battle, heard from beside the tank the camera is with. */
+  battle: {
+    /** Metres away at which a sound is half as loud. */
+    halfM: 350,
+    /** Nothing in the fight is quieter than this, 0 to 1: a far gun is still a gun. */
+    floorGain: 0.12,
+    /** The most short sounds started in one picture. More than this is only noise. */
+    mostAtOnce: 4,
+    /** Seconds of battle between two pictures past which the bar was dragged, and nothing is played. */
+    jumpS: 2,
+    /** How loud the engine is beside the guns, as a share of the range. */
+    droneShare: 0.7,
+  },
 } as const
