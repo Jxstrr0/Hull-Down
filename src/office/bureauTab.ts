@@ -37,6 +37,8 @@ export interface BureauOptions {
 
 export interface Bureau {
   draw: () => HTMLElement
+  /** The career as it stands now. */
+  career: () => Career
 }
 
 /** A seed for a new career. The sim never rolls its own: it is handed this. */
@@ -352,5 +354,5 @@ export function createBureau(options: BureauOptions): Bureau {
     return box
   }
 
-  return { draw }
+  return { draw, career: () => career }
 }

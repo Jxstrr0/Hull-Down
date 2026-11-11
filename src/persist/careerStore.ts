@@ -45,3 +45,13 @@ export function saveAdvisorMode(storage: KeyValue, mode: AdvisorMode): boolean {
     return false
   }
 }
+
+/** Forgets the career kept here. False when the browser would not. */
+export function dropCareer(storage: KeyValue & { removeItem(key: string): void }): boolean {
+  try {
+    storage.removeItem(CAREER_KEY)
+    return true
+  } catch {
+    return false
+  }
+}

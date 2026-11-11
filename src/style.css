@@ -1069,3 +1069,33 @@ body {
 .bu-bid-mine .bu-bid-name { text-decoration: underline; }
 .bu-bid-sum { grid-column: 2; font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-dim); }
 .bu-change { font-size: 0.95rem; }
+
+/* Saves: slots, the backup file and the save code. */
+.sv-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sv-said { margin: 0; padding: 6px 8px; border-left: 4px solid var(--stamp); color: var(--stamp); font-size: 0.9rem; }
+.sv-code {
+  align-self: stretch;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  word-break: break-all;
+  resize: vertical;
+}
+.sv-code::placeholder { color: var(--ink-dim); }
+.sv-code:focus-visible, .sv-file:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+.sv-file { min-height: 44px; max-width: 100%; color: var(--ink); font-family: var(--font-ui); font-size: 0.9rem; }
+.sv-file::file-selector-button {
+  min-height: 44px;
+  margin-right: 10px;
+  padding: 4px 14px;
+  border: 1.5px solid var(--ink-dim);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}

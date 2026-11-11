@@ -4,6 +4,8 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Try the saves** (0.8.7.0): Saves tab. Send yourself a save code and
+  paste it back, ideally on another device.
 - **Try a tender** (0.8.6.0): Bureau tab. Tell me if the Type 1 as issued
   placing third of four feels right, and whether the tab reads well on
   your phone.
@@ -150,6 +152,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.8.7.0, PR 8h: the Saves tab. PR 8 is complete.** Three save slots
+  (IndexedDB `hulldown`), a save code to show, copy and paste back, and a
+  backup file to download and load. Loading a save puts it in the
+  browser's storage and reloads the page. The first save asks the browser
+  to keep the game's storage. After 14 days without a backup the tab
+  shows "Saves !" and a reminder. Checked in a phone-sized browser: a
+  decided career comes back from the code, from a slot and from the file.
 - **0.8.6.0, PR 8g: the Bureau tab.** The career can now be played. A
   new Bureau tab in the design office shows the tender (limits, grant, how
   the army weighs a bid), the budget and standing, the chief engineer with
