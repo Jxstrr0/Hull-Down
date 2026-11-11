@@ -13,6 +13,8 @@ export const RENDER = {
     post: '#e9ece6',
     tank: '#4b5340',
     tankDark: '#2f3429',
+    /** Reactive tiles: a shade apart from the plate, so they read as bolted on. */
+    tankTile: '#5f6a50',
     /** Broken ground with no made track, on the last leg of the endurance run. */
     rut: '#77724f',
     smoke: '#2c2c2a',
@@ -194,6 +196,7 @@ export const RENDER = {
     maxMeshes: 260,
     theirTank: '#6d6248',
     theirTankDark: '#40392b',
+    theirTankTile: '#83775a',
     /** How far the camera sees, and where the haze starts and ends, metres. */
     farM: 4200,
     fog: { nearM: 500, farM: 3800 },
@@ -227,7 +230,7 @@ export const RENDER = {
   ground: { sizeM: 1400, underM: 0.03 },
   tank: {
     /** Sides to a road wheel and to the turret. Few, so a phone draws them fast. */
-    wheelSides: 12,
+    wheelSides: 10,
     turretSides: 20,
     gunSides: 8,
     /** How much of the hull length rests on the ground, for working out how the tank tilts. */
@@ -235,8 +238,60 @@ export const RENDER = {
     /** Road wheels are thin discs that stand a little proud of the track, so they show from the side. */
     wheelThickM: 0.08,
     wheelProudM: 0.02,
-    /** A bustle is a box behind the turret: its height and width as shares of the turret's height and radius. */
-    bustleHeightShare: 0.8,
+    /** A bustle is a box behind the turret: its width as a share of the turret radius. */
     bustleWidthShare: 1.5,
+    /** The most triangles one tank may be built from. A test builds every turret with every tile and counts. */
+    maxTriangles: 1100,
+    /** Sides to the sprocket, the idler, the fume extractor and the cupola. */
+    endWheelSides: 8,
+    extractorSides: 8,
+    cupolaSides: 8,
+    /** The guard over each track: how thick, and how far above the track it sits. */
+    fenderThickM: 0.04,
+    fenderLiftM: 0.02,
+    /** The grille over the engine: how thick, and its width as a share of the hull's. */
+    grilleThickM: 0.03,
+    grilleWidthShare: 0.7,
+    /** The mantlet round the root of the gun: how long, and its height and width as shares of the turret's height and radius. */
+    mantlet: { longM: 0.3, highShare: 0.5, wideShare: 0.5 },
+    /** The commander's cupola sits this far back and across from the middle of the ring, as shares of the turret's radius. */
+    cupola: { backShare: 0.3, acrossShare: 0.35 },
+    /** Smoke launchers: one block a side, this big, this far back as a share of the radius and this far up the turret. */
+    launcher: { longM: 0.34, highM: 0.16, wideM: 0.12, backShare: 0.45, upShare: 0.5 },
+    /** Reactive tiles stand this far off the plate and are this thick. A full grid covers this share of the plate. */
+    tile: { offM: 0.04, thickM: 0.07, cover: 0.9 },
+    /**
+     * Each turret, seen from above, as rings one over the other. A ring is
+     * given as shares of the turret's radius: how far it reaches ahead of the
+     * middle and behind it, its half width, and how much is cut off each
+     * corner. `up` is the share of the turret's height the ring sits at.
+     */
+    turrets: {
+      castDome: [
+        { up: 0, ahead: 1, behind: 1, half: 1, cut: 0.55 },
+        { up: 0.6, ahead: 0.9, behind: 0.9, half: 0.9, cut: 0.5 },
+        { up: 1, ahead: 0.35, behind: 0.25, half: 0.42, cut: 0.2 },
+      ],
+      lowProfile: [
+        { up: 0, ahead: 1, behind: 1, half: 1, cut: 0.55 },
+        { up: 0.55, ahead: 0.92, behind: 0.92, half: 0.92, cut: 0.5 },
+        { up: 1, ahead: 0.5, behind: 0.4, half: 0.55, cut: 0.28 },
+      ],
+      weldedWedge: [
+        { up: 0, ahead: 1, behind: 1, half: 0.95, cut: 0.3 },
+        { up: 0.52, ahead: 0.82, behind: 1, half: 0.9, cut: 0.3 },
+        { up: 1, ahead: 0.25, behind: 0.7, half: 0.7, cut: 0.2 },
+      ],
+      bustle: [
+        { up: 0, ahead: 1, behind: 0.92, half: 0.9, cut: 0.25 },
+        { up: 0.6, ahead: 0.82, behind: 0.92, half: 0.9, cut: 0.25 },
+        { up: 1, ahead: 0.3, behind: 0.92, half: 0.85, cut: 0.2 },
+      ],
+      unmanned: [
+        { up: 0, ahead: 1, behind: 1, half: 0.55, cut: 0.15 },
+        { up: 0.65, ahead: 0.85, behind: 1, half: 0.55, cut: 0.15 },
+        { up: 1, ahead: 0.5, behind: 0.8, half: 0.5, cut: 0.12 },
+      ],
+    },
   },
 } as const

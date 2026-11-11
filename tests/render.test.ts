@@ -7,7 +7,10 @@ import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import { VIEWS, shotAt } from '../src/render/director'
 import { courseOutline, coursePath, mudPatch, pointAt, poseAt, stripPath, trenchPit } from '../src/render/path'
 import { frameAt, lengthS, type RunRecord } from '../src/render/playback'
-import { tankShapeOf } from '../src/render/tankShape'
+import { partTriangles, tankShapeOf, tankTriangles } from '../src/render/tankShape'
+import { TURRETS, type TurretId } from '../src/data/parts'
+import { ZONES } from '../src/data/materials'
+import { allTiles } from '../src/sim/vehicle/era'
 import { heightAt, legGround, placeOnLeg } from '../src/render/terrain'
 import { puffAt, timelapseOf } from '../src/render/timelapse'
 import { courseLayout, runProvingGround, type EnduranceRun } from '../src/sim/trials'
@@ -508,6 +511,73 @@ describe('the grey-box tank', () => {
   })
 })
 
+describe('the parts the tank is built from', () => {
+  const shapes = Object.keys(TURRETS) as TurretId[]
+  const built = (turret: TurretId, tiles: boolean) => {
+    const { spec, sheet } = sheetOf((s) => {
+      s.turret.shape = turret
+      s.fireControl.commanderSight = true
+      if (tiles) for (const zone of ZONES) s.era[zone] = allTiles(zone)
+    })
+    return tankShapeOf(spec, sheet.geometry)
+  }
+
+  it('gives every turret its own shape, eight corners to a ring', () => {
+    const seen = new Set<string>()
+    for (const turret of shapes) {
+      const loft = built(turret, false).parts.find((part) => part.kind === 'loft')
+      expect(loft?.kind).toBe('loft')
+      if (loft?.kind !== 'loft') continue
+      expect(loft.rings.length).toBeGreaterThanOrEqual(2)
+      for (const ring of loft.rings) expect(ring.corners).toHaveLength(8)
+      const ys = loft.rings.map((ring) => ring.y)
+      expect(ys).toEqual([...ys].sort((a, b) => a - b))
+      seen.add(JSON.stringify(RENDER.tank.turrets[turret]))
+    }
+    expect(seen.size).toBe(shapes.length)
+  })
+
+  it('has a track loop, a sprocket and an idler each side, and a wheel for every road wheel', () => {
+    const { spec, sheet } = sheetOf()
+    const parts = tankShapeOf(spec, sheet.geometry).parts
+    expect(parts.filter((part) => part.kind === 'slab' && part.tone === 'dark')).toHaveLength(2)
+    const drums = parts.filter((part) => part.kind === 'drum' && part.axis === 'z')
+    expect(drums).toHaveLength(2 * (spec.runningGear.roadWheels + 2))
+  })
+
+  it('shows tiles only where the design carries them', () => {
+    for (const turret of shapes) {
+      expect(built(turret, false).parts.filter((part) => part.tone === 'tile')).toHaveLength(0)
+      const tiled = built(turret, true).parts.filter((part) => part.tone === 'tile')
+      expect(tiled.length).toBeGreaterThanOrEqual(5)
+      expect(tiled.some((part) => part.mount === 'turret')).toBe(true)
+      expect(tiled.some((part) => part.mount === 'hull')).toBe(true)
+    }
+  })
+
+  it('leaves the hatch off a turret with nobody in it, and the launchers off a tank without them', () => {
+    const cupola = (turret: TurretId) => built(turret, false).parts.filter((part) => part.kind === 'drum' && part.axis === 'y').length
+    expect(cupola('castDome')).toBe(1)
+    expect(cupola('unmanned')).toBe(0)
+    const { spec, sheet } = sheetOf((s) => { s.protection.smokeLaunchers = false })
+    const bare = tankShapeOf(spec, sheet.geometry).parts.length
+    const withThem = sheetOf((s) => { s.protection.smokeLaunchers = true })
+    expect(tankShapeOf(withThem.spec, withThem.sheet.geometry).parts.length).toBe(bare + 2)
+  })
+
+  it('keeps every part a real size and inside the budget for a phone', () => {
+    for (const turret of shapes) {
+      const shape = built(turret, true)
+      for (const part of shape.parts) {
+        expect(partTriangles(part)).toBeGreaterThan(0)
+        if (part.kind === 'box') for (const side of [part.size.x, part.size.y, part.size.z]) expect(side).toBeGreaterThan(0)
+        if (part.kind === 'drum') expect(part.radiusM * part.lengthM).toBeGreaterThan(0)
+      }
+      expect(tankTriangles(shape)).toBeLessThanOrEqual(RENDER.tank.maxTriangles)
+    }
+  })
+})
+
 describe('the 3D range stays out of the first load', () => {
   const sources = listFilesDeep('src').filter((file) => file.endsWith('.ts'))
   // A line that pulls code in when the page opens. `import type` costs nothing; `import(...)` waits until asked.
@@ -521,9 +591,9 @@ describe('the 3D range stays out of the first load', () => {
     expect(outside.filter((file) => loadsAtOnce(readRepoFile(file), /from\s+'three(\/[^']*)?'/))).toEqual([])
   })
 
-  it('keeps three.js in the two files that draw', () => {
+  it('keeps three.js in the three files that draw', () => {
     const users = sources.filter((file) => /from\s+'three(\/[^']*)?'/.test(readRepoFile(file)))
-    expect(users).toEqual(['src/render/battleScene.ts', 'src/render/rangeScene.ts'])
+    expect(users).toEqual(['src/render/battleScene.ts', 'src/render/rangeScene.ts', 'src/render/tankModel.ts'])
   })
 
   it('lets nothing outside src/render load the scene when the page opens', () => {
