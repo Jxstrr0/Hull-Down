@@ -41,6 +41,7 @@ export function serialWords(serial: SerialResult): string[] {
     const bare = serial.shots.filter((shot) => shot.hit.through && !shot.hit.tile).length
     if (bare > 0) words.push(fill(A.bare, { n: String(bare) }))
   }
+  if (serial.defeated > 0) words.push(fill(A.defeated, { n: String(serial.defeated) }))
   if (serial.shots.some((shot) => shot.hit.trackBroken)) words.push(A.track)
   return words
 }

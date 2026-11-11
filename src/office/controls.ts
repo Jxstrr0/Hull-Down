@@ -3,7 +3,7 @@
 // it can be tested. A control's id is the spec path the constraint checks use
 // for `Issue.part`, which is how a fault finds its "fix it" link.
 import {
-  BARRELS, COMFORT, COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS,
+  ACTIVE, BARRELS, COMFORT, COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS,
   STABILISERS, STOWAGE, SUSPENSIONS, TRANSMISSIONS, TURRETS,
 } from '../data/parts'
 import { STRINGS } from '../data/strings'
@@ -154,6 +154,7 @@ export const CONTROLS: readonly Control[] = [
     (s) => s.protection.fireSuppression, (s, v) => { s.protection.fireSuppression = v }),
   toggle('protection.spallLiner', 'crew', P.spallLiner,
     (s) => s.protection.spallLiner, (s, v) => { s.protection.spallLiner = v }),
+  choice('protection.active', 'crew', texts(ACTIVE, P.active), (s) => s.protection.active, (s, v) => { s.protection.active = v }),
 ]
 
 /** The control a fault points at, if the design office has one for it yet. */

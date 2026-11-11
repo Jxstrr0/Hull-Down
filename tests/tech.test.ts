@@ -6,7 +6,7 @@ import { ERA_TILE } from '../src/data/era'
 import { GUNNERY } from '../src/data/gunnery'
 import { MATERIALS } from '../src/data/materials'
 import { ACCORD_LIMITS, BUREAU_IDS, THREAT_TANKS } from '../src/data/opponents'
-import { COMPUTERS, NIGHT_SIGHTS } from '../src/data/parts'
+import { ACTIVE, COMPUTERS, NIGHT_SIGHTS } from '../src/data/parts'
 import { LATER_PARTS, TECH_FIELDS } from '../src/data/tech'
 import { TENDERS } from '../src/data/tenders'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
@@ -31,7 +31,7 @@ describe('technology generations', () => {
   it('lists only parts that exist', () => {
     const tables = {
       'fireControl.computer': COMPUTERS, 'fireControl.night': NIGHT_SIGHTS, material: MATERIALS,
-      'ammo.kinetic': OWN_ROUNDS, 'ammo.shaped': OWN_ROUNDS,
+      'ammo.kinetic': OWN_ROUNDS, 'ammo.shaped': OWN_ROUNDS, 'protection.active': ACTIVE,
     }
     for (const field of TECH_FIELDS) {
       for (const id of Object.keys(LATER_PARTS[field])) expect(Object.keys(tables[field])).toContain(id)

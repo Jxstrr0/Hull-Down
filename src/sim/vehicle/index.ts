@@ -7,6 +7,7 @@ export { gunRingMm, gunRounds } from '../gunnery/mount'
 export {
   ITEM_IDS, ITEM_KINDS, interiorOf, type Box, type Interior, type InteriorItem, type ItemId, type ItemKind,
 } from '../hits/interior'
+export { electricsOf, type Electrics } from './electrics'
 export { checkSpec, ISSUE_CODES, type Issue, type IssueCode, type Severity } from './checks'
 export { allTiles, cleanTiles, eraOf, hasTile, setTile, tileCount, tileGrid, type ZoneEra } from './era'
 export { frameOf, type Frame } from './frame'

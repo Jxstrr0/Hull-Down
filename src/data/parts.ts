@@ -401,6 +401,35 @@ export const SMOKE_LAUNCHERS: Part = { massT: 0.08, volumeM3: 0, costKr: 15_000,
 export const FIRE_SUPPRESSION: Part = { massT: 0.12, volumeM3: 0.15, costKr: 45_000, reliability: 0.99 }
 export const SPALL_LINER: Part = { massT: 0.45, volumeM3: 0.5, costKr: 60_000, reliability: 1 }
 
+export interface ActivePart extends Part {
+  /** Electrical power it draws when switched on, kilowatts. */
+  drawKw: number
+  /** The chance it deals with a rocket or a missile on its way in, 0 to 1. */
+  defeats: { rocket: number; missile: number }
+}
+
+/**
+ * Active protection. Soft kill sees a missile coming and blinds or decoys
+ * its guidance; it can do nothing about a rocket, which is not steered. Hard
+ * kill shoots the thing down, rocket or missile, wherever it comes from.
+ * Neither does anything about a round from a gun or a bomblet dropped from
+ * straight overhead.
+ */
+export const ACTIVE = {
+  none: { massT: 0, volumeM3: 0, costKr: 0, reliability: 1, drawKw: 0, defeats: { rocket: 0, missile: 0 } },
+  softKill: { massT: 0.25, volumeM3: 0.1, costKr: 320_000, reliability: 0.985, drawKw: 4, defeats: { rocket: 0, missile: 0.5 } },
+  hardKill: { massT: 0.9, volumeM3: 0.3, costKr: 1_100_000, reliability: 0.975, drawKw: 12, defeats: { rocket: 0.8, missile: 0.8 } },
+} as const satisfies Record<string, ActivePart>
+export type ActiveId = keyof typeof ACTIVE
+
+/** Electrical power: what the tank can make, kilowatts. What draws on it is listed with each part. */
+export const ELECTRICS = {
+  /** The generator on the main engine, with what the tank always needs already taken off. */
+  generatorKw: 8,
+  /** What the auxiliary power unit adds. */
+  apuKw: 8,
+} as const
+
 // --- Crew comfort ---------------------------------------------------------
 
 export interface ComfortPart extends Part {

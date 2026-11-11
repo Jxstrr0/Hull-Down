@@ -212,6 +212,7 @@ export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
     renderStations(sheet),
     group(D.groups.condition, [
       [r.reliability, unit(u.outOf100, sheet.reliabilityIndex, 0)],
+      [r.electrics, fill(u.kwOf, { draw: fixed(sheet.electrics.drawKw, 0), supply: fixed(sheet.electrics.supplyKw, 0) })],
       [r.workload, fill(u.busiest, { name: D.stations.names[busiestOf(sheet.crew).id], n: fixed(sheet.crewWorkload, 0) })],
     ]),
     group(D.groups.growth, [

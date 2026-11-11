@@ -6,6 +6,7 @@
 import type { Round } from '../../data/ammo'
 import type { StationId } from '../../data/crew'
 import { HITS } from '../../data/hits'
+import { ACTIVE } from '../../data/parts'
 import type { ZoneId } from '../../data/materials'
 import { TUNING } from '../../data/tuning'
 import { PI, detCos, detSin } from '../det'
@@ -120,6 +121,8 @@ export interface HitResult {
   mobilityKill: boolean
   firepowerKill: boolean
   outcome: Outcome
+  /** Set when active protection dealt with the round before it struck: soft kill threw it off, hard kill shot it down. */
+  defeated?: 'softKill' | 'hardKill'
 }
 
 function rad(deg: number): number {
@@ -138,6 +141,7 @@ const HIT = 66
 const PEN = 0
 const TRACK = 1
 const SUPPRESSION = 2
+const ACTIVE_ROLL = 9
 const PER_ITEM = 10
 
 const SIDE_ZONES: readonly ZoneId[] = ['hullSideFront', 'hullSideRear', 'turretSides']
@@ -185,6 +189,16 @@ export function traceShot(target: Target, shot: Incoming, spent?: Set<string>): 
   const entry = first ? along(o, d, first.tIn) : null
   const zone = first && entry ? zoneAt(shell, first.face, entry) : null
   if (!first || !entry || !zone) return missed(d, track, trackBroken)
+
+  // Active protection has its say before the round gets to the plate.
+  const system = spec.protection.active
+  if (shot.round.flight && system !== 'none' && roll(ACTIVE_ROLL) < ACTIVE[system].defeats[shot.round.flight]) {
+    return {
+      direction: d, entry, zone, track: false, trackBroken: false, tile: false, armour: null, through: false, reached: [], end: null,
+      exits: false, spalled: [], crewOut: [], fire: 'none', explosion: 'none', mobilityKill: false, firepowerKill: false,
+      outcome: 'stopped', defeated: system,
+    }
+  }
 
   // What the round goes through when it arrives.
   const margin = shot.luck ? TUNING.protection.marginShare * (2 * roll(PEN) - 1) : 0

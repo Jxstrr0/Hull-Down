@@ -2,7 +2,7 @@
 import { LOAD_SHARE, OWN_ROUNDS } from '../../data/ammo'
 import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
 import {
-  APU, BARRELS, COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, HULLS, LOADING,
+  ACTIVE, APU, BARRELS, COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, HULLS, LOADING,
   NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, SMOKE_LAUNCHERS, SPALL_LINER, STABILISERS, STOWAGE, SUSPENSIONS,
   TRANSMISSIONS, TURRETS, type Part,
 } from '../../data/parts'
@@ -137,6 +137,7 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
   if (spec.protection.smokeLaunchers) add('systems', SMOKE_LAUNCHERS)
   if (spec.protection.fireSuppression) add('systems', FIRE_SUPPRESSION)
   if (spec.protection.spallLiner) add('systems', SPALL_LINER)
+  add('systems', ACTIVE[spec.protection.active])
 
   // Crew
   const crewCount = loading.crew

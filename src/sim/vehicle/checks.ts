@@ -7,6 +7,7 @@ import { gunRingMm } from '../gunnery/mount'
 import type { Geometry } from './geometry'
 import type { Rollup } from './rollup'
 import type { Limits, VehicleSpec } from './spec'
+import { electricsOf } from './electrics'
 import { tooNew, unresearched } from './tech'
 
 export const ISSUE_CODES = [
@@ -40,6 +41,7 @@ export const ISSUE_CODES = [
   'rodTooLongForCarousel',
   'missileNeedsSmoothbore',
   'missileNeedsComputer',
+  'overPowerBudget',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -97,6 +99,12 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   if (spec.ammo.shaped === 'gunMissile') {
     if (gun.bore !== 'smoothbore') error('missileNeedsSmoothbore', 'ammo.shaped')
     if (spec.fireControl.computer !== 'digital') error('missileNeedsComputer', 'ammo.shaped')
+  }
+
+  // Electrical power: what is fitted cannot draw more than the tank makes
+  const electrics = electricsOf(spec)
+  if (electrics.drawKw > electrics.supplyKw) {
+    error('overPowerBudget', spec.powerpack.apu ? 'protection.active' : 'powerpack.apu', electrics.drawKw, electrics.supplyKw)
   }
 
   // Things that need a bustle turret
