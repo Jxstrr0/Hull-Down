@@ -1,0 +1,221 @@
+/* Hull Down: the design office look. Pale drafting paper with dark blue ink,
+   red-pencil notes and rubber stamps. Plan section 12. */
+:root {
+  --paper: #e9ece6;
+  --grid: #c9d0c8;
+  --ink: #1f3558;
+  --ink-dim: #5b6b85;
+  --pencil: #b23a2e;
+  --stamp: #3d6b4f;
+  --font-head: 'Archivo Narrow', 'Arial Narrow', sans-serif;
+  --font-ui: 'Archivo', system-ui, sans-serif;
+  --font-mono: 'Spline Sans Mono', ui-monospace, 'Courier New', monospace;
+  color-scheme: light;
+}
+
+:root[data-theme='blueprint'] {
+  --paper: #12305a;
+  --grid: #24467a;
+  --ink: #e8eef6;
+  --ink-dim: #8fa6c4;
+  --pencil: #f0a59c;
+  --stamp: #a9d6b8;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.bar-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bar-theme {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.bar-theme:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+
+.sheet {
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.sheet-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 2px solid var(--ink);
+}
+
+/* The drawing area, with centre lines where the tank will sit. */
+.sheet-field {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 16px;
+  text-align: center;
+  background:
+    linear-gradient(90deg, var(--ink-dim) 50%, transparent 0) center / 16px 1px repeat-x,
+    linear-gradient(var(--ink-dim) 50%, transparent 0) center / 1px 16px repeat-y;
+}
+
+.sheet-empty {
+  margin: 0;
+  padding: 4px 12px;
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.sheet-stamp {
+  margin: 0;
+  padding: 8px 16px;
+  border: 3px double var(--stamp);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--stamp);
+  font-family: var(--font-head);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: rotate(-7deg);
+}
+
+.sheet-note {
+  margin: 0;
+  padding: 2px 10px;
+  background: var(--paper);
+  color: var(--pencil);
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+.title-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 2px solid var(--ink);
+  background: var(--paper);
+}
+
+.tb-head {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--ink);
+  font-family: var(--font-head);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tb-country { font-weight: 600; color: var(--ink-dim); }
+
+.tb-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--ink);
+}
+.tb-cell:nth-child(even) { border-right: 1px solid var(--ink); }
+.tb-cell:nth-last-child(-n + 2) { border-bottom: 0; }
+
+.tb-label {
+  font-family: var(--font-head);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.tb-value { font-family: var(--font-mono); font-size: 0.95rem; }
+
+/* Studio piece: the credit line uses the studio font. Its colour follows the
+   page ink so it stays readable on both looks. */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 8px 16px;
+  font-size: 0.75rem;
+}
+.foot-studio {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 6px 0;
+}
+.foot-studio:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
+.foot-build { font-family: var(--font-mono); color: var(--ink-dim); padding: 6px 0; }
+
+/* Landscape phones and desktop: title block beside the drawing. */
+@media (orientation: landscape) and (min-width: 640px) {
+  .sheet-frame { flex-direction: row; }
+  .title-block {
+    grid-template-columns: 1fr;
+    align-content: end;
+    width: 240px;
+    border-top: 0;
+    border-left: 2px solid var(--ink);
+  }
+  .tb-cell { border-right: 0 !important; border-bottom: 1px solid var(--ink) !important; }
+  .tb-cell:last-child { border-bottom: 0 !important; }
+  .tb-head { border-top: 1px solid var(--ink); }
+}
