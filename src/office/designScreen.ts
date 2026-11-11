@@ -17,7 +17,7 @@ import { DEFAULT_THREAT, THREATS, type Round } from '../data/ammo'
 import { ZONES, type ZoneId } from '../data/materials'
 import { GUNS } from '../data/parts'
 import { TECH_FIELDS, type TechField } from '../data/tech'
-import { generationOf } from '../sim/vehicle/tech'
+import { generationOf, partKey } from '../sim/vehicle/tech'
 import { TUNING } from '../data/tuning'
 import { renderArmourTab, type ArmourTabState } from './armourTab'
 import { renderBlueprint, type ZoneTiles } from './blueprint'
@@ -37,7 +37,7 @@ import { DUEL } from '../data/duel'
 import { createBureau } from './bureauTab'
 import type { Marks } from '../data/range'
 import type { Tender } from '../data/tenders'
-import { tenderOf } from '../sim/career/career'
+import { careerLimits, tenderOf } from '../sim/career/career'
 import { createSaves } from './savesTab'
 import { dropCareer, saveCareer } from '../persist/careerStore'
 import { SAVE_FORMAT } from '../persist/saveCode'
@@ -208,7 +208,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       commit(() => undefined)
     },
     tender: (tender) => {
-      limits = tender.limits
+      limits = careerLimits(bureau.career())
       marks = tender.marks
       sheet = buildStatSheet(spec, limits)
       drawTop()
@@ -446,13 +446,16 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       const on = option === current
       // A part newer than the tender allows is shown, and cannot be picked.
       const comes = isTechField(control.id) ? generationOf(control.id, option) : 1
-      if (!on && comes > (limits.generation ?? 1)) {
+      const late = comes > (limits.generation ?? 1)
+      // So is one of the tender's own time that the bureau has yet to research.
+      const unknown = isTechField(control.id) && (limits.locked ?? []).includes(partKey(control.id, option))
+      if (!on && (late || unknown)) {
         const locked = optionButton(`${control.id}:${option}`, false, text, undefined)
         locked.setAttribute('role', 'radio')
         locked.setAttribute('aria-disabled', 'true')
         locked.classList.add('opt-locked')
-        locked.querySelector('.opt-head')?.append(el('span', 'opt-tag opt-tag-off', fill(O.generation, { n: String(comes) })))
-        locked.append(el('span', 'opt-warn', O.notYet))
+        locked.querySelector('.opt-head')?.append(el('span', 'opt-tag opt-tag-off', late ? fill(O.generation, { n: String(comes) }) : O.research))
+        locked.append(el('span', 'opt-warn', late ? O.notYet : O.notResearched))
         group.append(locked)
         continue
       }
@@ -951,6 +954,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     else if (tab === 'armour') {
       parts.push(renderArmourTab({
         generation: limits.generation ?? 1,
+        locked: limits.locked ?? [],
         spec, sheet, state: armourState, commit, goTo, pickZone,
         refresh: () => {
           drawBlueprint()
@@ -1004,7 +1008,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
 
   // A saved career may be on a later tender than the first.
   const now = tenderOf(bureau.career())
-  limits = now.limits
+  limits = careerLimits(bureau.career())
   marks = now.marks
   sheet = buildStatSheet(spec, limits)
   drawTop()

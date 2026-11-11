@@ -4,6 +4,14 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Research** (0.11.3.0): the generation-two parts now have to be
+  researched before they can be fitted. Three projects on the Bureau tab:
+  "Digital fire control" Kr 4.00M, "Thermal imaging" Kr 6.00M (needs the
+  digital one first), "Layered armour" Kr 5.00M. Paid once, kept from tender
+  to tender. Names, prices and the one dependency are my picks. All three
+  cost Kr 15M of the Kr 40M grant, so a bureau that buys everything has
+  less left for revisions: say if that is too tight or too easy. Rivals and
+  the Accord do not pay for research.
 - **The tender of 2001** (0.11.2.0): "A tank for the new century". Still
   44 t, unit cost up to Kr 5.00M, grant Kr 40M added to whatever the bureau
   has left, threats Palisade and Palisade B, firepower weighed as heavily as
@@ -239,6 +247,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.11.3.0, PR 11d: research.** The bureau pays for research projects
+  that unlock the generation-two parts (digital computer, thermal sight,
+  layered composite). A research card on the Bureau tab; unresearched parts
+  show "Needs research" in the office and are a fault if fitted. Research
+  is kept in the career and the save code. 800 tests.
 - **0.11.2.0, PR 11c: the tender of 2001.** A second tender, generation
   two, with its own proving-ground marks (long rod and tandem warheads on
   the armour trial, night as hard as day). After the army decides the

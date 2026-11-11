@@ -39,3 +39,20 @@ export function tooNew(spec: VehicleSpec, generation: Generation): TooNew[] {
   }
   return found
 }
+
+/** Names a part in a list of parts the bureau has not researched: the field, a colon, the part. */
+export function partKey(field: TechField, id: string): string {
+  return `${field}:${id}`
+}
+
+/** The parts of a design that are on a list of parts not yet researched. One path a part, one a zone. */
+export function unresearched(spec: VehicleSpec, locked: readonly string[]): string[] {
+  if (locked.length === 0) return []
+  const found: string[] = []
+  if (locked.includes(partKey('fireControl.computer', spec.fireControl.computer))) found.push('fireControl.computer')
+  if (locked.includes(partKey('fireControl.night', spec.fireControl.night))) found.push('fireControl.night')
+  for (const zone of ZONES) {
+    if (spec.armour[zone].some((layer) => locked.includes(partKey('material', layer.material)))) found.push(`armour.${zone}`)
+  }
+  return found
+}

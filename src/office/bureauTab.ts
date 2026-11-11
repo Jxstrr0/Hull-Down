@@ -3,12 +3,13 @@
 // design office's panel and keeps the career between visits.
 import { ADVISOR_MODES, type AdvisorMode } from '../data/advisor'
 import { BODIES } from '../data/career'
+import { RESEARCH } from '../data/research'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { STRINGS, fill } from '../data/strings'
 import { SCORE_AXES, SCORING, TENDER_IDS, TENDER_RULES, type Tender } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
 import {
-  buildBlock, buildPrototype, enterTender, fitUpgrade, newCareer, nextTender, tendersLeft, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
+  buildBlock, buildPrototype, enterTender, research, researchBlock, researchOpen, fitUpgrade, newCareer, nextTender, tendersLeft, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
   serviceSpec, serviceYear, serviceYearsLeft, startProduction, tenderIdOf, tenderOf, upgradeBlock, upgradesLeft, type Adopted,
   type Career,
 } from '../sim/career/career'
@@ -46,7 +47,7 @@ export interface BureauOptions {
   toFaults: () => void
   /** Put a tank on the drawing board in place of the design that is there. */
   load: (spec: VehicleSpec) => void
-  /** The career has moved on to another tender: the office works to its limits from now on. */
+  /** The career has moved on to another tender, or research is done: the office works to new limits from now on. */
   tender: (tender: Tender) => void
   /** Draw the panel again: something here has changed. */
   redraw: () => void
@@ -101,7 +102,7 @@ export function createBureau(options: BureauOptions): Bureau {
   let archiveKept = true
 
   function keep(next: Career): void {
-    const moved = tenderIdOf(next) !== tenderIdOf(career)
+    const moved = tenderIdOf(next) !== tenderIdOf(career) || next.researched.length !== career.researched.length
     career = next
     if (moved) options.tender(tenderOf(career))
     kept = saveCareer(storage, career)
@@ -286,6 +287,43 @@ export function createBureau(options: BureauOptions): Bureau {
       options.redraw()
     })
     box.append(build)
+    return box
+  }
+
+  /** The research the tender's generation offers. Nothing when it offers none. */
+  function drawResearch(): HTMLElement | null {
+    const open = researchOpen(career)
+    if (open.length === 0) return null
+    const R = C.research
+    const box = el('section', 'bu')
+    box.append(el('h3', 'ds-group-title', R.heading), el('p', 'ctl-note', fill(R.about, { budget: money(career.budgetKr) })))
+    const list = el('ul', 'bu-protos')
+    for (const id of open) {
+      const project = RESEARCH[id]
+      const words = R.projects[id]
+      const item = el('li', 'bu-proto')
+      item.append(el('p', 'bu-proto-name', words.name), el('p', 'ctl-note', words.about))
+      const block = researchBlock(career, id)
+      if (block === 'done') item.append(el('p', 'bu-stamp', R.done))
+      else {
+        item.append(el('p', 'bu-proto-sum', fill(R.cost, { cost: money(project.costKr) })))
+        if (block === 'needs') {
+          const first = project.needs.filter((need) => !career.researched.includes(need)).map((need) => R.projects[need].name)
+          item.append(el('p', 'ctl-issue', fill(R.needs, { names: first.join(', ') })))
+        } else if (block) item.append(el('p', 'ctl-issue', R.noMoney))
+        else {
+          const pay = button(`bureau:research:${id}`, fill(R.pay, { cost: money(project.costKr) }), 'btn btn-go')
+          pay.addEventListener('click', () => {
+            if (researchBlock(career, id)) return
+            keep(research(career, id))
+            options.redraw()
+          })
+          item.append(pay)
+        }
+      }
+      list.append(item)
+    }
+    box.append(list)
     return box
   }
 
@@ -683,7 +721,10 @@ export function createBureau(options: BureauOptions): Bureau {
     const decision = drawDecision()
     if (decision) box.append(decision)
     box.append(...drawService(spec))
-    box.append(drawTender(), drawBureau(), drawAdvisor(spec), drawShop(spec), drawPrototypes(), drawArchive(), drawRestart())
+    box.append(drawTender(), drawBureau())
+    const lab = drawResearch()
+    if (lab) box.append(lab)
+    box.append(drawAdvisor(spec), drawShop(spec), drawPrototypes(), drawArchive(), drawRestart())
     return box
   }
 

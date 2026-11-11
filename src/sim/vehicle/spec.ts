@@ -79,4 +79,6 @@ export interface Limits {
   maxUnitCostKr?: number
   /** The newest technology allowed (src/data/tech.ts). Generation one when not given. */
   generation?: Generation
+  /** Parts the bureau has yet to research, as `partKey` names them (src/sim/vehicle/tech.ts). None when not given. */
+  locked?: readonly string[]
 }

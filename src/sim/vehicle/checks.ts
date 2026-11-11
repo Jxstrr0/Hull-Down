@@ -7,7 +7,7 @@ import { gunRingMm } from '../gunnery/mount'
 import type { Geometry } from './geometry'
 import type { Rollup } from './rollup'
 import type { Limits, VehicleSpec } from './spec'
-import { tooNew } from './tech'
+import { tooNew, unresearched } from './tech'
 
 export const ISSUE_CODES = [
   'ringTooSmallForGun',
@@ -36,6 +36,7 @@ export const ISSUE_CODES = [
   'zoneUnarmoured',
   'tilesNeedPlate',
   'notYetAvailable',
+  'notResearched',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -74,7 +75,12 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
 
   // Parts newer than the tender's year allows
   const generation = limits.generation ?? 1
-  for (const late of tooNew(spec, generation)) error('notYetAvailable', late.part, late.generation, generation)
+  const late = tooNew(spec, generation)
+  for (const each of late) error('notYetAvailable', each.part, each.generation, generation)
+  // Parts of the tender's own time that the bureau has yet to research
+  for (const part of unresearched(spec, limits.locked ?? [])) {
+    if (!late.some((each) => each.part === part)) error('notResearched', part)
+  }
 
   // Turret ring
   const gunRing = gunRingMm(spec)
