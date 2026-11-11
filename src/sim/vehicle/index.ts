@@ -16,6 +16,12 @@ export {
   verdictsAgainst, worthAgainst,
   type Verdict, type ZoneProtection,
 } from './protection'
+export { paperLine, paperShot, type Line } from '../hits/aim'
+export { FACES, shellOf, tilePlaceAt, zoneAt, type FaceId, type Shell, type Vec } from '../hits/shell'
+export {
+  OUTCOMES, directionOf, targetOf, tileKey, traceShot,
+  type Effect, type HitResult, type Incoming, type Outcome, type Reached, type Target,
+} from '../hits/trace'
 export { rollupOf, AREAS, type Area, type Rollup } from './rollup'
-export { shotCosine, testShot, type ShotResult, type ShotSetup, type ShotStep } from './shot'
+export { shotCosine, shotThrough, testShot, type ShotResult, type ShotSetup, type ShotStep, type StackShot } from './shot'
 export type { ArmourLayer, Limits, VehicleSpec } from './spec'

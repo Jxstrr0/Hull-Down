@@ -8,7 +8,8 @@ import { MATERIALS, MATERIAL_IDS, ZONES, ZONE_FACING, type MaterialId, type Zone
 import { STRINGS, fill } from '../data/strings'
 import { TUNING } from '../data/tuning'
 import {
-  allTiles, hasTile, layerWorth, penetrationAt, setTile, shotCosine, testShot, tiledWorth, tileGrid, verdictOf,
+  allTiles, hasTile, layerWorth, paperShot, penetrationAt, setTile, shotCosine, targetOf, testShot, tiledWorth, tileGrid,
+  verdictOf,
   worthAgainst, type ShotResult, type StatSheet, type VehicleSpec, type Verdict,
 } from '../sim/vehicle'
 import { el } from '../ui/dom'
@@ -16,6 +17,7 @@ import { fixed, money } from '../ui/format'
 import {
   addLayer, canAddLayer, layerCost, layerRange, removeLayer, sectionOf, setLayerMaterial, setLayerMm,
 } from './armour'
+import { behindOf } from './behind'
 import type { ControlId } from './controls'
 import { issueText } from './readouts'
 
@@ -384,7 +386,8 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
   const steps = el('ol', 'shot-steps')
   const outcome = el('p', 'shot-result')
   outcome.setAttribute('role', 'status')
-  shotBox.append(figure, meets, steps, outcome)
+  const behind = el('div', 'shot-behind')
+  shotBox.append(figure, meets, steps, outcome, behind)
   if (threat) shotBox.append(el('p', 'ctl-note', fill(A.shotNote, { pct: fixed(TUNING.protection.marginShare * 100, 0) })))
   root.append(summary, values, detail, shotBox)
 
@@ -493,9 +496,11 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
     })
 
     steps.replaceChildren()
+    behind.replaceChildren()
     steps.hidden = !result
     outcome.hidden = !result
-    if (!result) return
+    behind.hidden = true
+    if (!result || !threat) return
     const row = (name: string, value: string, cls = 'shot-step'): void => {
       const item = el('li', cls)
       item.append(el('span', 'shot-step-name', name), el('span', 'shot-step-value', value))
@@ -515,6 +520,23 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
     }
     outcome.className = `shot-result verdict-${result.verdict}`
     outcome.textContent = `${A.verdictMarks[result.verdict]} ${outcomeText(result)}`
+
+    // On behind the armour, when the round gets that far.
+    const traced = paperShot(targetOf(spec, sheet.geometry, sheet.interior), sheet.geometry, zone, {
+      round: threat, rangeM: state.rangeM, angleDeg: state.angleDeg, tile: aimedAtTile,
+    })
+    const inside = behindOf(traced, spec, sheet.crewCount)
+    if (!inside) return
+    behind.hidden = false
+    const list = el('ol', 'shot-steps')
+    list.setAttribute('aria-label', A.behind.listLabel)
+    for (const each of inside.rows) {
+      const item = el('li', each.grave ? 'shot-step shot-step-stop' : 'shot-step')
+      item.append(el('span', 'shot-step-name', each.name), el('span', 'shot-step-value', each.value))
+      list.append(item)
+    }
+    behind.append(el('h4', 'shot-behind-title', A.behind.title), list, el('p', 'shot-behind-sum', inside.sum))
+    for (const note of [...inside.notes, A.behind.note]) behind.append(el('p', 'ctl-note', note))
   }
 
   function drawSummary(fired = false): void {
