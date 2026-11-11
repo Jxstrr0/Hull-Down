@@ -344,7 +344,10 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
           // The bar follows the run, except under a finger.
           if (!heldWhilePlaying) scrub.value = String(frame.timeS)
           // The tank is heard while the run plays, and not while it is held still.
-          if (playing) sound.drone(voice, droneAt(voice, frame.speedKmh))
+          if (playing) {
+            sound.drone(voice, droneAt(voice, frame.speedKmh))
+            sound.air()
+          }
           if ('fire' in source && frame.shoot) for (const cue of ear.hear(source.run, frame.shoot, playing)) sound.cue(cue, { calibreMm: voice.calibreMm })
           if (source.test === 'endurance' && frame.lapse) {
             const lapse = frame.lapse

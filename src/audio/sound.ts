@@ -35,7 +35,12 @@ export interface Sound {
    * every picture drawn: when the calls stop, the tank goes quiet by itself.
    */
   drone(voice: TankVoice, levels: Drone): void
-  /** Stop the engine and tracks and give them back. */
+  /**
+   * The air outdoors: light wind. Call it with every picture drawn, like
+   * `drone`; when the calls stop it dies away by itself.
+   */
+  air(): void
+  /** Stop the engine, the tracks and the wind and give them back. */
   still(): void
 }
 
@@ -70,6 +75,8 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
   let master: GainNode | null = null
   let noise: AudioBuffer | null = null
   let nodes: DroneNodes | null = null
+  /** The wind: its loudness, and what has to be stopped to end it. */
+  let wind: { out: GainNode; sources: AudioScheduledSourceNode[] } | null = null
   /** The recordings that have arrived, by cue. */
   const taped = new Map<CueId, AudioBuffer>()
 
@@ -257,7 +264,67 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     return { engine, sub, bright, chug, engineOut, whine, whineOut, hissOut, beat, trackOut, sources, voice }
   }
 
+  function calm(): void {
+    if (!wind) return
+    const old = wind
+    wind = null
+    const now = context?.currentTime ?? 0
+    old.out.gain.cancelScheduledValues(0)
+    old.out.gain.setTargetAtTime(0, now, AUDIO.engine.hushS)
+    for (const source of old.sources) source.stop(now + AUDIO.engine.hushS * 4)
+  }
+
+  function air(): void {
+    if (!enabled) return
+    const ctx = ready()
+    if (!ctx || !master || ctx.state !== 'running') return
+    const W = AUDIO.wind
+    if (!wind) {
+      // Noise with the top taken off, swelling slowly, and a thin whistle over it.
+      const out = ctx.createGain()
+      out.gain.value = 0
+      const swell = ctx.createGain()
+      swell.gain.value = 1 - W.gustDepth / 2
+      const gust = ctx.createOscillator()
+      gust.type = 'sine'
+      gust.frequency.value = W.gustHz
+      const gustDepth = ctx.createGain()
+      gustDepth.gain.value = W.gustDepth / 2
+      gust.connect(gustDepth)
+      gustDepth.connect(swell.gain)
+      const low = hiss(ctx)
+      const lowBand = ctx.createBiquadFilter()
+      lowBand.type = 'lowpass'
+      lowBand.frequency.value = W.lowHz
+      lowBand.Q.value = W.q
+      low.connect(lowBand)
+      lowBand.connect(swell)
+      const high = hiss(ctx)
+      const highBand = ctx.createBiquadFilter()
+      highBand.type = 'bandpass'
+      highBand.frequency.value = W.whistleHz
+      highBand.Q.value = W.whistleQ
+      const thin = ctx.createGain()
+      thin.gain.value = W.whistle
+      high.connect(highBand)
+      highBand.connect(thin)
+      thin.connect(swell)
+      swell.connect(out)
+      out.connect(master)
+      const sources = [gust, low, high]
+      low.start(0, Math.random() * AUDIO.noiseS)
+      high.start(0, Math.random() * AUDIO.noiseS)
+      gust.start()
+      wind = { out, sources }
+    }
+    const now = ctx.currentTime
+    wind.out.gain.cancelScheduledValues(now)
+    wind.out.gain.setTargetAtTime(W.gain, now, W.riseS)
+    wind.out.gain.setTargetAtTime(0, now + AUDIO.engine.hushAfterS, AUDIO.engine.hushS)
+  }
+
   function still(): void {
+    calm()
     if (!nodes) return
     const old = nodes
     nodes = null
@@ -299,5 +366,5 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     hold(nodes.trackOut.gain, levels.trackGain * AUDIO.tracks.gain)
   }
 
-  return { on: () => enabled, setOn, wake, cue, drone, still }
+  return { on: () => enabled, setOn, wake, cue, drone, air, still }
 }
