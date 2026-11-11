@@ -6,12 +6,20 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 - Confirm or replace the working name "Pattern 3" for the Radan baseline tank.
 - Choose how the hidden studio-site listing gets its cover image (see Notes).
+- Say if the project numbers ("Project 101", counting up, never reused) suit
+  you, or if you want a different scheme. See `docs/NAMES.md`.
 
 Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 11 November 2026).
 
 ## Log
 
+- **0.2.3.0, PR 2c: save, load, names and project numbers.** Designs are
+  kept on the device as you work and are still there after a reload. A new
+  Designs tab names the design, starts a new one from the baseline, copies or
+  scraps one, and lists the designs on file (up to 30) with weight, cost and
+  fault count. Each design gets a project number from 101 that is never
+  reused. "Start again" now keeps the name and number.
 - **0.2.2.0, PR 2b: the blueprint.** Side, top and front views drawn from the
   spec, with a Side / Top / Front switch. The drawing changes with the hull,
   glacis, turret, gun, wheels, tracks, engine position, hatches and sights.

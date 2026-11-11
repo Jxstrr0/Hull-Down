@@ -12,12 +12,17 @@ import {
 } from './controls'
 import { renderBlueprint } from './blueprint'
 import { VIEWS, type View } from './drawing'
+import {
+  MAX_DESIGNS, addDesign, currentDesign, loadStore, openDesign, saveStore, scrapDesign, type KeyValue,
+} from '../persist/designs'
+import { NAME_MAX, cleanName, cleanSpec } from '../persist/specCodec'
 import { issueText, renderReadouts } from './readouts'
 
 const O = STRINGS.office
 const D = STRINGS.dataSheet
+const X = STRINGS.office.designs
 
-const TABS = [...PART_TABS, 'readouts', 'faults'] as const
+const TABS = [...PART_TABS, 'readouts', 'faults', 'designs'] as const
 type Tab = (typeof TABS)[number]
 
 /** The weight bar is drawn a little longer than the limit, so going over shows. */
@@ -35,8 +40,17 @@ function deltaText(change: Preview): string {
 }
 
 export function renderDesignScreen(limits: Limits): HTMLElement {
-  let spec: VehicleSpec = structuredClone(BASELINE_SPEC)
+  // The browser's storage can be blocked. Touch it only inside these, where failure is handled.
+  const storage: KeyValue = {
+    getItem: (key) => window.localStorage.getItem(key),
+    setItem: (key, value) => window.localStorage.setItem(key, value),
+  }
+  const store = loadStore(storage)
+  let design = currentDesign(store)
+  let spec: VehicleSpec = design.spec
   let sheet: StatSheet = buildStatSheet(spec, limits)
+  /** False once the browser has refused to keep a design. */
+  let kept = true
   let tab: Tab = 'hull'
   /** A control to scroll to and mark after the next panel draw. */
   let flagged: ControlId | undefined
@@ -61,9 +75,13 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     viewSwitch.append(button)
     return button
   })
-  head.append(el('h2', 'office-name', O.designName), viewSwitch)
+  const titles = el('div', 'office-titles')
+  const projectLine = el('p', 'office-project')
+  const nameLine = el('h2', 'office-name')
+  titles.append(projectLine, nameLine)
+  head.append(titles, viewSwitch)
   const blueprint = el('div', 'bp')
-  const reset = el('button', 'office-reset', O.reset)
+  const reset = el('button', 'btn', O.reset)
   reset.type = 'button'
 
   const bar = el('div', 'wbar')
@@ -149,7 +167,13 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     blueprint.replaceChildren(...renderBlueprint(spec, sheet.geometry, view, goTo))
   }
 
+  function drawTitle(): void {
+    projectLine.textContent = fill(O.project, { n: String(design.projectNo) })
+    nameLine.textContent = spec.name || X.unnamed
+  }
+
   function drawTop(): void {
+    drawTitle()
     drawBlueprint()
     const scale = limits.maxMassT * BAR_SCALE
     AREAS.forEach((area, index) => {
@@ -198,6 +222,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
   /** Apply a change to the design and redraw everything. */
   function commit(change: (spec: VehicleSpec) => void): void {
     change(spec)
+    kept = saveStore(storage, store)
     sheet = buildStatSheet(spec, limits)
     drawTop()
     drawTabs()
@@ -341,6 +366,134 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     return box
   }
 
+  /** A button that acts on the second tap, so a slip of the thumb does not lose a design. */
+  function twoTap(button: HTMLButtonElement, label: string, confirm: string, action: () => void): void {
+    let armed = false
+    let disarm: number | undefined
+    const rest = (): void => {
+      armed = false
+      button.textContent = label
+      button.classList.remove('btn-armed')
+    }
+    button.addEventListener('click', () => {
+      window.clearTimeout(disarm)
+      if (!armed) {
+        armed = true
+        button.textContent = confirm
+        button.classList.add('btn-armed')
+        disarm = window.setTimeout(rest, 4000)
+        return
+      }
+      rest()
+      action()
+    })
+  }
+
+  /** Put whichever design the store says is current on the board. */
+  function showCurrent(): void {
+    design = currentDesign(store)
+    spec = design.spec
+    panel.scrollTop = 0
+    commit(() => undefined)
+  }
+
+  function actionButton(key: string, label: string): HTMLButtonElement {
+    const button = el('button', 'btn', label)
+    button.type = 'button'
+    button.dataset.key = key
+    return button
+  }
+
+  function faultCount(count: number): string {
+    if (count === 0) return X.noFaults
+    return count === 1 ? X.oneFault : fill(X.manyFaults, { n: String(count) })
+  }
+
+  function drawDesigns(): HTMLElement {
+    const box = el('div', 'designs')
+
+    const naming = el('section', 'ctl')
+    const label = el('label', 'ctl-label', X.nameLabel)
+    label.htmlFor = 'design-name'
+    const input = el('input', 'name-input')
+    input.id = 'design-name'
+    input.type = 'text'
+    input.maxLength = NAME_MAX
+    input.placeholder = X.namePlaceholder
+    input.autocomplete = 'off'
+    input.enterKeyHint = 'done'
+    input.value = spec.name
+    input.dataset.key = 'design-name'
+    // Typing changes the name at once, but the box is only tidied when the
+    // player leaves it, so a space can be typed without being trimmed away.
+    input.addEventListener('input', () => {
+      spec.name = cleanName(input.value)
+      kept = saveStore(storage, store)
+      drawTitle()
+    })
+    input.addEventListener('change', () => commit(() => undefined))
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') input.blur()
+    })
+    naming.append(label, input)
+    const note = el('p', kept ? 'ctl-note' : 'ctl-issue', `${fill(O.project, { n: String(design.projectNo) })}. ${kept ? X.kept : X.notKept}`)
+    naming.append(note)
+
+    const actions = el('div', 'actions')
+    const full = store.designs.length >= MAX_DESIGNS
+    const fresh = actionButton('design-new', X.newDesign)
+    const copy = actionButton('design-copy', X.copy)
+    fresh.disabled = copy.disabled = full
+    fresh.addEventListener('click', () => {
+      if (addDesign(store)) showCurrent()
+    })
+    copy.addEventListener('click', () => {
+      const from = structuredClone(spec)
+      if (from.name) from.name = fill(X.copyName, { name: from.name })
+      if (addDesign(store, from)) showCurrent()
+    })
+    const scrap = actionButton('design-scrap', X.scrap)
+    const scrapNo = design.projectNo
+    twoTap(scrap, X.scrap, X.scrapConfirm, () => {
+      scrapDesign(store, scrapNo)
+      showCurrent()
+    })
+    actions.append(fresh, copy, scrap)
+    if (full) actions.append(el('p', 'ctl-issue', X.full))
+
+    const list = el('section', 'ctl')
+    const title = el('h3', 'ctl-label', X.listTitle)
+    title.append(el('span', 'num-value', fill(X.listCount, { n: String(store.designs.length), max: String(MAX_DESIGNS) })))
+    const rows = el('div', 'opts')
+    for (const item of store.designs) {
+      const on = item.projectNo === design.projectNo
+      const stats = on ? sheet : buildStatSheet(item.spec, limits)
+      const row = el('button', on ? 'opt opt-on' : 'opt')
+      row.type = 'button'
+      row.dataset.key = `design:${item.projectNo}`
+      if (on) row.setAttribute('aria-current', 'true')
+      const headRow = el('span', 'opt-head')
+      headRow.append(el('span', 'opt-name', item.spec.name || X.unnamed))
+      if (on) headRow.append(el('span', 'opt-tag', X.onTheBoard))
+      row.append(
+        headRow,
+        el('span', 'opt-note', fill(O.project, { n: String(item.projectNo) })),
+        el('span', 'opt-delta', fill(X.summary, {
+          mass: fixed(stats.massT, 1), cost: money(stats.unitCostKr), faults: faultCount(stats.issues.length),
+        })),
+      )
+      row.addEventListener('click', () => {
+        openDesign(store, item.projectNo)
+        showCurrent()
+      })
+      rows.append(row)
+    }
+    list.append(title, rows)
+
+    box.append(naming, actions, list)
+    return box
+  }
+
   function drawPanel(): void {
     const scroll = panel.scrollTop
     const active = document.activeElement
@@ -349,6 +502,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     const parts: HTMLElement[] = []
     if (tab === 'readouts') parts.push(renderReadouts(sheet, limits))
     else if (tab === 'faults') parts.push(drawFaults())
+    else if (tab === 'designs') parts.push(drawDesigns())
     else {
       for (const control of CONTROLS) {
         if (control.tab !== tab) continue
@@ -374,26 +528,12 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     }
   }
 
-  // --- Start again: two taps, so a slip of the thumb does not lose a design.
-  let armed = false
-  let disarm: number | undefined
-  reset.addEventListener('click', () => {
-    if (!armed) {
-      armed = true
-      reset.textContent = O.resetConfirm
-      reset.classList.add('office-reset-armed')
-      disarm = window.setTimeout(() => {
-        armed = false
-        reset.textContent = O.reset
-        reset.classList.remove('office-reset-armed')
-      }, 4000)
-      return
-    }
-    window.clearTimeout(disarm)
-    armed = false
-    reset.textContent = O.reset
-    reset.classList.remove('office-reset-armed')
-    spec = structuredClone(BASELINE_SPEC)
+  // --- Start again: back to the baseline's parts, keeping the name and number.
+  twoTap(reset, O.reset, O.resetConfirm, () => {
+    const name = spec.name
+    design.spec = cleanSpec(BASELINE_SPEC)
+    design.spec.name = name
+    spec = design.spec
     commit(() => undefined)
   })
 

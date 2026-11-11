@@ -92,15 +92,18 @@ body {
 }
 
 .office-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.office-titles { min-width: 0; padding: 0 4px; background: var(--paper); }
+.office-project { margin: 0; font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-dim); }
 .office-name {
   margin: 0;
-  padding: 0 4px;
-  background: var(--paper);
+  overflow: hidden;
   font-family: var(--font-head);
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* Side / Top / Front switch. */
@@ -145,7 +148,7 @@ body {
 }
 
 .again { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: 20px; }
-.office-reset {
+.btn {
   min-height: 44px;
   padding: 4px 14px;
   border: 1.5px solid var(--ink-dim);
@@ -154,9 +157,29 @@ body {
   color: var(--ink);
   font-family: var(--font-ui);
   font-size: 0.9rem;
+  text-align: left;
   cursor: pointer;
 }
-.office-reset-armed { border-color: var(--pencil); color: var(--pencil); font-weight: 600; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn-armed { border-color: var(--pencil); color: var(--pencil); font-weight: 600; }
+
+/* Designs tab: the name box, the actions, and the plan chest. */
+.designs { display: flex; flex-direction: column; gap: 20px; }
+.name-input {
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+}
+.name-input::placeholder { color: var(--ink-dim); }
+.name-input:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+.actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
 
 /* Weight bar: one segment for each area, and a tick at the limit. */
 .wbar { margin-top: 6px; }
@@ -281,7 +304,7 @@ body {
   cursor: pointer;
 }
 .opt-on { border: 2.5px solid var(--ink); padding: 7px 9px; }
-.opt:focus-visible, .num-step:focus-visible, .fix:focus-visible, .office-reset:focus-visible {
+.opt:focus-visible, .num-step:focus-visible, .fix:focus-visible, .btn:focus-visible {
   outline: 3px solid var(--pencil);
   outline-offset: 2px;
 }
