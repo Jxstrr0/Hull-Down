@@ -4,6 +4,10 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Watch a battle in 3D** (0.9.3.0): say if the director's camera
+  shows the right things, and if it runs smoothly on your phone. Platoon
+  battles are open from the Trials tab for now; the plan has them
+  unlocked by passing the gates, which I have left for the career work.
 - **Try a battle** (0.9.1.0): Trials tab, "Send a platoon to battle".
   Say if the two orders read clearly and feel like real choices, and if
   the results look fair (the Type 1 as issued holds a ridge well against
@@ -171,6 +175,14 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 11 November 2026).
 
 ## Log
+
+- **0.9.3.0, PR 9d: the battle in 3D.** Under the map, "Watch it in 3D"
+  opens the battle on the ground it was fought on: ridges, woods, all
+  the tanks, tracers, hits and wrecks, and the dark for the night
+  ground. Play, pause and a slider. The director follows whichever of
+  your tanks is about to fire or be hit; "No. 1" and the rest ride
+  with one tank. Loaded only when opened, so the first load is
+  unchanged. This finishes PR 9.
 
 - **0.9.2.0, PR 9c: the battle map.** "One battle, as it happened" now
   opens with a map of the ground from above, your platoon at the

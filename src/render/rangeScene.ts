@@ -79,7 +79,7 @@ export interface RangeView {
 }
 
 /** Everything made for the scene, so it can all be given back. */
-class Kit {
+export class Kit {
   private readonly geometries: BufferGeometry[] = []
   private readonly materials = new Map<string, Material>()
 
@@ -151,38 +151,51 @@ class Kit {
   }
 }
 
-function buildTank(kit: Kit, shape: TankShape): Group {
-  const c = RENDER.colours
+/** The name of the part of a built tank that turns with the gun. */
+export const TURRET = 'turret'
+
+/**
+ * A grey-box tank, nose along x. The turret, its bustle and the gun are one
+ * part, named `TURRET`, that turns about the turret ring.
+ */
+export function buildTank(
+  kit: Kit, shape: TankShape, body: string = RENDER.colours.tank, dark: string = RENDER.colours.tankDark,
+): Group {
   const t = RENDER.tank
   const tank = new Group()
-  tank.add(kit.slab(shape.hullOutline, shape.hullWidthM, c.tank))
+  tank.add(kit.slab(shape.hullOutline, shape.hullWidthM, body))
 
   for (const side of [-1, 1]) {
-    const track = kit.box(shape.track.lengthM, shape.track.topM, shape.track.widthM, c.tankDark)
+    const track = kit.box(shape.track.lengthM, shape.track.topM, shape.track.widthM, dark)
     track.position.set(0, shape.track.topM / 2, side * shape.track.centreZM)
     tank.add(track)
     for (const x of shape.wheels.xM) {
-      const wheel = kit.mesh(new CylinderGeometry(shape.wheels.radiusM, shape.wheels.radiusM, t.wheelThickM, t.wheelSides), c.tank)
+      const wheel = kit.mesh(new CylinderGeometry(shape.wheels.radiusM, shape.wheels.radiusM, t.wheelThickM, t.wheelSides), body)
       wheel.rotation.x = Math.PI / 2
       wheel.position.set(x, shape.wheels.radiusM, side * (shape.track.centreZM + shape.track.widthM / 2 + t.wheelProudM))
       tank.add(wheel)
     }
   }
 
-  const turret = kit.mesh(new CylinderGeometry(shape.turret.radiusM, shape.turret.radiusM, shape.turret.heightM, t.turretSides), c.tank)
-  turret.position.set(shape.turret.xM, shape.turret.baseM + shape.turret.heightM / 2, 0)
-  tank.add(turret)
+  // Everything that turns with the gun, placed from the middle of the turret ring.
+  const top = new Group()
+  top.name = TURRET
+  top.position.set(shape.turret.xM, 0, 0)
+  tank.add(top)
+  const turret = kit.mesh(new CylinderGeometry(shape.turret.radiusM, shape.turret.radiusM, shape.turret.heightM, t.turretSides), body)
+  turret.position.set(0, shape.turret.baseM + shape.turret.heightM / 2, 0)
+  top.add(turret)
   if (shape.turret.bustleM > 0) {
     const long = shape.turret.radiusM + shape.turret.bustleM
-    const bustle = kit.box(long, shape.turret.heightM * t.bustleHeightShare, shape.turret.radiusM * t.bustleWidthShare, c.tank)
-    bustle.position.set(shape.turret.xM - long / 2, shape.turret.baseM + shape.turret.heightM / 2, 0)
-    tank.add(bustle)
+    const bustle = kit.box(long, shape.turret.heightM * t.bustleHeightShare, shape.turret.radiusM * t.bustleWidthShare, body)
+    bustle.position.set(-long / 2, shape.turret.baseM + shape.turret.heightM / 2, 0)
+    top.add(bustle)
   }
 
-  const gun = kit.mesh(new CylinderGeometry(shape.gun.radiusM, shape.gun.radiusM, shape.gun.lengthM, t.gunSides), c.tankDark)
+  const gun = kit.mesh(new CylinderGeometry(shape.gun.radiusM, shape.gun.radiusM, shape.gun.lengthM, t.gunSides), dark)
   gun.rotation.z = Math.PI / 2
-  gun.position.set(shape.gun.rootXM + shape.gun.lengthM / 2, shape.gun.yM, 0)
-  tank.add(gun)
+  gun.position.set(shape.gun.rootXM - shape.turret.xM + shape.gun.lengthM / 2, shape.gun.yM, 0)
+  top.add(gun)
   return tank
 }
 
