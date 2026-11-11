@@ -1,0 +1,40 @@
+name: publish-release
+
+# Every version bump that reaches main becomes a GitHub Release, tagged
+# v<VERSION>, with that version's line from docs/STATUS.md as its notes.
+# The studio site reads the latest release to show the game's version.
+on:
+  push:
+    branches: [main]
+    paths: [VERSION]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Publish this version, once
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(tr -d '[:space:]' < VERSION)"
+          tag="v$version"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "Release $tag already exists. Nothing to do."
+            exit 0
+          fi
+          node scripts/release-notes.mjs "$version" > release-notes.md
+          gh release create "$tag" --target "$GITHUB_SHA" --title "Hull Down $version" --notes-file release-notes.md --latest

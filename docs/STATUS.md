@@ -4,6 +4,7 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Releases (0.18.2.0).** From this version on, every merge that bumps the version publishes a GitHub Release by itself, so the studio site can show the current version. The first one will be v0.18.2.0. Say if you would rather releases start at 1.0.0.0 only.
 - **Credits (0.18.1.0).** Claude put the credits at the foot of the Saves tab, folded shut, next to the offline line. Say if you would rather have them somewhere else.
 - **Launch (0.18.0.0).** Kelbo's answers: 1.0.0.0 at the end of stage 18 without asking again; the cover is made by Kelbo from a prompt Claude wrote; the studio site listing already exists, so no PR there.
 - **Challenge screen (0.17.5.0).** I chose: it sits at the top of the Bureau tab, above the sandbox; trials on the Trials tab use the day's pass marks while it is on; the shared text carries no name. Say if you want it somewhere else, or a streak count added.
@@ -467,6 +468,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.18.2.0, PR 18c: brand check and releases.** `tests/brand.test.ts` holds the studio pieces to the Longlight brand: the official logo files unchanged, the splash in brand colours and Space Grotesk, the credit line, the full studio name and the studio link. `publish-release.yml` publishes a GitHub Release (`v<VERSION>`) each time the version changes on `main`, with that version's line from this log as its notes; a test now fails if a version has no log line.
 - **0.18.1.0, PR 18b: credits in the game.** A folded Credits list at the foot of the Saves tab: the studio line, then every font, sound and library with its maker, licence and a link to its source. A test keeps it in step with `CREDITS.md`.
 - **0.18.0.0, PR 18a: the crash screen.** If the game breaks, the page is replaced by a plain account, the save code read from what the browser last kept (copy or backup file), a button to start again, and a short fault report (version, fault, browser; nothing about the player). Harmless browser complaints do not trigger it. Add `#crash-test` to the address to see it.
 - **0.17.5.0, PR 17f: the challenge of the day on screen.** The Bureau tab opens with the day's challenge: the date, the brief, what the army weighs, and a switch, Work on the challenge. With it on the office works to the day's limits with every part of that time unlocked, the proving ground uses the day's marks, and the career waits (the sandbox and the challenge switch each other off). Enter this design runs the day's trials and shows the order of merit against the three rival bureaus. Kelbo chose as many tries as you like, best counts: the best of the day and the number of tries are kept on the device (`hulldown.daily`) and start afresh at midnight; entering the same design twice is one try. Kelbo chose a short text to copy: four lines with the date, the brief, the placing and the game's address. With this, plan PR 17 is done.
