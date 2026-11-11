@@ -144,6 +144,11 @@ export function decodeStore(text: string | null): DesignStore {
   } catch {
     return newStore()
   }
+  return cleanStore(raw)
+}
+
+/** A store from anything read out of a save. Anything that cannot be trusted is dropped. */
+export function cleanStore(raw: unknown): DesignStore {
   if (typeof raw !== 'object' || raw === null) return newStore()
   const { designs, current, nextProjectNo } = raw as { designs?: unknown; current?: unknown; nextProjectNo?: unknown }
   if (!Array.isArray(designs)) return newStore()
