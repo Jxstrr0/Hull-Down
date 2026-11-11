@@ -8,9 +8,8 @@ import {
   runProvingGround, type AccelerationRun, type EnduranceEvent, type EnduranceRun, type ObstacleResult, type RangeReport,
 } from '../sim/trials'
 import type { StatSheet, VehicleSpec } from '../sim/vehicle'
-import type { RunRecord } from '../render/playback'
-import { VIEWS, type RangeTest, type ViewId } from '../render/director'
-import type { RangeView } from '../render/rangeScene'
+import { VIEWS, type ViewId } from '../render/director'
+import type { RangeView, RunSource } from '../render/rangeScene'
 import { el } from './dom'
 import { fixed } from './format'
 
@@ -162,11 +161,24 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   const V = R.view
   let closeView = (): void => {}
 
-  const openView = async (test: RangeTest, record: RunRecord, slot: HTMLElement, opener: HTMLButtonElement): Promise<void> => {
+  /** A breakdown in a few words, for the caption on the 3D view. The report has the long form. */
+  const haltText = (event: EnduranceEvent): string => {
+    const halt: Partial<Record<RunPartId, string>> = V.halt
+    return fill((event.load > 1 && halt[event.part]) || V.halt.fault, {
+      part: R.endurance.parts[event.part], km: String(event.km), time: hours(event.haltH),
+    })
+  }
+
+  const openView = async (source: RunSource, slot: HTMLElement, opener: HTMLButtonElement): Promise<void> => {
     closeView()
+    const test = source.test
     const box = el('div', 'rg-view')
     const stage = el('div', 'rg-view-stage')
     const status = el('p', 'rg-view-status', V.loading)
+    // Words over the foot of the picture when the endurance run stops for a breakdown, and when it ends.
+    const caption = el('p', 'rg-view-caption')
+    caption.setAttribute('role', 'status')
+    caption.hidden = true
 
     // Play or pause, and the bar that shows how far through the run it is.
     const scrubRow = el('div', 'rg-view-row')
@@ -216,7 +228,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
 
     const controls = [toggle, scrub, ...viewButtons.map((each) => each.button)]
     for (const control of controls) control.disabled = true
-    stage.append(status)
+    stage.append(status, caption)
     box.append(stage, scrubRow, bar, views)
     slot.replaceChildren(box)
     opener.hidden = true
@@ -266,16 +278,26 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
       view = openRangeView({
         host: stage,
         label: V.label[test],
-        test,
+        source,
         view: chosen,
         spec: args.spec,
         geometry: sheet.geometry,
-        record,
         onFrame: (frame) => {
-          const time = fixed(frame.timeS, 1)
-          readout.textContent = fill(V.readout, { time, speed: fixed(frame.speedKmh, 0), dist: fixed(frame.distanceM, 0) })
           // The bar follows the run, except under a finger.
           if (!heldWhilePlaying) scrub.value = String(frame.timeS)
+          if (source.test === 'endurance' && frame.lapse) {
+            const lapse = frame.lapse
+            const km = fixed(lapse.km, 0)
+            const leg = source.run.legs[lapse.legIndex]!
+            readout.textContent = fill(V.lapseReadout, { time: hours(lapse.hours), km, leg: R.endurance.legShort[leg.id] })
+            scrub.setAttribute('aria-valuetext', fill(V.lapseValue, { km, total: String(source.run.lengthKm) }))
+            const words = lapse.event ? haltText(lapse.event) : lapse.done && source.run.finished ? fill(V.lapseDone, { km }) : ''
+            if (caption.textContent !== words) caption.textContent = words
+            caption.hidden = words === ''
+            return
+          }
+          const time = fixed(frame.timeS, 1)
+          readout.textContent = fill(V.readout, { time, speed: fixed(frame.speedKmh, 0), dist: fixed(frame.distanceM, 0) })
           scrub.setAttribute('aria-valuetext', fill(V.scrubValue, { time, length: fixed(Number(scrub.max), 1) }))
         },
         onState: (state) => {
@@ -294,12 +316,12 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   }
 
   /** A button that opens the 3D view of a run, and the place the view goes. */
-  const watch = (test: RangeTest, record: RunRecord): HTMLElement[] => {
+  const watch = (source: RunSource): HTMLElement[] => {
     const slot = el('div', 'rg-view-slot')
     const button = el('button', 'btn rg-watch', V.watch)
     button.type = 'button'
-    button.dataset.key = `range-watch:${test}`
-    button.addEventListener('click', () => void openView(test, record, slot, button))
+    button.dataset.key = `range-watch:${source.test}`
+    button.addEventListener('click', () => void openView(source, slot, button))
     return [button, slot]
   }
 
@@ -376,7 +398,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   )
   const accelNotes = [sheet.drive.shiftS > 0 ? fill(A.shifts, { n: String(a.shifts) }) : A.noShifts]
   if (a.gearLimited) accelNotes.push(fill(A.gearHeld, { n: fixed(a.topKmh, 0) }))
-  accel.append(...watch('acceleration', a.trace), speedChart(a, report.marks.topKmh), accelLines, ...accelNotes.map((text) => el('p', 'ctl-note rg-note', text)))
+  accel.append(...watch({ test: 'acceleration', record: a.trace }), speedChart(a, report.marks.topKmh), accelLines, ...accelNotes.map((text) => el('p', 'ctl-note rg-note', text)))
 
   // --- Obstacle course ----------------------------------------------------
   const O = R.obstacles
@@ -418,7 +440,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   const course = card(O.title, O.about, report.obstacles.passed)
   const courseLines = el('ul', 'rg-lines')
   courseLines.append(...report.obstacles.results.map(obstacleLine))
-  course.append(...watch('obstacles', report.obstacles.trace), courseLines)
+  course.append(...watch({ test: 'obstacles', record: report.obstacles.trace }), courseLines)
 
   // --- Endurance run ------------------------------------------------------
   const E = R.endurance
@@ -476,7 +498,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     if (part) item.append(fixButton(part, `endurance-${id}`))
     longLines.append(item)
   }
-  long.append(runChart(e), longLines)
+  long.append(...watch({ test: 'endurance', run: e }), runChart(e), longLines)
   if (over.length === 0) long.append(el('p', 'ctl-note rg-note', E.allWithin))
   long.append(el('p', 'ctl-note rg-note', E.note))
 

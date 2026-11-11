@@ -3,12 +3,13 @@
 import { RENDER } from '../data/render'
 import { courseLayout } from '../sim/trials'
 import { pointAt, type Path, type Pose } from './path'
+import type { LegId } from './terrain'
 
 /** The views a player can pick. The director picks for itself as the run goes on. */
 export const VIEWS = ['director', 'side', 'behind', 'above'] as const
 export type ViewId = (typeof VIEWS)[number]
 
-export type RangeTest = 'acceleration' | 'obstacles'
+export type RangeTest = 'acceleration' | 'obstacles' | 'endurance'
 
 /** A place on the range: x along the run, y up, z across it towards the camera side. */
 export interface Vec {
@@ -58,8 +59,17 @@ function courseShot(path: Path, pose: Pose, s: number): Shot {
   return travelling(d.after, pose)
 }
 
-/** The camera for a view, with the tank `s` metres into the run and sitting at `pose`. */
-export function shotAt(test: RangeTest, view: ViewId, path: Path, pose: Pose, s: number): Shot {
+/** Where the tank is, for the director to choose by. */
+export type Scene =
+  | { test: 'acceleration'; s: number }
+  | { test: 'obstacles'; s: number; path: Path }
+  /** The ground of an endurance leg repeats, so only a camera that travels with the tank will do. */
+  | { test: 'endurance'; leg: LegId }
+
+/** The camera for a view, with the tank sitting at `pose`. */
+export function shotAt(view: ViewId, scene: Scene, pose: Pose): Shot {
   if (view !== 'director') return travelling(view, pose)
-  return test === 'acceleration' ? travelling(stripSeat(s), pose) : courseShot(path, pose, s)
+  if (scene.test === 'acceleration') return travelling(stripSeat(scene.s), pose)
+  if (scene.test === 'obstacles') return courseShot(scene.path, pose, scene.s)
+  return travelling(RENDER.camera.director.endurance[scene.leg], pose)
 }

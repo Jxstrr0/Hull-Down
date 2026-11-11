@@ -57,7 +57,7 @@ export const STRINGS = {
     },
     trials: {
       title: 'Proving ground',
-      about: 'The range runs the prototype through its tests: a standing start down the strip, a trench, a step, a mud pit and a slope, then a long endurance run to see what breaks. The numbers in the design office are estimates. The range has the final word. You can watch the first two tests played back in 3D.',
+      about: 'The range runs the prototype through its tests: a standing start down the strip, a trench, a step, a mud pit and a slope, then a long endurance run to see what breaks. The numbers in the design office are estimates. The range has the final word. You can watch each test played back in 3D.',
       send: 'Send it to the range',
       blocked: 'The shop cannot build this design yet. Fix the faults first.',
       toFaults: 'Go to the faults',
@@ -595,9 +595,21 @@ export const STRINGS = {
       loading: 'Setting up the range…',
       failed: 'This device could not open the 3D range. Everything it would show is in the report below.',
       readout: '{time} s · {speed} km/h · {dist} m',
+      // The endurance run is a time-lapse: it shows the time and distance of the run, not of the watching.
+      lapseReadout: '{time} · {km} km · {leg}',
+      lapseValue: '{km} km of {total} km',
+      lapseDone: 'Finished: all {km} km.',
+      halt: {
+        fault: '{part} fault at km {km}. {time} at the roadside.',
+        suspension: 'Suspension arm broken at km {km}. {time} to replace.',
+        tracks: 'Track thrown at km {km}. {time} to refit.',
+        engine: 'Engine seized at km {km}. Towed in.',
+        transmission: 'Transmission broken at km {km}. Towed in.',
+      },
       label: {
         acceleration: 'The acceleration run played back in 3D. The report has the same facts in words.',
         obstacles: 'The obstacle course played back in 3D. The report has the same facts in words.',
+        endurance: 'The endurance run played back in 3D as a time-lapse. The report has the same facts in words.',
       },
     },
     note: 'Pact standard marks for a generation-one tank. A tender will set its own.',
