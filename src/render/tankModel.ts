@@ -6,7 +6,9 @@ import { PAINT, type PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import { camoOf, camoPlaces, type Camo } from './camo'
 import type { Kit } from './rangeScene'
-import type { LoftPart, Mount, TankPart, TankShape, Tone } from './tankShape'
+import type { Mount, Solid, TankShape, Tone } from './tankShape'
+
+type Loft = Extract<Solid, { kind: 'loft' }>
 
 /** The name of the part of a built tank that turns with the gun. */
 export const TURRET = 'turret'
@@ -34,7 +36,7 @@ function cornersOf(geometry: BufferGeometry): number[] {
 }
 
 /** Rings skinned one to the next and closed on top, every triangle turned to face outward. */
-function loftCorners(part: LoftPart): number[] {
+function loftCorners(part: Loft): number[] {
   const out: number[] = []
   let cx = 0
   let cy = 0
@@ -61,7 +63,7 @@ function loftCorners(part: LoftPart): number[] {
     if (nx * mx + ny * my + nz * mz >= 0) out.push(...a, ...b, ...c)
     else out.push(...a, ...c, ...b)
   }
-  const at = (ring: LoftPart['rings'][number], i: number): V => {
+  const at = (ring: Loft['rings'][number], i: number): V => {
     const corner = ring.corners[i % ring.corners.length]!
     return [corner.x, ring.y, corner.z]
   }
@@ -78,7 +80,7 @@ function loftCorners(part: LoftPart): number[] {
   return out
 }
 
-function partCorners(part: TankPart): number[] {
+function partCorners(part: Solid): number[] {
   switch (part.kind) {
     case 'box': {
       const geometry = new BoxGeometry(part.size.x, part.size.y, part.size.z)
@@ -139,4 +141,25 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
     ;(pile.mount === 'turret' ? top : tank).add(mesh)
   }
   return tank
+}
+
+/** Shapes that stand still, each with its colour. Every shape of one colour is joined into one mesh. */
+export function buildSolids(kit: Kit, items: readonly { colour: string; solid: Solid }[]): Group {
+  const group = new Group()
+  const piles = new Map<string, number[]>()
+  for (const item of items) {
+    let pile = piles.get(item.colour)
+    if (!pile) {
+      pile = []
+      piles.set(item.colour, pile)
+    }
+    for (const value of partCorners(item.solid)) pile.push(value)
+  }
+  for (const [colour, corners] of piles) {
+    const geometry = new BufferGeometry()
+    geometry.setAttribute('position', new Float32BufferAttribute(corners, 3))
+    geometry.computeVertexNormals()
+    group.add(kit.mesh(geometry, colour))
+  }
+  return group
 }

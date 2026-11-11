@@ -54,6 +54,10 @@ export interface LoftPart extends PartBase {
 
 export type TankPart = BoxPart | DrumPart | SlabPart | LoftPart
 
+type Bare<T> = T extends unknown ? Omit<T, 'mount' | 'tone'> : never
+/** The shape of a part alone: not what it is fixed to or how it is painted. Scenery is built from these too. */
+export type Solid = Bare<TankPart>
+
 export interface TankShape {
   lengthM: number
   /** Length of track on the ground, for working out the tilt. */
@@ -279,7 +283,7 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
 }
 
 /** Triangles one part is drawn with. */
-export function partTriangles(part: TankPart): number {
+export function partTriangles(part: Solid): number {
   switch (part.kind) {
     case 'box': return 12
     case 'drum': return part.sides * 4

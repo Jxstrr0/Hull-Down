@@ -166,6 +166,9 @@ export const RENDER = {
     toM: 3400,
     /** The ground is laid in pieces this long. */
     pieceM: 100,
+    /** Woods, the tower and the flags stand beside this stretch of the range. */
+    sceneryFromM: -60,
+    sceneryToM: 760,
     /** Marker posts beside the lane, this far apart and this many each way from the tank. */
     postEveryM: 50,
     postsEachWay: 6,
@@ -225,6 +228,32 @@ export const RENDER = {
     screenM: 9,
     wreckSmoke: { puffs: 3, sizeM: 3.2, riseM: 4.5 },
     nightLight: 0.3,
+  },
+  /**
+   * What stands round the proving ground: woods, far hills, a range tower
+   * and warning flags. Looks only. The cameras stand on the near side of the
+   * lane, so that side is kept clear further out.
+   */
+  scenery: {
+    /** The most triangles the scenery of one range may be built from. A test counts. */
+    maxTriangles: 5200,
+    /** Woods start this far from the middle of the lane, on the far side and on the camera's side, and are this deep. */
+    farSideFromM: 26,
+    nearSideFromM: 48,
+    depthM: 110,
+    /** One tree for every this many metres of range, each side. */
+    treeEveryM: 9,
+    tree: { minHeightM: 7, maxHeightM: 15, widthShare: 0.26, skirtShare: 0.05, sides: 5 },
+    treeColours: ['#3f4a34', '#4a5638', '#36422f'],
+    /** Low hills on the skyline: this many each side, this far off, this long and high at most. */
+    hills: { eachSide: 3, fromM: 190, toM: 300, lengthM: 260, heightM: 34, sides: 8, colour: '#7f8667' },
+    /** The range tower: a cabin on four legs beside the start, on the far side. */
+    tower: { alongM: -14, offM: 16, legHighM: 5, legWidthM: 0.3, cabinM: 3.4, cabinHighM: 2.4, roofM: 4.2, roofThickM: 0.25 },
+    towerColours: { legs: '#55584e', cabin: '#c9c3ad', roof: '#5a3f33' },
+    /** Red flags fly at each end of the range while it is in use: one each side of the lane. */
+    flag: { offM: 4.5, poleHighM: 6, poleRadiusM: 0.07, longM: 1.5, highM: 0.9, thickM: 0.05, pole: '#e9ece6', cloth: '#b23a2e' },
+    /** Every range lays its scenery out from this number, so it is the same on every device. */
+    seed: 4107,
   },
   /** The open ground lies a hair under the lane, so the two never fight over a pixel. */
   ground: { sizeM: 1400, underM: 0.03 },

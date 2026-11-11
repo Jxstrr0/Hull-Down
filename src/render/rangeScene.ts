@@ -18,7 +18,8 @@ import { courseOutline, coursePath, mudPatch, trenchPit, poseAt, stripPath, type
 import { frameAt, lengthS, type RunRecord } from './playback'
 import { reelOf, type ReelFrame } from './shootReel'
 import type { Camo } from './camo'
-import { buildTank, tonesOf } from './tankModel'
+import { rangeScenery } from './scenery'
+import { buildSolids, buildTank, tonesOf } from './tankModel'
 import { tankShapeOf, type TankShape } from './tankShape'
 import { legGround, placeOnLeg, type LegGround } from './terrain'
 import { puffAt, timelapseOf, type LapseFrame } from './timelapse'
@@ -193,6 +194,7 @@ function buildStrip(kit: Kit, scene: Scene): void {
   const strip = kit.box(long + 2 * RENDER.course.leadM, s.thickM, s.widthM, RENDER.colours.concrete)
   strip.position.set(long / 2, 0, 0)
   scene.add(strip)
+  scene.add(buildSolids(kit, rangeScenery({ fromX: -RENDER.course.leadM, toX: long + RENDER.course.leadM, laneHalfM: s.widthM / 2 })))
   for (let x = 0; x <= long; x += s.postEveryM) {
     for (const side of [-1, 1]) {
       const post = kit.box(s.postWidthM, s.postHeightM, s.postWidthM, RENDER.colours.post)
@@ -210,6 +212,7 @@ function buildCourse(kit: Kit, scene: Scene, path: Path): void {
   scene.add(flatGround(kit, -RENDER.ground.underM, path.lengthM / 2, reach, edge))
   scene.add(flatGround(kit, -RENDER.ground.underM, path.lengthM / 2, -edge, -reach))
   scene.add(kit.slab(courseOutline(), c.widthM, RENDER.colours.earth))
+  scene.add(buildSolids(kit, rangeScenery({ fromX: 0, toX: path.lengthM, laneHalfM: edge })))
   const mud = mudPatch()
   const pit = kit.box(mud.toX - mud.fromX, c.mudThickM, c.widthM - c.mudInsetM, RENDER.colours.mud)
   pit.position.set((mud.fromX + mud.toX) / 2, mud.y, 0)
@@ -344,6 +347,8 @@ function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: T
     kit.ribbon(line, RENDER.ground.sizeM, -RENDER.ground.underM, c.ground),
     kit.ribbon(line.filter((point) => point.x <= k.laneToM), k.laneWidthM, 0, run.moving ? c.earth : c.concrete),
   )
+
+  scene.add(buildSolids(kit, rangeScenery({ fromX: k.sceneryFromM, toX: k.sceneryToM, laneHalfM: k.laneWidthM / 2 })))
 
   // The posts keep pace with the tank a step at a time, so there are always some beside it to show it moving.
   const posts = new Group()
