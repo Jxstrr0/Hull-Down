@@ -1,0 +1,261 @@
+// The game's sound, made in the browser from the tables in src/data/audio.ts.
+// Nothing is made until the player first taps something that makes a noise:
+// browsers only allow sound to start from a tap. Where there is no sound at
+// all (an old browser, a test), every call here quietly does nothing.
+import { AUDIO, type CueId, type CueLayer } from '../data/audio'
+import { gunShape, type Drone, type TankVoice } from './cues'
+
+/** The steady sounds of one tank, and how to set them. */
+interface DroneNodes {
+  engine: OscillatorNode
+  sub: OscillatorNode
+  bright: BiquadFilterNode
+  chug: OscillatorNode
+  engineOut: GainNode
+  whine: OscillatorNode
+  whineOut: GainNode
+  hissOut: GainNode
+  beat: OscillatorNode
+  trackOut: GainNode
+  sources: AudioScheduledSourceNode[]
+  voice: TankVoice
+}
+
+export interface Sound {
+  /** True when the player has the sound on. */
+  on(): boolean
+  setOn(on: boolean): void
+  /** Call from a tap: makes the sound ready, which a browser only allows then. */
+  wake(): void
+  /** A short sound, now. `calibreMm` shapes the gun. */
+  cue(id: CueId, calibreMm?: number): void
+  /**
+   * The engine and tracks of a tank, as they are this instant. Call it with
+   * every picture drawn: when the calls stop, the tank goes quiet by itself.
+   */
+  drone(voice: TankVoice, levels: Drone): void
+  /** Stop the engine and tracks and give them back. */
+  still(): void
+}
+
+type ContextMaker = () => AudioContext | null
+
+function browserContext(): AudioContext | null {
+  const scope = globalThis as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext }
+  const Maker = scope.AudioContext ?? scope.webkitAudioContext
+  if (!Maker) return null
+  try {
+    return new Maker()
+  } catch {
+    return null
+  }
+}
+
+export function createSound(startOn: boolean, makeContext: ContextMaker = browserContext): Sound {
+  let enabled = startOn
+  let context: AudioContext | null = null
+  let failed = false
+  let master: GainNode | null = null
+  let noise: AudioBuffer | null = null
+  let nodes: DroneNodes | null = null
+
+  function ready(): AudioContext | null {
+    if (context || failed) return context
+    context = makeContext()
+    if (!context) {
+      failed = true
+      return null
+    }
+    master = context.createGain()
+    master.gain.value = enabled ? AUDIO.master : 0
+    // A gun and an engine together would be too much for a phone speaker: this holds the peaks down.
+    const limiter = context.createDynamicsCompressor()
+    master.connect(limiter)
+    limiter.connect(context.destination)
+    const length = Math.floor(context.sampleRate * AUDIO.noiseS)
+    noise = context.createBuffer(1, length, context.sampleRate)
+    const samples = noise.getChannelData(0)
+    for (let i = 0; i < length; i++) samples[i] = Math.random() * 2 - 1
+    return context
+  }
+
+  function wake(): void {
+    if (!enabled) return
+    const ctx = ready()
+    if (ctx && ctx.state === 'suspended') void ctx.resume().catch(() => {})
+  }
+
+  function setOn(on: boolean): void {
+    enabled = on
+    if (on) {
+      wake()
+    } else {
+      still()
+    }
+    if (context && master) master.gain.setTargetAtTime(on ? AUDIO.master : 0, context.currentTime, AUDIO.fadeS)
+  }
+
+  /** A stretch of the kept noise, starting anywhere in it. */
+  function hiss(ctx: AudioContext): AudioBufferSourceNode {
+    const source = ctx.createBufferSource()
+    source.buffer = noise
+    source.loop = true
+    return source
+  }
+
+  function layer(ctx: AudioContext, out: AudioNode, each: CueLayer, pitch: number, stretch: number, gain: number): void {
+    const from = ctx.currentTime + (each.delayS ?? 0)
+    const peak = from + each.attackS
+    const end = peak + each.decayS * stretch
+    const level = ctx.createGain()
+    level.gain.setValueAtTime(0.0001, from)
+    level.gain.linearRampToValueAtTime(each.gain * gain, peak)
+    level.gain.exponentialRampToValueAtTime(0.0001, end)
+    level.connect(out)
+    if (each.kind === 'tone') {
+      const tone = ctx.createOscillator()
+      tone.type = each.wave ?? 'sine'
+      tone.frequency.setValueAtTime(each.fromHz * pitch, from)
+      tone.frequency.exponentialRampToValueAtTime(each.toHz * pitch, end)
+      tone.connect(level)
+      tone.start(from)
+      tone.stop(end)
+      return
+    }
+    const source = hiss(ctx)
+    const band = ctx.createBiquadFilter()
+    band.type = each.filter ?? 'lowpass'
+    band.Q.value = each.q ?? 1
+    band.frequency.setValueAtTime(each.fromHz * pitch, from)
+    band.frequency.exponentialRampToValueAtTime(each.toHz * pitch, end)
+    source.connect(band)
+    band.connect(level)
+    source.start(from, Math.random() * AUDIO.noiseS)
+    source.stop(end)
+  }
+
+  function cue(id: CueId, calibreMm?: number): void {
+    if (!enabled) return
+    const ctx = ready()
+    if (!ctx || !master || ctx.state !== 'running') return
+    const shape = id === 'gun' && calibreMm ? gunShape(calibreMm) : { pitch: 1, stretch: 1 }
+    const gain = AUDIO.cueGain * (id === 'gun' ? 1 : AUDIO.farGain)
+    for (const each of AUDIO.cues[id]) layer(ctx, master, each, shape.pitch, shape.stretch, gain)
+  }
+
+  function build(ctx: AudioContext, out: AudioNode, voice: TankVoice): DroneNodes {
+    const E = AUDIO.engine
+    const T = AUDIO.tracks
+    const tone = E.voices[voice.engine]
+
+    // The engine: a rough note and one an octave under it, through a filter, throbbing.
+    const engine = ctx.createOscillator()
+    engine.type = tone.wave
+    const sub = ctx.createOscillator()
+    sub.type = 'sine'
+    const bright = ctx.createBiquadFilter()
+    bright.type = 'lowpass'
+    const throb = ctx.createGain()
+    throb.gain.value = 1 - tone.chug / 2
+    const chug = ctx.createOscillator()
+    chug.type = 'sine'
+    const chugDepth = ctx.createGain()
+    chugDepth.gain.value = tone.chug / 2
+    chug.connect(chugDepth)
+    chugDepth.connect(throb.gain)
+    const engineOut = ctx.createGain()
+    engineOut.gain.value = 0
+    engine.connect(bright)
+    sub.connect(bright)
+    bright.connect(throb)
+    throb.connect(engineOut)
+    engineOut.connect(out)
+
+    // A turbine's whine and its rush of air. Silent for the other engines.
+    const whine = ctx.createOscillator()
+    whine.type = 'sine'
+    const whineOut = ctx.createGain()
+    whineOut.gain.value = 0
+    whine.connect(whineOut)
+    whineOut.connect(out)
+    const air = hiss(ctx)
+    const airBand = ctx.createBiquadFilter()
+    airBand.type = 'bandpass'
+    airBand.frequency.value = E.hissHz
+    airBand.Q.value = E.hissQ
+    const hissOut = ctx.createGain()
+    hissOut.gain.value = 0
+    air.connect(airBand)
+    airBand.connect(hissOut)
+    hissOut.connect(out)
+
+    // The tracks: a band of noise that beats once a link.
+    const clatter = hiss(ctx)
+    const clatterBand = ctx.createBiquadFilter()
+    clatterBand.type = 'bandpass'
+    clatterBand.frequency.value = T.bandHz
+    clatterBand.Q.value = T.q
+    const pulse = ctx.createGain()
+    pulse.gain.value = 1 - T.beatDepth / 2
+    const beat = ctx.createOscillator()
+    beat.type = 'square'
+    const beatDepth = ctx.createGain()
+    beatDepth.gain.value = T.beatDepth / 2
+    beat.connect(beatDepth)
+    beatDepth.connect(pulse.gain)
+    const trackOut = ctx.createGain()
+    trackOut.gain.value = 0
+    clatter.connect(clatterBand)
+    clatterBand.connect(pulse)
+    pulse.connect(trackOut)
+    trackOut.connect(out)
+
+    const sources = [engine, sub, chug, whine, air, clatter, beat]
+    for (const source of sources) source.start()
+    return { engine, sub, bright, chug, engineOut, whine, whineOut, hissOut, beat, trackOut, sources, voice }
+  }
+
+  function still(): void {
+    if (!nodes) return
+    const old = nodes
+    nodes = null
+    const at = (context?.currentTime ?? 0) + AUDIO.engine.hushS * 4
+    for (const out of [old.engineOut, old.whineOut, old.hissOut, old.trackOut]) {
+      out.gain.cancelScheduledValues(0)
+      out.gain.setTargetAtTime(0, context?.currentTime ?? 0, AUDIO.engine.hushS)
+    }
+    for (const source of old.sources) source.stop(at)
+  }
+
+  function drone(voice: TankVoice, levels: Drone): void {
+    if (!enabled) return
+    const ctx = ready()
+    if (!ctx || !master || ctx.state !== 'running') return
+    if (nodes && nodes.voice !== voice) still()
+    nodes ??= build(ctx, master, voice)
+    const E = AUDIO.engine
+    const tone = E.voices[voice.engine]
+    const now = ctx.currentTime
+    const glide = (param: AudioParam, value: number): void => {
+      param.setTargetAtTime(value, now, E.followS)
+    }
+    glide(nodes.engine.frequency, levels.engineHz)
+    glide(nodes.sub.frequency, levels.engineHz / 2)
+    glide(nodes.bright.frequency, levels.engineHz * tone.bright)
+    glide(nodes.chug.frequency, levels.engineHz * tone.chugRatio)
+    glide(nodes.whine.frequency, Math.max(1, levels.whineHz))
+    glide(nodes.beat.frequency, Math.max(0.01, levels.beatHz))
+    // Each loudness is set, and then told to fade if no new picture comes.
+    const hold = (param: AudioParam, value: number): void => {
+      param.cancelScheduledValues(now)
+      param.setTargetAtTime(value, now, E.followS)
+      param.setTargetAtTime(0, now + E.hushAfterS, E.hushS)
+    }
+    hold(nodes.engineOut.gain, levels.engineGain * E.gain)
+    hold(nodes.whineOut.gain, levels.engineGain * E.gain * tone.whine * E.whineGain)
+    hold(nodes.hissOut.gain, levels.engineGain * E.gain * tone.hiss)
+    hold(nodes.trackOut.gain, levels.trackGain * AUDIO.tracks.gain)
+  }
+
+  return { on: () => enabled, setOn, wake, cue, drone, still }
+}

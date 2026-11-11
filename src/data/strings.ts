@@ -1987,6 +1987,12 @@ export const STRINGS = {
     toBlueprint: 'Blueprint',
     switchTo: 'Switch to the {name} look',
   },
+  sound: {
+    on: 'Sound on',
+    off: 'Sound off',
+    turnOn: 'Sound is off. Turn it on',
+    turnOff: 'Sound is on. Turn it off',
+  },
   credit: '© 2026 Kelbo / Longlight Interactive',
   studioLink: 'https://longlight.games/',
   studioName: 'Longlight Interactive',
