@@ -108,8 +108,14 @@ export function enterDaily(spec: VehicleSpec, challenge: DailyChallenge, rivals:
   return { day: challenge.day, bids, place: bids.indexOf(mine) + 1, mine }
 }
 
+/** What is kept of a try: its place, and whether and how well it scored. */
+export interface DailyTry {
+  place: number
+  mine: Pick<BidLine, 'legal' | 'total'>
+}
+
 /** Whether a new try beats the best so far that day: a legal bid over one thrown out, then the better place, then more marks. */
-export function betterTry(now: Pick<DailyResult, 'place' | 'mine'>, best: Pick<DailyResult, 'place' | 'mine'> | null): boolean {
+export function betterTry(now: DailyTry, best: DailyTry | null): boolean {
   if (!best) return true
   if (now.mine.legal !== best.mine.legal) return now.mine.legal
   return now.place < best.place || (now.place === best.place && now.mine.total > best.mine.total)
