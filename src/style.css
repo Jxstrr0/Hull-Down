@@ -519,6 +519,8 @@ body {
 .ds-bar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .ds-bar-track { height: 6px; margin-top: 5px; border: 1px solid var(--ink-dim); }
 .ds-bar-fill { height: 100%; background: var(--ink); }
+.ds-station-jobs { margin: 5px 0 0; font-size: 0.9rem; }
+.ds-station-shares { margin: 2px 0 0; font-size: 0.85rem; color: var(--ink-dim); }
 .ds-table { width: 100%; margin-top: 10px; border-collapse: collapse; }
 .ds-table-caption { padding-bottom: 4px; font-size: 0.88rem; color: var(--ink-dim); text-align: left; }
 .ds-table th, .ds-table td { padding: 7px 0 7px 8px; border-bottom: 1px solid var(--grid); text-align: right; }

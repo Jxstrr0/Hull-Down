@@ -136,9 +136,11 @@ describe('what the firing tests reward', () => {
     expect(blames.filter((blame) => blame === 'ranging').length).toBeGreaterThan(SEEDS.length / 2)
   })
 
-  it('fails a one-plane stabiliser on the move, and blames the shake', () => {
+  it('ranks the stabilisers on the move, and blames the shake of a one-plane gun', () => {
     const one = build((s) => { s.fireControl.stabiliser = 'singlePlane' })
-    expect(passRate(one, 'onTheMove')).toBeLessThan(0.25)
+    const none = build((s) => { s.fireControl.stabiliser = 'none' })
+    expect(passRate(one, 'onTheMove')).toBeLessThan(passRate(base, 'onTheMove') - 0.25)
+    expect(passRate(none, 'onTheMove')).toBeLessThan(passRate(one, 'onTheMove') - 0.1)
     expect(passRate(one, 'halted')).toBe(passRate(base, 'halted'))
     const blames = SEEDS.map((seed) => runGunnery(one.fire, 'onTheMove', seed).blame)
     expect(blames.filter((blame) => blame === 'shake').length).toBeGreaterThan(SEEDS.length * 0.8)

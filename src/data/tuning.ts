@@ -124,7 +124,6 @@ export const TUNING = {
     ratedTPerMm: 0.076,
   },
   crew: {
-    workloadBase: { 3: 62, 4: 50 },
     workloadMin: 10,
     workloadMax: 100,
   },

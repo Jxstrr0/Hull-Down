@@ -2,11 +2,13 @@
 // to the few numbers a shot needs. The design office quotes from it and the
 // range shoots by it. Game-level abstractions, not engineering data.
 import { pactRounds, type PactRoundId, type RoundKind } from '../../data/ammo'
+import { CREW, type StationId } from '../../data/crew'
 import { CREWS, GUNNERY, type CrewId } from '../../data/gunnery'
 import {
   COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS,
 } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
+import { stationsOf, workloadAt } from '../crew/stations'
 import { detExp } from '../det'
 import type { VehicleSpec } from '../vehicle/spec'
 
@@ -55,8 +57,13 @@ export interface Fire {
   night: { seeM: number; layFactor: number }
   /** Seconds, for a fresh trained crew with nothing else to do. */
   times: { findS: number; rangeS: number; layS: number; relayS: number }
-  /** How much slower the crew is for the work the design gives them. 1 is the reference. */
-  pace: number
+  /**
+   * How much slower each crewman is for the work the design gives him. 1 is
+   * the reference. The commander finds targets, and with no loader feeds the
+   * gun by hand and clears jams; the gunner lays the gun; `ranging` is
+   * whichever of the two works the rangefinder.
+   */
+  pace: { commander: number; gunner: number; ranging: number }
   feed: Feed
 }
 
@@ -71,7 +78,7 @@ export const RANGE_DAY: Shoot = { moving: false, night: false, crew: 'cadre' }
 
 const G = GUNNERY
 
-export function fireOf(spec: VehicleSpec, crewWorkload: number): Fire {
+export function fireOf(spec: VehicleSpec): Fire {
   const fc = spec.fireControl
   const sight = G.sights[fc.sight]
   const rangefinder = G.rangefinders[fc.rangefinder]
@@ -83,6 +90,9 @@ export function fireOf(spec: VehicleSpec, crewWorkload: number): Fire {
   const ride = stabiliser.halts ? 1 : G.ride[spec.runningGear.suspension]
   const L = G.loading
   const auto = loading.fixedRof !== null
+  const stations = stationsOf(spec)
+  const paceOf = (station: StationId): number =>
+    1 + (workloadAt(stations, station) - G.pace.referenceWorkload) * G.pace.perPoint
 
   return {
     rounds: pactRounds(spec.gun).map(({ id, round }) => ({
@@ -109,7 +119,7 @@ export function fireOf(spec: VehicleSpec, crewWorkload: number): Fire {
       layS: sight.layS + computer.setS,
       relayS: stabiliser.relayS,
     },
-    pace: 1 + (crewWorkload - G.pace.referenceWorkload) * G.pace.perPoint,
+    pace: { commander: paceOf('commander'), gunner: paceOf('gunner'), ranging: paceOf(CREW.ranging[fc.rangefinder]) },
     feed: {
       auto,
       freshS: 60 / (loading.fixedRof ?? gun.loaderRof),
@@ -243,8 +253,9 @@ export function hitChance(fire: Fire, round: FireRound, rangeM: number, shoot: S
 /** Seconds from a target showing to the first shot, with a round already in the gun. */
 export function firstShotS(fire: Fire, shoot: Shoot): number {
   const t = fire.times
-  const still = (t.findS + t.rangeS + t.layS) * (shoot.night ? fire.night.layFactor : 1)
-  return (still + (shoot.moving ? fire.moving.extraS : 0)) * fire.pace * CREWS[shoot.crew].pace
+  const p = fire.pace
+  const still = (t.findS * p.commander + t.rangeS * p.ranging + t.layS * p.gunner) * (shoot.night ? fire.night.layFactor : 1)
+  return (still + (shoot.moving ? fire.moving.extraS * p.gunner : 0)) * CREWS[shoot.crew].pace
 }
 
 /**
@@ -254,7 +265,7 @@ export function firstShotS(fire: Fire, shoot: Shoot): number {
 export function loadS(fire: Fire, fired: number, shoot: Shoot): number {
   const feed = fire.feed
   if (feed.readyRounds !== null) {
-    return fired < feed.readyRounds ? feed.freshS : feed.handFeedS * fire.pace * CREWS[shoot.crew].pace
+    return fired < feed.readyRounds ? feed.freshS : feed.handFeedS * fire.pace.commander * CREWS[shoot.crew].pace
   }
   const tired = Math.min(feed.tirePerRound * fired, feed.tireMax)
   return feed.freshS * (1 + tired) * (shoot.moving ? feed.movingFactor : 1) * CREWS[shoot.crew].pace
@@ -262,7 +273,7 @@ export function loadS(fire: Fire, fired: number, shoot: Shoot): number {
 
 /** Seconds a jam costs: the crew has to clear it. */
 export function jamS(fire: Fire, shoot: Shoot): number {
-  return fire.feed.clearS * fire.pace * CREWS[shoot.crew].pace
+  return fire.feed.clearS * fire.pace.commander * CREWS[shoot.crew].pace
 }
 
 /** True while the machine, not the crew, is feeding the gun. Only then can it jam. */
@@ -272,7 +283,7 @@ export function machineFed(fire: Fire, fired: number): boolean {
 
 /** Seconds to bring the gun back on to the target after a shot. */
 export function relayS(fire: Fire, shoot: Shoot): number {
-  return fire.times.relayS * fire.pace * CREWS[shoot.crew].pace
+  return fire.times.relayS * fire.pace.gunner * CREWS[shoot.crew].pace
 }
 
 /**
