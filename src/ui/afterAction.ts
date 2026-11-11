@@ -3,9 +3,10 @@
 // the way, and what the crew and the parts came to.
 import { STATION_IDS } from '../data/crew'
 import type { ZoneId } from '../data/materials'
+import { REPORT } from '../data/report'
 import { STRINGS, fill } from '../data/strings'
 import { cutawayPicture } from '../office/blueprint'
-import { afterAction, type AfterAction, type Finding, type RangeReport, type ShotLine } from '../sim/trials'
+import type { AfterAction, Finding, ShotLine } from '../sim/trials'
 import { OUTCOMES, type HitResult, type StatSheet, type VehicleSpec, type Vec } from '../sim/vehicle'
 import { el } from './dom'
 import { fixed } from './format'
@@ -115,25 +116,48 @@ export function viewOf(hit: HitResult): 'side' | 'top' {
   return Math.abs(d.z) > Math.abs(d.x) && Math.abs(d.z) >= Math.abs(d.y) ? 'top' : 'side'
 }
 
+/** A point on the page, in metres: across, then down. */
+export type PagePoint = readonly [number, number]
+
+/** A round's path laid on a cutaway. */
+export interface ShotPath {
+  /** Where the line starts, outside the tank. */
+  from: PagePoint
+  /** Where it meets the armour. */
+  strike: PagePoint
+  /** Where it stops inside. Null when the armour stopped it. */
+  end: PagePoint | null
+  /** A little past the far side, when it goes out again. */
+  beyond: PagePoint | null
+  /** Each thing it reached inside. */
+  reached: PagePoint[]
+}
+
+/** Where a round's path falls on the cutaway seen from the side or from above. */
+export function pathOf(line: ShotLine, view: 'side' | 'top'): ShotPath {
+  const { hit } = line.shot
+  const d = hit.direction
+  const at = (v: Vec): PagePoint => (view === 'side' ? [v.x, -v.y] : [v.x, -v.z])
+  const move = (v: Vec, metres: number): Vec => ({ x: v.x + d.x * metres, y: v.y + d.y * metres, z: v.z + d.z * metres })
+  const entry = hit.entry ?? line.shot.line.aim
+  return {
+    from: at(move(entry, -REPORT.picture.leadInM)),
+    strike: at(entry),
+    end: hit.through && hit.end ? at(hit.end) : null,
+    beyond: hit.through && hit.end && hit.exits ? at(move(hit.end, REPORT.picture.exitM)) : null,
+    reached: hit.through ? hit.reached.map((each) => at(each.at)) : [],
+  }
+}
+
 /** The cutaway with the round's path on it. */
 function picture(line: ShotLine, sheet: StatSheet, spec: VehicleSpec): HTMLElement {
   const { hit } = line.shot
   const view = viewOf(hit)
   const { root, box } = cutawayPicture(spec, sheet.geometry, view, sheet.interior, 'aa')
-  const d = hit.direction
-  /** A point of the tank on the page. */
-  const at = (v: Vec): [number, number] => (view === 'side' ? [v.x, -v.y] : [v.x, -v.z])
-  const move = (v: Vec, metres: number): Vec => ({ x: v.x + d.x * metres, y: v.y + d.y * metres, z: v.z + d.z * metres })
-
-  const entry = hit.entry ?? line.shot.line.aim
-  const from = at(move(entry, -1.6))
-  const strike = at(entry)
-  const end = hit.through && hit.end ? at(hit.end) : null
-  const beyond = hit.through && hit.end && hit.exits ? at(move(hit.end, 0.7)) : null
-  const reached = hit.through ? hit.reached.map((each) => at(each.at)) : []
+  const { from, strike, end, beyond, reached } = pathOf(line, view)
 
   // Room for the path outside the tank.
-  const pad = 0.25
+  const pad = REPORT.picture.padM
   const all = [from, strike, ...(end ? [end] : []), ...(beyond ? [beyond] : [])]
   const x0 = Math.min(box.x, ...all.map((p) => p[0] - pad))
   const y0 = Math.min(box.y, ...all.map((p) => p[1] - pad))
@@ -246,8 +270,7 @@ function stepList(rows: { name: string; value: string; grave?: boolean; off?: bo
 }
 
 /** The report, or nothing when the trial fired no rounds. */
-export function afterActionCard(range: RangeReport, sheet: StatSheet, spec: VehicleSpec, kit: AfterActionKit): HTMLElement | null {
-  const report = afterAction(range.armour, spec)
+export function afterActionCard(report: AfterAction, sheet: StatSheet, spec: VehicleSpec, kit: AfterActionKit): HTMLElement | null {
   if (report.shots.length === 0) return null
   const total = report.shots.length
   let at = report.worstIndex ?? 0

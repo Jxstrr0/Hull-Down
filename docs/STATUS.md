@@ -99,6 +99,15 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.6.4.0, PR 6e: the report's share card.** At the foot of the
+  after-action report, "Make a share card" draws the report as one
+  picture, 1080 by 1350: the design's name, project number and weight, the
+  pass stamp, the count of rounds, the worst round's path on the cutaway,
+  and the three things that decided the trial, over the studio's credit
+  line. Share sends it through the phone's share sheet where the phone
+  takes picture files; Save picture downloads it. Always the paper look.
+  Nothing is stored or sent anywhere by the game. Its sizes and colours
+  are in `src/data/card.ts`.
 - **0.6.3.0, PR 6d: the after-action report.** A new card at the end of
   the range, after the armour trial and the berm. It opens with a count
   (rounds fired, stopped, through, tracks broken) and "What decided it":
@@ -351,7 +360,8 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   (0.6.0.0), 6b a shot followed through the armour and the inside, with the
   damage it does and the protection systems, 6c the armour trial and the
   hull-down berm on the range, 6d the after-action report (0.6.3.0), 6e
-  the report's share card, 6f revision history and the comparison view.
+  the report's share card (0.6.4.0), 6f revision history and the
+  comparison view.
   (The share card was first folded into 6d; it is its own small PR so the
   report stays readable on a phone.) The plan calls the first playable
   0.6.0.0; with the split it is the last of these, and that is where to

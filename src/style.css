@@ -919,3 +919,10 @@ body {
 .aa-reach { fill: var(--paper); stroke: var(--pencil); stroke-width: 2; }
 .aa-result { margin: 8px 0 0; font-weight: 700; }
 .aa .shot-step-value { flex: 0 1 auto; text-align: right; }
+/* The share card: its picture and the buttons that send or save it. */
+.sc { margin-top: 14px; border-top: 1px solid var(--grid); }
+.sc-slot { margin-top: 10px; }
+.sc-img { display: block; width: 100%; max-width: 360px; height: auto; border: 1px solid var(--grid); }
+.sc-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sc-save { display: inline-flex; align-items: center; text-decoration: none; }
+.sc-status { margin: 8px 0 0; }
