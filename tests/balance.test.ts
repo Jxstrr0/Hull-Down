@@ -3,7 +3,7 @@ import { BALANCE } from '../src/data/balance'
 import { BUREAU_IDS, type BureauId } from '../src/data/opponents'
 import { SCORE_AXES, TENDER_IDS, TENDERS, type TenderId } from '../src/data/tenders'
 import {
-  balanceSeeds, dominantOf, leaderOf, rivalsOnly, shareOf, tallyTender, verdictOf, type BureauTally, type TenderTally,
+  balanceSeeds, dominantOf, leaderOf, rivalsOnly, shareOf, tallyCareer, tallyTender, verdictOf, type BureauTally, type TenderTally,
 } from '../src/sim/career/balance'
 import { rivalBid } from '../src/sim/career/rival'
 
@@ -114,4 +114,25 @@ describe('the verdict', () => {
     expect(dominantOf([])).toBeNull()
     expect(shareOf([], 'heavy')).toBe(0)
   })
+})
+
+describe('the game as it stands', () => {
+  // The same check as `npm run sim`, on fewer seeds. If this fails after a
+  // change to the parts, the bureaus or the tenders, run `npm run sim` to see
+  // which bureau has run away with it.
+  const tallies = tallyCareer(balanceSeeds(BALANCE.testSeeds))
+
+  it('has no one way of building a tank that wins every tender', () => {
+    expect(dominantOf(tallies)).toBeNull()
+    expect(verdictOf(tallies).tooStrong).toEqual([])
+  }, SLOW)
+
+  it('gives every rival bureau a tender it leads', () => {
+    expect(new Set(tallies.map(leaderOf)).size).toBe(BUREAU_IDS.length)
+    expect(verdictOf(tallies).tooWeak).toEqual([])
+  }, SLOW)
+
+  it('throws out no rival bid', () => {
+    for (const tally of tallies) for (const bureau of BUREAU_IDS) expect(tally.bureaus[bureau].illegal).toBe(0)
+  }, SLOW)
 })

@@ -1,5 +1,9 @@
 // Tenders: what the army asks for, what it will pay, and how it weighs the
 // bids. Game-level numbers, not engineering data.
+//
+// Each tender weighs the five counts differently, so that no one way of
+// building a tank wins them all: `npm run sim` and tests/balance.test.ts
+// check that each rival bureau leads a tender of its own.
 import type { Limits } from '../sim/vehicle/spec'
 import type { ThreatTankId } from './opponents'
 import { MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, type Marks } from './range'
@@ -31,7 +35,8 @@ export type TenderId = (typeof TENDER_IDS)[number]
 export const TENDERS: Record<TenderId, Tender> = {
   /**
    * The first tender: make the Type 1 better. It asks for a tank that can
-   * shoot at night, which the Type 1 as issued cannot do well enough.
+   * shoot at night, which the Type 1 as issued cannot do well enough, so
+   * firepower counts for most, and getting the gun to where it is needed next.
    * The other bureaus are as new to the proving ground as the player: each
    * enters the tank it first drew up, so a newcomer who fixes the night
    * shoot nearly always wins.
@@ -41,14 +46,15 @@ export const TENDERS: Record<TenderId, Tender> = {
     limits: { ...PACT_LIMITS_GEN1, maxUnitCostKr: 3_200_000 },
     marks: { ...MARKS_GEN1, hits: { ...MARKS_GEN1.hits, night: 4 } },
     threats: ['warden', 'palisade'],
-    weights: { protection: 30, firepower: 25, mobility: 15, reliability: 15, cost: 15 },
+    weights: { protection: 15, firepower: 35, mobility: 25, reliability: 15, cost: 10 },
     grantKr: 22_000_000,
     rivalRevisions: 0,
   },
   /**
    * Twenty years on: a tank for the new century. Generation two technology
    * is allowed, the Accord has a rebuilt Palisade and tandem warheads, and
-   * the army will pay more for a tank that can meet them.
+   * the army will pay more for a tank that can meet them. Protection and
+   * firepower count for most, level with each other.
    */
   tank2001: {
     year: 2001,
@@ -61,14 +67,15 @@ export const TENDERS: Record<TenderId, Tender> = {
   },
   /**
    * Fifteen years on again: generation three. The Pact's bridges carry
-   * more, the army will pay more, and protection counts for most.
+   * more, but the army has a whole fleet to replace: it wants a tank it can
+   * buy in numbers and keep running, so cost and reliability count for most.
    */
   tank2016: {
     year: 2016,
     limits: { ...PACT_LIMITS_GEN3, generation: 3, maxUnitCostKr: 8_000_000 },
     marks: MARKS_GEN3,
     threats: ['palisadeB'],
-    weights: { protection: 35, firepower: 25, mobility: 10, reliability: 15, cost: 15 },
+    weights: { protection: 10, firepower: 15, mobility: 10, reliability: 25, cost: 40 },
     grantKr: 60_000_000,
     rivalRevisions: 3,
   },
