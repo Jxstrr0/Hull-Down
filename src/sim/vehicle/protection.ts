@@ -3,9 +3,11 @@
 // each kind of threat, and slope lengthens the path a shot must cross.
 // Game-level abstractions, not engineering data.
 import type { Round, RoundKind } from '../../data/ammo'
+import { ERA_TILE } from '../../data/era'
 import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
 import { TUNING } from '../../data/tuning'
 import { PI, detCos } from '../det'
+import type { ZoneEra } from './era'
 import type { Geometry } from './geometry'
 import type { ArmourLayer, VehicleSpec } from './spec'
 
@@ -64,6 +66,11 @@ export function worthAgainst(protection: ZoneProtection, kind: RoundKind): numbe
   return kind === 'kinetic' ? protection.keMm : protection.ceMm
 }
 
+/** The same where the shot meets a reactive tile. */
+export function tiledWorth(protection: ZoneProtection, kind: RoundKind): number {
+  return worthAgainst(protection, kind) + (kind === 'kinetic' ? ERA_TILE.keMm : ERA_TILE.ceMm)
+}
+
 /** Holds with a margin, fails with a margin, or too close to call. */
 export type Verdict = 'holds' | 'marginal' | 'fails'
 
@@ -74,7 +81,7 @@ export function verdictOf(protectionMm: number, penMm: number): Verdict {
   return 'marginal'
 }
 
-/** Every zone's verdict against one round at one range, for a level shot at its face. */
+/** Every zone's verdict against one round at one range, for a level shot at its bare plate. */
 export function verdictsAgainst(
   protection: Record<ZoneId, ZoneProtection>, round: Round, rangeM: number,
 ): Record<ZoneId, Verdict> {
@@ -82,4 +89,19 @@ export function verdictsAgainst(
   return Object.fromEntries(
     ZONES.map((zone) => [zone, verdictOf(worthAgainst(protection[zone], round.kind), pen)]),
   ) as Record<ZoneId, Verdict>
+}
+
+/**
+ * The verdict where the shot meets a reactive tile, for every zone that has
+ * any. A zone's bare plate, between and around the tiles, is `verdictsAgainst`.
+ */
+export function tiledVerdictsAgainst(
+  protection: Record<ZoneId, ZoneProtection>, era: Record<ZoneId, ZoneEra>, round: Round, rangeM: number,
+): Partial<Record<ZoneId, Verdict>> {
+  const pen = penetrationAt(round, rangeM)
+  const verdicts: Partial<Record<ZoneId, Verdict>> = {}
+  for (const zone of ZONES) {
+    if (era[zone].tiles > 0) verdicts[zone] = verdictOf(tiledWorth(protection[zone], round.kind), pen)
+  }
+  return verdicts
 }

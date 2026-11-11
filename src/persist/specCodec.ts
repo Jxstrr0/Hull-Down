@@ -5,7 +5,7 @@ import { BASELINE_SPEC } from '../data/baseline'
 import { MATERIALS, ZONES, type MaterialId } from '../data/materials'
 import { TUNING } from '../data/tuning'
 import { CONTROLS } from '../office/controls'
-import type { ArmourLayer, VehicleSpec } from '../sim/vehicle'
+import { cleanTiles, type ArmourLayer, type VehicleSpec } from '../sim/vehicle'
 
 export const NAME_MAX = 28
 
@@ -55,6 +55,10 @@ export function cleanSpec(raw: unknown): VehicleSpec {
   const armour: unknown = (raw as { armour?: unknown }).armour
   if (typeof armour === 'object' && armour !== null) {
     for (const zone of ZONES) spec.armour[zone] = cleanLayers((armour as Record<string, unknown>)[zone], spec.armour[zone])
+  }
+  const era: unknown = (raw as { era?: unknown }).era
+  if (typeof era === 'object' && era !== null) {
+    for (const zone of ZONES) spec.era[zone] = cleanTiles(zone, (era as Record<string, unknown>)[zone])
   }
   spec.name = cleanName((raw as { name?: unknown }).name)
   return spec

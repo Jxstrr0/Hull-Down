@@ -1,9 +1,11 @@
 // Puts a drawing on the page as SVG, with tap zones that open a control.
 // While the armour is being worked on it becomes the protection map: each
-// zone that a view shows square on is hatched by how it stands up to a round.
+// zone that a view shows square on is hatched by how it stands up to a round,
+// and its reactive tiles are drawn where they are fitted.
+import type { TileGrid } from '../data/era'
 import type { ZoneId } from '../data/materials'
 import { STRINGS, fill } from '../data/strings'
-import type { Geometry, VehicleSpec, Verdict } from '../sim/vehicle'
+import { hasTile, type Geometry, type VehicleSpec, type Verdict } from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { fixed } from '../ui/format'
 import type { ControlId } from './controls'
@@ -18,7 +20,44 @@ export interface BlueprintMap {
   selected: ZoneId
   /** Each zone's verdict against the chosen round. Left out when no round is chosen. */
   verdicts?: Record<ZoneId, Verdict>
+  /** The zones that have reactive tiles: where they sit, and how a tile stands up to the round. */
+  tiles?: Partial<Record<ZoneId, ZoneTiles>>
   pick(zone: ZoneId): void
+}
+
+export interface ZoneTiles {
+  grid: TileGrid
+  /** The spec number: bit n is set when tile place n has a tile. */
+  fitted: number
+  verdict?: Verdict
+}
+
+/** How much of a tile place the tile's edge takes, each side. */
+const TILE_EDGE = 0.14
+
+/**
+ * Two cut-outs in the shape of a zone's tiles, measured in shares of the
+ * face's own box so no sizes are needed: one for the whole tiles and one for
+ * their middles. Painting ink through the first and paper through the second
+ * leaves each tile with an edge.
+ */
+function tileClips(zone: ZoneId, tiles: ZoneTiles): SVGClipPathElement[] {
+  const { grid, fitted } = tiles
+  const w = 1 / grid.cols
+  const h = 1 / grid.rows
+  const clip = (id: string, inset: number): SVGClipPathElement => {
+    const node = svg('clipPath', { id: `${id}-${zone}`, clipPathUnits: 'objectBoundingBox' })
+    for (let place = 0; place < grid.cols * grid.rows; place++) {
+      if (!hasTile(fitted, place)) continue
+      const x = (place % grid.cols) * w
+      const y = Math.floor(place / grid.cols) * h
+      node.append(svg('rect', {
+        x: String(x + w * inset), y: String(y + h * inset), width: String(w * (1 - 2 * inset)), height: String(h * (1 - 2 * inset)),
+      }))
+    }
+    return node
+  }
+  return [clip('tiles', TILE_EDGE / 4), clip('tiles-in', TILE_EDGE)]
 }
 
 function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string>): SVGElementTagNameMap[K] {
@@ -99,6 +138,22 @@ export function renderBlueprint(
     // Set as a style, not an attribute, so the stylesheet's plain fill does not win.
     if (verdict && verdict !== 'holds') face.style.fill = `url(#map-${verdict})`
     root.append(face)
+
+    const tiles = map.tiles?.[shape.zone]
+    if (!tiles) continue
+    root.append(...tileClips(shape.zone, tiles))
+    const layer = (cls: string, clip: string): SVGPathElement => {
+      const path = svg('path', { d: shape.d, class: cls })
+      path.style.clipPath = `url(#${clip}-${shape.zone})`
+      root.append(path)
+      return path
+    }
+    layer('bp-tile-edge', 'tiles')
+    const middle = layer(tiles.verdict ? `bp-tile bp-tile-${tiles.verdict}` : 'bp-tile', 'tiles-in')
+    // The hatching already has paper behind it.
+    if (tiles.verdict && tiles.verdict !== 'holds') middle.style.fill = `url(#map-${tiles.verdict})`
+    // The tiles would hide the outline of the zone being worked on, so draw it again on top.
+    if (shape.zone === map.selected) root.append(svg('path', { d: shape.d, class: 'bp-face bp-face-on' }))
   }
 
   if (map) {
@@ -117,6 +172,11 @@ export function renderBlueprint(
     for (const verdict of VERDICTS) {
       const item = el('span', 'bp-key')
       item.append(el('span', `bp-swatch bp-swatch-${verdict}`), O.armour.verdicts[verdict])
+      legend.append(item)
+    }
+    if (map.tiles && Object.keys(map.tiles).length > 0) {
+      const item = el('span', 'bp-key')
+      item.append(el('span', 'bp-swatch bp-swatch-tile'), O.armour.legendTiles)
       legend.append(item)
     }
     return [root, legend]

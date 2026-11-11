@@ -65,6 +65,11 @@ export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
   const root = el('div', 'ds')
   const m = sheet.mobility
   const f = sheet.firepower
+  const tiles = { count: 0, massT: 0 }
+  for (const zone of ZONES) {
+    tiles.count += sheet.rollup.era[zone].tiles
+    tiles.massT += sheet.rollup.era[zone].massT
+  }
   root.append(
     group(D.groups.general, [
       [r.mass, unit(u.tonnes, sheet.massT, 1)],
@@ -94,10 +99,13 @@ export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
       [r.spareVolume, unit(u.cubicMetres, sheet.growth.volumeM3, 1)],
       [r.spareCooling, unit(u.hp, sheet.growth.coolingHp, 0)],
     ]),
-    group(D.groups.protection, ZONES.map((zone): [string, string] => [
-      STRINGS.zones[zone].name,
-      fill(u.protection, { ke: fixed(sheet.protection[zone].keMm, 0), ce: fixed(sheet.protection[zone].ceMm, 0) }),
-    ])),
+    group(D.groups.protection, [
+      ...ZONES.map((zone): [string, string] => [
+        STRINGS.zones[zone].name,
+        fill(u.protection, { ke: fixed(sheet.protection[zone].keMm, 0), ce: fixed(sheet.protection[zone].ceMm, 0) }),
+      ]),
+      [r.tiles, tiles.count === 0 ? u.noTiles : fill(u.tiles, { n: String(tiles.count), mass: fixed(tiles.massT, 2) })],
+    ]),
     weightGroup(sheet),
     el('p', 'ds-note', D.note),
   )

@@ -589,3 +589,51 @@ body {
   .bp-svg { max-height: 130px; }
   .panel { max-width: 720px; }
 }
+
+/* Reactive tiles: on the drawing, on the zone chips and in the Armour tab. */
+.bp-tile-edge { fill: var(--ink); stroke: none; pointer-events: none; }
+.bp-tile { fill: var(--paper); stroke: none; pointer-events: none; }
+.bp-tile-holds { fill: color-mix(in srgb, var(--stamp) 30%, var(--paper)); }
+.bp-swatch-tile { border-width: 2.5px; background: var(--paper); }
+.zone-tiles {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1.5px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+.zrow-sub { display: block; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; }
+.prot { flex-wrap: wrap; }
+.prot-row { flex: 1 0 100%; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.prot-row .chip-label { flex: none; }
+.prot-era { margin: 0; min-width: 0; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 500; white-space: nowrap; }
+.tiles { display: grid; gap: 4px; justify-content: start; margin: 4px 0 8px; }
+.tile {
+  box-sizing: border-box;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1.5px dashed var(--ink-dim);
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+}
+/* A fitted tile is a solid block with a bolt in each corner. */
+.tile-on {
+  border: 2px solid var(--ink);
+  background:
+    radial-gradient(circle at 7px 7px, var(--paper) 0 2px, transparent 2.5px),
+    radial-gradient(circle at calc(100% - 7px) 7px, var(--paper) 0 2px, transparent 2.5px),
+    radial-gradient(circle at 7px calc(100% - 7px), var(--paper) 0 2px, transparent 2.5px),
+    radial-gradient(circle at calc(100% - 7px) calc(100% - 7px), var(--paper) 0 2px, transparent 2.5px),
+    var(--ink);
+}
+.tile-gap {
+  border: 1px solid var(--grid);
+  background: repeating-linear-gradient(135deg, var(--ink-dim) 0 1px, transparent 1px 6px);
+  cursor: default;
+}
+.tile:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+.tiles-bulk { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }

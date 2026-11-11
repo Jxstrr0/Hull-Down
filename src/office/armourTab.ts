@@ -1,12 +1,15 @@
-// The Armour tab: pick a zone, see what it stops, and build its stack of
-// layers. A section view shows the layers to scale with a level shot.
+// The Armour tab: pick a zone, see what it stops, build its stack of layers
+// and bolt reactive tiles over it. A section view shows the layers to scale
+// with a level shot.
 import { THREATS, THREAT_IDS, type RoundKind, type ThreatId } from '../data/ammo'
 import { SECTION } from '../data/drawing'
+import { ERA_GRID_VIEW, ERA_TILE } from '../data/era'
 import { MATERIALS, MATERIAL_IDS, ZONES, ZONE_FACING, type MaterialId, type ZoneId } from '../data/materials'
 import { STRINGS, fill } from '../data/strings'
 import { TUNING } from '../data/tuning'
 import {
-  layerWorth, penetrationAt, verdictOf, worthAgainst, type StatSheet, type VehicleSpec, type Verdict,
+  allTiles, hasTile, layerWorth, penetrationAt, setTile, tiledWorth, tileGrid, verdictOf, worthAgainst,
+  type StatSheet, type VehicleSpec, type Verdict,
 } from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { fixed, money } from '../ui/format'
@@ -116,6 +119,9 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
   /** How a zone stands against the chosen round, on the numbers in `sheet`. */
   const verdictFor = (id: ZoneId): Verdict | undefined =>
     threat ? verdictOf(worthAgainst(sheet.protection[id], threat.kind), pen) : undefined
+  /** The same where the shot meets a reactive tile. Nothing when the zone has no tiles. */
+  const tiledVerdictFor = (id: ZoneId): Verdict | undefined =>
+    threat && sheet.rollup.era[id].tiles > 0 ? verdictOf(tiledWorth(sheet.protection[id], threat.kind), pen) : undefined
 
   const mapBox = el('details', 'mapbox')
   mapBox.open = state.mapOpen
@@ -198,9 +204,16 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
       const row = el('button', id === zone ? 'zrow zrow-on' : 'zrow')
       row.type = 'button'
       row.dataset.key = `zrow:${id}`
+      const name = el('span', 'zrow-name', STRINGS.zones[id].name)
+      const tiled = tiledVerdictFor(id)
+      if (tiled) {
+        name.append(el('span', `zrow-sub verdict-${tiled}`, fill(A.zoneRowTiled, {
+          mark: A.verdictMarks[tiled], mm: mm(tiledWorth(sheet.protection[id], threat.kind)), verdict: A.verdicts[tiled],
+        })))
+      }
       row.append(
         el('span', `zrow-mark verdict-${verdict}`, A.verdictMarks[verdict]),
-        el('span', 'zrow-name', STRINGS.zones[id].name),
+        name,
         el('span', 'zrow-value', fill(A.zoneRow, {
           mm: mm(worthAgainst(sheet.protection[id], threat.kind)), verdict: A.verdicts[verdict],
         })),
@@ -209,6 +222,7 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
       list.append(row)
     }
     mapBox.append(list, el('p', 'ctl-note', A.notOnDrawing))
+    if (ZONES.some((id) => sheet.rollup.era[id].tiles > 0)) mapBox.append(el('p', 'ctl-note', A.mapTiles))
   }
   root.append(mapBox)
 
@@ -225,8 +239,16 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
     button.type = 'button'
     button.dataset.key = `zone:${id}`
     button.setAttribute('aria-pressed', id === zone ? 'true' : 'false')
-    if (faulty) button.setAttribute('aria-label', fill(A.zoneHasFaults, { name }))
-    else if (verdict) button.setAttribute('aria-label', fill(A.zoneVerdict, { name, verdict: A.verdicts[verdict] }))
+    const tiles = sheet.rollup.era[id].tiles
+    const tiled = tiledVerdictFor(id)
+    if (tiles > 0) {
+      button.append(el('span', 'zone-tiles', tiled ? `${A.verdictMarks[tiled]} ${String(tiles)}` : String(tiles)))
+    }
+    const spoken: string[] = [name]
+    if (verdict) spoken.push(A.verdicts[verdict])
+    if (tiles > 0) spoken.push(tiled ? fill(A.zoneTiled, { n: String(tiles), verdict: A.verdicts[tiled] }) : fill(A.zoneTiles, { n: String(tiles) }))
+    if (faulty) spoken.push(A.hasFaults)
+    if (spoken.length > 1) button.setAttribute('aria-label', spoken.join(', '))
     button.addEventListener('click', () => host.pickZone(id))
     zones.append(button)
   }
@@ -266,6 +288,13 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
   }
   const kinetic = value(A.kinetic, 'kinetic')
   const shaped = value(A.shaped, 'shaped')
+  /** What the zone is worth where a tile sits. Only there when the zone has tiles. */
+  const underTile = el('dd', 'prot-era')
+  if (sheet.rollup.era[zone].tiles > 0) {
+    const row = el('div', 'prot-row')
+    row.append(el('dt', 'chip-label', A.underTile), underTile)
+    values.append(row)
+  }
   // The two numbers sit between the sections so they can stay in view while the layers scroll.
   const detail = el('section', 'ctl')
   detail.append(el('p', 'ctl-note', fill(A.worth, { from: A.from[ZONE_FACING[zone]] })))
@@ -303,6 +332,16 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
       standing.className = `prot-verdict verdict-${verdict}`
       standing.textContent = `${A.verdictMarks[verdict]} ${fill(A.against, { verdict: A.verdicts[verdict], mm: mm(pen) })}`
     }
+
+    const zoneEra = sheet.rollup.era[zone]
+    const tiled = tiledVerdictFor(zone)
+    const pct = fixed(zoneEra.coverage * 100, 0)
+    underTile.textContent = tiled && threat
+      ? fill(A.underTileVerdict, {
+          mm: mm(tiledWorth(protection, threat.kind)), mark: A.verdictMarks[tiled], verdict: A.verdicts[tiled], pct,
+        })
+      : fill(A.underTileValue, { ke: mm(tiledWorth(protection, 'kinetic')), ce: mm(tiledWorth(protection, 'shaped')), pct })
+    underTile.className = tiled ? `prot-era verdict-${tiled}` : 'prot-era'
 
     const section = sectionOf(layers, protection.slopeDeg)
     const { box, shot } = section
@@ -421,6 +460,66 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
   stack.append(add)
   if (add.disabled) stack.append(el('p', 'ctl-note', A.full))
   root.append(stack)
+
+  // --- Reactive tiles ------------------------------------------------------
+  const tilesBox = el('section', 'ctl')
+  tilesBox.dataset.control = 'tiles'
+  const grid = tileGrid(zone)
+  const zoneEra = sheet.rollup.era[zone]
+  const tilesTitle = el('h3', 'ctl-label', A.tilesTitle)
+  tilesBox.append(tilesTitle)
+  if (!grid) {
+    tilesBox.append(el('p', 'ctl-note', STRINGS.eraGaps[zone]))
+  } else {
+    tilesTitle.append(el('span', 'num-value', fill(A.tilesCount, { n: String(zoneEra.tiles), max: String(zoneEra.open) })))
+    tilesBox.append(el('p', 'ctl-note', fill(A.tilesAbout, { ce: String(ERA_TILE.ceMm) })))
+    const fitted = spec.era[zone]
+    const board = el('div', 'tiles')
+    board.style.gridTemplateColumns = `repeat(${grid.cols}, minmax(44px, 56px))`
+    board.setAttribute('role', 'group')
+    board.setAttribute('aria-label', fill(A.tilesGrid, { zone: text.name }))
+    for (let place = 0; place < grid.cols * grid.rows; place++) {
+      const where = { row: String(Math.floor(place / grid.cols) + 1), col: String((place % grid.cols) + 1) }
+      if (grid.gaps.includes(place)) {
+        const blocked = el('span', 'tile tile-gap')
+        blocked.setAttribute('role', 'img')
+        blocked.setAttribute('aria-label', fill(A.tileBlocked, where))
+        board.append(blocked)
+        continue
+      }
+      const on = hasTile(fitted, place)
+      const button = el('button', on ? 'tile tile-on' : 'tile')
+      button.type = 'button'
+      button.dataset.key = `tile:${place}`
+      button.setAttribute('aria-pressed', on ? 'true' : 'false')
+      button.setAttribute('aria-label', fill(A.tilePlace, where))
+      button.addEventListener('click', () => host.commit((s) => {
+        s.era[zone] = setTile(zone, s.era[zone], place, !on)
+      }))
+      board.append(button)
+    }
+    const gaps = STRINGS.eraGaps[zone]
+    tilesBox.append(board, el('p', 'layer-note', `${A.tilesViews[ERA_GRID_VIEW[zone]]} ${A.tilesKey}${gaps ? ` ${gaps}` : ''}`))
+
+    const all = allTiles(zone)
+    const bulk = el('div', 'tiles-bulk')
+    const act = (label: string, key: string, to: number): void => {
+      const button = el('button', 'btn', label)
+      button.type = 'button'
+      button.dataset.key = key
+      button.disabled = fitted === to
+      button.addEventListener('click', () => host.commit((s) => {
+        s.era[zone] = to
+      }))
+      bulk.append(button)
+    }
+    act(A.tilesFit, 'tiles-fit', all)
+    act(A.tilesStrip, 'tiles-strip', 0)
+    tilesBox.append(bulk, el('p', 'layer-note', zoneEra.tiles === 0 ? A.tilesNone : fill(A.tilesSum, {
+      n: String(zoneEra.tiles), pct: fixed(zoneEra.coverage * 100, 0), mass: fixed(zoneEra.massT, 2), cost: money(zoneEra.costKr),
+    })))
+  }
+  root.append(tilesBox)
 
   drawSummary()
   // The row of zones is rebuilt on every draw; put it back where it was.

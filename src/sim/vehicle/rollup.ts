@@ -6,6 +6,7 @@ import {
   TRANSMISSIONS, TURRETS, type Part,
 } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
+import { eraOf, type ZoneEra } from './era'
 import type { Geometry } from './geometry'
 import type { VehicleSpec } from './spec'
 
@@ -18,8 +19,10 @@ export interface Rollup {
   massT: Record<Area, number>
   volumeM3: Record<Area, number>
   costKr: Record<Area, number>
-  /** Armour weight of each zone, tonnes. */
+  /** Armour weight of each zone, tonnes, reactive tiles included. */
   zoneMassT: Record<ZoneId, number>
+  /** Reactive tiles on each zone. */
+  era: Record<ZoneId, ZoneEra>
   totalMassT: number
   /** Space taken inside. */
   usedM3: number
@@ -68,8 +71,10 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
 
   // Armour, zone by zone
   const zoneMassT = {} as Record<ZoneId, number>
+  const era = eraOf(spec, geo)
   for (const zone of ZONES) {
-    let zoneMass = 0
+    let zoneMass = era[zone].massT
+    costKr.armour += era[zone].costKr
     for (const layer of spec.armour[zone]) {
       const material = MATERIALS[layer.material]
       const layerMass = geo.zoneAreaM2[zone] * (layer.mm / 1000) * material.densityTM3
@@ -143,6 +148,7 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
     volumeM3,
     costKr,
     zoneMassT,
+    era,
     totalMassT: sum(massT),
     usedM3: sum(volumeM3),
     capacityM3: hull.internalM3 + geo.turretVolumeM3 - glacisLoss - engineLoss,
