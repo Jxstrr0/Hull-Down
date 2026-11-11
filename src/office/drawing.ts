@@ -3,7 +3,7 @@
 // Coordinates are metres, already flipped for SVG (up is negative y).
 import { DRAWING } from '../data/drawing'
 import type { ZoneId } from '../data/materials'
-import { GUNS, HULLS, LOADING, TURRETS } from '../data/parts'
+import { BARRELS, GUNS, HULLS, LOADING, TURRETS } from '../data/parts'
 import { TUNING } from '../data/tuning'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
 import type { ControlId } from './controls'
@@ -167,7 +167,7 @@ export function layout(spec: VehicleSpec, geo: Geometry) {
   const radius = geo.turretRadiusM
   const turretX = length * DRAWING.turretCentre[spec.hull.engineAt]
   const gunRootX = turretX - radius * DRAWING.gunRootShare
-  const barrel = calibre * DRAWING.barrelCalibres
+  const barrel = calibre * BARRELS[spec.barrel].calibres
   const bay = DRAWING.engineBay[spec.hull.engineAt]
   return {
     hull, length, roof, belly, lowerH, calibre, radius, turretX, gunRootX,

@@ -152,7 +152,7 @@ export function runGunnery(fire: Fire, test: GunneryTestId, seed: number): Gunne
         result.hit = true
         break
       }
-      left *= RANGE.gunnery.correction
+      left *= fire.missLeft
     }
     if (result.shots.length === 0) tooSlow++
   })

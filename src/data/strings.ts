@@ -211,6 +211,8 @@ export const STRINGS = {
     'turret.shape': { label: 'Turret shape', note: '' },
     'turret.ringMm': { label: 'Turret ring', note: 'The opening in the hull roof that the turret sits in. A wider ring takes a bigger gun and a bigger, heavier turret.' },
     gun: { label: 'Main gun', note: '' },
+    barrel: { label: 'Barrel length', note: 'A longer barrel throws every round faster. Faster rounds fly flatter, so a badly judged range matters less, and kinetic rounds go through more.' },
+    recoil: { label: 'Recoil mount', note: 'What soaks up the kick of the gun. A longer stroke spreads the kick out, so a smaller turret ring takes it and the tank rocks less. A tank that rocks hides where the shot fell, and the next round is corrected less well.' },
     loading: { label: 'Loading', note: '' },
     'ammo.rounds': { label: 'Rounds carried', note: 'Rounds beyond what the autoloader holds go in racks around the crew.' },
     'ammo.stowage': { label: 'Ammunition stowage', note: 'How the rounds outside the autoloader are kept.' },
@@ -254,6 +256,16 @@ export const STRINGS = {
       smooth115: { name: '115 mm smoothbore', note: 'A step up, firing fin-stabilised rounds.' },
       smooth125: { name: '125 mm smoothbore', note: 'The heavy hitter of the Pact. Needs a wide turret ring.' },
       rifled120: { name: '120 mm rifled', note: 'A foreign pattern. Powerful, but not a Pact calibre.' },
+    },
+    barrels: {
+      short: { name: 'Short barrel', note: 'Light, cheap and steady on the move. Slower rounds with less punch.' },
+      standard: { name: 'Standard barrel', note: 'The length the gun was drawn up with.' },
+      long: { name: 'Long barrel', note: 'Faster rounds with more punch. Heavier and dearer, and it whips when the tank is moving.' },
+    },
+    recoils: {
+      stiff: { name: 'Short-stroke mount', note: 'Small, light and cheap. Kicks hard: it needs a wider ring, and the gunner loses sight of where each shot fell.' },
+      standard: { name: 'Standard mount', note: 'The mount the gun was drawn up with.' },
+      longStroke: { name: 'Long-stroke mount', note: 'Soaks the kick up over a longer stroke. Fits a smaller ring and the gunner sees each shot fall, but it takes up turret room and has more to go wrong.' },
     },
     loading: {
       loader: { name: 'Fourth crewman', note: 'A human loader. Simple and dependable, but the turret must be tall enough to stand in.' },
@@ -357,6 +369,7 @@ export const STRINGS = {
       sustainedTired: 'Kept up after {h} h in the tank',
       firstShotMoving: 'First shot on the move',
       hitMoving: 'Hit on the move at {range} m',
+      missCorrected: 'Of a misjudged range, put right by the next round',
       hitNight: 'Hit at night at {range} m',
       depression: 'Gun depression',
       reliability: 'Reliability',
@@ -457,7 +470,7 @@ export const STRINGS = {
     warning: 'Warning',
   },
   issues: {
-    ringTooSmallForGun: 'Turret ring {value} mm is too small for this gun. It needs {limit} mm.',
+    ringTooSmallForGun: 'Turret ring {value} mm is too small for this gun on its recoil mount. It needs {limit} mm.',
     ringTooBigForHull: 'Turret ring {value} mm will not fit this hull. The most it takes is {limit} mm.',
     ringTooSmallForLoader: 'Turret ring {value} mm is too small for this loading system. It needs {limit} mm.',
     ringOffStep: 'Turret rings come in {limit} mm steps.',
@@ -546,7 +559,7 @@ export const STRINGS = {
     kinds: { kinetic: 'Kinetic', shaped: 'Shaped charge' },
     kinetic: '{kind}. {speed} m/s. Goes through {pen} mm at the muzzle and {far} mm at 2000 m.',
     shaped: '{kind}. {speed} m/s. Goes through {pen} mm at any range.',
-    note: 'Millimetres of plain steel plate, hit square on. You choose the load for each trial later.',
+    note: 'Millimetres of plain steel plate, hit square on, fired from the barrel fitted. You choose the load for each trial later.',
   },
   range: {
     label: 'Proving ground',

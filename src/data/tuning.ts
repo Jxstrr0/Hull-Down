@@ -103,6 +103,8 @@ export const TUNING = {
     maxSpareRingBonusDeg: 2,
     /** A taller turret for a standing loader lets the breech rise further. */
     loaderDepressionBonusDeg: 1,
+    /** A kinetic round thrown faster goes through more: penetration grows as speed to this power. */
+    penPerSpeedPower: 1.5,
   },
   reliability: {
     /**

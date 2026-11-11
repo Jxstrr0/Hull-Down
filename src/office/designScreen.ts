@@ -4,7 +4,7 @@
 import { BASELINE_SPEC } from '../data/baseline'
 import { STRINGS, fill } from '../data/strings'
 import {
-  AREAS, buildStatSheet, penetrationAt, tiledVerdictsAgainst, tileGrid, verdictsAgainst, type Issue, type Limits,
+  AREAS, buildStatSheet, gunRounds, penetrationAt, tiledVerdictsAgainst, tileGrid, verdictsAgainst, type Issue, type Limits,
   type StatSheet, type VehicleSpec,
 } from '../sim/vehicle'
 import { el } from '../ui/dom'
@@ -13,7 +13,7 @@ import {
   CONTROLS, PART_TABS, fixTarget, preview, type ChoiceControl, type Control, type ControlId, type NumberControl,
   type PartTab, type Preview, type ToggleControl,
 } from './controls'
-import { DEFAULT_THREAT, THREATS, pactRounds, type Round } from '../data/ammo'
+import { DEFAULT_THREAT, THREATS, type Round } from '../data/ammo'
 import { ZONES, type ZoneId } from '../data/materials'
 import { GUNS } from '../data/parts'
 import { TUNING } from '../data/tuning'
@@ -506,7 +506,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     box.append(el('h3', 'ctl-label', supplied ? R.title : R.ownTitle))
     if (!supplied) box.append(el('p', 'ctl-note', R.notSupplied))
     const list = el('dl', 'ds-rows')
-    for (const { id, round } of pactRounds(spec.gun)) {
+    for (const { id, round } of gunRounds(spec)) {
       const row = el('div', 'ammo')
       const line = round.kind === 'kinetic'
         ? fill(R.kinetic, {

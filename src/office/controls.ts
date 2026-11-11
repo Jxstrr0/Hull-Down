@@ -3,8 +3,8 @@
 // it can be tested. A control's id is the spec path the constraint checks use
 // for `Issue.part`, which is how a fault finds its "fix it" link.
 import {
-  COMFORT, COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS,
-  STOWAGE, SUSPENSIONS, TRANSMISSIONS, TURRETS,
+  BARRELS, COMFORT, COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS,
+  STABILISERS, STOWAGE, SUSPENSIONS, TRANSMISSIONS, TURRETS,
 } from '../data/parts'
 import { STRINGS } from '../data/strings'
 import { TUNING } from '../data/tuning'
@@ -110,6 +110,8 @@ export const CONTROLS: readonly Control[] = [
   number('turret.ringMm', 'turret', L.ringMm, L.ringStepMm, 'mm', (s) => s.turret.ringMm, (s, v) => { s.turret.ringMm = v }),
 
   choice('gun', 'gun', texts(GUNS, P.guns), (s) => s.gun, (s, v) => { s.gun = v }),
+  choice('barrel', 'gun', texts(BARRELS, P.barrels), (s) => s.barrel, (s, v) => { s.barrel = v }),
+  choice('recoil', 'gun', texts(RECOILS, P.recoils), (s) => s.recoil, (s, v) => { s.recoil = v }),
   choice('loading', 'gun', texts(LOADING, P.loading), (s) => s.loading, (s, v) => { s.loading = v }),
   number('ammo.rounds', 'gun', L.rounds, 1, 'rounds', (s) => s.ammo.rounds, (s, v) => { s.ammo.rounds = v }),
   choice('ammo.stowage', 'gun', texts(STOWAGE, P.stowage), (s) => s.ammo.stowage, (s, v) => { s.ammo.stowage = v }),

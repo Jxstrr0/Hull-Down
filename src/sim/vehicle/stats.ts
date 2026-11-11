@@ -2,13 +2,14 @@
 // These are estimates. The proving ground has the final word.
 import {
   COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, LOADING, NIGHT_SIGHTS,
-  RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU,
+  RANGEFINDERS, RECOILS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU,
 } from '../../data/parts'
 import type { ZoneId } from '../../data/materials'
 import { GROUNDS, RUN_PART_IDS } from '../../data/range'
 import { TUNING } from '../../data/tuning'
 import { busiestOf, comfortOf, stationsOf, type Comfort, type Station } from '../crew/stations'
 import { fireOf, quoteOf, turretFallbacks, type Fire, type GunneryQuote, type TurretPart } from '../gunnery/fire'
+import { gunRingMm } from '../gunnery/mount'
 import { driveOf, maxSlopeDeg, topSpeedOf, type Drive } from '../mobility/drive'
 import { survivalOf, type Wear } from '../reliability/wear'
 import { checkSpec, type Issue } from './checks'
@@ -115,7 +116,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
   // Firepower
   const g = TUNING.gunnery
   const spareRingDeg = clamp(
-    ((spec.turret.ringMm - gun.minRingMm) / 100) * g.depressionPerSpareRing100Mm, 0, g.maxSpareRingBonusDeg,
+    ((spec.turret.ringMm - gunRingMm(spec)) / 100) * g.depressionPerSpareRing100Mm, 0, g.maxSpareRingBonusDeg,
   )
   const loaderDeg = loading.extraTurretHeightM > 0 ? g.loaderDepressionBonusDeg : 0
 
@@ -136,7 +137,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     tracks: { reliability: TUNING.tracks.reliability, have: massT, rated: trackRatedT },
   }
   let reliability =
-    gun.reliability * loading.reliability *
+    gun.reliability * RECOILS[spec.recoil].reliability * loading.reliability *
     SIGHTS[fc.sight].reliability * RANGEFINDERS[fc.rangefinder].reliability *
     STABILISERS[fc.stabiliser].reliability * COMPUTERS[fc.computer].reliability *
     NIGHT_SIGHTS[fc.night].reliability

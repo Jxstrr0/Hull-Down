@@ -3,6 +3,7 @@
 import { MATERIALS, ZONES } from '../../data/materials'
 import { COOLING, ENGINES, GUNS, HULLS, LOADING, STOWAGE, SUSPENSIONS, TRANSMISSIONS, TURRETS } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
+import { gunRingMm } from '../gunnery/mount'
 import type { Geometry } from './geometry'
 import type { Rollup } from './rollup'
 import type { Limits, VehicleSpec } from './spec'
@@ -70,7 +71,8 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   const ring = spec.turret.ringMm
 
   // Turret ring
-  if (ring < gun.minRingMm) error('ringTooSmallForGun', 'turret.ringMm', ring, gun.minRingMm)
+  const gunRing = gunRingMm(spec)
+  if (ring < gunRing) error('ringTooSmallForGun', 'turret.ringMm', ring, gunRing)
   if (ring > hull.maxRingMm) error('ringTooBigForHull', 'turret.ringMm', ring, hull.maxRingMm)
   if (ring < loading.minRingMm) error('ringTooSmallForLoader', 'turret.ringMm', ring, loading.minRingMm)
   if (ring % lim.ringStepMm !== 0) error('ringOffStep', 'turret.ringMm', ring, lim.ringStepMm)
