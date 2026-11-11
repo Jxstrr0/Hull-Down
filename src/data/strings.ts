@@ -1872,6 +1872,21 @@ export const STRINGS = {
       winter: { name: 'Winter whitewash', note: 'White brushed over the green, which shows through in places.' },
     },
   },
+  graphics: {
+    title: 'Picture quality',
+    about: 'How finely the 3D playbacks are drawn. It changes nothing but the picture. Left on Auto, the game times each playback you watch and steps down if this device is not keeping up.',
+    listLabel: 'Picture quality',
+    picked: 'Picked',
+    settings: {
+      auto: { name: 'Auto', note: 'The game picks. Now drawing at {tier}.' },
+      high: { name: 'High', note: 'The sharpest picture, smooth edges and full woods.' },
+      medium: { name: 'Medium', note: 'A little softer, with thinner woods.' },
+      low: { name: 'Low', note: 'Plain edges and few trees. For a phone that stutters.' },
+    },
+    tiers: { high: 'High', medium: 'Medium', low: 'Low' },
+    measured: 'Last playback timed: {fps} frames a second at {tier}.',
+    notMeasured: 'No playback timed yet. Watch any test or battle in 3D for a few seconds.',
+  },
   guide: {
     heading: 'Your first contract',
     step: 'Step {n} of {of}',

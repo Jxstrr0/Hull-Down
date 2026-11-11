@@ -4,6 +4,15 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Picture quality** (0.15.3.0): a setting on the Trials tab, Auto,
+  High, Medium or Low, as you chose. On Auto the game times each 3D
+  playback and steps down a tier if it runs under 40 frames a second
+  (straight to Low under 22). It never steps back up by itself; picking
+  Auto again starts from High. The last frame rate measured is shown
+  under the buttons, so you can read it off your phone and tell me.
+  This finishes plan PR 15 as you sliced it. Blender, built in Actions,
+  is still open if the code-made shapes look too plain to you.
+
 - **Scenery on the range** (0.15.2.0): the strip, the obstacle course
   and the three shoots now have conifer woods on both sides, low hills
   on the skyline, a range tower by the start and red flags at each end.
@@ -402,6 +411,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.15.3.0, PR 15d: picture quality.** Last slice of plan PR 15. Three tiers in `src/data/graphics.ts` (pixel ratio, smooth edges, how much of the woods is planted). `src/render/frameMeter.ts` times the frames of every 3D view; on Auto the game steps down when the device is slow and remembers it under `hulldown.graphics`. A picker and the last measured frame rate on the Trials tab. First load 762 KB.
 - **0.15.2.0, PR 15c: scenery on the range.** Third slice of plan PR 15. `src/render/scenery.ts` lays out woods, skyline hills, a range tower and warning flags as a plain list of shapes, the same on every device, and `buildSolids` joins them into one mesh a colour. On the strip, the course and the shoots. A test holds each range to 5,200 triangles and keeps the lane and the camera side clear. A `density` setting thins the woods, ready for the graphics tiers.
 - **0.15.1.0, PR 15b: the paint shop.** Second slice of plan PR 15. Four cosmetic paint schemes in `src/data/paint.ts`, picked on the Trials tab and kept beside the design (`SavedDesign.paint`), so a repaint is never a new build. Two are camouflage: `src/render/camo.ts` makes a small repeating pattern in code (no image files), the same on every device, and the tank's plate is painted with it in the range and battle 3D views. No more meshes or triangles than a plain tank. First load 758 KB.
 - **0.15.0.0, PR 15a: the tank on the range.** First slice of plan PR 15 (art pass), made in code as Kelbo chose. `tankShapeOf` now gives a list of parts (boxes, drums, slabs and a lofted turret) and `src/render/tankModel.ts` joins them into one mesh per colour. Five turret shapes in `RENDER.tank.turrets`; tiles drawn from `spec.era`. `tankTriangles` and a test hold a tank to 1,100 triangles.

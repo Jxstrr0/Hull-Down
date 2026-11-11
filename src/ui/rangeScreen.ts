@@ -2,6 +2,7 @@
 // back to the part that would fix each failure. A run can be watched in 3D;
 // that code is only fetched when the player asks for it.
 import { GROUNDS, RANGE, RUN_PART_IDS, type Marks, type RunPartId } from '../data/range'
+import type { TierId } from '../data/graphics'
 import type { PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import { STRINGS, fill } from '../data/strings'
@@ -37,6 +38,14 @@ const ENDURANCE_FIX: Record<RunPartId, FixPart | null> = {
   tracks: 'runningGear.trackWidthMm',
 }
 
+/** How a 3D view learns how finely to draw, and reports how fast it is drawing. */
+export interface GraphicsLink {
+  /** The tier to draw at now. */
+  tier(): TierId
+  /** A view has timed its frames. Gives back the tier to draw at from here on. */
+  measured(fps: number): TierId
+}
+
 export interface RangeScreenArgs {
   spec: VehicleSpec
   /** The limits the design was built to. The range builds the tank again from the design. */
@@ -47,6 +56,7 @@ export interface RangeScreenArgs {
   projectNo: number
   /** The paint the prototype wears in the 3D views. */
   paint: PaintId
+  graphics: GraphicsLink
   back(): void
   /** Leave the range and open the control that fixes a failure. */
   fix(part: FixPart): void
@@ -319,6 +329,8 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
         spec: args.spec,
         geometry: sheet.geometry,
         paint: args.paint,
+        quality: args.graphics.tier(),
+        onMeasured: (fps) => view?.setQuality(args.graphics.measured(fps)),
         onFrame: (frame) => {
           // The bar follows the run, except under a finger.
           if (!heldWhilePlaying) scrub.value = String(frame.timeS)

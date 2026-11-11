@@ -934,6 +934,7 @@ body {
 .paints { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .paint-strip { display: flex; height: 14px; margin: 4px 0; border: 1px solid var(--ink-dim); }
 .paint-chip { flex: 1 1 0; }
+.quality-line { margin-top: 8px; font-family: var(--font-mono); font-size: 0.82rem; }
 .proto-list { list-style: none; margin: 0 0 12px; padding: 0; border-top: 1px solid var(--grid); }
 .proto {
   display: flex;

@@ -6,12 +6,14 @@ import {
   PlaneGeometry, Scene, SphereGeometry, WebGLRenderer, type Object3D,
 } from 'three'
 import { BATTLE } from '../data/battle'
+import { TIERS, type TierId } from '../data/graphics'
 import type { PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import type { BattleResult } from '../sim/battle/battle'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
 import { momentOf, type BattleMoment } from '../ui/battleReplay'
 import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot } from './battleDirector'
+import { createFrameMeter } from './frameMeter'
 import { Kit } from './rangeScene'
 import { THEIR_TONES, TURRET, buildTank, tonesOf } from './tankModel'
 import { tankShapeOf } from './tankShape'
@@ -59,8 +61,11 @@ export interface BattleStage {
   tracers: Mesh[]
 }
 
-/** Everything in the picture: the ground, its ridges and woods, the tanks and what they throw. */
-export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook, theirs: TankLook): BattleStage {
+/**
+ * Everything in the picture: the ground, its ridges and woods, the tanks and
+ * what they throw. `woodShare` thins the trees for a slow device.
+ */
+export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook, theirs: TankLook, woodShare = 1): BattleStage {
   const c = RENDER.colours
   const ground = BATTLE.grounds[battle.ground]
   const root = new Group()
@@ -84,8 +89,9 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
 
   for (const wood of ground.woods) {
     // Trees in two rings, the same every time.
-    for (let i = 0; i < K.wood.trees; i++) {
-      const turn = (i / K.wood.trees) * 2 * Math.PI
+    const trees = Math.max(K.wood.fewestTrees, Math.round(K.wood.trees * woodShare))
+    for (let i = 0; i < trees; i++) {
+      const turn = (i / trees) * 2 * Math.PI
       const out = wood.r * (i % 2 === 0 ? 0.75 : 0.35)
       const tree = kit.mesh(new ConeGeometry(K.wood.radiusM, K.wood.heightM, K.wood.sides), K.wood.colour)
       tree.position.set(east(wood.x + Math.cos(turn) * out), K.wood.heightM / 2, south(wood.y + Math.sin(turn) * out))
@@ -208,6 +214,10 @@ export interface BattleViewArgs {
   theirs: TankLook
   /** A tank to stay with. Null lets the director choose. */
   follow: number | null
+  /** How finely to draw. */
+  quality: TierId
+  /** Called once the view has timed its frames, with the frame rate, frames a second. */
+  onMeasured(fps: number): void
   onFrame(frame: BattleFrame): void
   onState(state: { playing: boolean; ended: boolean }): void
 }
@@ -218,6 +228,8 @@ export interface BattleView {
   pause(): void
   seek(timeS: number): void
   setFollow(tank: number | null): void
+  /** Draw more or less finely from now on. The frames are timed again. */
+  setQuality(tier: TierId): void
   dispose(): void
 }
 
@@ -226,7 +238,8 @@ export interface BattleView {
  * cannot give it a 3D drawing surface.
  */
 export function openBattleView(args: BattleViewArgs): BattleView {
-  const renderer = new WebGLRenderer({ antialias: true, powerPreference: 'low-power' })
+  let tier = args.quality
+  const renderer = new WebGLRenderer({ antialias: TIERS[tier].antialias, powerPreference: 'low-power' })
   const kit = new Kit()
   const scene = new Scene()
   const battle = args.battle
@@ -240,7 +253,7 @@ export function openBattleView(args: BattleViewArgs): BattleView {
   sun.position.set(RENDER.light.sunFrom.x, RENDER.light.sunFrom.y, RENDER.light.sunFrom.z)
   scene.add(sun)
 
-  const stage = buildBattleStage(kit, battle, args.mine, args.theirs)
+  const stage = buildBattleStage(kit, battle, args.mine, args.theirs, TIERS[tier].scenery)
   scene.add(stage.root)
   const cuts = directorCuts(battle)
   let follow = args.follow
@@ -255,7 +268,7 @@ export function openBattleView(args: BattleViewArgs): BattleView {
     const width = args.host.clientWidth
     const height = args.host.clientHeight
     if (width === 0 || height === 0) return
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, RENDER.maxPixelRatio))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, TIERS[tier].pixelRatio))
     renderer.setSize(width, height, false)
     camera.aspect = width / height
     camera.updateProjectionMatrix()
@@ -271,6 +284,7 @@ export function openBattleView(args: BattleViewArgs): BattleView {
   let ticking = 0
   let playing = false
   let disposed = false
+  let meter = createFrameMeter()
 
   const place = (spot: Spot): [number, number, number] => [east(spot.x), spot.up, south(spot.y)]
 
@@ -305,8 +319,11 @@ export function openBattleView(args: BattleViewArgs): BattleView {
       return
     }
     const passedS = lastMs === 0 ? 0 : Math.min((nowMs - lastMs) / 1000, RENDER.maxFrameS)
+    const fps = lastMs === 0 ? null : meter.add(nowMs - lastMs)
     lastMs = nowMs
     timeS = Math.min(timeS + passedS * K.rate, endS)
+    if (fps !== null) args.onMeasured(fps)
+    if (disposed) return
     if (draw()) {
       stop()
       args.onState({ playing: false, ended: true })
@@ -336,6 +353,14 @@ export function openBattleView(args: BattleViewArgs): BattleView {
     if (!playing) draw()
   }
 
+  function setQuality(next: TierId): void {
+    if (disposed || next === tier) return
+    tier = next
+    meter = createFrameMeter()
+    resize()
+    if (!playing) draw()
+  }
+
   function setFollow(tank: number | null): void {
     if (disposed) return
     follow = tank
@@ -355,5 +380,5 @@ export function openBattleView(args: BattleViewArgs): BattleView {
   resize()
   watcher.observe(args.host)
   play()
-  return { lengthS: endS, play, pause, seek, setFollow, dispose }
+  return { lengthS: endS, play, pause, seek, setFollow, setQuality, dispose }
 }

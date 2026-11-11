@@ -9,6 +9,7 @@ import {
 import { GUNNERY } from '../data/gunnery'
 import { RANGE, type GunneryTestId } from '../data/range'
 import { RENDER } from '../data/render'
+import { TIERS, type TierId } from '../data/graphics'
 import type { PaintId } from '../data/paint'
 import type { Fire } from '../sim/gunnery/fire'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
@@ -18,6 +19,7 @@ import { courseOutline, coursePath, mudPatch, trenchPit, poseAt, stripPath, type
 import { frameAt, lengthS, type RunRecord } from './playback'
 import { reelOf, type ReelFrame } from './shootReel'
 import type { Camo } from './camo'
+import { createFrameMeter } from './frameMeter'
 import { rangeScenery } from './scenery'
 import { buildSolids, buildTank, tonesOf } from './tankModel'
 import { tankShapeOf, type TankShape } from './tankShape'
@@ -59,6 +61,10 @@ export interface RangeViewArgs {
   geometry: Geometry
   /** The paint the tank wears. */
   paint: PaintId
+  /** How finely to draw. */
+  quality: TierId
+  /** Called once the view has timed its frames, with the frame rate, frames a second. */
+  onMeasured(fps: number): void
   /** Called with every picture drawn. */
   onFrame(frame: ViewFrame): void
   /** Called when the run starts playing, is paused, or reaches its end. */
@@ -80,6 +86,8 @@ export interface RangeView {
   /** Show the run at this many seconds in. Playing carries on from there. */
   seek(timeS: number): void
   setView(view: ViewId): void
+  /** Draw more or less finely from now on. The frames are timed again. */
+  setQuality(tier: TierId): void
   /** Stop and give back everything the picture was holding. */
   dispose(): void
 }
@@ -186,7 +194,7 @@ function flatGround(kit: Kit, y: number, centreX: number, nearZ: number, farZ: n
   return ground
 }
 
-function buildStrip(kit: Kit, scene: Scene): void {
+function buildStrip(kit: Kit, scene: Scene, density: number): void {
   const s = RENDER.strip
   const long = RANGE.acceleration.stripM
   const reach = RENDER.ground.sizeM / 2
@@ -194,7 +202,7 @@ function buildStrip(kit: Kit, scene: Scene): void {
   const strip = kit.box(long + 2 * RENDER.course.leadM, s.thickM, s.widthM, RENDER.colours.concrete)
   strip.position.set(long / 2, 0, 0)
   scene.add(strip)
-  scene.add(buildSolids(kit, rangeScenery({ fromX: -RENDER.course.leadM, toX: long + RENDER.course.leadM, laneHalfM: s.widthM / 2 })))
+  scene.add(buildSolids(kit, rangeScenery({ fromX: -RENDER.course.leadM, toX: long + RENDER.course.leadM, laneHalfM: s.widthM / 2, density })))
   for (let x = 0; x <= long; x += s.postEveryM) {
     for (const side of [-1, 1]) {
       const post = kit.box(s.postWidthM, s.postHeightM, s.postWidthM, RENDER.colours.post)
@@ -204,7 +212,7 @@ function buildStrip(kit: Kit, scene: Scene): void {
   }
 }
 
-function buildCourse(kit: Kit, scene: Scene, path: Path): void {
+function buildCourse(kit: Kit, scene: Scene, path: Path, density: number): void {
   const c = RENDER.course
   // The open ground stops at the lane on both sides, so the trench stays an open cut.
   const reach = RENDER.ground.sizeM / 2
@@ -212,7 +220,7 @@ function buildCourse(kit: Kit, scene: Scene, path: Path): void {
   scene.add(flatGround(kit, -RENDER.ground.underM, path.lengthM / 2, reach, edge))
   scene.add(flatGround(kit, -RENDER.ground.underM, path.lengthM / 2, -edge, -reach))
   scene.add(kit.slab(courseOutline(), c.widthM, RENDER.colours.earth))
-  scene.add(buildSolids(kit, rangeScenery({ fromX: 0, toX: path.lengthM, laneHalfM: edge })))
+  scene.add(buildSolids(kit, rangeScenery({ fromX: 0, toX: path.lengthM, laneHalfM: edge, density })))
   const mud = mudPatch()
   const pit = kit.box(mud.toX - mud.fromX, c.mudThickM, c.widthM - c.mudInsetM, RENDER.colours.mud)
   pit.position.set((mud.fromX + mud.toX) / 2, mud.y, 0)
@@ -265,10 +273,10 @@ interface Show {
 }
 
 /** A recorded drive down the strip or over the obstacle course. */
-function driveShow(kit: Kit, scene: Scene, test: 'acceleration' | 'obstacles', record: RunRecord, shape: TankShape): Show {
+function driveShow(kit: Kit, scene: Scene, test: 'acceleration' | 'obstacles', record: RunRecord, shape: TankShape, density: number): Show {
   const path = test === 'acceleration' ? stripPath() : coursePath()
-  if (test === 'acceleration') buildStrip(kit, scene)
-  else buildCourse(kit, scene, path)
+  if (test === 'acceleration') buildStrip(kit, scene, density)
+  else buildCourse(kit, scene, path, density)
   return {
     lengthS: lengthS(record),
     rate: RENDER.playRate[test],
@@ -336,7 +344,7 @@ function enduranceShow(kit: Kit, scene: Scene, run: EnduranceRun, shape: TankSha
  * A firing test, target by target: the board comes up down the range, each
  * round is seen to leave the gun and land, and a board that is hit goes down.
  */
-function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: TankShape): Show {
+function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: TankShape, density: number): Show {
   const k = RENDER.shoot
   const c = RENDER.colours
   const reel = reelOf(run, fire)
@@ -348,7 +356,7 @@ function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: T
     kit.ribbon(line.filter((point) => point.x <= k.laneToM), k.laneWidthM, 0, run.moving ? c.earth : c.concrete),
   )
 
-  scene.add(buildSolids(kit, rangeScenery({ fromX: k.sceneryFromM, toX: k.sceneryToM, laneHalfM: k.laneWidthM / 2 })))
+  scene.add(buildSolids(kit, rangeScenery({ fromX: k.sceneryFromM, toX: k.sceneryToM, laneHalfM: k.laneWidthM / 2, density })))
 
   // The posts keep pace with the tank a step at a time, so there are always some beside it to show it moving.
   const posts = new Group()
@@ -454,10 +462,12 @@ function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: T
  * cannot give it a 3D drawing surface.
  */
 export function openRangeView(args: RangeViewArgs): RangeView {
-  const renderer = new WebGLRenderer({ antialias: true, powerPreference: 'low-power' })
+  let tier = args.quality
+  const renderer = new WebGLRenderer({ antialias: TIERS[tier].antialias, powerPreference: 'low-power' })
   const kit = new Kit()
   const scene = new Scene()
   const source = args.source
+  const density = TIERS[tier].scenery
   // The night shoot is lit by what little there is.
   const dark = source.test === 'night'
   const sky = dark ? RENDER.colours.nightSky : RENDER.colours.sky
@@ -475,8 +485,8 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   const show = source.test === 'endurance'
     ? enduranceShow(kit, scene, source.run, shape, args.spec.hull.engineAt)
     : 'record' in source
-      ? driveShow(kit, scene, source.test, source.record, shape)
-      : shootShow(kit, scene, source.run, source.fire, shape)
+      ? driveShow(kit, scene, source.test, source.record, shape, density)
+      : shootShow(kit, scene, source.run, source.fire, shape, density)
 
   const cam = RENDER.camera
   let view = args.view
@@ -491,7 +501,7 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     const width = args.host.clientWidth
     const height = args.host.clientHeight
     if (width === 0 || height === 0) return
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, RENDER.maxPixelRatio))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, TIERS[tier].pixelRatio))
     renderer.setSize(width, height, false)
     camera.aspect = width / height
     camera.updateProjectionMatrix()
@@ -507,6 +517,7 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   let ticking = 0
   let playing = false
   let disposed = false
+  let meter = createFrameMeter()
 
   /** Put the tank and the camera where the run has them at `timeS`, and draw. */
   function draw(): boolean {
@@ -536,8 +547,11 @@ export function openRangeView(args: RangeViewArgs): RangeView {
       return
     }
     const passedS = lastMs === 0 ? 0 : Math.min((nowMs - lastMs) / 1000, RENDER.maxFrameS)
+    const fps = lastMs === 0 ? null : meter.add(nowMs - lastMs)
     lastMs = nowMs
     timeS = Math.min(timeS + passedS * show.rate, endS)
+    if (fps !== null) args.onMeasured(fps)
+    if (disposed) return
     if (draw()) {
       stop()
       args.onState({ playing: false, ended: true })
@@ -574,6 +588,14 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     if (!playing) draw()
   }
 
+  function setQuality(next: TierId): void {
+    if (disposed || next === tier) return
+    tier = next
+    meter = createFrameMeter()
+    resize()
+    if (!playing) draw()
+  }
+
   function dispose(): void {
     if (disposed) return
     disposed = true
@@ -587,5 +609,5 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   resize()
   watcher.observe(args.host)
   play()
-  return { lengthS: endS, play, pause, seek, setView, dispose }
+  return { lengthS: endS, play, pause, seek, setView, setQuality, dispose }
 }

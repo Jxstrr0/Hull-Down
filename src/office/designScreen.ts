@@ -31,6 +31,9 @@ import {
   saveStore, scrapDesign, setPaint,
 } from '../persist/designs'
 import { PAINT, PAINT_IDS } from '../data/paint'
+import { GRAPHICS_SETTINGS } from '../data/graphics'
+import { loadGraphics, pickGraphics, saveGraphics, tierOf, withMeasure } from '../persist/graphicsStore'
+import type { GraphicsLink } from '../ui/rangeScreen'
 import { NAME_MAX, cleanName, cleanSpec } from '../persist/specCodec'
 import { issueText, renderGunnery, renderReadouts, renderStations } from './readouts'
 import { renderRangeScreen } from '../ui/rangeScreen'
@@ -96,6 +99,17 @@ export function renderDesignScreen(first: Tender): HTMLElement {
   const glossaryState: GlossaryState = { open: undefined, all: false }
   /** True when the first-contract guide has been put away. */
   let guideHidden = loadGuideHidden(storage)
+  // How finely the 3D views draw. A view reports its frame rate here, and is told the tier to carry on at.
+  let graphics = loadGraphics(storage)
+  const graphicsLink: GraphicsLink = {
+    tier: () => tierOf(graphics),
+    measured: (fps) => {
+      graphics = withMeasure(graphics, fps)
+      saveGraphics(storage, graphics)
+      if (tab === 'trials') drawPanel()
+      return tierOf(graphics)
+    },
+  }
 
   const root = el('section', 'office')
   root.setAttribute('aria-label', O.label)
@@ -578,6 +592,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       sheet,
       projectNo: design.projectNo,
       paint: paintOf(design),
+      graphics: graphicsLink,
       back: () => {
         closeRange()
         panel.querySelector<HTMLElement>('[data-key="to-range"]')?.focus({ preventScroll: true })
@@ -629,6 +644,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       projectNo: design.projectNo,
       name: spec.name || X.unnamed,
       paint: paintOf(design),
+      graphics: graphicsLink,
       back: () => {
         closeRange()
         panel.querySelector<HTMLElement>('[data-key="to-battles"]')?.focus({ preventScroll: true })
@@ -689,7 +705,45 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     }
     box.append(battles)
     box.append(drawPaint())
+    box.append(drawQuality())
     box.append(drawPrototypes())
+    return box
+  }
+
+  /** How finely the 3D views draw: left to the game, or picked. */
+  function drawQuality(): HTMLElement {
+    const G = STRINGS.graphics
+    const box = el('section', 'protos')
+    box.append(el('h3', 'ds-group-title', G.title), el('p', 'ctl-note', G.about))
+    const group = el('div', 'paints')
+    group.setAttribute('role', 'radiogroup')
+    group.setAttribute('aria-label', G.listLabel)
+    for (const id of GRAPHICS_SETTINGS) {
+      const on = id === graphics.setting
+      const button = el('button', on ? 'opt opt-on' : 'opt')
+      button.type = 'button'
+      button.dataset.key = `graphics:${id}`
+      button.setAttribute('role', 'radio')
+      button.setAttribute('aria-checked', on ? 'true' : 'false')
+      const headRow = el('span', 'opt-head')
+      headRow.append(el('span', 'opt-name', G.settings[id].name))
+      if (on) headRow.append(el('span', 'opt-tag', G.picked))
+      const note = id === 'auto' ? fill(G.settings.auto.note, { tier: G.tiers[graphics.auto] }) : G.settings[id].note
+      button.append(headRow, el('span', 'opt-note', note))
+      button.addEventListener('click', () => {
+        if (id === graphics.setting) return
+        graphics = pickGraphics(graphics, id)
+        saveGraphics(storage, graphics)
+        drawPanel()
+        panel.querySelector<HTMLElement>(`[data-key="graphics:${id}"]`)?.focus({ preventScroll: true })
+      })
+      group.append(button)
+    }
+    const last = graphics.measured
+    const line = last ? fill(G.measured, { fps: String(last.fps), tier: G.tiers[last.tier] }) : G.notMeasured
+    const said = el('p', 'ctl-note quality-line', line)
+    said.dataset.key = 'graphics-measured'
+    box.append(group, said)
     return box
   }
 

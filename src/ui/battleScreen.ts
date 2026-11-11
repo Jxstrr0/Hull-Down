@@ -17,6 +17,7 @@ import {
 } from './battleWords'
 import { createBattleMap, type BattleMap } from './battleMap'
 import { createBattleWatch, type BattleWatch } from './battleWatch'
+import type { GraphicsLink } from './rangeScreen'
 import { el } from './dom'
 import { card, scoreBar } from './duelScreen'
 import { opponentsFor, seriesScore, type Opponent } from './duelWords'
@@ -33,6 +34,7 @@ export interface BattleScreenArgs {
   name: string
   /** The paint the design wears in the 3D view. */
   paint: PaintId
+  graphics: GraphicsLink
   back(): void
   /** Leave the battles and open the control that would change a result. */
   fix(part: BattleFixPart): void
@@ -172,7 +174,7 @@ export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
       map?.stop()
       watch?.stop()
       map = createBattleMap(battle, at + 1)
-      watch = createBattleWatch(battle, at + 1, { ...lookOf(me), paint: args.paint }, lookOf(foe))
+      watch = createBattleWatch(battle, at + 1, { ...lookOf(me), paint: args.paint }, lookOf(foe), args.graphics)
       const nav = el('div', 'duel-nav')
       const step = (key: string, label: string, aria: string, to: number): HTMLButtonElement => {
         const button = el('button', 'btn duel-step', label)
