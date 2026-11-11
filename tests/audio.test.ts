@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { createShootEar, droneAt, gunShape, revsAt, strikeOf, voiceOf, type TankVoice } from '../src/audio/cues'
 import { createSound } from '../src/audio/sound'
@@ -255,5 +256,39 @@ describe('the synth', () => {
     sound.drone(VOICE, droneAt(VOICE, 20))
     sound.setOn(false)
     expect(fake.calls.get('stop')).toBe(fake.calls.get('start'))
+  })
+
+  it('lays a recording over a cue once it has arrived, and plays the synth alone until then', async () => {
+    const fake = fakeContext()
+    const asked: string[] = []
+    const sound = createSound(true, () => fake.context, (file) => {
+      asked.push(file)
+      return Promise.resolve(file === AUDIO.recordings.hit.file ? null : new ArrayBuffer(8))
+    })
+    const sources = (): number => fake.calls.get('createBufferSource') ?? 0
+    sound.wake()
+    let before = sources()
+    sound.cue('short')
+    const alone = sources() - before
+    await new Promise((done) => setTimeout(done, 0))
+    expect(asked).toEqual(Object.values(AUDIO.recordings).map((each) => each.file))
+    before = sources()
+    sound.cue('short')
+    expect(sources() - before).toBe(alone + 1)
+    // One that could not be fetched is done without.
+    before = sources()
+    sound.cue('hit')
+    expect(sources() - before).toBe(AUDIO.cues.hit.filter((layer) => layer.kind === 'noise').length)
+  })
+})
+
+describe('the recordings', () => {
+  it('are all in the build, small, and of a kind every phone can play', () => {
+    for (const each of Object.values(AUDIO.recordings)) {
+      expect(each.file).toMatch(/^audio\/[a-z]+\.mp3$/)
+      expect(existsSync(`public/${each.file}`)).toBe(true)
+      expect(each.gain).toBeGreaterThan(0)
+      expect(each.synthGain).toBeLessThanOrEqual(1)
+    }
   })
 })

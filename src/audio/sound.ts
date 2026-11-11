@@ -1,4 +1,5 @@
-// The game's sound, made in the browser from the tables in src/data/audio.ts.
+// The game's sound, made in the browser from the tables in src/data/audio.ts,
+// with a few short recordings laid over it once they have been fetched.
 // Nothing is made until the player first taps something that makes a noise:
 // browsers only allow sound to start from a tap. Where there is no sound at
 // all (an old browser, a test), every call here quietly does nothing.
@@ -39,6 +40,17 @@ export interface Sound {
 }
 
 type ContextMaker = () => AudioContext | null
+/** Fetches a sound file, or gives null when it cannot be had. */
+type Loader = (file: string) => Promise<ArrayBuffer | null>
+
+async function browserLoad(file: string): Promise<ArrayBuffer | null> {
+  try {
+    const reply = await fetch(file)
+    return reply.ok ? await reply.arrayBuffer() : null
+  } catch {
+    return null
+  }
+}
 
 function browserContext(): AudioContext | null {
   const scope = globalThis as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext }
@@ -51,13 +63,15 @@ function browserContext(): AudioContext | null {
   }
 }
 
-export function createSound(startOn: boolean, makeContext: ContextMaker = browserContext): Sound {
+export function createSound(startOn: boolean, makeContext: ContextMaker = browserContext, load: Loader = browserLoad): Sound {
   let enabled = startOn
   let context: AudioContext | null = null
   let failed = false
   let master: GainNode | null = null
   let noise: AudioBuffer | null = null
   let nodes: DroneNodes | null = null
+  /** The recordings that have arrived, by cue. */
+  const taped = new Map<CueId, AudioBuffer>()
 
   function ready(): AudioContext | null {
     if (context || failed) return context
@@ -76,7 +90,20 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     noise = context.createBuffer(1, length, context.sampleRate)
     const samples = noise.getChannelData(0)
     for (let i = 0; i < length; i++) samples[i] = Math.random() * 2 - 1
+    void fetchRecordings(context)
     return context
+  }
+
+  /** Fetch the recordings in the background. One that fails is simply not used. */
+  async function fetchRecordings(ctx: AudioContext): Promise<void> {
+    for (const [id, each] of Object.entries(AUDIO.recordings)) {
+      try {
+        const bytes = await load(each.file)
+        if (bytes) taped.set(id as CueId, await ctx.decodeAudioData(bytes))
+      } catch {
+        // A file this browser cannot read: the synth plays alone.
+      }
+    }
   }
 
   function wake(): void {
@@ -140,7 +167,21 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     if (!ctx || !master || ctx.state !== 'running') return
     const shape = id === 'gun' && calibreMm ? gunShape(calibreMm) : { pitch: 1, stretch: 1 }
     const gain = AUDIO.cueGain * (id === 'gun' ? 1 : AUDIO.farGain)
-    for (const each of AUDIO.cues[id]) layer(ctx, master, each, shape.pitch, shape.stretch, gain)
+    const recordings: Partial<Record<CueId, { gain: number; synthGain: number }>> = AUDIO.recordings
+    const recording = recordings[id]
+    const tape = taped.get(id)
+    const under = recording && tape ? recording.synthGain : 1
+    for (const each of AUDIO.cues[id]) layer(ctx, master, each, shape.pitch, shape.stretch, gain * under)
+    if (!recording || !tape) return
+    // Played slower for a bigger gun, which makes it lower and longer at once.
+    const source = ctx.createBufferSource()
+    source.buffer = tape
+    source.playbackRate.value = shape.pitch
+    const level = ctx.createGain()
+    level.gain.value = recording.gain * gain
+    source.connect(level)
+    level.connect(master)
+    source.start()
   }
 
   function build(ctx: AudioContext, out: AudioNode, voice: TankVoice): DroneNodes {

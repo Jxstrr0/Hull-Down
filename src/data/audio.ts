@@ -1,5 +1,5 @@
-// Every number the sound is made from. All of it is synthesized in the
-// browser: there are no sound files in this table. These are numbers that
+// Every number the sound is made from. Most of it is synthesized in the
+// browser; a few short recordings are laid over the gun and the strikes. These are numbers that
 // sound right on a phone speaker, not measurements of anything.
 import type { EnginePart } from './parts'
 
@@ -122,6 +122,19 @@ export const AUDIO = {
   cueGain: 0.6,
   /** Loudness of a strike as a share of the cue, for being a long way down the range. */
   farGain: 0.7,
+
+  /**
+   * Recordings laid over the synth where a free one fits (CC0, listed in
+   * CREDITS.md). They are fetched when the sound first starts, never with the
+   * page. Until one arrives, or if it never does, the synth plays alone.
+   * `gain` is the recording's loudness; `synthGain` is what the synth under
+   * it is turned down to.
+   */
+  recordings: {
+    gun: { file: 'audio/gun.mp3', gain: 0.9, synthGain: 0.5 },
+    hit: { file: 'audio/hit.mp3', gain: 0.7, synthGain: 0.4 },
+    short: { file: 'audio/short.mp3', gain: 0.9, synthGain: 0.5 },
+  } satisfies Partial<Record<CueId, { file: string; gain: number; synthGain: number }>>,
 
   /** The cue map: every short sound, layer by layer. */
   cues: {

@@ -4,6 +4,14 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Free recordings** (0.16.1.0): three public-domain (CC0) recordings
+  from OpenGameArt are now laid over the synth: a cannon shot for the
+  gun, a steel ring for a hit, a thud for a round that falls short. A
+  miss stays synth only (I found no free recording of a round going
+  by). They add 43 KB, fetched only when sound first starts, and each
+  has its line in `CREDITS.md`. I picked them by description and by
+  measuring them, not by ear: if one sounds wrong, say which and I
+  will swap it or drop back to the synth for that sound.
 - **Sound, first slice** (0.16.0.0): the range playbacks now have sound,
   all of it made in the browser with no files. The engine note comes
   from the engine you fitted (a diesel chugs, the multi-fuel is rougher,
@@ -14,9 +22,8 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   different. A "Sound on / Sound off" button sits beside Blueprint and
   is remembered. **I cannot hear it from here**, so every level is a
   first guess: tell me what is too loud, too quiet or just wrong and I
-  will retune `src/data/audio.ts`. Still to come in PR 16: the free
-  recordings you asked for layered over the gun and the strikes (next
-  slice), then battles, then the office.
+  will retune `src/data/audio.ts`. Still to come in PR 16: battles,
+  then the office.
 - **Range officer voice: the quote you asked for.** Nothing has been
   generated. The script sheet, 12 short lines, one speaker:
 
@@ -450,6 +457,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.16.1.0, PR 16b: free recordings over the synth.** Second slice of plan PR 16. Three CC0 recordings from OpenGameArt (`public/audio/gun.mp3`, `hit.mp3`, `short.mp3`; originals in `art/third-party/sounds/`), listed in `CREDITS.md`. `AUDIO.recordings` says which cue each belongs to and how loud; `src/audio/sound.ts` fetches them when sound first starts and plays them over the synth, slowed for a bigger gun. Without them the synth plays alone.
 - **0.16.0.0, PR 16a: sound on the range.** First slice of plan PR 16. `src/data/audio.ts` holds every number and the cue map (gun, hit, miss, short). `src/audio/cues.ts` works out what a playback should sound like from what it shows (engine note from the engine and gearbox, track beat from speed, gun from calibre, one cue a round fired and one a round landed), with tests. `src/audio/sound.ts` makes it with the browser's own synth: no sound files, nothing fetched. A Sound button in the header, kept under `hulldown.sound`. First load 770 KB.
 - **0.15.3.0, PR 15d: picture quality.** Last slice of plan PR 15. Three tiers in `src/data/graphics.ts` (pixel ratio, smooth edges, how much of the woods is planted). `src/render/frameMeter.ts` times the frames of every 3D view; on Auto the game steps down when the device is slow and remembers it under `hulldown.graphics`. A picker and the last measured frame rate on the Trials tab. First load 762 KB.
 - **0.15.2.0, PR 15c: scenery on the range.** Third slice of plan PR 15. `src/render/scenery.ts` lays out woods, skyline hills, a range tower and warning flags as a plain list of shapes, the same on every device, and `buildSolids` joins them into one mesh a colour. On the strip, the course and the shoots. A test holds each range to 5,200 triangles and keeps the lane and the camera side clear. A `density` setting thins the woods, ready for the graphics tiers.

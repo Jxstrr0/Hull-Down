@@ -27,6 +27,22 @@ the plan names these fonts.
 | `@fontsource/spline-sans-mono` | Spline Sans Mono | The Spline Sans Mono Project Authors | https://github.com/SorkinType/SplineSansMono | SIL OFL 1.1 | None |
 | `@fontsource/space-grotesk` | Space Grotesk (studio pieces only) | The Space Grotesk Project Authors | https://github.com/floriankarsten/space-grotesk | SIL OFL 1.1 | None |
 
+## Sounds (third-party recordings)
+
+All three come from OpenGameArt and are CC0 1.0 (public domain):
+https://creativecommons.org/publicdomain/zero/1.0/. The originals are kept
+unchanged in `art/third-party/sounds/`; the files the game plays are made
+from them with ffmpeg.
+
+| File | Title | Author | Source | Licence | Changes |
+| --- | --- | --- | --- | --- | --- |
+| `art/third-party/sounds/cannon_fire_0.ogg` | Cannon fire | Thimras | https://opengameart.org/content/cannon-fire | CC0 1.0 | None (the original) |
+| `public/audio/gun.mp3` | Cannon fire | Thimras | https://opengameart.org/content/cannon-fire | CC0 1.0 | Cut to 1.7 s, faded out, mixed to mono, saved as MP3 |
+| `art/third-party/sounds/bong1.wav` | Metal Impact Sounds (bong1) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | None (the original) |
+| `public/audio/hit.mp3` | Metal Impact Sounds (bong1) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | Cut to 1.9 s, faded out, saved as MP3 |
+| `art/third-party/sounds/thud2.wav` | Metal Impact Sounds (thud2) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | None (the original) |
+| `public/audio/short.mp3` | Metal Impact Sounds (thud2) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | Cut to 0.45 s, made 6 dB louder, faded out, saved as MP3 |
+
 ## Libraries (npm packages, shipped in the build)
 
 | Package | What it does | Authors | Source | Licence | Changes |
