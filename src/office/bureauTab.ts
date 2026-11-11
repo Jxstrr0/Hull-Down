@@ -9,6 +9,8 @@ import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/
 import { STRINGS, fill } from '../data/strings'
 import { SCORE_AXES, SCORING, TENDER_IDS, TENDER_RULES, type Tender } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
+import { guideState, type GuideState } from '../sim/career/guide'
+import { GUIDE } from '../data/guide'
 import { customerChecks, exportOpen, saleBlock, strained, saleFeeKr, secrets, sell, sellVariant, variantBlock, variantCostKr, variantDesignation, variantFixed } from '../sim/career/exportDesk'
 import { intelFiles } from '../sim/career/intel'
 import {
@@ -58,6 +60,8 @@ export interface BureauOptions {
 
 export interface Bureau {
   draw: () => HTMLElement
+  /** Where the first-contract guide has got to, or null when it has nothing to say. */
+  guide: (spec: VehicleSpec, faults: number) => GuideState | null
   /** The career as it stands now. */
   career: () => Career
 }
@@ -920,5 +924,17 @@ export function createBureau(options: BureauOptions): Bureau {
     return box
   }
 
-  return { draw, career: () => career }
+  function guide(spec: VehicleSpec, faults: number): GuideState | null {
+    const newest = career.prototypes[career.prototypes.length - 1]
+    const trial = newest ? trials.get(newest.no) : undefined
+    if (newest && !trial && !career.outcome && career.tenderNo === GUIDE.tenderNo) {
+      later(() => {
+        const result = prototypeTrial(career, newest.no)
+        if (result) trials.set(newest.no, result)
+      })
+    }
+    return guideState(career, spec, faults, trial?.score ?? null)
+  }
+
+  return { draw, guide, career: () => career }
 }

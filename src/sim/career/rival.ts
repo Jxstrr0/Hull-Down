@@ -1,6 +1,6 @@
 // A rival bureau's bid. It draws up its tank, sends a prototype to the same
 // trials as everyone else, and revises it on what the reports say, under the
-// same rule on revisions as the player. A revision that does no better is
+// same rule on revisions as the player (a tender may allow it fewer). A revision that does no better is
 // dropped and the bureau enters the tank it had.
 import type { ObstacleId } from '../../data/range'
 import type { BureauId } from '../../data/opponents'
@@ -38,7 +38,7 @@ export function rivalBid(bureau: BureauId, tender: Tender, seed: number): RivalB
   let bid = trialBid(draft.spec, tender, seed)
   let score = scoreBid(bid, tender)
   let revisions = 0
-  while (revisions < TENDER_RULES.revisions) {
+  while (revisions < Math.min(tender.rivalRevisions, TENDER_RULES.revisions)) {
     const lessons = lessonsOf(bid.range)
     if (lessons.length === 0) break
     const next = reviseRival(draft, bureau, tender.limits, lessons)

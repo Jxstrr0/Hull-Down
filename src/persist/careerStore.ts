@@ -7,6 +7,7 @@ import type { KeyValue } from './designs'
 
 export const CAREER_KEY = 'hulldown.career'
 export const ADVISOR_KEY = 'hulldown.advisor'
+export const GUIDE_KEY = 'hulldown.guide'
 
 /** The career kept here, or null when there is none or it cannot be read. */
 export function loadCareer(storage: KeyValue): Career | null {
@@ -40,6 +41,24 @@ export function loadAdvisorMode(storage: KeyValue): AdvisorMode {
 export function saveAdvisorMode(storage: KeyValue, mode: AdvisorMode): boolean {
   try {
     storage.setItem(ADVISOR_KEY, mode)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** True when the player has put the first-contract guide away. */
+export function loadGuideHidden(storage: KeyValue): boolean {
+  try {
+    return storage.getItem(GUIDE_KEY) === 'off'
+  } catch {
+    return false
+  }
+}
+
+export function saveGuideHidden(storage: KeyValue, hidden: boolean): boolean {
+  try {
+    storage.setItem(GUIDE_KEY, hidden ? 'off' : 'on')
     return true
   } catch {
     return false

@@ -4,34 +4,18 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
-- **The glossary** (0.14.1.0): my pick for "tap-to-explain". At the
-  bottom of every tab of the design office there is a row called "Words
-  on this page": one button for each term on that tab that a newcomer
-  might not know. Tap one and its meaning opens under the row. "Show
-  every word" lists all 43. I chose a row of buttons over underlined
-  words inside the text because most of the text sits inside buttons
-  already, and a word in a sentence is too small to tap. The 43 entries
-  are my wording, in `STRINGS.glossary.terms`: say if any reads wrong,
-  or if a word is missing. The trial reports do not have the row yet.
-- **What the rivals fit in 2016** (0.13.4.0): my picks. The heavy bureau
-  fits hard kill and an auxiliary power unit. The light bureau fits soft
-  kill. The firepower bureau builds the unmanned turret with soft kill.
-  None of them fit any of it before generation three. Their marks barely
-  move (active protection only counts at the armour trial), but their
-  tanks now look like 2016. This finishes plan PR 13. Say if a bureau
-  should pick differently.
-- **The unmanned turret** (0.13.3.0): a fifth turret shape on the Turret
-  tab, generation three, research Kr 10.0M after the digital computer.
-  About 0.9 t of structure, low (0.56 m), small inside, Kr 480,000,
-  draws 4 kW. Nobody sits in it: the gunner and commander move down
-  beside the driver, so a round through the turret hurts no one. My
-  picks for the price: it needs an autoloader, the engine at the back
-  and the digital computer (three new faults with Fix it); the racks and
-  fuel tanks that sat beside the driver have to go across the hull; the
-  commander carries 8 more workload points ("Sees the world only by
-  screens"); and with hard kill it takes all 16 kW an auxiliary power
-  unit and the engine make together. Rival bureaux do not use it yet.
-  Say if any number or rule feels wrong.
+- **The guided first contract** (0.14.2.0): Kelbo chose "guide plus
+  gentler rivals". The guide is a card at the top of every tab during
+  the first tender: fix the night sight, build the prototype, read the
+  report, enter. It follows the career, so it is right after a reload,
+  and "Hide the guide" puts it away (it can be brought back). The
+  gentler rivals are my pick of how: on the first tender only, the other
+  bureaus enter the tank they first drew and make no revisions. A player
+  who fits the better night sight and nothing else wins 38 careers in 40
+  (it was 8 in 40). The side effect to know about: a player who changes
+  nothing now wins about 25 in 40, where it was 2 in 40. From the second
+  tender the rivals revise as before. Say if the first tender is now too
+  easy, or if any of the guide's wording reads wrong.
 - **Active protection and electrical power** (0.13.2.0): a new choice on
   the Crew and protection tab. Soft kill (generation two, research
   Kr 4.0M; 0.25 t, Kr 320,000, draws 4 kW) throws off about half the
@@ -386,6 +370,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.14.2.0, PR 14: the guided first contract.** A guide card on every tab walks a newcomer through the first tender (night sight, prototype, report, enter), and the rival bureaus make no revisions on that tender. Kelbo confirmed the glossary, the unmanned turret and the rivals' 2016 picks as built. This finishes plan PR 14.
 - **0.14.1.0, PR 14b: the glossary.** `STRINGS.glossary` (43 entries, each with the word beginnings it explains), `src/ui/glossaryWords.ts` (`termsIn`), `src/ui/glossary.ts` (the row of buttons), drawn at the foot of every design office tab. `tests/glossary.test.ts` checks every entry is used by the game and every control has a word explained. Phone test: open the Hull tab, scroll to "Words on this page", tap Glacis, read it, tap it again to close; change the hull and the open word stays open; tap "Show every word".
 - **0.14.0.0, PR 14a: the hard-coded-text test.** First slice of plan PR 14 (Teaching). `tests/hardCodedText.test.ts` reads every source file outside `src/data/` and fails on anything that looks like English for the player. It found two: the korona format (`STRINGS.money`) and the army designation "Model 81" (`STRINGS.career.designation`), both now in the string table. Nothing changes on screen. Phone test: money still reads "Kr 2.60M" and an adopted tank is still "Model 81".
 - **0.13.4.0, PR 13e: the rivals in generation three.** `LaterPicks` gains `turret`, `active` and `apu`; each bureau has a `later[3]`. The designer can repair `overPowerBudget`, `turretNeedsAutoloader` and `turretNeedsComputer`. `tests/rivalsGen3.test.ts`. Plan PR 13 is complete. Phone test: play to the 2016 tender, send a tank to the range, win or lose the decision, and read the rival tanks on the Bureau tab: one has an unmanned turret, all have active protection.

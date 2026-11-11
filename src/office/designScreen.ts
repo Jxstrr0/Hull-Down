@@ -10,6 +10,8 @@ import {
 } from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { pageTextOf, renderGlossary, type GlossaryState } from '../ui/glossary'
+import { renderGuide } from '../ui/guide'
+import { GUIDE } from '../data/guide'
 import { fixed, money, signed, signedMoney } from '../ui/format'
 import {
   CONTROLS, PART_TABS, fixTarget, preview, type ChoiceControl, type Control, type ControlId, type NumberControl,
@@ -41,7 +43,7 @@ import type { Marks } from '../data/range'
 import type { Tender } from '../data/tenders'
 import { careerLimits, tenderOf } from '../sim/career/career'
 import { createSaves } from './savesTab'
-import { dropCareer, saveCareer } from '../persist/careerStore'
+import { dropCareer, loadGuideHidden, saveCareer, saveGuideHidden } from '../persist/careerStore'
 import { SAVE_FORMAT } from '../persist/saveCode'
 
 const O = STRINGS.office
@@ -91,6 +93,8 @@ export function renderDesignScreen(first: Tender): HTMLElement {
   }
 
   const glossaryState: GlossaryState = { open: undefined, all: false }
+  /** True when the first-contract guide has been put away. */
+  let guideHidden = loadGuideHidden(storage)
 
   const root = el('section', 'office')
   root.setAttribute('aria-label', O.label)
@@ -220,7 +224,8 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       drawBlueprint()
     },
     redraw: () => {
-      if (tab === 'bureau') drawPanel()
+      // The guide sits on every page and follows the career.
+      if (tab === 'bureau' || bureau.career().tenderNo === GUIDE.tenderNo) drawPanel()
     },
   })
 
@@ -947,12 +952,41 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     return box
   }
 
+  /** The first-contract guide, for the top of the page. Null after the first tender. */
+  function drawGuide(): HTMLElement | null {
+    const faults = sheet.issues.filter((issue) => issue.severity === 'error').length
+    const state = bureau.guide(spec, faults)
+    if (!state) return null
+    return renderGuide(state, {
+      hidden: guideHidden,
+      onBureau: tab === 'bureau',
+      go: (action) => {
+        if (action === 'part') {
+          goToPart(GUIDE.part)
+          return
+        }
+        tab = action === 'faults' ? 'faults' : 'bureau'
+        panel.scrollTop = 0
+        drawTabs()
+        drawPanel()
+        showTab()
+      },
+      hide: (hidden) => {
+        guideHidden = hidden
+        saveGuideHidden(storage, hidden)
+        drawPanel()
+      },
+    })
+  }
+
   function drawPanel(): void {
     const scroll = panel.scrollTop
     const active = document.activeElement
     const focusKey = active instanceof HTMLElement && panel.contains(active) ? active.dataset.key : undefined
 
     const parts: HTMLElement[] = []
+    const guide = drawGuide()
+    if (guide) parts.push(guide)
     if (tab === 'readouts') parts.push(renderReadouts(sheet, limits))
     else if (tab === 'faults') parts.push(drawFaults())
     else if (tab === 'designs') parts.push(drawDesigns())

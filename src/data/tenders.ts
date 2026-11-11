@@ -21,6 +21,8 @@ export interface Tender {
   weights: Record<ScoreAxis, number>
   /** What the ministry grants the bureau to build and try its prototypes. */
   grantKr: number
+  /** Revisions each rival bureau makes after its first prototype. */
+  rivalRevisions: number
 }
 
 export const TENDER_IDS = ['improvedType1', 'tank2001', 'tank2016'] as const
@@ -30,6 +32,9 @@ export const TENDERS: Record<TenderId, Tender> = {
   /**
    * The first tender: make the Type 1 better. It asks for a tank that can
    * shoot at night, which the Type 1 as issued cannot do well enough.
+   * The other bureaus are as new to the proving ground as the player: each
+   * enters the tank it first drew up, so a newcomer who fixes the night
+   * shoot nearly always wins.
    */
   improvedType1: {
     year: 1981,
@@ -38,6 +43,7 @@ export const TENDERS: Record<TenderId, Tender> = {
     threats: ['warden', 'palisade'],
     weights: { protection: 30, firepower: 25, mobility: 15, reliability: 15, cost: 15 },
     grantKr: 22_000_000,
+    rivalRevisions: 0,
   },
   /**
    * Twenty years on: a tank for the new century. Generation two technology
@@ -51,6 +57,7 @@ export const TENDERS: Record<TenderId, Tender> = {
     threats: ['palisade', 'palisadeB'],
     weights: { protection: 30, firepower: 30, mobility: 10, reliability: 15, cost: 15 },
     grantKr: 40_000_000,
+    rivalRevisions: 3,
   },
   /**
    * Fifteen years on again: generation three. The Pact's bridges carry
@@ -63,6 +70,7 @@ export const TENDERS: Record<TenderId, Tender> = {
     threats: ['palisadeB'],
     weights: { protection: 35, firepower: 25, mobility: 10, reliability: 15, cost: 15 },
     grantKr: 60_000_000,
+    rivalRevisions: 3,
   },
 }
 
