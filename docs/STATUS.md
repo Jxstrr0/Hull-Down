@@ -4,6 +4,16 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **The tender of 2001** (0.11.2.0): "A tank for the new century". Still
+  44 t, unit cost up to Kr 5.00M, grant Kr 40M added to whatever the bureau
+  has left, threats Palisade and Palisade B, firepower weighed as heavily as
+  protection. My picks; say what you want changed. Three things I chose
+  that you may want otherwise: leftover budget carries over; a tank in
+  service can take generation-two parts in an upgrade once the bureau is on
+  the 2001 tender; and the office proving ground now marks to the tender's
+  own standard (so the first tender's night shoot asks for 4 hits there too,
+  as the army always did). The rival bureaus do not reach for
+  generation-two parts on their own yet, so the 2001 tender is easy to win.
 - **New Accord kit** (0.11.1.0): "Palisade B" (the Palisade rebuilt, for
   generation-two tenders), and three rounds: the 120 mm long rod, the tandem
   rocket and the tandem missile. A tandem warhead gets back all but 15% of
@@ -229,6 +239,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.11.2.0, PR 11c: the tender of 2001.** A second tender, generation
+  two, with its own proving-ground marks (long rod and tandem warheads on
+  the armour trial, night as hard as day). After the army decides the
+  first tender the Bureau tab offers "Go on to the tender of 2001" (tap
+  twice): the grant is added to the budget, prototypes stay behind, tanks
+  in service carry on. The office then works to the new tender's limits,
+  the locked parts open, and Palisade B joins the duels and battles.
 - **0.11.1.0, PR 11b: tandem and improved threats.** Three new Accord
   rounds (120 mm long rod, tandem rocket, tandem missile). A tandem warhead
   sets a reactive tile off first, so the tile adds only 15% of its worth

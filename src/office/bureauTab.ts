@@ -5,10 +5,10 @@ import { ADVISOR_MODES, type AdvisorMode } from '../data/advisor'
 import { BODIES } from '../data/career'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { STRINGS, fill } from '../data/strings'
-import { SCORE_AXES, SCORING, TENDER_RULES } from '../data/tenders'
+import { SCORE_AXES, SCORING, TENDER_IDS, TENDER_RULES, type Tender } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
 import {
-  buildBlock, buildPrototype, enterTender, fitUpgrade, newCareer, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
+  buildBlock, buildPrototype, enterTender, fitUpgrade, newCareer, nextTender, tendersLeft, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
   serviceSpec, serviceYear, serviceYearsLeft, startProduction, tenderIdOf, tenderOf, upgradeBlock, upgradesLeft, type Adopted,
   type Career,
 } from '../sim/career/career'
@@ -46,6 +46,8 @@ export interface BureauOptions {
   toFaults: () => void
   /** Put a tank on the drawing board in place of the design that is there. */
   load: (spec: VehicleSpec) => void
+  /** The career has moved on to another tender: the office works to its limits from now on. */
+  tender: (tender: Tender) => void
   /** Draw the panel again: something here has changed. */
   redraw: () => void
 }
@@ -80,6 +82,8 @@ export function createBureau(options: BureauOptions): Bureau {
   /** The prototype whose "enter" button has been tapped once. */
   let armed: number | null = null
   let restartArmed = false
+  /** True once "go on to the next tender" has been tapped once. */
+  let nextArmed = false
   let deciding = false
   let working = false
   /** The rate and quality picked for a tank whose production has not started. */
@@ -97,7 +101,9 @@ export function createBureau(options: BureauOptions): Bureau {
   let archiveKept = true
 
   function keep(next: Career): void {
+    const moved = tenderIdOf(next) !== tenderIdOf(career)
     career = next
+    if (moved) options.tender(tenderOf(career))
     kept = saveCareer(storage, career)
     career.adopted.forEach((_, index) => file(index))
   }
@@ -364,7 +370,32 @@ export function createBureau(options: BureauOptions): Bureau {
     box.append(order, el('h4', 'bu-sub', D.standing))
     const changes = el('ul', 'bu-changes')
     for (const change of standingChanges(outcome)) changes.append(el('li', 'bu-change', change.text))
-    box.append(changes, el('p', 'ctl-note', outcome.won ? D.nextWon : D.next))
+    box.append(changes)
+    if (outcome.won) box.append(el('p', 'ctl-note', D.nextWon))
+    if (!tendersLeft(career)) {
+      box.append(el('p', 'ctl-note', D.next))
+      return box
+    }
+    // The next tender: tap twice, since the prototypes stay behind.
+    const after = TENDERS[TENDER_IDS[career.tenderNo + 1]!]
+    const words = STRINGS.tenders[TENDER_IDS[career.tenderNo + 1]!]
+    box.append(el('p', 'ctl-note', fill(D.onward, { year: String(after.year), name: words.name, grant: money(after.grantKr) })))
+    const go = button('bureau:next', nextArmed ? D.goConfirm : fill(D.go, { year: String(after.year) }), nextArmed ? 'btn btn-armed' : 'btn')
+    go.addEventListener('click', () => {
+      if (!nextArmed) {
+        nextArmed = true
+        options.redraw()
+        return
+      }
+      nextArmed = false
+      armed = null
+      trials = new Map()
+      read = null
+      askedKey = ''
+      keep(nextTender(career))
+      options.redraw()
+    })
+    box.append(go)
     return box
   }
 
@@ -629,6 +660,7 @@ export function createBureau(options: BureauOptions): Bureau {
         return
       }
       restartArmed = false
+      nextArmed = false
       armed = null
       trials = new Map()
       reports = new Map()

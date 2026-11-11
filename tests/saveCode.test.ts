@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { TENDER_IDS } from '../src/data/tenders'
 import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { BODIES } from '../src/data/career'
@@ -151,7 +152,7 @@ describe('cleaning a career read from a save', () => {
 
   it('pulls numbers into range and fills what is missing', () => {
     const career = cleanCareer({ seed: 5, tenderNo: 99, budgetKr: -4, reputation: { army: 400, ministry: -3, pact: 'high' } })!
-    expect(career.tenderNo).toBe(0)
+    expect(career.tenderNo).toBe(TENDER_IDS.length - 1)
     expect(career.budgetKr).toBe(0)
     expect(career.reputation).toEqual({ army: 100, ministry: 0, pact: 50 })
     expect(career.prototypes).toEqual([])

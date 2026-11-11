@@ -5,7 +5,7 @@ import { SERVICE, type Production } from '../data/service'
 import { STRINGS, fill } from '../data/strings'
 import { TENDERS } from '../data/tenders'
 import {
-  serviceSpec, upgradeBlock, upgradeCostKr, type Adopted, type Career, type UpgradeBlock, productionStanding,
+  serviceSpec, upgradeBlock, upgradeLimits, upgradeCostKr, type Adopted, type Career, type UpgradeBlock, productionStanding,
 } from '../sim/career/career'
 import { askMeasure, fixedPartsChanged, massCeilingT, type Upgrade, type UpgradeAsk } from '../sim/career/upgrade'
 import type { VehicleSpec } from '../sim/vehicle/spec'
@@ -188,7 +188,7 @@ export function upgradeCheck(career: Career, index: number, spec: VehicleSpec): 
   const tank = career.adopted[index]
   const ask = tank?.contract
   if (!tank || !ask) return null
-  const limits = TENDERS[tank.tender].limits
+  const limits = upgradeLimits(career, tank)
   const before = buildStatSheet(serviceSpec(tank), limits)
   const after = buildStatSheet(spec, limits)
   const measure = askMeasure(ask, before, after)

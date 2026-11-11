@@ -2,7 +2,7 @@
 // bids. Game-level numbers, not engineering data.
 import type { Limits } from '../sim/vehicle/spec'
 import type { ThreatTankId } from './opponents'
-import { MARKS_GEN1, type Marks } from './range'
+import { MARKS_GEN1, MARKS_GEN2, type Marks } from './range'
 import { PACT_LIMITS_GEN1 } from './tuning'
 
 export const SCORE_AXES = ['protection', 'firepower', 'mobility', 'reliability', 'cost'] as const
@@ -23,7 +23,7 @@ export interface Tender {
   grantKr: number
 }
 
-export const TENDER_IDS = ['improvedType1'] as const
+export const TENDER_IDS = ['improvedType1', 'tank2001'] as const
 export type TenderId = (typeof TENDER_IDS)[number]
 
 export const TENDERS: Record<TenderId, Tender> = {
@@ -38,6 +38,19 @@ export const TENDERS: Record<TenderId, Tender> = {
     threats: ['warden', 'palisade'],
     weights: { protection: 30, firepower: 25, mobility: 15, reliability: 15, cost: 15 },
     grantKr: 22_000_000,
+  },
+  /**
+   * Twenty years on: a tank for the new century. Generation two technology
+   * is allowed, the Accord has a rebuilt Palisade and tandem warheads, and
+   * the army will pay more for a tank that can meet them.
+   */
+  tank2001: {
+    year: 2001,
+    limits: { ...PACT_LIMITS_GEN1, generation: 2, maxUnitCostKr: 5_000_000 },
+    marks: MARKS_GEN2,
+    threats: ['palisade', 'palisadeB'],
+    weights: { protection: 30, firepower: 30, mobility: 10, reliability: 15, cost: 15 },
+    grantKr: 40_000_000,
   },
 }
 

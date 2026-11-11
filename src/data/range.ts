@@ -248,6 +248,37 @@ export const MARKS_GEN1 = {
   /** Height showing over the crest of the berm with the gun laid level, metres at most. */
   bermShowsM: 1.9,
 } as const
+/**
+ * What the army asks twenty years on. The Accord's long rod and its tandem
+ * warheads are on the armour trial, the night shoot is as hard as the day
+ * one, and everything is wanted quicker.
+ */
+export const MARKS_GEN2 = {
+  sprintS: 10,
+  topKmh: 55,
+  enduranceStops: 1,
+  hits: { halted: 4, onTheMove: 4, night: 4 },
+  firstShotS: 15,
+  drillRpm: 4,
+  armour: [
+    { zone: 'upperGlacis', threat: 'accord120Sabot', rangeM: 2000, angleDeg: 0, gate: true },
+    { zone: 'upperGlacis', threat: 'tandemRocket', rangeM: 200, angleDeg: 0, gate: true },
+    { zone: 'turretFrontLeft', threat: 'accord120Sabot', rangeM: 2000, angleDeg: 0, gate: true },
+    { zone: 'turretFrontRight', threat: 'accord120Sabot', rangeM: 2000, angleDeg: 30, gate: true },
+    { zone: 'turretFrontRight', threat: 'tandemRocket', rangeM: 200, angleDeg: 0, gate: true },
+    { zone: 'hullSideFront', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: true },
+    { zone: 'turretSides', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: true },
+    { zone: 'upperGlacis', threat: 'accord120LongRod', rangeM: 2000, angleDeg: 0, gate: false },
+    { zone: 'turretFrontLeft', threat: 'accord120LongRod', rangeM: 2000, angleDeg: 0, gate: false },
+    { zone: 'turretFrontLeft', threat: 'tandemMissile', rangeM: 1000, angleDeg: 0, gate: false },
+    { zone: 'lowerGlacis', threat: 'accord120Sabot', rangeM: 1000, angleDeg: 0, gate: false },
+    { zone: 'hullSideFront', threat: 'tandemRocket', rangeM: 200, angleDeg: 0, gate: false },
+    { zone: 'hullSideRear', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: false },
+    { zone: 'hullRear', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: false },
+  ] as readonly ArmourSerial[],
+  bermShowsM: 1.9,
+} as const
+
 export type Marks = {
   sprintS: number
   topKmh: number
