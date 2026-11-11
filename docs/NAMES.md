@@ -23,7 +23,11 @@ Tarnovian korona, written `Kr 4.2M`.
 
 ## Bureau, people and vehicles
 
-None named yet. The player's bureau is "State Tank Design Bureau" for now.
+The player's bureau is "State Tank Design Bureau" for now.
+
+| Name | What it is | Status |
+| --- | --- | --- |
+| Pattern 3 | The Radan baseline tank every Pact design starts from. | Working name (PR 1), Kelbo to confirm |
 
 ## Designation scheme
 
