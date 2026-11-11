@@ -254,7 +254,7 @@ export const STRINGS = {
       underTileVerdict: '{mm} mm {mark} {verdict} · {pct}% covered',
       tilesTitle: 'Reactive tiles',
       tilesCount: '{n} of {max}',
-      tilesAbout: 'Explosive tiles bolted over the plate. Where a shot meets one it adds {ce} mm against shaped charges, and nothing against kinetic rounds. A tile works once.',
+      tilesAbout: 'Explosive tiles bolted over the plate. Where a shot meets one it adds {ce} mm against shaped charges, and nothing against kinetic rounds. A tandem warhead sets the tile off first and gets almost all of it back. A tile works once.',
       tilesGrid: 'Tile places on the {zone}',
       tilePlace: 'Tile, row {row}, place {col}',
       tileBlocked: 'Row {row}, place {col}: blocked',
@@ -695,6 +695,9 @@ export const STRINGS = {
     accord105Shaped: { name: 'Accord 105 mm shaped charge', note: 'The other round in every Accord tank.' },
     infantryRocket: { name: 'Infantry rocket', note: 'A shoulder-fired shaped charge. Short ranged, and found everywhere.' },
     guidedMissile: { name: 'Guided missile', note: 'A wire-guided shaped charge with a large warhead.' },
+    accord120LongRod: { name: 'Accord 120 mm long rod', note: 'A longer, heavier dart for the 120 mm gun. Goes through far more than the first sabot.' },
+    tandemRocket: { name: 'Tandem rocket', note: 'A shoulder-fired rocket with two charges. The first sets off a reactive tile; the second does the work.' },
+    tandemMissile: { name: 'Tandem missile', note: 'A guided missile with two charges and a very large warhead. Tiles do little against it.' },
   },
   rounds: {
     sabot100: '100 mm sabot',
@@ -1113,6 +1116,10 @@ export const STRINGS = {
       palisade: {
         name: 'Palisade',
         line: 'Said to be the Accord\'s next tank. A 120 mm gun behind layered armour, and slow for it.',
+      },
+      palisadeB: {
+        name: 'Palisade B',
+        line: 'The Palisade rebuilt: a long-rod round, a thermal sight, and newer armour at the front. Slower still.',
       },
     },
   },

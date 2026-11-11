@@ -1,4 +1,4 @@
-// Ammunition for generation one: the rounds the Kamen Pact supplies for each
+// Ammunition: the rounds the Kamen Pact supplies for each
 // gun, and the Northern Accord rounds a design is tested against.
 // Game-level abstractions, not engineering data.
 import type { GunId } from './parts'
@@ -16,6 +16,8 @@ export interface Round {
   penMm: number
   /** Kinetic rounds slow down: millimetres lost for every 1000 m. Shaped charges lose nothing. */
   lossPerKmMm: number
+  /** A shaped charge with a small charge in front that sets off a reactive tile before the main one arrives. */
+  tandem?: boolean
 }
 
 /**
@@ -58,6 +60,10 @@ export const THREATS = {
   accord105Shaped: { kind: 'shaped', speedMs: 1170, spreadM: 0.6, penMm: 420, lossPerKmMm: 0 },
   infantryRocket: { kind: 'shaped', speedMs: 300, spreadM: 3, penMm: 320, lossPerKmMm: 0 },
   guidedMissile: { kind: 'shaped', speedMs: 200, spreadM: 0.5, penMm: 580, lossPerKmMm: 0 },
+  // Generation two: what the Accord fields from about 2000.
+  accord120LongRod: { kind: 'kinetic', speedMs: 1680, spreadM: 0.3, penMm: 640, lossPerKmMm: 30 },
+  tandemRocket: { kind: 'shaped', speedMs: 280, spreadM: 2.5, penMm: 520, lossPerKmMm: 0, tandem: true },
+  tandemMissile: { kind: 'shaped', speedMs: 240, spreadM: 0.4, penMm: 820, lossPerKmMm: 0, tandem: true },
 } as const satisfies Record<string, Round>
 export type ThreatId = keyof typeof THREATS
 export const THREAT_IDS = Object.keys(THREATS) as ThreatId[]

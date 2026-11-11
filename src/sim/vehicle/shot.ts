@@ -4,11 +4,10 @@
 // no luck: the answer is an estimate with a stated margin of error.
 // Game-level abstractions, not engineering data.
 import type { Round, RoundKind } from '../../data/ammo'
-import { ERA_TILE } from '../../data/era'
 import { MATERIALS } from '../../data/materials'
 import { TUNING } from '../../data/tuning'
 import { PI, detCos } from '../det'
-import { penetrationAt, verdictOf, type Verdict } from './protection'
+import { penetrationAt, tileWorthMm, verdictOf, type Verdict } from './protection'
 import type { ArmourLayer } from './spec'
 
 export interface ShotSetup {
@@ -74,6 +73,8 @@ export interface StackShot {
   cosine: number
   /** True when the shot meets a reactive tile before the plate. */
   tile: boolean
+  /** True for a tandem warhead, which a tile does little to. */
+  tandem?: boolean
 }
 
 /** One round through one stack, layer by layer. No luck: the same shot always gives the same answer. */
@@ -85,7 +86,7 @@ export function shotThrough(layers: readonly ArmourLayer[], shot: StackShot): Sh
 
   const worths: { what: 'tile' | 'layer'; layer?: number; worthMm: number }[] = []
   // A tile is worth the same whatever the angle.
-  if (shot.tile) worths.push({ what: 'tile', worthMm: kinetic ? ERA_TILE.keMm : ERA_TILE.ceMm })
+  if (shot.tile) worths.push({ what: 'tile', worthMm: tileWorthMm(shot) })
   layers.forEach((layer, index) => {
     const material = MATERIALS[layer.material]
     worths.push({ what: 'layer', layer: index, worthMm: layer.mm * (kinetic ? material.ke : material.ce) * pathFactor })
@@ -127,5 +128,6 @@ export function testShot(layers: readonly ArmourLayer[], slopeDeg: number, setup
     penMm: penetrationAt(setup.round, setup.rangeM),
     cosine: shotCosine(slopeDeg, setup.angleDeg),
     tile: setup.tile,
+    tandem: setup.round.tandem,
   })
 }

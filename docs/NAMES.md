@@ -33,6 +33,7 @@ The player's bureau is "State Tank Design Bureau" for now.
 | Ordnance Institute No. 4 | Rival bureau: firepower first. | Working name (0.7.0.0), Kelbo to confirm |
 | Warden | Accord threat tank: the standard one, 105 mm gun. | Working name (0.7.0.0), Kelbo to confirm |
 | Palisade | Accord threat tank: the next one, 120 mm gun, layered armour. | Working name (0.7.0.0), Kelbo to confirm |
+| Palisade B | Accord threat tank: the Palisade rebuilt for generation two. | Working name (0.11.1.0), Kelbo to confirm |
 | Radek Stanek | The bureau's chief engineer, the optional advisor. | Working name (0.8.5.0), Kelbo to confirm |
 
 ## Designation scheme

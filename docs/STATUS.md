@@ -4,6 +4,11 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **New Accord kit** (0.11.1.0): "Palisade B" (the Palisade rebuilt, for
+  generation-two tenders), and three rounds: the 120 mm long rod, the tandem
+  rocket and the tandem missile. A tandem warhead gets back all but 15% of
+  what a reactive tile adds. Names and numbers are my picks. The new rounds
+  can already be chosen on the Armour tab so you can try them.
 - **Generation two parts, first three** (0.11.0.0): a thermal sight, a
   digital computer and a layered composite armour insert. They show in the
   office as locked ("Generation 2") until a later tender opens them. The
@@ -224,6 +229,12 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.11.1.0, PR 11b: tandem and improved threats.** Three new Accord
+  rounds (120 mm long rod, tandem rocket, tandem missile). A tandem warhead
+  sets a reactive tile off first, so the tile adds only 15% of its worth
+  against it. New threat tank, Palisade B, with a thermal sight and layered
+  composite; the duel and battle screens only list the Accord tanks a
+  tender of that generation expects, so it does not show yet.
 - **0.11.0.0, PR 11a: technology generations.** Every tender now carries a
   generation, and a design cannot fit a part newer than its tender allows
   (a new fault, "Not to be had yet"). First generation-two parts: thermal

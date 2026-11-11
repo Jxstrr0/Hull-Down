@@ -201,7 +201,7 @@ export function traceShot(target: Target, shot: Incoming, spent?: Set<string>): 
 
   // The mantlet is an upright casting set into the sloping turret front.
   const normal = zone === 'mantlet' ? vec(-1, 0, 0) : first.normal
-  const armour = shotThrough(spec.armour[zone], { kind: shot.round.kind, penMm, cosine: -dot(d, normal), tile })
+  const armour = shotThrough(spec.armour[zone], { kind: shot.round.kind, penMm, cosine: -dot(d, normal), tile, tandem: shot.round.tandem })
   const through = !armour.ricochet && armour.leftMm > 0
   const result: HitResult = {
     direction: d, entry, zone, track, trackBroken, tile, armour, through, reached: [], end: null, exits: false,

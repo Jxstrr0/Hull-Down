@@ -12,7 +12,7 @@ export { allTiles, cleanTiles, eraOf, hasTile, setTile, tileCount, tileGrid, typ
 export { frameOf, type Frame } from './frame'
 export { geometryOf, type Geometry } from './geometry'
 export {
-  layerWorth, pathFactor, penetrationAt, protectionOf, stackProtection, tiledVerdictsAgainst, tiledWorth, verdictOf,
+  layerWorth, pathFactor, penetrationAt, protectionOf, stackProtection, tiledVerdictsAgainst, tiledWorth, tileWorthMm, verdictOf,
   verdictsAgainst, worthAgainst,
   type Verdict, type ZoneProtection,
 } from './protection'

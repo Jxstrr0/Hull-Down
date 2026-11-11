@@ -32,7 +32,9 @@ export function opponentsFor(limits: Limits, seed: number): Opponent[] {
     line: STRINGS.opponents.bureaus[id].line,
     tank: combatantOf(designRival(id, limits, seed), limits),
   }))
-  const threats = THREAT_TANK_IDS.map((id): Opponent => ({
+  // Only the Accord tanks a tender of this generation expects to meet.
+  const generation = limits.generation ?? 1
+  const threats = THREAT_TANK_IDS.filter((id) => THREAT_TANKS[id].generation <= generation).map((id): Opponent => ({
     id,
     kind: 'threat',
     name: STRINGS.opponents.threats[id].name,
