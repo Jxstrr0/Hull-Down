@@ -3,7 +3,9 @@ import { ZONES } from '../data/materials'
 import { GUNNERY } from '../data/gunnery'
 import { RANGE } from '../data/range'
 import { STRINGS, fill } from '../data/strings'
-import { AREAS, busiestOf, type Issue, type IssueCode, type Limits, type StatSheet } from '../sim/vehicle'
+import {
+  AREAS, busiestOf, fatigueAfter, slowOf, type Issue, type IssueCode, type Limits, type StatSheet,
+} from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { fixed, money, plain, signed } from '../ui/format'
 
@@ -45,11 +47,18 @@ export function renderGunnery(sheet: StatSheet): HTMLElement {
   const halts = sheet.fire.moving.halts
   const percent = (chance: number, template: string = u.percent): string => fill(template, { n: fixed(chance * 100, 0) })
   const quoteRange = { range: String(GUNNERY.quoteRangeM) }
-  const box = group(D.groups.gunnery, [
+  const hours = { h: String(q.tiredHours) }
+  const rows: [string, string][] = [
     [r.firstShot, unit(u.seconds, q.firstShotS, 0)],
+    [fill(r.firstShotTired, hours), unit(u.seconds, q.firstShotTiredS, 0)],
     [r.firstShotMoving, unit(halts ? u.secondsHalted : u.seconds, q.firstShotMovingS, 0)],
     [r.rateOfFire, unit(u.perMinute, sheet.firepower.rateOfFireRpm, 1)],
     [fill(r.sustained, { n: String(Math.min(GUNNERY.loading.drillRounds, sheet.firepower.rounds)) }), unit(u.perMinute, q.sustainedRpm, 1)],
+  ]
+  // A machine does not tire, so the line would only repeat the one above it.
+  if (!sheet.fire.feed.auto) rows.push([fill(r.sustainedTired, hours), unit(u.perMinute, q.sustainedTiredRpm, 1)])
+  const box = group(D.groups.gunnery, [
+    ...rows,
     [fill(r.hitMoving, quoteRange), percent(q.movingChance, halts ? u.percentHalted : u.percent)],
     [fill(r.hitNight, quoteRange), percent(q.nightChance)],
   ])
@@ -115,6 +124,24 @@ export function renderStations(sheet: StatSheet): HTMLElement {
   box.append(el('h3', 'ds-group-title', D.groups.stations))
   const list = el('ul', 'ds-bars')
   const noLoader = !sheet.crew.some((station) => station.id === 'loader')
+  const hours = sheet.gunnery.tiredHours
+
+  const ease = el('li', 'ds-bar ds-station')
+  ease.dataset.key = 'comfort'
+  const easeHead = el('div', 'ds-bar-head')
+  const score = fixed(sheet.comfort.score, 0)
+  easeHead.append(el('span', 'ds-label', T.comfort), el('span', 'ds-value', fill(T.value, { n: score })))
+  const easeTrack = el('div', 'ds-bar-track')
+  easeTrack.setAttribute('role', 'img')
+  easeTrack.setAttribute('aria-label', fill(T.comfortBarLabel, { n: score }))
+  const easeBar = el('div', 'ds-bar-fill')
+  easeBar.style.width = `${fixed(sheet.comfort.score, 1)}%`
+  easeTrack.append(easeBar)
+  const easeShares = sheet.comfort.shares.length === 0
+    ? T.comfortPlain
+    : sheet.comfort.shares.map((share) => fill(T.share, { name: T.comfortSources[share.source], points: signed(share.points, 0) })).join(' · ')
+  ease.append(easeHead, easeTrack, el('p', 'ds-station-jobs', T.comfortAbout), el('p', 'ds-station-shares', easeShares))
+  list.append(ease)
   for (const station of sheet.crew) {
     const item = el('li', 'ds-bar ds-station')
     const head = el('div', 'ds-bar-head')
@@ -133,7 +160,13 @@ export function renderStations(sheet: StatSheet): HTMLElement {
     const shares = station.shares.length === 0
       ? T.nothing
       : station.shares.map((share) => fill(T.share, { name: T.sources[share.source], points: signed(share.points, 0) })).join(' · ')
-    item.append(head, track, el('p', 'ds-station-jobs', words), el('p', 'ds-station-shares', shares))
+    const fatigue = fatigueAfter(hours, station.tiringPerHour)
+    const tired = fill(T.tired, {
+      h: String(hours), tired: fixed(fatigue * 100, 0), slow: fixed((slowOf(fatigue) - 1) * 100, 0),
+    })
+    item.append(
+      head, track, el('p', 'ds-station-jobs', words), el('p', 'ds-station-shares', shares), el('p', 'ds-station-shares', tired),
+    )
     list.append(item)
   }
   box.append(list, el('p', 'ds-table-note', T.note))

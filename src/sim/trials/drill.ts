@@ -2,7 +2,8 @@
 // gun can be fed. A human loader tires; a machine keeps its pace, jams now
 // and then, and has to be fed by hand once it is empty.
 import { GUNNERY } from '../../data/gunnery'
-import { RANGE_DAY, jamS, loadS, machineFed, relayS, type Fire } from '../gunnery/fire'
+import { RANGE } from '../../data/range'
+import { RANGE_DAY, jamS, loadS, machineFed, relayS, type Fire, type Shoot } from '../gunnery/fire'
 import { unit } from '../rng'
 
 export interface DrillRound {
@@ -32,6 +33,7 @@ export interface DrillRun {
 const DRILL = 77
 
 export function runLoadingDrill(fire: Fire, seed: number): DrillRun {
+  const shoot: Shoot = { ...RANGE_DAY, hours: RANGE.crewHours }
   const count = Math.min(GUNNERY.loading.drillRounds, fire.carried)
   const rounds: DrillRound[] = []
   let totalS = 0
@@ -43,8 +45,8 @@ export function runLoadingDrill(fire: Fire, seed: number): DrillRun {
     const jammed = machine && unit(seed, DRILL, fired) < fire.feed.jamPerRound
     const byHand = fire.feed.auto && !machine
     if (byHand && emptyAfter === null) emptyAfter = fired
-    const clearS = jammed ? jamS(fire, RANGE_DAY) : 0
-    const seconds = Math.max(loadS(fire, fired, RANGE_DAY) + clearS, relayS(fire, RANGE_DAY))
+    const clearS = jammed ? jamS(fire, shoot) : 0
+    const seconds = Math.max(loadS(fire, fired, shoot) + clearS, relayS(fire, shoot))
     if (jammed) jams++
     clearingS += clearS
     totalS += seconds

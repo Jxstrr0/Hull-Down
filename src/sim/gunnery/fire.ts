@@ -7,8 +7,9 @@ import { CREWS, GUNNERY, type CrewId } from '../../data/gunnery'
 import {
   COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS,
 } from '../../data/parts'
+import { RANGE } from '../../data/range'
 import { TUNING } from '../../data/tuning'
-import { stationsOf, workloadAt } from '../crew/stations'
+import { fatigueAfter, slowOf, stationsOf, tiringAt, workloadAt } from '../crew/stations'
 import { detExp } from '../det'
 import type { VehicleSpec } from '../vehicle/spec'
 
@@ -64,6 +65,8 @@ export interface Fire {
    * whichever of the two works the rangefinder.
    */
   pace: { commander: number; gunner: number; ranging: number }
+  /** Fatigue each of them gains for every hour in the tank. The loader's is nought when a machine loads. */
+  tire: { commander: number; gunner: number; ranging: number; loader: number }
   feed: Feed
 }
 
@@ -72,9 +75,12 @@ export interface Shoot {
   moving: boolean
   night: boolean
   crew: CrewId
+  /** Hours the crew has been in the tank. Nought is a fresh crew. */
+  hours: number
 }
 
-export const RANGE_DAY: Shoot = { moving: false, night: false, crew: 'cadre' }
+/** Halted, by day, with a fresh trained crew: what the design office quotes. */
+export const RANGE_DAY: Shoot = { moving: false, night: false, crew: 'cadre', hours: 0 }
 
 const G = GUNNERY
 
@@ -120,6 +126,12 @@ export function fireOf(spec: VehicleSpec): Fire {
       relayS: stabiliser.relayS,
     },
     pace: { commander: paceOf('commander'), gunner: paceOf('gunner'), ranging: paceOf(CREW.ranging[fc.rangefinder]) },
+    tire: {
+      commander: tiringAt(stations, 'commander'),
+      gunner: tiringAt(stations, 'gunner'),
+      ranging: tiringAt(stations, CREW.ranging[fc.rangefinder]),
+      loader: tiringAt(stations, 'loader'),
+    },
     feed: {
       auto,
       freshS: 60 / (loading.fixedRof ?? gun.loaderRof),
@@ -250,12 +262,26 @@ export function hitChance(fire: Fire, round: FireRound, rangeM: number, shoot: S
     within(G.target.widthM / 2, miss.acrossM) * within(G.target.heightM / 2, miss.upM)
 }
 
+type Role = keyof Fire['tire']
+
+/** How worn one of the crew is in this shoot, 0 (fresh) to 1 (worn out). */
+export function fatigueOf(fire: Fire, role: Role, shoot: Shoot): number {
+  return fatigueAfter(shoot.hours, fire.tire[role])
+}
+
+/** How much longer one of the crew takes over a job in this shoot: the work of his station, his training and how worn he is. */
+function slow(fire: Fire, role: Role, shoot: Shoot): number {
+  const busy = role === 'loader' ? 1 : fire.pace[role]
+  return busy * CREWS[shoot.crew].pace * slowOf(fatigueOf(fire, role, shoot))
+}
+
 /** Seconds from a target showing to the first shot, with a round already in the gun. */
 export function firstShotS(fire: Fire, shoot: Shoot): number {
   const t = fire.times
-  const p = fire.pace
-  const still = (t.findS * p.commander + t.rangeS * p.ranging + t.layS * p.gunner) * (shoot.night ? fire.night.layFactor : 1)
-  return (still + (shoot.moving ? fire.moving.extraS * p.gunner : 0)) * CREWS[shoot.crew].pace
+  const gunner = slow(fire, 'gunner', shoot)
+  const still = (t.findS * slow(fire, 'commander', shoot) + t.rangeS * slow(fire, 'ranging', shoot) + t.layS * gunner) *
+    (shoot.night ? fire.night.layFactor : 1)
+  return still + (shoot.moving ? fire.moving.extraS * gunner : 0)
 }
 
 /**
@@ -265,15 +291,15 @@ export function firstShotS(fire: Fire, shoot: Shoot): number {
 export function loadS(fire: Fire, fired: number, shoot: Shoot): number {
   const feed = fire.feed
   if (feed.readyRounds !== null) {
-    return fired < feed.readyRounds ? feed.freshS : feed.handFeedS * fire.pace.commander * CREWS[shoot.crew].pace
+    return fired < feed.readyRounds ? feed.freshS : feed.handFeedS * slow(fire, 'commander', shoot)
   }
   const tired = Math.min(feed.tirePerRound * fired, feed.tireMax)
-  return feed.freshS * (1 + tired) * (shoot.moving ? feed.movingFactor : 1) * CREWS[shoot.crew].pace
+  return feed.freshS * (1 + tired) * (shoot.moving ? feed.movingFactor : 1) * slow(fire, 'loader', shoot)
 }
 
 /** Seconds a jam costs: the crew has to clear it. */
 export function jamS(fire: Fire, shoot: Shoot): number {
-  return fire.feed.clearS * fire.pace.commander * CREWS[shoot.crew].pace
+  return fire.feed.clearS * slow(fire, 'commander', shoot)
 }
 
 /** True while the machine, not the crew, is feeding the gun. Only then can it jam. */
@@ -283,7 +309,7 @@ export function machineFed(fire: Fire, fired: number): boolean {
 
 /** Seconds to bring the gun back on to the target after a shot. */
 export function relayS(fire: Fire, shoot: Shoot): number {
-  return fire.times.relayS * fire.pace.gunner * CREWS[shoot.crew].pace
+  return fire.times.relayS * slow(fire, 'gunner', shoot)
 }
 
 /**
@@ -316,11 +342,16 @@ export interface GunneryQuote {
   /** The first round's hit chance at the quoting range: on the move, and at night. */
   movingChance: number
   nightChance: number
+  /** The same first shot and rate of fire after a day in the tank, and how long that day is. */
+  tiredHours: number
+  firstShotTiredS: number
+  sustainedTiredRpm: number
 }
 
 export function quoteOf(fire: Fire): GunneryQuote {
   const moving: Shoot = { ...RANGE_DAY, moving: true }
   const night: Shoot = { ...RANGE_DAY, night: true }
+  const tired: Shoot = { ...RANGE_DAY, hours: RANGE.crewHours }
   const first = fire.rounds[0]
   return {
     firstShotS: firstShotS(fire, RANGE_DAY),
@@ -333,5 +364,8 @@ export function quoteOf(fire: Fire): GunneryQuote {
     })),
     movingChance: first ? hitChance(fire, first, G.quoteRangeM, moving) : 0,
     nightChance: first ? hitChance(fire, first, G.quoteRangeM, night) : 0,
+    tiredHours: tired.hours,
+    firstShotTiredS: firstShotS(fire, tired),
+    sustainedTiredRpm: sustainedRpm(fire, tired),
   }
 }

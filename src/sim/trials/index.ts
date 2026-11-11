@@ -45,6 +45,8 @@ export interface RangeReport {
   endurance: EnduranceRun & { passed: boolean }
   gunnery: Record<GunneryTestId, GunneryResult>
   drill: DrillRun & { passed: boolean }
+  /** Hours the crew had been in the tank when the shoots and the drill came round. */
+  crewHours: number
   /** Tests passed and tests run. */
   passes: number
   tests: number
@@ -99,6 +101,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     endurance,
     gunnery,
     drill,
+    crewHours: RANGE.crewHours,
     passes: passed.filter(Boolean).length,
     tests: passed.length,
   }
