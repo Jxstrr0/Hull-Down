@@ -6,7 +6,7 @@ import { MARKS_GEN2 } from '../src/data/range'
 import { TENDER_IDS, TENDERS } from '../src/data/tenders'
 import { cleanCareer } from '../src/persist/careerCodec'
 import {
-  buildBlock, buildPrototype, enterTender, newCareer, nextTender, tenderIdOf, tenderOf, tendersLeft, trialSeed, upgradeLimits,
+  buildBlock, buildPrototype, enterTender, newCareer, nextTender, research, tenderIdOf, tenderOf, tendersLeft, trialSeed, upgradeLimits,
 } from '../src/sim/career/career'
 import { rivalBid } from '../src/sim/career/rival'
 import { buildStatSheet, type VehicleSpec } from '../src/sim/vehicle'
@@ -20,6 +20,8 @@ function tank(change: (spec: VehicleSpec) => void): VehicleSpec {
 }
 const NIGHT = tank((spec) => { spec.fireControl.night = 'imageIntensifier' })
 const THERMAL = tank((spec) => { spec.fireControl.night = 'thermal' })
+/** The next tender, with the thermal sight researched. */
+const onward = (career: Parameters<typeof nextTender>[0]) => research(research(nextTender(career), 'digitalComputer'), 'thermalSight')
 
 describe('the tender of 2001', () => {
   const T = TENDERS.tank2001
@@ -67,19 +69,20 @@ describe('going on to the next tender', () => {
   }, SLOW)
 
   it('stops at the last tender', () => {
-    const next = nextTender(decided)
+    const next = onward(decided)
     expect(tendersLeft(next)).toBe(false)
     const done = enterTender(buildPrototype(next, THERMAL), 1)
     expect(() => nextTender(done)).toThrow()
   }, SLOW)
 
-  it('builds a generation-two prototype only once the tender allows it', () => {
+  it('builds a generation-two prototype only once the tender allows it and the research is done', () => {
     expect(buildBlock(start, THERMAL)).toBe('illegal')
-    expect(buildBlock(nextTender(decided), THERMAL)).toBeNull()
+    expect(buildBlock(nextTender(decided), THERMAL)).toBe('illegal')
+    expect(buildBlock(onward(decided), THERMAL)).toBeNull()
   }, SLOW)
 
   it('survives a save and a load', () => {
-    const next = buildPrototype(nextTender(decided), THERMAL)
+    const next = buildPrototype(onward(decided), THERMAL)
     const back = cleanCareer(JSON.parse(JSON.stringify(next)))
     expect(back).toEqual(next)
     expect(back && tenderOf(back)).toBe(TENDERS.tank2001)

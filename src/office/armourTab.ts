@@ -8,7 +8,7 @@ import { MATERIALS, MATERIAL_IDS, ZONES, ZONE_FACING, type MaterialId, type Zone
 import { STRINGS, fill } from '../data/strings'
 import type { Generation } from '../data/tech'
 import { TUNING } from '../data/tuning'
-import { generationOf } from '../sim/vehicle/tech'
+import { generationOf, partKey } from '../sim/vehicle/tech'
 import {
   allTiles, hasTile, layerWorth, paperShot, penetrationAt, setTile, shotCosine, targetOf, testShot, tiledWorth, tileGrid,
   verdictOf,
@@ -48,6 +48,8 @@ export interface ArmourTabHost {
   sheet: StatSheet
   /** The newest technology the tender allows. */
   generation: Generation
+  /** Materials the bureau has yet to research, as `partKey` names them. */
+  locked: readonly string[]
   state: ArmourTabState
   /** Apply a change to the design and redraw everything. */
   commit(change: (spec: VehicleSpec) => void): void
@@ -590,9 +592,10 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
     select.setAttribute('aria-label', fill(A.materialOf, { n }))
     for (const id of MATERIAL_IDS) {
       const comes = generationOf('material', id)
-      const locked = comes > host.generation && id !== layer.material
+      const late = comes > host.generation
+      const locked = (late || host.locked.includes(partKey('material', id))) && id !== layer.material
       const name = STRINGS.materials[id].name
-      const option = el('option', '', locked ? fill(A.lockedMaterial, { name, n: String(comes) }) : name)
+      const option = el('option', '', !locked ? name : late ? fill(A.lockedMaterial, { name, n: String(comes) }) : fill(A.unresearchedMaterial, { name }))
       option.value = id
       option.selected = id === layer.material
       option.disabled = locked

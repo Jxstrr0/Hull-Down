@@ -5,11 +5,13 @@
 import { BASELINE_SPEC } from '../../data/baseline'
 import { BODIES, CAREER, STANDARD_PARTS, type Body, type StandardPart } from '../../data/career'
 import { BUREAU_IDS, type BureauId } from '../../data/opponents'
+import { RESEARCH, RESEARCH_IDS, type ResearchId } from '../../data/research'
 import { SERVICE, type Production } from '../../data/service'
 import { TENDER_IDS, TENDER_RULES, TENDERS, type ScoreAxis, type Tender, type TenderId } from '../../data/tenders'
 import { hash32 } from '../rng'
-import type { VehicleSpec } from '../vehicle/spec'
+import type { Limits, VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet } from '../vehicle/stats'
+import { generationOf, partKey } from '../vehicle/tech'
 import { rivalBid } from './rival'
 import { decide, scoreBid, trialBid, type BidScore, type Trialled } from './score'
 import { fieldReport, serviceUnitCostKr, type FieldReport } from './service'
@@ -66,6 +68,8 @@ export interface Career {
   outcome: Outcome | null
   /** Tanks of the bureau's the army has adopted, oldest first. */
   adopted: Adopted[]
+  /** Research the bureau has paid for, in the order it was done. It is kept from tender to tender. */
+  researched: ResearchId[]
 }
 
 /** A tank of the bureau's in the army's hands. */
@@ -118,6 +122,7 @@ export function newCareer(seed: number): Career {
     prototypes: [],
     outcome: null,
     adopted: [],
+    researched: [],
   }
   career.budgetKr = tenderOf(career).grantKr
   return career
@@ -141,9 +146,45 @@ export function nextTender(career: Career): Career {
   return next
 }
 
-/** The limits a package for a tank in service is held to: its own tender's, with the technology of today. */
-export function upgradeLimits(career: Career, tank: Adopted): Tender['limits'] {
-  return { ...TENDERS[tank.tender].limits, generation: tenderOf(career).limits.generation }
+/** The parts the bureau has yet to research, as `partKey` names them. */
+export function lockedParts(career: Career): string[] {
+  return RESEARCH_IDS.filter((id) => !career.researched.includes(id)).map((id) => partKey(RESEARCH[id].field, RESEARCH[id].part))
+}
+
+/** The limits the bureau designs to: the tender's, less the parts it has yet to research. */
+export function careerLimits(career: Career): Limits {
+  return { ...tenderOf(career).limits, locked: lockedParts(career) }
+}
+
+/** The limits a package for a tank in service is held to: its own tender's, with the technology the bureau has today. */
+export function upgradeLimits(career: Career, tank: Adopted): Limits {
+  return { ...TENDERS[tank.tender].limits, generation: tenderOf(career).limits.generation, locked: lockedParts(career) }
+}
+
+/** The projects the bureau can see in this tender: those of its generation and earlier, done or not. */
+export function researchOpen(career: Career): ResearchId[] {
+  const generation = tenderOf(career).limits.generation ?? 1
+  return RESEARCH_IDS.filter((id) => generationOf(RESEARCH[id].field, RESEARCH[id].part) <= generation)
+}
+
+export const RESEARCH_BLOCKS = ['done', 'tooNew', 'needs', 'noMoney'] as const
+/** Why a project cannot be paid for. */
+export type ResearchBlock = (typeof RESEARCH_BLOCKS)[number]
+
+/** What stops the bureau paying for a project, or null when nothing does. */
+export function researchBlock(career: Career, id: ResearchId): ResearchBlock | null {
+  if (career.researched.includes(id)) return 'done'
+  if (!researchOpen(career).includes(id)) return 'tooNew'
+  if (RESEARCH[id].needs.some((need) => !career.researched.includes(need))) return 'needs'
+  if (RESEARCH[id].costKr > career.budgetKr) return 'noMoney'
+  return null
+}
+
+/** Pays for a project: its part can be fitted from now on. Throws when it cannot be paid for: ask `researchBlock` first. */
+export function research(career: Career, id: ResearchId): Career {
+  const block = researchBlock(career, id)
+  if (block) throw new Error(`research cannot be done: ${block}`)
+  return { ...career, budgetKr: career.budgetKr - RESEARCH[id].costKr, researched: [...career.researched, id] }
 }
 
 /** True when two specs build the same tank. The name is paint: it does not count. */
@@ -178,7 +219,7 @@ export type BuildBlock = (typeof BUILD_BLOCKS)[number]
 /** What stops this design being built as the next prototype, or null when nothing does. */
 export function buildBlock(career: Career, spec: VehicleSpec): BuildBlock | null {
   if (career.outcome) return 'decided'
-  if (buildStatSheet(spec, tenderOf(career).limits).issues.some((issue) => issue.severity === 'error')) return 'illegal'
+  if (buildStatSheet(spec, careerLimits(career)).issues.some((issue) => issue.severity === 'error')) return 'illegal'
   const last = career.prototypes[career.prototypes.length - 1]
   if (last && sameTank(last.spec, spec)) return 'same'
   if (career.prototypes.length > 0) {

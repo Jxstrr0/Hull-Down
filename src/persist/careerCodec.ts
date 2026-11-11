@@ -4,6 +4,7 @@
 import { BODIES, CAREER, type Body } from '../data/career'
 import { ZONES } from '../data/materials'
 import { BUREAU_IDS } from '../data/opponents'
+import { RESEARCH_IDS } from '../data/research'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { SCORE_AXES, TENDER_IDS, TENDER_RULES, TENDERS, type ScoreAxis } from '../data/tenders'
 import { CAREER_FORMAT, type BidLine, type Bidder, type Career, type Outcome, type Prototype } from '../sim/career/career'
@@ -154,5 +155,9 @@ export function cleanCareer(raw: unknown): Career | null {
     prototypes,
     outcome: cleanOutcome(raw.outcome, prototypes),
     adopted: cleanAdopted(raw.adopted),
+    // Each project once, in the order the save has them.
+    researched: Array.isArray(raw.researched)
+      ? [...new Set((raw.researched as unknown[]).flatMap((item) => RESEARCH_IDS.filter((id) => id === item)))]
+      : [],
   }
 }
