@@ -764,6 +764,21 @@ body {
   color: #1f3558;
   text-align: center;
 }
+/* The caption sits on paper in either look, so it reads against the picture. */
+.rg-view-caption {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: 0;
+  padding: 6px 10px;
+  border-top: 3px solid #1f3558;
+  background: rgb(233 236 230 / 92%);
+  color: #1f3558;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
 .rg-view-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px 0; }
 .rg-view-toggle { flex: none; min-width: 76px; }
 .rg-view-scrub { flex: 1; min-width: 0; height: 44px; accent-color: var(--ink); }

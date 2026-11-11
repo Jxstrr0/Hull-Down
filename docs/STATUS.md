@@ -10,8 +10,8 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 - **Try the Trials tab** (0.4.1.0). Say if the range marks feel fair: the
   light hull cannot cross the standard trench, and the smallest engine only
   climbs the slope in a tank of about 34 to 36 t or less.
-- **Watch a run in 3D** (0.4.3.0): Trials, "Send it to the range", then
-  "Watch the run" on the first two tests. It is a grey box on purpose. Say
+- **Watch a run in 3D** (0.4.4.0): Trials, "Send it to the range", then
+  "Watch the run" on any of the three tests. It is a grey box on purpose. Say
   if the speed of the playback or the cameras feel wrong, if the bar is
   easy to drag with a thumb, and if it stutters on your phone.
 - **Say how the endurance run should treat luck.** As built: every part
@@ -29,6 +29,15 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.4.4.0, PR 4e: the endurance run in 3D.** The endurance card has a
+  "Watch the run" button too. It plays the 300 km as a time-lapse of under
+  half a minute: the hours and kilometres count up fast while the tank is
+  seen driving each leg in turn, on the road, the range tracks, the hills
+  and the rough ground. A slow tank is seen to crawl. At each breakdown the
+  tank stops and a caption says what broke and how long it cost. When an
+  overloaded engine or transmission is wrecked, smoke rises from the engine
+  deck and the run ends there. Pause, the scrub bar and the four cameras
+  work the same as on the other two tests.
 - **0.4.3.0, PR 4d: pause, scrub and cameras.** The 3D view has a Play /
   Pause button, a bar that shows how far through the run it is and can be
   dragged to any moment, and four cameras: Director, Side, Behind and Above.

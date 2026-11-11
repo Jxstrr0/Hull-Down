@@ -8,7 +8,9 @@ import { VIEWS, shotAt } from '../src/render/director'
 import { courseOutline, coursePath, mudPatch, pointAt, poseAt, stripPath, trenchPit } from '../src/render/path'
 import { frameAt, lengthS, type RunRecord } from '../src/render/playback'
 import { tankShapeOf } from '../src/render/tankShape'
-import { courseLayout, runProvingGround } from '../src/sim/trials'
+import { heightAt, legGround, placeOnLeg } from '../src/render/terrain'
+import { puffAt, timelapseOf } from '../src/render/timelapse'
+import { courseLayout, runProvingGround, type EnduranceRun } from '../src/sim/trials'
 import { buildStatSheet, type VehicleSpec } from '../src/sim/vehicle'
 import { listFilesDeep, readRepoFile } from './helpers'
 
@@ -129,11 +131,20 @@ describe('the camera', () => {
     for (const view of VIEWS) expect(STRINGS.range.view.camera[view]).toBeTruthy()
   })
 
+  it('travels with the tank on every leg of the endurance run, whatever the view', () => {
+    const pose = { x: 700, y: 2, pitchRad: 0.1 }
+    for (const leg of RANGE.endurance.legs) {
+      const seat = seats[RENDER.camera.director.endurance[leg.id]]
+      expect(shotAt('director', { test: 'endurance', leg: leg.id }, pose).from).toEqual({ x: pose.x - seat.backM, y: pose.y + seat.upM, z: seat.sideM })
+      expect(shotAt('above', { test: 'endurance', leg: leg.id }, pose).from.y).toBe(pose.y + seats.above.upM)
+    }
+  })
+
   it('travels with the tank in the side, behind and above views, on both ranges', () => {
     for (const view of ['side', 'behind', 'above'] as const) {
       for (const [test, path, s] of [['acceleration', strip, 400], ['obstacles', course, 60]] as const) {
         const pose = poseAt(path, s, foot)
-        const shot = shotAt(test, view, path, pose, s)
+        const shot = shotAt(view, test === 'acceleration' ? { test, s } : { test, s, path }, pose)
         expect(shot.from).toEqual({ x: pose.x - seats[view].backM, y: pose.y + seats[view].upM, z: seats[view].sideM })
         expect(shot.to).toEqual({ x: pose.x, y: pose.y + RENDER.camera.lookUpM, z: 0 })
       }
@@ -144,7 +155,7 @@ describe('the camera', () => {
     for (const view of VIEWS) {
       for (let s = 0; s <= course.lengthM; s += 3) {
         const pose = poseAt(course, s, foot)
-        expect(shotAt('obstacles', view, course, pose, s).to).toEqual({ x: pose.x, y: pose.y + RENDER.camera.lookUpM, z: 0 })
+        expect(shotAt(view, { test: 'obstacles', s, path: course }, pose).to).toEqual({ x: pose.x, y: pose.y + RENDER.camera.lookUpM, z: 0 })
       }
     }
   })
@@ -153,7 +164,7 @@ describe('the camera', () => {
     const cuts = RENDER.camera.director.acceleration
     const seatAt = (s: number): string => {
       const pose = poseAt(strip, s, foot)
-      const from = shotAt('acceleration', 'director', strip, pose, s).from
+      const from = shotAt('director', { test: 'acceleration', s }, pose).from
       return Object.entries(seats).find(([, seat]) => from.x === pose.x - seat.backM && from.y === seat.upM && from.z === seat.sideM)![0]
     }
     expect(cuts[0]!.fromM).toBe(0)
@@ -167,7 +178,7 @@ describe('the camera', () => {
   it('stands still beside each obstacle while the tank goes over it', () => {
     const stands: number[] = []
     for (const span of layout.filter((each) => each.id !== 'flat')) {
-      const at = (s: number) => shotAt('obstacles', 'director', course, poseAt(course, s, foot), s).from
+      const at = (s: number) => shotAt('director', { test: 'obstacles', s, path: course }, poseAt(course, s, foot)).from
       const before = at(span.fromM - 2)
       expect(at(span.fromM)).toEqual(before)
       expect(at(span.toM)).toEqual(before)
@@ -187,14 +198,14 @@ describe('the camera', () => {
     const s = course.lengthM - 1
     const pose = poseAt(course, s, foot)
     const seat = seats[RENDER.camera.director.obstacles.after]
-    expect(shotAt('obstacles', 'director', course, pose, s).from).toEqual({ x: pose.x - seat.backM, y: pose.y + seat.upM, z: seat.sideM })
+    expect(shotAt('director', { test: 'obstacles', s, path: course }, pose).from).toEqual({ x: pose.x - seat.backM, y: pose.y + seat.upM, z: seat.sideM })
   })
 
   it('never sits on top of what it looks at', () => {
     for (const view of VIEWS) {
       for (const [test, path] of [['acceleration', strip], ['obstacles', course]] as const) {
         for (let s = 0; s <= path.lengthM; s += 7) {
-          const shot = shotAt(test, view, path, poseAt(path, s, foot), s)
+          const shot = shotAt(view, test === 'acceleration' ? { test, s } : { test, s, path }, poseAt(path, s, foot))
           const gap = Math.hypot(shot.from.x - shot.to.x, shot.from.y - shot.to.y, shot.from.z - shot.to.z)
           expect(gap).toBeGreaterThan(5)
           // Straight down has no "up" to hold the picture level.
@@ -256,6 +267,205 @@ describe('reading a run back', () => {
       const s = frameAt(course, t).s
       expect(s).toBeGreaterThanOrEqual(before)
       before = s
+    }
+  })
+})
+
+describe('the endurance run as a time-lapse', () => {
+  const e = RENDER.endurance
+  const enduranceOf = (change?: (spec: VehicleSpec) => void, seed = 1): EnduranceRun =>
+    runProvingGround(sheetOf(change).sheet, { seed }).endurance
+  /** The first seed that gives the baseline a clean run, one with a roadside stop, and so on. */
+  const seedWhere = (wanted: (run: EnduranceRun) => boolean, change?: (spec: VehicleSpec) => void): EnduranceRun => {
+    for (let seed = 1; seed < 400; seed++) {
+      const run = enduranceOf(change, seed)
+      if (wanted(run)) return run
+    }
+    throw new Error('no seed gives that run')
+  }
+  const clean = seedWhere((run) => run.finished && run.events.length === 0)
+  const stopped = seedWhere((run) => run.finished && run.events.length === 1)
+  const wrecked = seedWhere((run) => !run.finished, (spec) => {
+    spec.powerpack.transmission = 'manual38'
+  })
+
+  it('takes the same time to watch whatever the tank, when nothing breaks', () => {
+    expect(timelapseOf(clean).lengthS).toBeCloseTo(clean.lengthKm * e.secondsPerKm, 9)
+    expect(timelapseOf(clean).stops).toEqual([])
+  })
+
+  it('starts at nought and ends on the whole run', () => {
+    const lapse = timelapseOf(clean)
+    expect(lapse.at(0)).toMatchObject({ km: 0, hours: 0, legIndex: 0, legM: 0, event: null, done: false })
+    expect(lapse.at(-3).km).toBe(0)
+    const end = lapse.at(lapse.lengthS)
+    expect(end.done).toBe(true)
+    expect(end.km).toBe(clean.lengthKm)
+    expect(end.hours).toBeCloseTo(clean.movingH, 9)
+    expect(lapse.at(lapse.lengthS + 50)).toEqual(end)
+  })
+
+  it('counts the kilometres and the hours up, never down', () => {
+    for (const run of [clean, stopped, wrecked]) {
+      const lapse = timelapseOf(run)
+      let before = lapse.at(0)
+      for (let t = 0; t <= lapse.lengthS; t += 0.05) {
+        const now = lapse.at(t)
+        expect(now.km).toBeGreaterThanOrEqual(before.km)
+        expect(now.hours).toBeGreaterThanOrEqual(before.hours)
+        expect(now.legIndex).toBeGreaterThanOrEqual(before.legIndex)
+        before = now
+      }
+    }
+  })
+
+  it('is on the leg the sim says for every kilometre', () => {
+    const lapse = timelapseOf(clean)
+    for (let t = 0.01; t < lapse.lengthS; t += 0.07) {
+      const now = lapse.at(t)
+      const leg = clean.legs[now.legIndex]!
+      expect(now.km).toBeGreaterThanOrEqual(leg.fromKm)
+      expect(now.km).toBeLessThanOrEqual(leg.toKm)
+      expect(now.speedKmh).toBe(leg.speedKmh)
+    }
+  })
+
+  it('starts each leg at the start of its ground', () => {
+    const lapse = timelapseOf(clean)
+    for (const leg of clean.legs.slice(1)) {
+      const justIn = lapse.at(leg.fromKm * e.secondsPerKm + 1e-6)
+      expect(justIn.legIndex).toBe(clean.legs.indexOf(leg))
+      expect(justIn.legM).toBeLessThan(0.01)
+    }
+  })
+
+  it('shows a slower tank covering less ground in the picture', () => {
+    const slow = seedWhere((run) => run.finished && run.events.length === 0, (spec) => {
+      spec.powerpack.engine = 'diesel580'
+    })
+    expect(slow.legs[0]!.speedKmh).toBeLessThan(clean.legs[0]!.speedKmh)
+    const t = 2
+    expect(timelapseOf(slow).at(t).legM).toBeLessThan(timelapseOf(clean).at(t).legM)
+    // The kilometres go by the same: the count is the time-lapse, the ground is the speed.
+    expect(timelapseOf(slow).at(t).km).toBeCloseTo(timelapseOf(clean).at(t).km, 9)
+  })
+
+  it('stops for a roadside repair, counts the time lost, and drives on', () => {
+    const lapse = timelapseOf(stopped)
+    const event = stopped.events[0]!
+    expect(lapse.stops).toHaveLength(1)
+    const stop = lapse.stops[0]!
+    expect(stop.event).toBe(event)
+    expect(stop.atS).toBeCloseTo(event.km * e.secondsPerKm, 9)
+    expect(lapse.lengthS).toBeCloseTo(stopped.lengthKm * e.secondsPerKm + e.holdS, 9)
+
+    const before = lapse.at(stop.atS - 0.01)
+    expect(before.event).toBeNull()
+    const during = lapse.at(stop.atS + e.holdS / 2)
+    expect(during.event).toBe(event)
+    expect(during.speedKmh).toBe(0)
+    expect(during.km).toBe(event.km)
+    expect(during.heldS).toBeCloseTo(e.holdS / 2, 9)
+    expect(during.legM).toBeCloseTo(lapse.at(stop.atS).legM, 9)
+    const after = lapse.at(stop.atS + e.holdS + 0.01)
+    expect(after.event).toBeNull()
+    expect(after.hours - before.hours).toBeGreaterThan(event.haltH)
+    expect(lapse.at(lapse.lengthS).hours).toBeCloseTo(stopped.movingH + stopped.haltedH, 9)
+  })
+
+  it('ends where the powerpack is wrecked, and holds there', () => {
+    const lapse = timelapseOf(wrecked)
+    const last = wrecked.events.at(-1)!
+    expect(last.ended).toBe(true)
+    const stop = lapse.stops.at(-1)!
+    expect(stop.event).toBe(last)
+    expect(lapse.lengthS).toBeCloseTo(stop.atS + e.endHoldS, 9)
+    const end = lapse.at(lapse.lengthS)
+    expect(end).toMatchObject({ km: wrecked.reachedKm, event: last, speedKmh: 0, done: true })
+    expect(end.heldS).toBeCloseTo(e.endHoldS, 9)
+    expect(end.km).toBeLessThan(wrecked.lengthKm)
+    expect(wrecked.legs[end.legIndex]!.id).toBe(last.leg)
+  })
+
+  it('raises smoke one puff after another, each growing as it climbs', () => {
+    const k = e.smoke
+    expect(puffAt(0, 0)).toEqual({ upM: 0, driftM: 0, sizeM: k.fromM })
+    expect(puffAt(1, 0)).toBeNull()
+    const early = puffAt(0, k.everyS * 0.25)!
+    const late = puffAt(0, k.everyS * 0.75)!
+    expect(late.upM).toBeGreaterThan(early.upM)
+    expect(late.sizeM).toBeGreaterThan(early.sizeM)
+    expect(late.upM).toBeLessThan(k.riseM)
+    // By the end of the hold every puff is in the air.
+    for (let i = 0; i < k.puffs; i++) expect(puffAt(i, e.endHoldS)).not.toBeNull()
+  })
+})
+
+describe('the ground of an endurance leg', () => {
+  const ids = RANGE.endurance.legs.map((leg) => leg.id)
+
+  it('has ground for every leg of the run', () => {
+    expect(Object.keys(RENDER.endurance.legs).sort()).toEqual([...ids].sort())
+    for (const id of ids) expect(RENDER.camera.director.endurance[id]).toBeTruthy()
+  })
+
+  it('lies flat on the road and the tracks, and rises and falls on the hills and the rough', () => {
+    for (const id of ['road', 'tracks'] as const) expect(legGround(id).path.points.every((point) => point.y === 0)).toBe(true)
+    for (const id of ['hills', 'rough'] as const) {
+      const ys = legGround(id).path.points.map((point) => point.y)
+      expect(Math.max(...ys)).toBeGreaterThan(0)
+      expect(Math.min(...ys)).toBeLessThan(0)
+    }
+    expect(RENDER.endurance.legs.hills.riseM).toBeGreaterThan(RENDER.endurance.legs.rough.riseM * 5)
+  })
+
+  it('repeats, so the stretch the tank drives joins up with itself', () => {
+    for (const id of ids) {
+      const leg = RENDER.endurance.legs[id]
+      for (const x of [0, 3.3, 17, 100]) expect(heightAt(id, x + leg.periodM)).toBeCloseTo(heightAt(id, x), 9)
+      const ground = legGround(id)
+      const foot = 4
+      const start = poseAt(ground.path, placeOnLeg(ground, 0), foot)
+      const round = poseAt(ground.path, ground.fromS + ground.loopS, foot)
+      expect(round.y).toBeCloseTo(start.y, 9)
+      expect(round.pitchRad).toBeCloseTo(start.pitchRad, 9)
+      // One lap on, the tank is drawn back where it started.
+      expect(placeOnLeg(ground, ground.loopS * 3 + 5)).toBeCloseTo(placeOnLeg(ground, 5), 6)
+    }
+  })
+
+  it('reaches past the haze on both sides of the tank, wherever it is on its stretch', () => {
+    for (const id of ids) {
+      const ground = legGround(id)
+      const points = ground.path.points
+      const endX = points.at(-1)!.x
+      for (const legM of [0, ground.loopS * 0.5, ground.loopS * 0.999]) {
+        const s = placeOnLeg(ground, legM)
+        const x = points.find((point) => point.s >= s)!.x
+        expect(x).toBeGreaterThan(RENDER.fog.farM)
+        expect(endX - x).toBeGreaterThan(RENDER.fog.farM)
+      }
+    }
+  })
+
+  it('stands a marker post at each end of the stretch, so they join up too', () => {
+    for (const id of ids) {
+      const ground = legGround(id)
+      const points = ground.path.points
+      const fromX = points.find((point) => point.s >= ground.fromS)!.x
+      const toX = points.find((point) => point.s >= ground.fromS + ground.loopS - 1e-9)!.x
+      expect(ground.postsX).toContain(fromX)
+      expect(ground.postsX).toContain(toX)
+    }
+  })
+
+  it('never tips the tank steeper than the slope on the obstacle course', () => {
+    for (const id of ids) {
+      const ground = legGround(id)
+      for (let legM = 0; legM < ground.loopS; legM += ground.loopS / 97) {
+        const pose = poseAt(ground.path, placeOnLeg(ground, legM), 4)
+        expect(Math.abs((pose.pitchRad * 180) / Math.PI)).toBeLessThan(RANGE.course.slope.angleDeg)
+      }
     }
   })
 })

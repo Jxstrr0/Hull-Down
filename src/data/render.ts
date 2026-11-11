@@ -13,6 +13,9 @@ export const RENDER = {
     post: '#e9ece6',
     tank: '#4b5340',
     tankDark: '#2f3429',
+    /** Broken ground with no made track, on the last leg of the endurance run. */
+    rut: '#77724f',
+    smoke: '#2c2c2a',
     sun: '#ffffff',
   },
   light: {
@@ -23,7 +26,7 @@ export const RENDER = {
     sunFrom: { x: -30, y: 60, z: 40 },
   },
   /** Seconds of the run played for each second watched. */
-  playRate: { acceleration: 4, obstacles: 2 },
+  playRate: { acceleration: 4, obstacles: 2, endurance: 1 },
   /** The scrub bar moves in steps of this many seconds of the run. */
   scrubStepS: 0.1,
   /** The picture is never drawn finer than this many screen dots for each CSS pixel. */
@@ -57,6 +60,8 @@ export const RENDER = {
        * past the obstacle, and a travelling camera takes the run-out.
        */
       obstacles: { upM: 3, sideM: 16, sidePerM: 0.3, holdM: 5, after: 'behind' },
+      /** On the endurance run the director gives each leg one travelling camera. */
+      endurance: { road: 'behind', tracks: 'front', hills: 'side', rough: 'side' },
     },
   },
   fog: { nearM: 120, farM: 520 },
@@ -86,6 +91,38 @@ export const RENDER = {
     mudInsetM: 0.4,
     /** The trench is closed at its far end by a wall this thick. */
     pitWallM: 0.2,
+  },
+  /**
+   * The endurance run is shown as a time-lapse: the kilometres count up fast
+   * while the tank is seen driving each leg, and the picture stops with it at
+   * every breakdown.
+   */
+  endurance: {
+    /** Seconds of watching for each kilometre of the run. */
+    secondsPerKm: 0.08,
+    /** Seconds the picture holds on a roadside repair, and on a breakdown that ends the run. */
+    holdS: 1.8,
+    endHoldS: 4,
+    /** The ground goes by this many times faster than the tank really drives. */
+    showRate: 3,
+    laneWidthM: 8,
+    /**
+     * The ground of each leg, which repeats every `periodM`: it rises and
+     * falls by `riseM`, with a smaller ripple of `rippleShare` on top, and is
+     * drawn with `samples` flat pieces to a period. A marker post stands
+     * every `postEvery` periods.
+     */
+    legs: {
+      road: { lane: 'concrete', periodM: 60, riseM: 0, rippleShare: 0, samples: 1, postEvery: 1 },
+      tracks: { lane: 'earth', periodM: 60, riseM: 0, rippleShare: 0, samples: 1, postEvery: 1 },
+      hills: { lane: 'earth', periodM: 140, riseM: 5, rippleShare: 0.12, samples: 28, postEvery: 1 },
+      rough: { lane: 'rut', periodM: 11, riseM: 0.28, rippleShare: 0.5, samples: 10, postEvery: 5 },
+    },
+    /**
+     * Smoke from a wrecked engine or transmission: puffs that rise from the engine
+     * deck, `deckShare` of the hull's length from its middle, and spread as they go.
+     */
+    smoke: { puffs: 5, riseM: 6, everyS: 1.8, fromM: 0.35, toM: 1.7, driftM: 1.5, opacity: 0.6, sides: 8, deckShare: 0.3 },
   },
   /** The open ground lies a hair under the lane, so the two never fight over a pixel. */
   ground: { sizeM: 1400, underM: 0.03 },
