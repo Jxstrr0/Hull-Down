@@ -4,6 +4,16 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Export variants** (0.12.2.0): the design on the drawing board can be
+  sold to a customer as a version of a tank in service. It keeps the
+  tank's hull, turret, gun, loading and running gear (the same line builds
+  it) but may change the cooling, fuel, sights, armour and the rest. The
+  bureau pays one tank's cost to work it up, then takes the 3% fee. It is
+  called by the tank's designation plus a mark: "-D" for Dahrat, "-J" for
+  Ilandu, "-M" for Tolmar (so "Model 81-D"). The same ministry rules apply
+  as for a plain sale. The marks, the work-up cost and what a version may
+  change are my picks. The Export desk card has a button to put a tank in
+  service on the drawing board as a starting point.
 - **Export sales** (0.12.1.0): a tank in service that suits a customer can
   now be sold from the Export desk card. Each customer orders once. The
   bureau's fee is 3% of the order at the tank's own unit cost (a Kr 2.27M
@@ -300,6 +310,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.12.2.0, PR 12c: export variants.** `variantBlock`, `sellVariant`,
+  `variantCostKr`, `variantFixed` and `variantDesignation` in
+  `src/sim/career/exportDesk.ts`; `Sale.variant` keeps the version's
+  design; marks and the work-up cost in `src/data/export.ts`. The Export
+  desk card checks the design on the board against each customer.
 - **0.12.1.0, PR 12b: export sales.** `saleBlock`, `sell`, `secrets` and
   `saleFeeKr` in `src/sim/career/exportDesk.ts`; `Career.sales` (kept in
   saves, one order a customer); fee share, the ministry's standing bar and
