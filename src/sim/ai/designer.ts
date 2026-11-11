@@ -6,7 +6,8 @@ import { BASELINE_SPEC } from '../../data/baseline'
 import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
 import { BUREAUS, BUREAU_IDS, DESIGNER, type BureauId, type Philosophy, type Picks } from '../../data/opponents'
 import {
-  COOLING, ENGINES, GUNS, HULLS, LOADING, SUSPENSIONS, TRANSMISSIONS, type GunId, type TransmissionId,
+  COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS,
+  TRANSMISSIONS, TURRETS, type EngineId, type GunId, type TransmissionId, type TurretId,
 } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { gunRingMm } from '../gunnery/mount'
@@ -108,13 +109,13 @@ function fit(spec: VehicleSpec, targetT: number, limits: Limits): number {
 }
 
 /** The bureau's armour pattern at one scale, every plate on the drawing-office step. */
-function plated(philosophy: Philosophy, scale: number): Record<ZoneId, ArmourLayer[]> {
+function plated(pattern: Record<ZoneId, number>, scale: number): Record<ZoneId, ArmourLayer[]> {
   const lim = TUNING.limits
   const out = {} as Record<ZoneId, ArmourLayer[]>
   for (const zone of ZONES) {
     out[zone] = BASELINE_SPEC.armour[zone].map((layer) => {
       const most = Math.min(lim.maxLayerMm, MATERIALS[layer.material].maxMm)
-      const mm = Math.round((layer.mm * philosophy.armour[zone] * scale) / lim.layerStepMm) * lim.layerStepMm
+      const mm = Math.round((layer.mm * pattern[zone] * scale) / lim.layerStepMm) * lim.layerStepMm
       return { material: layer.material, mm: clamp(mm, lim.minLayerMm, most) }
     })
   }
@@ -122,17 +123,17 @@ function plated(philosophy: Philosophy, scale: number): Record<ZoneId, ArmourLay
 }
 
 /** Thickens the bureau's armour pattern as far as the weight aimed at allows. */
-function armourUp(spec: VehicleSpec, philosophy: Philosophy, targetT: number): void {
+function armourUp(spec: VehicleSpec, pattern: Record<ZoneId, number>, targetT: number): void {
   let low: number = DESIGNER.armourScale.min
   let high: number = DESIGNER.armourScale.max
-  spec.armour = plated(philosophy, low)
+  spec.armour = plated(pattern, low)
   for (let step = 0; step < DESIGNER.armourSteps; step++) {
     const mid = (low + high) / 2
-    spec.armour = plated(philosophy, mid)
+    spec.armour = plated(pattern, mid)
     if (massOf(spec) <= targetT) low = mid
     else high = mid
   }
-  spec.armour = plated(philosophy, low)
+  spec.armour = plated(pattern, low)
 }
 
 /** One thing done about one fault. False when the designer has nothing left to try. */
@@ -177,11 +178,33 @@ function repair(spec: VehicleSpec, issue: Issue): boolean {
   }
 }
 
+/** A bureau's tank on the drawing board, with the armour pattern it is being built to. */
+export interface Draft {
+  spec: VehicleSpec
+  /** The bureau's pattern as it now stands: its own, with whatever the trials have taught it. */
+  pattern: Record<ZoneId, number>
+}
+
 /**
- * The tank one bureau enters. The same bureau, limits and seed always give
- * the same tank. The name is left blank for the screen to fill in.
+ * Fits the running gear, armours up to the bureau's weight and puts right
+ * whatever cannot be built. False when the tank cannot be built at all.
  */
-export function designRival(bureau: BureauId, limits: Limits, seed: number): VehicleSpec {
+function settle(spec: VehicleSpec, pattern: Record<ZoneId, number>, philosophy: Philosophy, limits: Limits): boolean {
+  const targetT = limits.maxMassT * philosophy.massShare
+  for (let turn = 0; turn < DESIGNER.repairTurns; turn++) {
+    armourUp(spec, pattern, fit(spec, targetT, limits))
+    const faults = errorsOf(spec, limits)
+    if (faults.length === 0) return true
+    if (!faults.some((issue) => repair(spec, issue))) break
+  }
+  return false
+}
+
+/**
+ * The tank one bureau first draws up. The same bureau, limits and seed
+ * always give the same tank. The name is left blank for the screen to fill in.
+ */
+export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draft {
   const philosophy: Philosophy = BUREAUS[bureau]
   const bureauNo = BUREAU_IDS.indexOf(bureau)
   const picks = philosophy.picks
@@ -219,15 +242,110 @@ export function designRival(bureau: BureauId, limits: Limits, seed: number): Veh
   // A gun outside the tender's calibres is no use: the bureau takes the biggest gun that is allowed.
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 
-  const targetT = limits.maxMassT * philosophy.massShare
-  for (let turn = 0; turn < DESIGNER.repairTurns; turn++) {
-    armourUp(spec, philosophy, fit(spec, targetT, limits))
-    const faults = errorsOf(spec, limits)
-    if (faults.length === 0) return spec
-    if (!faults.some((issue) => repair(spec, issue))) break
-  }
+  const pattern = { ...philosophy.armour }
+  if (settle(spec, pattern, philosophy, limits)) return { spec, pattern }
   // Nothing the bureau wanted could be built: it enters the licence-built tank as it stands.
   const fallback = copyOf(BASELINE_SPEC)
   fallback.name = ''
-  return fallback
+  return { spec: fallback, pattern }
+}
+
+/** The tank one bureau enters before any trial: its first draft. */
+export function designRival(bureau: BureauId, limits: Limits, seed: number): VehicleSpec {
+  return draftRival(bureau, limits, seed).spec
+}
+
+/**
+ * What a trial can teach a bureau. A word names a test its tank failed; a
+ * zone names a plate that let a round through.
+ */
+export const LESSONS = ['night', 'onTheMove', 'halted', 'drill', 'power', 'trench', 'berm'] as const
+export type Lesson = (typeof LESSONS)[number] | { zone: ZoneId }
+
+/** The part after this one in its table, which lists them plainest first. Null at the end. */
+function nextOf<K extends string>(table: Record<K, unknown>, current: K): K | null {
+  const ids = Object.keys(table) as K[]
+  return ids[ids.indexOf(current) + 1] ?? null
+}
+
+/** One thing done about one lesson. False when the bureau has nothing better to fit. */
+function learn(draft: Draft, lesson: Lesson): boolean {
+  const { spec } = draft
+  const fc = spec.fireControl
+  if (typeof lesson !== 'string') {
+    draft.pattern[lesson.zone] *= DESIGNER.lessonArmour
+    return true
+  }
+  switch (lesson) {
+    case 'night': {
+      const night = nextOf(NIGHT_SIGHTS, fc.night)
+      if (night) fc.night = night
+      return night !== null
+    }
+    case 'onTheMove': {
+      const stabiliser = nextOf(STABILISERS, fc.stabiliser)
+      if (stabiliser) {
+        fc.stabiliser = stabiliser
+        return true
+      }
+      const computer = nextOf(COMPUTERS, fc.computer)
+      if (computer) fc.computer = computer
+      return computer !== null
+    }
+    case 'halted': {
+      const rangefinder = nextOf(RANGEFINDERS, fc.rangefinder)
+      if (rangefinder) {
+        fc.rangefinder = rangefinder
+        return true
+      }
+      const computer = nextOf(COMPUTERS, fc.computer)
+      if (computer) {
+        fc.computer = computer
+        return true
+      }
+      const sight = nextOf(SIGHTS, fc.sight)
+      if (sight) fc.sight = sight
+      return sight !== null
+    }
+    case 'drill': {
+      const loading = nextOf(LOADING, spec.loading)
+      if (loading) spec.loading = loading
+      return loading !== null
+    }
+    case 'power': {
+      const now = ENGINES[spec.powerpack.engine].powerHp
+      const stronger = (Object.keys(ENGINES) as EngineId[])
+        .filter((id) => ENGINES[id].powerHp > now)
+        .sort((a, b) => ENGINES[a].powerHp - ENGINES[b].powerHp)[0]
+      if (stronger) spec.powerpack.engine = stronger
+      return stronger !== undefined
+    }
+    case 'trench': {
+      const longer = spec.hull.size === 'light' ? 'medium' : spec.hull.size === 'medium' ? 'heavy' : null
+      if (longer) spec.hull.size = longer
+      return longer !== null
+    }
+    case 'berm': {
+      // A turret that lets the gun dip further shows less of the tank over a crest.
+      const now = TURRETS[spec.turret.shape].depressionDeg
+      const deeper = (Object.keys(TURRETS) as TurretId[])
+        .filter((id) => TURRETS[id].depressionDeg > now)
+        .sort((a, b) => TURRETS[a].depressionDeg - TURRETS[b].depressionDeg)[0]
+      if (deeper) spec.turret.shape = deeper
+      return deeper !== undefined
+    }
+  }
+}
+
+/**
+ * The bureau's next revision: the draft with something done about each
+ * lesson, rebuilt to its weight. The draft handed in is left as it was.
+ * Null when nothing could be changed or the result cannot be built.
+ */
+export function reviseRival(draft: Draft, bureau: BureauId, limits: Limits, lessons: readonly Lesson[]): Draft | null {
+  const next: Draft = { spec: copyOf(draft.spec), pattern: { ...draft.pattern } }
+  let changed = false
+  for (const lesson of lessons) changed = learn(next, lesson) || changed
+  if (!changed) return null
+  return settle(next.spec, next.pattern, BUREAUS[bureau], limits) ? next : null
 }

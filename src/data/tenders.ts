@@ -38,6 +38,12 @@ export const TENDERS: Record<TenderId, Tender> = {
   },
 }
 
+/** The rules every tender is run by. */
+export const TENDER_RULES = {
+  /** Revisions a bidder may make after its first prototype (Q4). */
+  revisions: 3,
+} as const
+
 /** How a bid's trial results turn into marks out of 100 on each count. */
 export const SCORING = {
   /** Marks off the total for each proving-ground test failed. */
