@@ -4,6 +4,19 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Roof threats** (0.13.1.0): the range of 2016 fires three new serials.
+  A drone bomblet (goes through 70 mm) is dropped on the turret roof and
+  the hull roof, and both must hold or the armour test is failed. A
+  top-attack missile (280 mm) is fired at the turret roof for the record
+  only. The Type 1's roof (20 mm hull, 35 mm turret) lets every bomblet
+  through. A composite sandwich on both roofs (10 mm steel, 40 mm layered
+  composite, 10 mm steel) holds for about 2.3 t. Tiles alone do not pass,
+  because hatches and grilles stay bare, but tiles over a good plate stop
+  the missile wherever a tile sits. Nothing passive stops the missile
+  everywhere: that is the job of active protection, next. Rival bureaus
+  get no new roof parts yet; they thicken a roof that failed, as they do
+  any plate. Threat names ("Drone bomblet", "Top-attack missile") and all
+  numbers are my picks.
 - **The tender of 2016** (0.13.0.0): a third tender, "A tank for a watched
   battlefield", opens after the tender of 2001. Weight limit 48 t (the
   Pact rebuilt its bridges: a new rule I made up, so the roof armour and
@@ -331,6 +344,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.13.1.0, PR 13b: top-attack and drone threats, roof protection.** Two new threats and the generation-three trial marks: bomblets on both roofs must hold, a top-attack missile is fired for the record. The tender of 2016 uses them and its brief says so.
 - **0.13.0.0, PR 13a: the tender of 2016.** `tank2016` in
   `src/data/tenders.ts` (generation three); `PACT_LIMITS_GEN3` in
   `src/data/tuning.ts` raises the bridge class to 48 t. No new parts yet.

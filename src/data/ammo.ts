@@ -87,6 +87,9 @@ export const THREATS = {
   accord120LongRod: { kind: 'kinetic', speedMs: 1680, spreadM: 0.3, penMm: 640, lossPerKmMm: 30 },
   tandemRocket: { kind: 'shaped', speedMs: 280, spreadM: 2.5, penMm: 520, lossPerKmMm: 0, tandem: true },
   tandemMissile: { kind: 'shaped', speedMs: 240, spreadM: 0.4, penMm: 820, lossPerKmMm: 0, tandem: true },
+  // Generation three: what comes down on the roof.
+  topAttackMissile: { kind: 'shaped', speedMs: 180, spreadM: 0.4, penMm: 280, lossPerKmMm: 0 },
+  droneBomblet: { kind: 'shaped', speedMs: 40, spreadM: 0.6, penMm: 70, lossPerKmMm: 0 },
 } as const satisfies Record<string, Round>
 export type ThreatId = keyof typeof THREATS
 export const THREAT_IDS = Object.keys(THREATS) as ThreatId[]
