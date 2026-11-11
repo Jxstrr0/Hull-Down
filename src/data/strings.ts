@@ -10,6 +10,15 @@ export const STRINGS = {
     basedOn: 'Based on the Radan baseline, {name}.',
     reset: 'Start again',
     resetConfirm: 'Tap again to scrap this design',
+    views: { side: 'Side', top: 'Top', front: 'Front' },
+    viewsLabel: 'Blueprint view',
+    drawingLabel: '{view} view of the design. Tap a part of the drawing to edit it.',
+    zoneLabel: 'Edit: {name}',
+    captions: {
+      side: 'Long {l} m ({g} m with gun) · High {h} m',
+      top: 'Long {l} m · Wide {w} m',
+      front: 'Wide {w} m · High {h} m',
+    },
     tabsLabel: 'Design areas',
     tabs: {
       hull: 'Hull',

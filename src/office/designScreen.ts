@@ -1,6 +1,6 @@
 // The design office, first version: pick parts, watch the weight bar move,
 // read the faults and jump to the part that fixes them.
-// The blueprint drawing joins the top panel in the next PR.
+// The blueprint on top is drawn from the same spec, and tapping it opens a part.
 import { BASELINE_SPEC } from '../data/baseline'
 import { STRINGS, fill } from '../data/strings'
 import { AREAS, buildStatSheet, type Issue, type Limits, type StatSheet, type VehicleSpec } from '../sim/vehicle'
@@ -10,6 +10,8 @@ import {
   CONTROLS, PART_TABS, fixTarget, preview, type ChoiceControl, type Control, type ControlId, type NumberControl,
   type PartTab, type Preview, type ToggleControl,
 } from './controls'
+import { renderBlueprint } from './blueprint'
+import { VIEWS, type View } from './drawing'
 import { issueText, renderReadouts } from './readouts'
 
 const O = STRINGS.office
@@ -38,6 +40,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
   let tab: Tab = 'hull'
   /** A control to scroll to and mark after the next panel draw. */
   let flagged: ControlId | undefined
+  let view: View = 'side'
 
   const root = el('section', 'office')
   root.setAttribute('aria-label', O.label)
@@ -45,11 +48,23 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
   // --- Top panel: name, weight bar, headline numbers ---------------------
   const top = el('div', 'office-top')
   const head = el('div', 'office-head')
-  const titles = el('div', 'office-titles')
-  titles.append(el('h2', 'office-name', O.designName), el('p', 'office-based', fill(O.basedOn, { name: BASELINE_SPEC.name })))
+  const viewSwitch = el('div', 'views')
+  viewSwitch.setAttribute('role', 'group')
+  viewSwitch.setAttribute('aria-label', O.viewsLabel)
+  const viewButtons = VIEWS.map((id) => {
+    const button = el('button', 'view', O.views[id])
+    button.type = 'button'
+    button.addEventListener('click', () => {
+      view = id
+      drawBlueprint()
+    })
+    viewSwitch.append(button)
+    return button
+  })
+  head.append(el('h2', 'office-name', O.designName), viewSwitch)
+  const blueprint = el('div', 'bp')
   const reset = el('button', 'office-reset', O.reset)
   reset.type = 'button'
-  head.append(titles, reset)
 
   const bar = el('div', 'wbar')
   bar.setAttribute('role', 'img')
@@ -83,7 +98,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
   const chipPower = chip(O.chips.powerToWeight)
   const chipReliability = chip(O.chips.reliability)
   const chipSpace = chip(O.chips.space)
-  top.append(head, bar, chips)
+  top.append(head, blueprint, bar, chips)
 
   // --- Tabs and the panel under them -------------------------------------
   const tabList = el('div', 'tabs')
@@ -114,7 +129,28 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     return sheet.issues.filter((issue) => issue.part === id)
   }
 
+  /** Open a control's tab and mark the control. */
+  function goTo(id: ControlId): void {
+    const target = fixTarget(id)
+    if (!target) return
+    tab = target.tab
+    flagged = target.id
+    drawTabs()
+    drawPanel()
+  }
+
+  function drawBlueprint(): void {
+    VIEWS.forEach((id, index) => {
+      const button = viewButtons[index]
+      if (!button) return
+      button.classList.toggle('view-on', id === view)
+      button.setAttribute('aria-pressed', id === view ? 'true' : 'false')
+    })
+    blueprint.replaceChildren(...renderBlueprint(spec, sheet.geometry, view, goTo))
+  }
+
   function drawTop(): void {
+    drawBlueprint()
     const scale = limits.maxMassT * BAR_SCALE
     AREAS.forEach((area, index) => {
       const segment = segments[index]
@@ -274,8 +310,10 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
 
   function drawFaults(): HTMLElement {
     const box = el('div', 'faults')
+    const startAgain = el('div', 'again')
+    startAgain.append(el('p', 'ctl-note', fill(O.basedOn, { name: BASELINE_SPEC.name })), reset)
     if (sheet.issues.length === 0) {
-      box.append(el('p', 'ds-clear', D.noFaults))
+      box.append(el('p', 'ds-clear', D.noFaults), startAgain)
       return box
     }
     const list = el('ul', 'ds-faults')
@@ -292,18 +330,14 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
         const fix = el('button', 'fix', O.fixIt)
         fix.type = 'button'
         fix.dataset.key = `fix:${issue.code}`
-        fix.addEventListener('click', () => {
-          tab = target.tab
-          flagged = target.id
-          drawTabs()
-          drawPanel()
-        })
+        fix.addEventListener('click', () => goTo(target.id))
         item.append(fix)
       }
       list.append(item)
     }
     box.append(list)
     if (sheet.issues.some((issue) => issue.part.startsWith('armour'))) box.append(el('p', 'ctl-note', O.armourLater))
+    box.append(startAgain)
     return box
   }
 
