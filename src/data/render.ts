@@ -39,8 +39,6 @@ export const RENDER = {
   playRate: { acceleration: 4, obstacles: 2, endurance: 1, shoot: 1 },
   /** The scrub bar moves in steps of this many seconds of the run. */
   scrubStepS: 0.1,
-  /** The picture is never drawn finer than this many screen dots for each CSS pixel. */
-  maxPixelRatio: 2,
   /** Longest stretch of time one drawn frame may cover, seconds. A phone that stalls does not skip the run. */
   maxFrameS: 0.1,
   camera: {
@@ -208,7 +206,7 @@ export const RENDER = {
     /** A ridge is a low mound this long, deep and high, its crest this far ahead of the tank behind it. */
     ridge: { longM: 150, deepM: 36, highM: 2.2, aheadM: 12, sides: 10 },
     /** A wood is this many trees of this size, with this many sides each. */
-    wood: { trees: 12, heightM: 16, radiusM: 6, sides: 5, colour: '#3f4a34' },
+    wood: { trees: 12, fewestTrees: 4, heightM: 16, radiusM: 6, sides: 5, colour: '#3f4a34' },
     /** The camera that travels with a tank: behind and above it, looking this far past it along its gun. */
     chase: { backM: 19, upM: 6.5, aheadM: 90, lookUpM: 2 },
     /** The camera that stands by a tank being put out of the fight: this far off, this high, for this long (battle seconds). */

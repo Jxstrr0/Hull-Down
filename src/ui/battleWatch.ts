@@ -4,6 +4,7 @@
 // pressed. What the camera is doing is always written under the picture.
 import { STRINGS, fill } from '../data/strings'
 import type { BattleView, TankLook } from '../render/battleScene'
+import type { GraphicsLink } from './rangeScreen'
 import type { BattleResult } from '../sim/battle/battle'
 import { tankName } from './battleWords'
 import { el } from './dom'
@@ -17,7 +18,7 @@ export interface BattleWatch {
   stop(): void
 }
 
-export function createBattleWatch(battle: BattleResult, battleNo: number, mine: TankLook, theirs: TankLook): BattleWatch {
+export function createBattleWatch(battle: BattleResult, battleNo: number, mine: TankLook, theirs: TankLook, graphics: GraphicsLink): BattleWatch {
   const root = el('div', 'bw')
   const opener = el('button', 'btn bw-open', W.open)
   opener.type = 'button'
@@ -135,6 +136,8 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
         mine,
         theirs,
         follow,
+        quality: graphics.tier(),
+        onMeasured: (fps) => view?.setQuality(graphics.measured(fps)),
         onFrame: (frame) => {
           if (!held) scrub.value = String(frame.timeS)
           const who = tankName(battle, frame.tank)
