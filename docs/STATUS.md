@@ -6,7 +6,10 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 - **Try the armour toy** (plan stage PR 3 is done at 0.3.3.0): Armour tab,
   protection map, reactive tiles and the test shot. Say what feels wrong,
-  slow or confusing before PR 4 (mobility and the 3D range) starts.
+  slow or confusing; fixes can go in at any point.
+- **Try the Trials tab** (0.4.0.0). Say if the range marks feel fair: the
+  light hull cannot cross the standard trench, and the smallest engine only
+  climbs the slope in a tank of about 34 to 36 t or less.
 - Confirm or replace the working name "Pattern 3" for the Radan baseline tank.
 - Choose how the hidden studio-site listing gets its cover image (see Notes).
 - Say if the project numbers ("Project 101", counting up, never reused) suit
@@ -17,6 +20,17 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.4.0.0, PR 4a: how the tank moves, and the first two range tests.** A
+  new Trials tab sends a design with no faults to the proving ground, which
+  opens as its own screen. Two tests so far. Acceleration and top speed: a
+  standing start down the strip, with the 0 to 32 km/h time, the top speed
+  and a speed chart. Obstacle course: a 2.7 m trench, a 0.8 m step, a mud pit
+  and a 30 degree slope, each passed or failed with the reason and a "Fix"
+  button that opens the part. Narrow tracks on a heavy tank bog in the mud, a
+  weak engine stalls on the slope, a short hull drops into the trench and an
+  overloaded suspension sags too low for the step. Readouts gain steepest
+  slope, trench, step and ground clearance. Top speed now comes from the same
+  model the range uses.
 - **0.3.3.0, PR 3d: the quick test shot.** A "Test shot" box in the Armour
   tab fires the chosen round at the zone you are working on. Pick the angle
   (square on, or 15 to 60 degrees off), and where the zone has reactive tiles,
@@ -81,6 +95,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   section view (0.3.0.0), 3b armour zones on the blueprint, the Pact
   ammunition lists and the two protection maps (0.3.1.0), 3c reactive (ERA)
   tiles (0.3.2.0), 3d the quick test shot (0.3.3.0). PR 4 is then 0.4.0.0.
+- PR 4 is split too: 4a the mobility model with the acceleration test and the
+  obstacle course, shown as a report (0.4.0.0), 4b the endurance run and
+  stress-based breakdowns (0.4.1.0), 4c the grey-box 3D range that plays the
+  runs back (0.4.2.0), 4d the director camera, pause and scrub (0.4.3.0).
+  PR 5 is then 0.5.0.0.
+- The range marks (12 s to 32 km/h, 50 km/h top speed, the course as built)
+  are a Pact standard for now. Tenders set their own marks in PR 8.
 - Reactive tiles work once in a real trial. That wear arrives with the hit
   model in PR 6; the design office shows a fresh tile.
 - The section view shows armour only. The interior (crew, ammunition, fuel,

@@ -5,7 +5,9 @@ import {
   RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU,
 } from '../../data/parts'
 import type { ZoneId } from '../../data/materials'
+import { GROUNDS } from '../../data/range'
 import { TUNING } from '../../data/tuning'
+import { driveOf, maxSlopeDeg, topSpeedOf, type Drive } from '../mobility/drive'
 import { checkSpec, type Issue } from './checks'
 import { geometryOf, type Geometry } from './geometry'
 import { protectionOf, type ZoneProtection } from './protection'
@@ -20,6 +22,8 @@ export interface StatSheet {
   massT: number
   unitCostKr: number
   crewCount: number
+  /** How the tank moves. The proving ground tests run on this. */
+  drive: Drive
   mobility: {
     /** Engine horsepower per tonne. */
     powerToWeightHpT: number
@@ -29,6 +33,14 @@ export interface StatSheet {
     rangeKm: number
     /** Kilograms per square centimetre under the tracks. */
     groundPressureKgCm2: number
+    /** The steepest slope it climbs on firm ground, degrees. */
+    maxSlopeDeg: number
+    /** The longest trench it bridges, metres. */
+    trenchM: number
+    /** The highest step it mounts, metres. */
+    stepM: number
+    /** Ground to belly, metres. */
+    clearanceM: number
   }
   firepower: {
     calibreMm: number
@@ -86,12 +98,9 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
   const fc = spec.fireControl
 
   // Mobility
-  const m = TUNING.mobility
-  const trackDrag = 1 - (spec.runningGear.trackWidthMm - TUNING.geometry.standardTrackMm) * m.speedLossPerExtraTrackMm
-  const poweredKmh = (m.speedBaseKmh + m.speedPerHpT * ((engine.powerHp * transmission.efficiency) / massT)) * trackDrag
-  const gearLimited = poweredKmh > transmission.gearedKmh
+  const drive = driveOf(spec, geometry, rollup)
+  const top = topSpeedOf(drive, GROUNDS.hard)
   const fuelPer100Km = engine.fuelPer100KmPerT * massT
-  const contactCm2 = 2 * geometry.trackContactM * 100 * (spec.runningGear.trackWidthMm / 10)
 
   // Firepower
   const g = TUNING.gunnery
@@ -138,12 +147,17 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     massT,
     unitCostKr: rollup.unitCostKr,
     crewCount: rollup.crewCount,
+    drive,
     mobility: {
       powerToWeightHpT: engine.powerHp / massT,
-      topSpeedKmh: Math.min(poweredKmh, transmission.gearedKmh),
-      gearLimited,
+      topSpeedKmh: top.gearLimited ? transmission.gearedKmh : top.speedMs * 3.6,
+      gearLimited: top.gearLimited,
       rangeKm: (spec.powerpack.fuelL / fuelPer100Km) * 100,
-      groundPressureKgCm2: (massT * 1000) / contactCm2,
+      groundPressureKgCm2: drive.pressureKgCm2,
+      maxSlopeDeg: maxSlopeDeg(drive, GROUNDS.firm),
+      trenchM: drive.trenchM,
+      stepM: drive.stepM,
+      clearanceM: drive.clearanceM,
     },
     firepower: {
       calibreMm: gun.calibreMm,

@@ -82,11 +82,20 @@ export const TUNING = {
     trackKrPerM: 1_800,
   },
   mobility: {
-    /** Top speed from power: base + slope x (power at the tracks per tonne). */
-    speedBaseKmh: 24,
-    speedPerHpT: 2.3,
-    /** Share of top speed lost for each millimetre of track wider than standard (gained if narrower). */
-    speedLossPerExtraTrackMm: 0.0003,
+    wattsPerHp: 745.7,
+    gravityMs2: 9.81,
+    /** Rolling drag grows with speed: this much more, as a share of weight, for each metre a second. */
+    dragPerMs: 0.0025,
+    /** Share of drag gained for each millimetre of track wider than standard (lost if narrower). */
+    dragPerExtraTrackMm: 0.0005,
+    /** Tracks, wheels and gears have to be spun up too: the tank gets moving as if this much heavier. */
+    spinUpFactor: 1.15,
+    /** The longest trench a tank bridges, as a share of its hull length. */
+    trenchShare: 0.42,
+    /** The highest step it mounts, as a share of the height of its hull roof. */
+    stepShare: 0.57,
+    /** Metres the hull sags for each unit of suspension overload (load / rated - 1). */
+    sagMPerOverload: 0.5,
   },
   gunnery: {
     /** Gun depression gained per 100 mm of turret ring beyond the gun's minimum. */
