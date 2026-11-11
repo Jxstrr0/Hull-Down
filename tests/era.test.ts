@@ -129,8 +129,8 @@ describe('what tiles stop', () => {
   it('helps against shaped charges only', () => {
     const sheet = sheetOf()
     const side = sheet.protection.hullSideFront
-    expect(tiledWorth(side, 'shaped')).toBe(worthAgainst(side, 'shaped') + ERA_TILE.ceMm)
-    expect(tiledWorth(side, 'kinetic')).toBe(worthAgainst(side, 'kinetic') + ERA_TILE.keMm)
+    expect(tiledWorth(side, { kind: 'shaped' })).toBe(worthAgainst(side, 'shaped') + ERA_TILE.ceMm)
+    expect(tiledWorth(side, { kind: 'kinetic' })).toBe(worthAgainst(side, 'kinetic') + ERA_TILE.keMm)
     expect(ERA_TILE.keMm).toBe(0)
   })
 

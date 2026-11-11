@@ -11,6 +11,7 @@ import type {
   SightId, StabiliserId, StowageId, SuspensionId, TurretId,
 } from './parts'
 import type { Limits, VehicleSpec } from '../sim/vehicle/spec'
+import type { Generation } from './tech'
 
 /**
  * What a bureau reaches for, part by part: its first choice, then what it
@@ -178,6 +179,8 @@ export const ACCORD_LIMITS: Limits = {
   maxMassT: 60,
   maxWidthM: 3.7,
   allowedCalibresMm: [100, 120],
+  // The Accord is not held to the Pact's tender years.
+  generation: 3,
 }
 
 /**
@@ -189,6 +192,8 @@ export interface ThreatTank {
   spec: VehicleSpec
   /** What it fires, the round it reaches for first at the front. */
   rounds: readonly ThreatId[]
+  /** The generation of tender that first expects to meet it. */
+  generation: Generation
 }
 
 const NO_TILES: Record<ZoneId, number> = {
@@ -196,12 +201,13 @@ const NO_TILES: Record<ZoneId, number> = {
   turretFrontLeft: 0, turretFrontRight: 0, mantlet: 0, turretSides: 0, turretRear: 0, turretRoof: 0,
 }
 
-export const THREAT_TANK_IDS = ['warden', 'palisade'] as const
+export const THREAT_TANK_IDS = ['warden', 'palisade', 'palisadeB'] as const
 export type ThreatTankId = (typeof THREAT_TANK_IDS)[number]
 
 export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
   // The Accord's standard tank: a 105 mm rifled gun, a loader, good sights, steel armour.
   warden: {
+    generation: 1,
     rounds: ['accord105Sabot', 'accord105Shaped'],
     spec: {
       name: '',
@@ -241,6 +247,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
   },
   // The tank the Accord is said to be building next: a 120 mm gun behind layered armour, and slow for it.
   palisade: {
+    generation: 1,
     rounds: ['accord120Sabot'],
     spec: {
       name: '',
@@ -279,6 +286,57 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
         turretFrontRight: [
           { material: 'rolledSteel', mm: 100 },
           { material: 'compositeInsert', mm: 150 },
+          { material: 'rolledSteel', mm: 100 },
+        ],
+        mantlet: [{ material: 'castSteel', mm: 260 }],
+        turretSides: [{ material: 'rolledSteel', mm: 50 }],
+        turretRear: [{ material: 'rolledSteel', mm: 30 }],
+        turretRoof: [{ material: 'rolledSteel', mm: 30 }],
+      },
+      era: NO_TILES,
+    },
+  },
+  // The Palisade as rebuilt around 2000: the long-rod round, a thermal sight, and newer layers at the front.
+  palisadeB: {
+    generation: 2,
+    rounds: ['accord120LongRod'],
+    spec: {
+      name: '',
+      hull: { size: 'heavy', glacisAngleDeg: 68, engineAt: 'rear' },
+      turret: { shape: 'weldedWedge', ringMm: 2250 },
+      gun: 'rifled120',
+      barrel: 'standard',
+      recoil: 'standard',
+      loading: 'loader',
+      ammo: { rounds: 40, stowage: 'armouredBins' },
+      fireControl: {
+        sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'digital',
+        night: 'thermal', commanderSight: true,
+      },
+      powerpack: { engine: 'diesel780', transmission: 'hydro50', cooling: 'standard', fuelL: 950, apu: true },
+      runningGear: { suspension: 'hydropneumatic', roadWheels: 7, trackWidthMm: 700 },
+      protection: { smokeLaunchers: true, fireSuppression: true, spallLiner: true },
+      crew: { comfort: 'improved' },
+      armour: {
+        upperGlacis: [
+          { material: 'rolledSteel', mm: 60 },
+          { material: 'layeredComposite', mm: 95 },
+          { material: 'rolledSteel', mm: 40 },
+        ],
+        lowerGlacis: [{ material: 'rolledSteel', mm: 70 }],
+        hullSideFront: [{ material: 'rolledSteel', mm: 50 }],
+        hullSideRear: [{ material: 'rolledSteel', mm: 35 }],
+        hullRear: [{ material: 'rolledSteel', mm: 30 }],
+        hullRoof: [{ material: 'rolledSteel', mm: 25 }],
+        belly: [{ material: 'rolledSteel', mm: 20 }],
+        turretFrontLeft: [
+          { material: 'rolledSteel', mm: 100 },
+          { material: 'layeredComposite', mm: 150 },
+          { material: 'rolledSteel', mm: 100 },
+        ],
+        turretFrontRight: [
+          { material: 'rolledSteel', mm: 100 },
+          { material: 'layeredComposite', mm: 150 },
           { material: 'rolledSteel', mm: 100 },
         ],
         mantlet: [{ material: 'castSteel', mm: 260 }],

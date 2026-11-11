@@ -13,6 +13,8 @@ export interface EraTile {
   keMm: number
   /** The same against shaped-charge warheads. */
   ceMm: number
+  /** The share of that left against a tandem warhead, whose first charge has already set the tile off. */
+  tandemShare: number
 }
 
 export const ERA_TILE = {
@@ -20,6 +22,7 @@ export const ERA_TILE = {
   costPerM2Kr: 14_000,
   keMm: 0,
   ceMm: 250,
+  tandemShare: 0.15,
 } as const satisfies EraTile
 
 /** Where tiles can go on a zone: a grid of tile places, some of them blocked. */

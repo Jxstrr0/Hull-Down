@@ -132,7 +132,7 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
     threat ? verdictOf(worthAgainst(sheet.protection[id], threat.kind), pen) : undefined
   /** The same where the shot meets a reactive tile. Nothing when the zone has no tiles. */
   const tiledVerdictFor = (id: ZoneId): Verdict | undefined =>
-    threat && sheet.rollup.era[id].tiles > 0 ? verdictOf(tiledWorth(sheet.protection[id], threat.kind), pen) : undefined
+    threat && sheet.rollup.era[id].tiles > 0 ? verdictOf(tiledWorth(sheet.protection[id], threat), pen) : undefined
 
   const mapBox = el('details', 'mapbox')
   mapBox.open = state.mapOpen
@@ -219,7 +219,7 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
       const tiled = tiledVerdictFor(id)
       if (tiled) {
         name.append(el('span', `zrow-sub verdict-${tiled}`, fill(A.zoneRowTiled, {
-          mark: A.verdictMarks[tiled], mm: mm(tiledWorth(sheet.protection[id], threat.kind)), verdict: A.verdicts[tiled],
+          mark: A.verdictMarks[tiled], mm: mm(tiledWorth(sheet.protection[id], threat)), verdict: A.verdicts[tiled],
         })))
       }
       row.append(
@@ -560,9 +560,9 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
     const pct = fixed(zoneEra.coverage * 100, 0)
     underTile.textContent = tiled && threat
       ? fill(A.underTileVerdict, {
-          mm: mm(tiledWorth(protection, threat.kind)), mark: A.verdictMarks[tiled], verdict: A.verdicts[tiled], pct,
+          mm: mm(tiledWorth(protection, threat)), mark: A.verdictMarks[tiled], verdict: A.verdicts[tiled], pct,
         })
-      : fill(A.underTileValue, { ke: mm(tiledWorth(protection, 'kinetic')), ce: mm(tiledWorth(protection, 'shaped')), pct })
+      : fill(A.underTileValue, { ke: mm(tiledWorth(protection, { kind: 'kinetic' })), ce: mm(tiledWorth(protection, { kind: 'shaped' })), pct })
     underTile.className = tiled ? `prot-era verdict-${tiled}` : 'prot-era'
 
     drawShot(fired)

@@ -66,9 +66,15 @@ export function worthAgainst(protection: ZoneProtection, kind: RoundKind): numbe
   return kind === 'kinetic' ? protection.keMm : protection.ceMm
 }
 
+/** What a reactive tile adds against a round. A tandem warhead leaves it little to do. */
+export function tileWorthMm(round: Pick<Round, 'kind' | 'tandem'>): number {
+  if (round.kind === 'kinetic') return ERA_TILE.keMm
+  return round.tandem ? ERA_TILE.ceMm * ERA_TILE.tandemShare : ERA_TILE.ceMm
+}
+
 /** The same where the shot meets a reactive tile. */
-export function tiledWorth(protection: ZoneProtection, kind: RoundKind): number {
-  return worthAgainst(protection, kind) + (kind === 'kinetic' ? ERA_TILE.keMm : ERA_TILE.ceMm)
+export function tiledWorth(protection: ZoneProtection, round: Pick<Round, 'kind' | 'tandem'>): number {
+  return worthAgainst(protection, round.kind) + tileWorthMm(round)
 }
 
 /** Holds with a margin, fails with a margin, or too close to call. */
@@ -101,7 +107,7 @@ export function tiledVerdictsAgainst(
   const pen = penetrationAt(round, rangeM)
   const verdicts: Partial<Record<ZoneId, Verdict>> = {}
   for (const zone of ZONES) {
-    if (era[zone].tiles > 0) verdicts[zone] = verdictOf(tiledWorth(protection[zone], round.kind), pen)
+    if (era[zone].tiles > 0) verdicts[zone] = verdictOf(tiledWorth(protection[zone], round), pen)
   }
   return verdicts
 }
