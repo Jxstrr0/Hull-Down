@@ -2054,6 +2054,18 @@ export const STRINGS = {
     project: '{project} · challenge',
     waits: 'The bureau waits while the challenge is on. Switch it off to build prototypes and enter tenders.',
   },
+  credits: {
+    heading: 'Credits',
+    about: 'Everything in the game that somebody else made, with thanks. All of it is free to use; the licence is named on each line.',
+    groups: {
+      fonts: 'Fonts',
+      sounds: 'Sounds',
+      libraries: 'Code',
+    },
+    line: '{title}, by {by}. {licence}.',
+    source: 'Source',
+    sourceLabel: 'Source of {title}, opens in a new tab',
+  },
   crash: {
     title: 'Something broke',
     lead: 'The game hit a fault it could not recover from. Your work is not lost: the career and every design are kept as they were last saved.',
