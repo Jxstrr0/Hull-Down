@@ -2,9 +2,12 @@
 // would mend a failure, and how to describe where a shot fell. No DOM in
 // here, so it can be tested.
 import { GUNNERY } from '../data/gunnery'
+import type { ComputerId } from '../data/parts'
+import type { Generation } from '../data/tech'
 import type { STRINGS } from '../data/strings'
 import type { GunneryRun, MissCause, ShotRecord, TurretPartId } from '../sim/trials'
 import type { StatSheet, VehicleSpec } from '../sim/vehicle'
+import { available } from '../sim/vehicle/tech'
 
 type FixPart = keyof typeof STRINGS.controls
 
@@ -17,13 +20,17 @@ const CAUSE_FIX: Record<MissCause, FixPart> = {
 }
 
 /** The control that would cut the time to the first shot most, skipping any that is already the quickest there is. */
-export function slowFix(sheet: StatSheet, spec: VehicleSpec): FixPart {
+export function slowFix(sheet: StatSheet, spec: VehicleSpec, generation: Generation = 1): FixPart {
   const t = sheet.fire.times
   const fc = spec.fireControl
+  const setS = GUNNERY.computers[fc.computer].setS
+  // No computer the tender allows sets the gun any quicker than this one.
+  const quickest = !(Object.keys(GUNNERY.computers) as ComputerId[])
+    .some((id) => available('fireControl.computer', id, generation) && GUNNERY.computers[id].setS < setS)
   const ways: { seconds: number; part: FixPart; best: boolean }[] = [
     { seconds: t.findS, part: 'fireControl.commanderSight', best: fc.commanderSight },
     { seconds: t.rangeS, part: 'fireControl.rangefinder', best: fc.rangefinder === 'laser' },
-    { seconds: GUNNERY.computers[fc.computer].setS, part: 'fireControl.computer', best: fc.computer === 'electronic' },
+    { seconds: setS, part: 'fireControl.computer', best: quickest },
   ]
   ways.sort((a, b) => b.seconds - a.seconds)
   // With the quickest of everything, only an easier tank to fight is left.

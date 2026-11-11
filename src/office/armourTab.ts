@@ -6,7 +6,9 @@ import { SECTION } from '../data/drawing'
 import { ERA_GRID_VIEW, ERA_TILE } from '../data/era'
 import { MATERIALS, MATERIAL_IDS, ZONES, ZONE_FACING, type MaterialId, type ZoneId } from '../data/materials'
 import { STRINGS, fill } from '../data/strings'
+import type { Generation } from '../data/tech'
 import { TUNING } from '../data/tuning'
+import { generationOf } from '../sim/vehicle/tech'
 import {
   allTiles, hasTile, layerWorth, paperShot, penetrationAt, setTile, shotCosine, targetOf, testShot, tiledWorth, tileGrid,
   verdictOf,
@@ -44,6 +46,8 @@ export interface ArmourTabState {
 export interface ArmourTabHost {
   spec: VehicleSpec
   sheet: StatSheet
+  /** The newest technology the tender allows. */
+  generation: Generation
   state: ArmourTabState
   /** Apply a change to the design and redraw everything. */
   commit(change: (spec: VehicleSpec) => void): void
@@ -92,6 +96,7 @@ function hatchDefs(prefix: string, unit: number): SVGDefsElement {
   tile('highHardSteel', 4, rising(4))
   tile('castSteel', 7, [dot(1.75, 1.75), dot(5.25, 5.25)])
   tile('compositeInsert', 8, [...rising(8), ...falling(8)])
+  tile('layeredComposite', 5, [...rising(5), ...falling(5), dot(2.5, 2.5)])
   tile('airGap', 8, [])
   return defs
 }
@@ -584,9 +589,13 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
     select.dataset.key = `layer-material:${index}`
     select.setAttribute('aria-label', fill(A.materialOf, { n }))
     for (const id of MATERIAL_IDS) {
-      const option = el('option', '', STRINGS.materials[id].name)
+      const comes = generationOf('material', id)
+      const locked = comes > host.generation && id !== layer.material
+      const name = STRINGS.materials[id].name
+      const option = el('option', '', locked ? fill(A.lockedMaterial, { name, n: String(comes) }) : name)
       option.value = id
       option.selected = id === layer.material
+      option.disabled = locked
       select.append(option)
     }
     select.addEventListener('change', () => host.commit((s) => setLayerMaterial(s, zone, index, select.value)))

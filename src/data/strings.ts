@@ -177,6 +177,8 @@ export const STRINGS = {
     },
     fitted: 'Fitted',
     notFitted: 'Not fitted',
+    generation: 'Generation {n}',
+    notYet: 'Not to be had yet. It comes with a later tender.',
     noChange: 'No change in weight or cost',
     delta: '{mass} · {cost}',
     deltaTonnes: '{n} t',
@@ -237,6 +239,7 @@ export const STRINGS = {
       layerCount: '{n} of {max}',
       layer: 'Layer {n}',
       materialOf: 'Material of layer {n}',
+      lockedMaterial: '{name} (generation {n})',
       thicknessOf: 'Thickness of layer {n}',
       thinner: 'Make layer {n} thinner',
       thicker: 'Make layer {n} thicker',
@@ -443,11 +446,13 @@ export const STRINGS = {
       none: { name: 'No computer', note: 'The gunner works out the aim.' },
       mechanical: { name: 'Mechanical computer', note: 'Cams and gears set the gun for range and round.' },
       electronic: { name: 'Electronic computer', note: 'Takes range, wind and tilt and sets the gun itself.' },
+      digital: { name: 'Digital computer', note: 'Reads its own sensors and corrects for nearly everything, faster than the gunner can ask.' },
     },
     nightSights: {
       none: { name: 'No night sight', note: 'Blind after dark.' },
       activeInfrared: { name: 'Infrared searchlight', note: 'Sees a short way at night, and shows up to anyone with the same kit.' },
       imageIntensifier: { name: 'Image intensifier', note: 'Sees by starlight without showing a light.' },
+      thermal: { name: 'Thermal sight', note: 'Sees warmth, not light. Night is nearly as good as day, at a price.' },
     },
     commanderSight: { name: 'Independent commander\'s sight', note: 'The commander finds the next target while the gunner shoots.' },
     engines: {
@@ -642,6 +647,7 @@ export const STRINGS = {
     layerNeedsPlates: 'An insert or an air gap needs a steel plate on both sides of it.',
     zoneUnarmoured: 'One zone has no armour at all.',
     tilesNeedPlate: 'Reactive tiles need a plate to bolt on to. Add a layer or strip the tiles.',
+    notYetAvailable: 'Not to be had yet: this is generation {value} technology, and this tender is generation {limit}.',
   },
   materials: {
     rolledSteel: { name: 'Rolled steel', note: 'The standard plate. Good against everything, and heavy.' },
@@ -649,6 +655,7 @@ export const STRINGS = {
     castSteel: { name: 'Cast steel', note: 'Cheap and takes any shape. A little weaker than plate.' },
     airGap: { name: 'Air gap', note: 'Empty space between two plates. Upsets shaped charges for almost no weight.' },
     compositeInsert: { name: 'Composite insert', note: 'Layers of ceramic and steel. Light for what it stops, best against shaped charges, and costly.' },
+    layeredComposite: { name: 'Layered composite', note: 'A newer insert of many thin layers. Stops more of both kinds of round, and costs more again.' },
   },
   zones: {
     upperGlacis: { name: 'Upper glacis', note: 'The big sloped plate at the front of the hull. It takes many of the hits in a head-on fight.' },
