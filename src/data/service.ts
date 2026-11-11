@@ -112,6 +112,8 @@ export const SERVICE = {
       comfort: 10,
     },
   },
+  /** The bureau's archive keeps the service records of this many tanks, the newest first. */
+  archive: { most: 40 },
 } as const
 
 export type FixedPart = (typeof SERVICE.upgrade.fixed)[number]

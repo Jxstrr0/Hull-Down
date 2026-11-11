@@ -13,12 +13,15 @@ import {
   type Career,
 } from '../sim/career/career'
 import type { BidScore, Trialled } from '../sim/career/score'
+import { fileRecord, serviceRecord, type ServiceRecord } from '../sim/career/record'
 import type { FieldReport } from '../sim/career/service'
 import { buildStatSheet, type VehicleSpec } from '../sim/vehicle'
 import { TENDERS } from '../data/tenders'
+import { loadArchive, saveArchive } from '../persist/archiveStore'
 import { loadAdvisorMode, loadCareer, saveAdvisorMode, saveCareer } from '../persist/careerStore'
 import type { KeyValue } from '../persist/designs'
 import { remarkLink, remarkText } from '../ui/advisorWords'
+import { packageLines, recordRows, recordTitle, servedLine, yearLine } from '../ui/archiveWords'
 import {
   axesLine, bidLine, bidderName, blockLine, failedLine, mark, revisionsLine, standingChanges, standingLine, verdictLine,
 } from '../ui/careerWords'
@@ -89,9 +92,31 @@ export function createBureau(options: BureauOptions): Bureau {
   /** The upgrade button that has been tapped once: "load:0" or "fit:0". */
   let upgradeArmed = ''
 
+  /** The service records of the bureau's tanks, this career's and earlier ones'. */
+  let archive: ServiceRecord[] = loadArchive(storage)
+  let archiveKept = true
+
   function keep(next: Career): void {
     career = next
     kept = saveCareer(storage, career)
+    career.adopted.forEach((_, index) => file(index))
+  }
+
+  /** Bring a tank's page in the archive up to date with what is known of it. */
+  function file(index: number): void {
+    const tank = career.adopted[index]
+    if (!tank) return
+    const known: FieldReport[] = []
+    for (let year = 1; year <= tank.years; year++) {
+      const report = reports.get(`${index}:${year}`)
+      if (report) known.push(report)
+    }
+    const record = serviceRecord(career, index, known)
+    if (!record) return
+    const next = fileRecord(archive, record, SERVICE.archive.most)
+    if (JSON.stringify(next) === JSON.stringify(archive)) return
+    archive = next
+    archiveKept = saveArchive(storage, archive)
   }
 
   /** Do a slow piece of work after the screen has had the chance to say so. */
@@ -468,6 +493,7 @@ export function createBureau(options: BureauOptions): Bureau {
       later(() => {
         const made = reportOf(career, index, year)
         if (made) reports.set(key, made)
+        file(index)
       })
       break // One at a time: the rest follow as each is done.
     }
@@ -552,6 +578,45 @@ export function createBureau(options: BureauOptions): Bureau {
     }).reverse()
   }
 
+  /** The archive: one page a tank, the newest first. */
+  function drawArchive(): HTMLElement {
+    const A = STRINGS.archive
+    const box = el('section', 'bu')
+    box.dataset.key = 'archive'
+    box.append(el('h3', 'ds-group-title', A.heading), el('p', 'ctl-note', A.about))
+    if (!archiveKept) box.append(el('p', 'ctl-issue', A.notKept))
+    if (archive.length === 0) {
+      box.append(el('p', 'ctl-note', A.none))
+      return box
+    }
+    for (const record of archive) {
+      const fold = el('details', 'cmp-fold sv-report')
+      fold.dataset.key = `archive:${record.id}`
+      fold.append(el('summary', 'cmp-fold-title', recordTitle(record)))
+      const body = el('div', 'sv-body')
+      body.append(el('p', 'bu-proto-sum', servedLine(record)))
+      const rows = el('dl', 'bu-rows')
+      for (const line of recordRows(record)) row(rows, line.label, line.value)
+      const packages = packageLines(record)
+      row(rows, A.packages, packages.length ? String(packages.length) : A.noPackages)
+      body.append(rows)
+      if (packages.length) {
+        const list = el('ul', 'sv-lines')
+        for (const line of packages) list.append(el('li', 'sv-line', line))
+        body.append(list)
+      }
+      if (record.years.length) {
+        const list = el('ul', 'sv-lines')
+        list.setAttribute('aria-label', A.years)
+        for (const year of record.years) list.append(el('li', 'sv-line', yearLine(year)))
+        body.append(el('h5', 'sv-sub', A.years), list)
+      }
+      fold.append(body)
+      box.append(fold)
+    }
+    return box
+  }
+
   function drawRestart(): HTMLElement {
     const R = C.restart
     const box = el('section', 'bu')
@@ -586,7 +651,7 @@ export function createBureau(options: BureauOptions): Bureau {
     const decision = drawDecision()
     if (decision) box.append(decision)
     box.append(...drawService(spec))
-    box.append(drawTender(), drawBureau(), drawAdvisor(spec), drawShop(spec), drawPrototypes(), drawRestart())
+    box.append(drawTender(), drawBureau(), drawAdvisor(spec), drawShop(spec), drawPrototypes(), drawArchive(), drawRestart())
     return box
   }
 
