@@ -4,6 +4,15 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Scenery on the range** (0.15.2.0): the strip, the obstacle course
+  and the three shoots now have conifer woods on both sides, low hills
+  on the skyline, a range tower by the start and red flags at each end.
+  All made in code, about 5,000 triangles at most. The camera side is
+  kept clear further out so no tree blocks the view. The endurance run
+  and the battles are as they were (the battles already have woods and
+  ridges); say if you want those dressed too, or other props (sheds,
+  fences, wrecks as hard targets).
+
 - **The paint shop** (0.15.1.0): four schemes to start, picked on the
   Trials tab: Plain green, Sand, Three colour, Winter whitewash. Looks
   only, as you chose: no mark, weight or cost changes, and a repaint is
@@ -393,6 +402,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.15.2.0, PR 15c: scenery on the range.** Third slice of plan PR 15. `src/render/scenery.ts` lays out woods, skyline hills, a range tower and warning flags as a plain list of shapes, the same on every device, and `buildSolids` joins them into one mesh a colour. On the strip, the course and the shoots. A test holds each range to 5,200 triangles and keeps the lane and the camera side clear. A `density` setting thins the woods, ready for the graphics tiers.
 - **0.15.1.0, PR 15b: the paint shop.** Second slice of plan PR 15. Four cosmetic paint schemes in `src/data/paint.ts`, picked on the Trials tab and kept beside the design (`SavedDesign.paint`), so a repaint is never a new build. Two are camouflage: `src/render/camo.ts` makes a small repeating pattern in code (no image files), the same on every device, and the tank's plate is painted with it in the range and battle 3D views. No more meshes or triangles than a plain tank. First load 758 KB.
 - **0.15.0.0, PR 15a: the tank on the range.** First slice of plan PR 15 (art pass), made in code as Kelbo chose. `tankShapeOf` now gives a list of parts (boxes, drums, slabs and a lofted turret) and `src/render/tankModel.ts` joins them into one mesh per colour. Five turret shapes in `RENDER.tank.turrets`; tiles drawn from `spec.era`. `tankTriangles` and a test hold a tank to 1,100 triangles.
 - **0.14.2.0, PR 14: the guided first contract.** A guide card on every tab walks a newcomer through the first tender (night sight, prototype, report, enter), and the rival bureaus make no revisions on that tender. Kelbo confirmed the glossary, the unmanned turret and the rivals' 2016 picks as built. This finishes plan PR 14.
