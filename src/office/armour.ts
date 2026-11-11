@@ -59,19 +59,25 @@ export function layerCost(geo: Geometry, zone: ZoneId, layer: ArmourLayer): { ma
 // --- Section view ---------------------------------------------------------
 
 export interface Slab {
-  material: MaterialId
+  /** A layer's material, or a reactive tile standing off the plate. */
+  material: MaterialId | 'tile'
   /** Corners in SVG space (millimetres, y down), outer bottom corner first. */
   points: [number, number][]
+  /** Where the shot goes in and comes out, along the shot line. */
+  enterX: number
+  exitX: number
 }
 
 export interface Section {
   box: { x: number; y: number; w: number; h: number }
-  /** Outside layer first. */
+  /** Outside first: the tile when there is one, then the layers. */
   slabs: Slab[]
   /** The level shot: where it starts, meets the plate, leaves it and stops. */
   shot: { y: number; startX: number; enterX: number; exitX: number; endX: number }
   /** How far the shot travels inside the armour. */
   pathMm: number
+  /** How far the top of the strip sits behind its bottom. */
+  leanMm: number
 }
 
 function round(value: number): number {
@@ -79,40 +85,52 @@ function round(value: number): number {
 }
 
 /**
- * A strip of the zone's plate, cut through and drawn to scale, leaning at its
- * slope, with a level shot coming from the left.
+ * A strip of the zone's plate, cut through along the shot and drawn to scale,
+ * leaning at its slope, with a level shot coming from the left. A shot that
+ * comes in `angleDeg` off square crosses more plate, so the cut is wider.
  */
-export function sectionOf(layers: readonly ArmourLayer[], slopeDeg: number): Section {
+export function sectionOf(layers: readonly ArmourLayer[], slopeDeg: number, angleDeg = 0, tile = false): Section {
   const S = SECTION
   const slope = (slopeDeg * Math.PI) / 180
-  const factor = 1 / Math.cos(slope)
-  /** How far the top of the strip sits behind its bottom. */
-  const lean = S.stripMm * Math.tan(slope)
+  const turn = Math.cos((angleDeg * Math.PI) / 180)
+  const factor = 1 / (Math.cos(slope) * turn)
+  const lean = (S.stripMm * Math.tan(slope)) / turn
 
   const slabs: Slab[] = []
-  let x = 0
-  for (const layer of layers) {
-    const across = layer.mm * factor
+  const slab = (material: Slab['material'], x: number, across: number): void => {
     slabs.push({
-      material: layer.material,
+      material,
       points: [
         [round(x), S.stripMm],
         [round(x + across), S.stripMm],
         [round(x + across + lean), 0],
         [round(x + lean), 0],
       ],
+      enterX: round(x + lean / 2),
+      exitX: round(x + across + lean / 2),
     })
+  }
+  // The tile stands a little way off the outside of the plate.
+  const tileAcross = S.tileMm * factor
+  const front = tile ? -(tileAcross + S.tileGapMm * factor) : 0
+  if (tile) slab('tile', front, tileAcross)
+  let x = 0
+  for (const layer of layers) {
+    const across = layer.mm * factor
+    slab(layer.material, x, across)
     x += across
   }
 
   const enterX = lean / 2
   const exitX = enterX + x
-  const left = -S.leadMm - S.marginMm
+  const startX = front - S.leadMm
+  const left = startX - S.marginMm
   const right = Math.max(x + lean, exitX + S.tailMm) + S.marginMm
   return {
     box: { x: round(left), y: -S.marginMm, w: round(Math.max(S.minWidthMm, right - left)), h: S.stripMm + 2 * S.marginMm },
     slabs,
-    shot: { y: S.stripMm / 2, startX: -S.leadMm, enterX: round(enterX), exitX: round(exitX), endX: round(exitX + S.tailMm) },
+    shot: { y: S.stripMm / 2, startX: round(startX), enterX: round(enterX), exitX: round(exitX), endX: round(exitX + S.tailMm) },
     pathMm: x,
+    leanMm: lean,
   }
 }

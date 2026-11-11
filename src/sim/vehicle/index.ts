@@ -8,4 +8,5 @@ export {
   type Verdict, type ZoneProtection,
 } from './protection'
 export { rollupOf, AREAS, type Area, type Rollup } from './rollup'
+export { shotCosine, testShot, type ShotResult, type ShotSetup, type ShotStep } from './shot'
 export type { ArmourLayer, Limits, VehicleSpec } from './spec'

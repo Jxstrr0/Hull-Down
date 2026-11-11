@@ -252,12 +252,46 @@ describe('the section view', () => {
   it('keeps everything inside the drawing, even the thickest, steepest stack', () => {
     const thick = Array.from({ length: TUNING.limits.maxLayersPerZone }, () => ({ material: 'castSteel' as const, mm: 600 }))
     for (const [layers, slope] of [[thick, 75], [[], 0], [baseline().armour.belly, 0]] as const) {
-      const { box, slabs, shot } = sectionOf(layers, slope)
-      expect(box.w).toBeGreaterThanOrEqual(SECTION.minWidthMm)
-      for (const x of [shot.startX, shot.endX, ...slabs.flatMap((slab) => slab.points.map((point) => point[0]))]) {
-        expect(x).toBeGreaterThanOrEqual(box.x)
-        expect(x).toBeLessThanOrEqual(box.x + box.w)
+      for (const [angle, tile] of [[0, false], [60, true]] as const) {
+        const { box, slabs, shot } = sectionOf(layers, slope, angle, tile)
+        expect(box.w).toBeGreaterThanOrEqual(SECTION.minWidthMm)
+        for (const x of [shot.startX, shot.endX, ...slabs.flatMap((slab) => slab.points.map((point) => point[0]))]) {
+          expect(x).toBeGreaterThanOrEqual(box.x)
+          expect(x).toBeLessThanOrEqual(box.x + box.w)
+        }
       }
     }
+  })
+
+  it('widens the cut for a shot that comes in off square', () => {
+    const layers = baseline().armour.upperGlacis
+    const square = sectionOf(layers, 68)
+    const turned = sectionOf(layers, 68, 60)
+    expect(turned.pathMm).toBeCloseTo(square.pathMm * 2, 3)
+    expect(turned.leanMm).toBeCloseTo(square.leanMm * 2, 3)
+    expect(sectionOf(layers, 68, 0)).toEqual(square)
+  })
+
+  it('says where the shot goes in and comes out of each slab', () => {
+    const section = sectionOf(baseline().armour.upperGlacis, 68, 30)
+    expect(section.slabs[0]?.enterX).toBeCloseTo(section.shot.enterX, 1)
+    expect(section.slabs.at(-1)?.exitX).toBeCloseTo(section.shot.exitX, 1)
+    for (let i = 1; i < section.slabs.length; i++) {
+      expect(section.slabs[i]?.enterX).toBeCloseTo(section.slabs[i - 1]?.exitX ?? NaN, 1)
+    }
+  })
+
+  it('stands a reactive tile off the outside of the plate', () => {
+    const layers = baseline().armour.hullSideFront
+    const bare = sectionOf(layers, 0)
+    const tiled = sectionOf(layers, 0, 0, true)
+    expect(tiled.slabs.map((slab) => slab.material)).toEqual(['tile', 'rolledSteel'])
+    const tile = tiled.slabs[0]
+    expect(tile?.exitX).toBeLessThan(tiled.shot.enterX)
+    expect((tile?.exitX ?? 0) - (tile?.enterX ?? 0)).toBeCloseTo(SECTION.tileMm, 3)
+    // The plate itself has not moved, and the shot starts further out.
+    expect(tiled.slabs[1]).toEqual(bare.slabs[0])
+    expect(tiled.pathMm).toBe(bare.pathMm)
+    expect(tiled.shot.startX).toBeLessThan(bare.shot.startX)
   })
 })

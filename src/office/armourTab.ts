@@ -8,8 +8,8 @@ import { MATERIALS, MATERIAL_IDS, ZONES, ZONE_FACING, type MaterialId, type Zone
 import { STRINGS, fill } from '../data/strings'
 import { TUNING } from '../data/tuning'
 import {
-  allTiles, hasTile, layerWorth, penetrationAt, setTile, tiledWorth, tileGrid, verdictOf, worthAgainst,
-  type StatSheet, type VehicleSpec, type Verdict,
+  allTiles, hasTile, layerWorth, penetrationAt, setTile, shotCosine, testShot, tiledWorth, tileGrid, verdictOf,
+  worthAgainst, type ShotResult, type StatSheet, type VehicleSpec, type Verdict,
 } from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { fixed, money } from '../ui/format'
@@ -33,6 +33,10 @@ export interface ArmourTabState {
   rangeM: number
   /** Whether the protection map's settings are unfolded. */
   mapOpen: boolean
+  /** How far off square the test shot comes in, degrees. */
+  angleDeg: number
+  /** Whether the test shot is aimed at a reactive tile, when the zone has any. */
+  atTile: boolean
 }
 
 export interface ArmourTabHost {
@@ -313,16 +317,207 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
   if (zone === 'upperGlacis') link(A.changeGlacis, 'hull.glacisAngleDeg')
   if (zone === 'turretFrontLeft' || zone === 'turretFrontRight' || zone === 'turretSides') link(A.changeTurret, 'turret.shape')
 
+  // --- The test shot --------------------------------------------------------
+  const shotBox = el('section', 'ctl')
+  shotBox.dataset.control = 'shot'
+  shotBox.append(el('h3', 'ctl-label', A.shotTitle))
+  shotBox.append(el('p', 'ctl-note', threat
+    ? fill(A.shotSetup, {
+        round: threat.kind === 'kinetic'
+          ? fill(A.mapKinetic, { round: threatName, range: String(state.rangeM) })
+          : fill(A.mapShaped, { round: threatName }),
+      })
+    : A.shotNone))
+
+  const angles: readonly number[] = TUNING.protection.shotAnglesDeg
+  const angleAt = angles.indexOf(state.angleDeg)
+  const angleRow = el('div', 'num maprange')
+  const turnShot = (direction: number, sign: string, label: string): HTMLButtonElement => {
+    const button = el('button', 'num-step', sign)
+    button.type = 'button'
+    button.dataset.key = `shot-angle:${direction}`
+    button.setAttribute('aria-label', label)
+    const next = angles[angleAt + direction]
+    button.disabled = next === undefined
+    button.addEventListener('click', () => {
+      if (next === undefined) return
+      state.angleDeg = next
+      host.refresh()
+    })
+    return button
+  }
+  const angleShown = el('output', 'maprange-value')
+  angleShown.append(
+    el('span', 'layer-name', A.angleLabel),
+    el('span', 'num-value', state.angleDeg === 0 ? A.angleSquare : fill(A.angleValue, { n: String(state.angleDeg) })),
+  )
+  angleRow.append(turnShot(-1, '−', A.angleLess), angleShown, turnShot(1, '+', A.angleMore))
+  shotBox.append(angleRow)
+
+  /** Whether the shot meets a tile: only when the zone has tiles and the player aims at one. */
+  const aimedAtTile = sheet.rollup.era[zone].tiles > 0 && state.atTile
+  if (sheet.rollup.era[zone].tiles > 0) {
+    const aim = el('div', 'seg')
+    aim.setAttribute('role', 'group')
+    aim.setAttribute('aria-label', A.aimLabel)
+    for (const [atTile, label] of [[true, A.aimTile], [false, A.aimPlate]] as [boolean, string][]) {
+      const button = el('button', state.atTile === atTile ? 'seg-item seg-on' : 'seg-item', label)
+      button.type = 'button'
+      button.dataset.key = `shot-aim:${atTile ? 'tile' : 'plate'}`
+      button.setAttribute('aria-pressed', state.atTile === atTile ? 'true' : 'false')
+      button.addEventListener('click', () => {
+        state.atTile = atTile
+        host.refresh()
+      })
+      aim.append(button)
+    }
+    shotBox.append(aim)
+  }
+
   const figure = el('figure', 'sec')
   const drawing = el('div', 'sec-drawing')
   const ends = el('div', 'sec-ends')
   ends.append(el('span', '', A.outside), el('span', '', A.inside))
   const caption = el('figcaption', 'bp-caption')
   figure.append(drawing, ends, caption)
-  detail.append(figure)
-  root.append(summary, values, detail)
+  const meets = el('p', 'ctl-note shot-meets')
+  const steps = el('ol', 'shot-steps')
+  const outcome = el('p', 'shot-result')
+  outcome.setAttribute('role', 'status')
+  shotBox.append(figure, meets, steps, outcome)
+  if (threat) shotBox.append(el('p', 'ctl-note', fill(A.shotNote, { pct: fixed(TUNING.protection.marginShare * 100, 0) })))
+  root.append(summary, values, detail, shotBox)
 
-  function drawSummary(): void {
+  /** A small arrowhead with its point at (x, y), flying along (dx, dy). */
+  const arrowHead = (x: number, y: number, dx: number, dy: number): SVGPolygonElement => {
+    const size = SECTION.arrowMm
+    const length = Math.hypot(dx, dy) || 1
+    const ux = dx / length
+    const uy = dy / length
+    const backX = x - ux * size
+    const backY = y - uy * size
+    const half = size / 2.5
+    return svg('polygon', {
+      points: `${x},${y} ${backX - uy * half},${backY + ux * half} ${backX + uy * half},${backY - ux * half}`,
+      class: 'sec-arrow',
+    })
+  }
+
+  /** What the shot did, in a sentence. */
+  const outcomeText = (result: ShotResult): string => {
+    if (result.ricochet) {
+      return fill(A.shotSkids, {
+        deg: fixed((Math.acos(result.cosine) * 180) / Math.PI, 0), limit: String(TUNING.protection.ricochetDeg),
+      })
+    }
+    const spare = mm(Math.abs(result.spareMm))
+    if (result.verdict === 'marginal') return fill(result.spareMm >= 0 ? A.shotCloseStopped : A.shotCloseThrough, { mm: spare })
+    if (result.verdict === 'fails') return fill(A.shotThrough, { mm: spare })
+    const stop = result.steps.find((step) => step.fate === 'stopped')
+    if (!stop) return A.shotSpent
+    if (stop.what === 'tile') return fill(A.shotStoppedTile, { mm: spare })
+    return fill(A.shotStopped, { n: String((stop.layer ?? 0) + 1), mm: spare })
+  }
+
+  /** The section view, with the test shot drawn as far as it gets. `fired` plays the shot in. */
+  function drawShot(fired: boolean): void {
+    const slopeDeg = sheet.protection[zone].slopeDeg
+    const section = sectionOf(layers, slopeDeg, state.angleDeg, aimedAtTile)
+    const result = threat
+      ? testShot(layers, slopeDeg, { round: threat, rangeM: state.rangeM, angleDeg: state.angleDeg, tile: aimedAtTile })
+      : undefined
+    const { box, shot } = section
+    const described = layers.length === 0
+      ? A.sectionEmpty
+      : layers.map((layer) => fill(A.sectionLayer, { mm: mm(layer.mm), material: STRINGS.materials[layer.material].name })).join(', ')
+    const picture = svg('svg', {
+      class: 'sec-svg', viewBox: `${box.x} ${box.y} ${box.w} ${box.h}`, role: 'img',
+      'aria-label': fill(A.sectionLabel, { zone: text.name, layers: described }),
+    })
+    picture.style.aspectRatio = `${box.w} / ${box.h}`
+    // Hatching is sized for a drawing about as wide as a phone.
+    picture.append(hatchDefs('sec', box.w / 330))
+    for (const slab of section.slabs) {
+      const points = slab.points.map(([x, y]) => `${x},${y}`).join(' ')
+      picture.append(slab.material === 'tile'
+        ? svg('polygon', { points, class: 'slab slab-tile' })
+        : svg('polygon', { points, fill: `url(#sec-${slab.material})`, class: `slab slab-${slab.material}` }))
+    }
+
+    // How far the shot gets: to the first thing in its way, to where it stops, or out the far side.
+    const firstX = section.slabs[0]?.enterX ?? shot.enterX
+    const path: [number, number][] = [[shot.startX, shot.y]]
+    const marks: SVGElement[] = []
+    const stopAt = result?.steps.findIndex((step) => step.fate === 'stopped') ?? -1
+    const stopSlab = section.slabs[stopAt]
+    const stopStep = result?.steps[stopAt]
+    if (!result) {
+      path.push([shot.endX, shot.y])
+      marks.push(arrowHead(firstX, shot.y, 1, 0))
+    } else if (result.ricochet) {
+      // It skids up the face of the plate.
+      const k = SECTION.skidShare
+      const endX = firstX + section.leanMm * k
+      const endY = shot.y - SECTION.stripMm * k
+      path.push([firstX, shot.y], [endX, endY])
+      marks.push(arrowHead(endX, endY, section.leanMm, -SECTION.stripMm))
+    } else if (stopSlab && stopStep) {
+      const x = stopSlab.enterX + stopStep.crossed * (stopSlab.exitX - stopSlab.enterX)
+      const tick = SECTION.arrowMm / 2
+      path.push([x, shot.y])
+      marks.push(
+        svg('line', { x1: String(x - tick), y1: String(shot.y - tick), x2: String(x + tick), y2: String(shot.y + tick), class: 'sec-stop' }),
+        svg('line', { x1: String(x - tick), y1: String(shot.y + tick), x2: String(x + tick), y2: String(shot.y - tick), class: 'sec-stop' }),
+      )
+    } else {
+      path.push([shot.endX, shot.y])
+      marks.push(arrowHead(shot.endX, shot.y, 1, 0))
+    }
+    const classes = ['sec-shot']
+    if (result) classes.push('sec-shot-live')
+    // A shot too close to call is drawn broken. Any other plays in when the panel is drawn afresh.
+    const unsure = result?.verdict === 'marginal'
+    if (unsure) classes.push('sec-shot-unsure')
+    else if (result && fired) classes.push('sec-shot-fired')
+    const line = svg('polyline', { points: path.map(([x, y]) => `${x},${y}`).join(' '), class: classes.join(' ') })
+    // Measured as one unit long, so the stylesheet can draw it in from nothing.
+    if (!unsure) line.setAttribute('pathLength', '1')
+    picture.append(line, ...marks)
+    drawing.replaceChildren(picture)
+    caption.textContent = layers.length === 0 ? A.none : fill(A.sectionCaption, { mm: mm(section.pathMm) })
+
+    const cosine = shotCosine(slopeDeg, state.angleDeg)
+    meets.hidden = state.angleDeg === 0
+    meets.textContent = fill(A.shotMeets, {
+      angle: String(state.angleDeg), deg: fixed((Math.acos(cosine) * 180) / Math.PI, 0), x: fixed(1 / cosine, 1),
+    })
+
+    steps.replaceChildren()
+    steps.hidden = !result
+    outcome.hidden = !result
+    if (!result) return
+    const row = (name: string, value: string, cls = 'shot-step'): void => {
+      const item = el('li', cls)
+      item.append(el('span', 'shot-step-name', name), el('span', 'shot-step-value', value))
+      steps.append(item)
+    }
+    row(A.stepArrives, fill(A.stepCanCross, { mm: mm(result.penMm) }))
+    for (const step of result.steps) {
+      const layer = step.layer === undefined ? undefined : layers[step.layer]
+      const name = layer
+        ? fill(A.stepLayer, {
+            n: String((step.layer ?? 0) + 1), material: STRINGS.materials[layer.material].name, mm: mm(layer.mm),
+          })
+        : A.stepTile
+      if (step.fate === 'through') row(name, fill(A.stepTakes, { mm: mm(step.worthMm), left: mm(step.leftMm) }))
+      else if (step.fate === 'stopped') row(name, A.stepStops, 'shot-step shot-step-stop')
+      else row(name, A.stepNotReached, 'shot-step shot-step-off')
+    }
+    outcome.className = `shot-result verdict-${result.verdict}`
+    outcome.textContent = `${A.verdictMarks[result.verdict]} ${outcomeText(result)}`
+  }
+
+  function drawSummary(fired = false): void {
     const protection = sheet.protection[zone]
     weight.textContent = fill(A.zoneWeight, { n: fixed(sheet.rollup.zoneMassT[zone], 2) })
     kinetic.textContent = fill(D.units.mm, { n: mm(protection.keMm) })
@@ -343,34 +538,7 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
       : fill(A.underTileValue, { ke: mm(tiledWorth(protection, 'kinetic')), ce: mm(tiledWorth(protection, 'shaped')), pct })
     underTile.className = tiled ? `prot-era verdict-${tiled}` : 'prot-era'
 
-    const section = sectionOf(layers, protection.slopeDeg)
-    const { box, shot } = section
-    const described = layers.length === 0
-      ? A.sectionEmpty
-      : layers.map((layer) => fill(A.sectionLayer, { mm: mm(layer.mm), material: STRINGS.materials[layer.material].name })).join(', ')
-    const picture = svg('svg', {
-      class: 'sec-svg', viewBox: `${box.x} ${box.y} ${box.w} ${box.h}`, role: 'img',
-      'aria-label': fill(A.sectionLabel, { zone: text.name, layers: described }),
-    })
-    picture.style.aspectRatio = `${box.w} / ${box.h}`
-    // Hatching is sized for a drawing about as wide as a phone.
-    picture.append(hatchDefs('sec', box.w / 330))
-    for (const slab of section.slabs) {
-      picture.append(svg('polygon', {
-        points: slab.points.map(([x, y]) => `${x},${y}`).join(' '),
-        fill: `url(#sec-${slab.material})`, class: `slab slab-${slab.material}`,
-      }))
-    }
-    const arrow = SECTION.arrowMm
-    picture.append(
-      svg('line', { x1: String(shot.startX), y1: String(shot.y), x2: String(shot.endX), y2: String(shot.y), class: 'sec-shot' }),
-      svg('polygon', {
-        points: `${shot.enterX},${shot.y} ${shot.enterX - arrow},${shot.y - arrow / 2.5} ${shot.enterX - arrow},${shot.y + arrow / 2.5}`,
-        class: 'sec-arrow',
-      }),
-    )
-    drawing.replaceChildren(picture)
-    caption.textContent = layers.length === 0 ? A.none : fill(A.sectionCaption, { mm: mm(section.pathMm) })
+    drawShot(fired)
   }
 
   // --- The layers ---------------------------------------------------------
@@ -521,7 +689,7 @@ export function renderArmourTab(host: ArmourTabHost): HTMLElement {
   }
   root.append(tilesBox)
 
-  drawSummary()
+  drawSummary(true)
   // The row of zones is rebuilt on every draw; put it back where it was.
   queueMicrotask(() => {
     zones.scrollLeft = state.zonesScroll

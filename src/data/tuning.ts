@@ -49,6 +49,10 @@ export const TUNING = {
     /** Ranges the protection map can be set to, metres. */
     mapRangesM: [500, 1000, 1500, 2000, 3000],
     defaultRangeM: 1000,
+    /** Angles off square the test shot can be fired from, degrees. */
+    shotAnglesDeg: [0, 15, 30, 45, 60],
+    /** A kinetic round meeting the plate further than this from square skids off. */
+    ricochetDeg: 80,
   },
   mass: {
     /** Tonnes per litre of fuel, with its tank. */
