@@ -3,13 +3,13 @@
 // bureau likes, puts right whatever cannot be built, and then spends the
 // weight it has left on armour. Same parts list, same limits, same checks.
 import { BASELINE_SPEC } from '../../data/baseline'
-import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
-import { BUREAUS, BUREAU_IDS, DESIGNER, type BureauId, type Philosophy, type Picks } from '../../data/opponents'
+import { MATERIALS, ZONES, type MaterialId, type ZoneId } from '../../data/materials'
+import { BUREAUS, BUREAU_IDS, DESIGNER, type BureauId, type LaterPicks, type Philosophy, type Picks } from '../../data/opponents'
 import {
   COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS,
   TRANSMISSIONS, TURRETS, type EngineId, type GunId, type TransmissionId, type TurretId,
 } from '../../data/parts'
-import type { Generation } from '../../data/tech'
+import { GENERATIONS, type Generation } from '../../data/tech'
 import { TUNING } from '../../data/tuning'
 import { gunRingMm } from '../gunnery/mount'
 import { unit } from '../rng'
@@ -110,32 +110,45 @@ function fit(spec: VehicleSpec, targetT: number, limits: Limits): number {
   )
 }
 
+type Swaps = Partial<Record<MaterialId, MaterialId>>
+
+/** The newer parts a bureau has moved on to by a tender of this generation, the latest word on each. */
+function laterPicks(philosophy: Philosophy, generation: Generation): LaterPicks {
+  let picks: LaterPicks = {}
+  for (const g of GENERATIONS) {
+    const more: LaterPicks | undefined = philosophy.later[g]
+    if (g <= generation && more) picks = { ...picks, ...more, materials: { ...picks.materials, ...more.materials } }
+  }
+  return picks
+}
+
 /** The bureau's armour pattern at one scale, every plate on the drawing-office step. */
-function plated(pattern: Record<ZoneId, number>, scale: number): Record<ZoneId, ArmourLayer[]> {
+function plated(pattern: Record<ZoneId, number>, scale: number, swaps: Swaps): Record<ZoneId, ArmourLayer[]> {
   const lim = TUNING.limits
   const out = {} as Record<ZoneId, ArmourLayer[]>
   for (const zone of ZONES) {
     out[zone] = BASELINE_SPEC.armour[zone].map((layer) => {
-      const most = Math.min(lim.maxLayerMm, MATERIALS[layer.material].maxMm)
+      const material = swaps[layer.material] ?? layer.material
+      const most = Math.min(lim.maxLayerMm, MATERIALS[material].maxMm)
       const mm = Math.round((layer.mm * pattern[zone] * scale) / lim.layerStepMm) * lim.layerStepMm
-      return { material: layer.material, mm: clamp(mm, lim.minLayerMm, most) }
+      return { material, mm: clamp(mm, lim.minLayerMm, most) }
     })
   }
   return out
 }
 
 /** Thickens the bureau's armour pattern as far as the weight aimed at allows. */
-function armourUp(spec: VehicleSpec, pattern: Record<ZoneId, number>, targetT: number): void {
+function armourUp(spec: VehicleSpec, pattern: Record<ZoneId, number>, targetT: number, swaps: Swaps): void {
   let low: number = DESIGNER.armourScale.min
   let high: number = DESIGNER.armourScale.max
-  spec.armour = plated(pattern, low)
+  spec.armour = plated(pattern, low, swaps)
   for (let step = 0; step < DESIGNER.armourSteps; step++) {
     const mid = (low + high) / 2
-    spec.armour = plated(pattern, mid)
+    spec.armour = plated(pattern, mid, swaps)
     if (massOf(spec) <= targetT) low = mid
     else high = mid
   }
-  spec.armour = plated(pattern, low)
+  spec.armour = plated(pattern, low, swaps)
 }
 
 /** One thing done about one fault. False when the designer has nothing left to try. */
@@ -174,6 +187,14 @@ function repair(spec: VehicleSpec, issue: Issue): boolean {
       }
       return false
     }
+    // A round the tank cannot fire goes back to the Pact's issue.
+    case 'rodTooLongForCarousel':
+      spec.ammo.kinetic = 'supplied'
+      return true
+    case 'missileNeedsSmoothbore':
+    case 'missileNeedsComputer':
+      spec.ammo.shaped = 'supplied'
+      return true
     default:
       // Rings, wheels, tracks and weight are set by `fit` and `armourUp`, which run again after every repair.
       return false
@@ -193,8 +214,9 @@ export interface Draft {
  */
 function settle(spec: VehicleSpec, pattern: Record<ZoneId, number>, philosophy: Philosophy, limits: Limits): boolean {
   const targetT = limits.maxMassT * philosophy.massShare
+  const swaps = laterPicks(philosophy, limits.generation ?? 1).materials ?? {}
   for (let turn = 0; turn < DESIGNER.repairTurns; turn++) {
-    armourUp(spec, pattern, fit(spec, targetT, limits))
+    armourUp(spec, pattern, fit(spec, targetT, limits), swaps)
     const faults = errorsOf(spec, limits)
     if (faults.length === 0) return true
     if (!faults.some((issue) => repair(spec, issue))) break
@@ -241,6 +263,13 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   spec.protection = { smokeLaunchers: true, fireSuppression: pick('fireSuppression'), spallLiner: pick('spallLiner') }
   spec.crew.comfort = pick('comfort')
   for (const zone of ZONES) spec.era[zone] = philosophy.tiles.includes(zone) ? allTiles(zone) : 0
+  // What the bureau has moved on to by the tender's year.
+  const later = laterPicks(philosophy, limits.generation ?? 1)
+  if (later.loading) spec.loading = later.loading
+  if (later.computer) spec.fireControl.computer = later.computer
+  if (later.night) spec.fireControl.night = later.night
+  if (later.kinetic) spec.ammo.kinetic = later.kinetic
+  if (later.shaped) spec.ammo.shaped = later.shaped
   // A gun outside the tender's calibres is no use: the bureau takes the biggest gun that is allowed.
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 
