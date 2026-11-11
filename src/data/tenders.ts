@@ -2,7 +2,7 @@
 // bids. Game-level numbers, not engineering data.
 import type { Limits } from '../sim/vehicle/spec'
 import type { ThreatTankId } from './opponents'
-import { MARKS_GEN1, MARKS_GEN2, type Marks } from './range'
+import { MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, type Marks } from './range'
 import { PACT_LIMITS_GEN1, PACT_LIMITS_GEN3 } from './tuning'
 
 export const SCORE_AXES = ['protection', 'firepower', 'mobility', 'reliability', 'cost'] as const
@@ -59,7 +59,7 @@ export const TENDERS: Record<TenderId, Tender> = {
   tank2016: {
     year: 2016,
     limits: { ...PACT_LIMITS_GEN3, generation: 3, maxUnitCostKr: 8_000_000 },
-    marks: MARKS_GEN2,
+    marks: MARKS_GEN3,
     threats: ['palisadeB'],
     weights: { protection: 35, firepower: 25, mobility: 10, reliability: 15, cost: 15 },
     grantKr: 60_000_000,

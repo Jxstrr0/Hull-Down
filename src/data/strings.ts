@@ -716,6 +716,8 @@ export const STRINGS = {
     accord120LongRod: { name: 'Accord 120 mm long rod', note: 'A longer, heavier dart for the 120 mm gun. Goes through far more than the first sabot.' },
     tandemRocket: { name: 'Tandem rocket', note: 'A shoulder-fired rocket with two charges. The first sets off a reactive tile; the second does the work.' },
     tandemMissile: { name: 'Tandem missile', note: 'A guided missile with two charges and a very large warhead. Tiles do little against it.' },
+    topAttackMissile: { name: 'Top-attack missile', note: 'A guided missile that climbs and comes down on the roof, where the armour is thinnest.' },
+    droneBomblet: { name: 'Drone bomblet', note: 'A small shaped charge dropped from a drone. It does not go through much, but a roof is not much.' },
   },
   rounds: {
     sabot100: '100 mm sabot',
@@ -1401,7 +1403,7 @@ export const STRINGS = {
   tenders: {
     tank2016: {
       name: 'A tank for a watched battlefield',
-      brief: 'Fifteen years on. The Palisade B is still what the Accord fields, but the army has watched what small wars abroad do to tanks, and wants above all a tank that comes back. The Pact has rebuilt its bridges to carry 48 t, and the ministry will pay more than it ever has. Generation three parts are allowed as the bureau works them up.',
+      brief: 'Fifteen years on. The Palisade B is still what the Accord fields, but the army has watched what small wars abroad do to tanks, and wants above all a tank that comes back: the range now drops a bomblet from a drone on the hull roof and the turret roof, and both must hold. A top-attack missile is fired at the turret roof for the record. The Pact has rebuilt its bridges to carry 48 t, and the ministry will pay more than it ever has. Generation three parts are allowed as the bureau works them up.',
     },
     tank2001: {
       name: 'A tank for the new century',

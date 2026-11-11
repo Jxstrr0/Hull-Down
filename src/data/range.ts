@@ -286,6 +286,21 @@ export const MARKS_GEN2 = {
   bermShowsM: 1.9,
 } as const
 
+/**
+ * What the army asks in generation three: everything it asked in 2001, and
+ * a roof that holds against what small drones drop on it. The top-attack
+ * missile is fired for the record.
+ */
+export const MARKS_GEN3 = {
+  ...MARKS_GEN2,
+  armour: [
+    ...MARKS_GEN2.armour,
+    { zone: 'turretRoof', threat: 'droneBomblet', rangeM: 100, angleDeg: 0, gate: true },
+    { zone: 'hullRoof', threat: 'droneBomblet', rangeM: 100, angleDeg: 0, gate: true },
+    { zone: 'turretRoof', threat: 'topAttackMissile', rangeM: 1000, angleDeg: 0, gate: false },
+  ] as readonly ArmourSerial[],
+} as const
+
 export type Marks = {
   sprintS: number
   topKmh: number
