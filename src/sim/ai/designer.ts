@@ -9,6 +9,7 @@ import {
   COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS,
   TRANSMISSIONS, TURRETS, type EngineId, type GunId, type TransmissionId, type TurretId,
 } from '../../data/parts'
+import type { Generation } from '../../data/tech'
 import { TUNING } from '../../data/tuning'
 import { gunRingMm } from '../gunnery/mount'
 import { unit } from '../rng'
@@ -17,6 +18,7 @@ import { allTiles } from '../vehicle/era'
 import { geometryOf } from '../vehicle/geometry'
 import { rollupOf } from '../vehicle/rollup'
 import type { ArmourLayer, Limits, VehicleSpec } from '../vehicle/spec'
+import { available } from '../vehicle/tech'
 
 const SLOTS = [
   'hull', 'turret', 'gun', 'barrel', 'recoil', 'loading', 'stowage', 'engine', 'suspension', 'sight', 'rangefinder',
@@ -263,22 +265,26 @@ export const LESSONS = ['night', 'onTheMove', 'halted', 'drill', 'power', 'trenc
 export type Lesson = (typeof LESSONS)[number] | { zone: ZoneId }
 
 /** The part after this one in its table, which lists them plainest first. Null at the end. */
-function nextOf<K extends string>(table: Record<K, unknown>, current: K): K | null {
+function nextOf<K extends string>(table: Record<K, unknown>, current: K, allowed: (id: K) => boolean = () => true): K | null {
   const ids = Object.keys(table) as K[]
-  return ids[ids.indexOf(current) + 1] ?? null
+  const next = ids[ids.indexOf(current) + 1]
+  return next !== undefined && allowed(next) ? next : null
 }
 
 /** One thing done about one lesson. False when the bureau has nothing better to fit. */
-function learn(draft: Draft, lesson: Lesson): boolean {
+function learn(draft: Draft, lesson: Lesson, generation: Generation): boolean {
   const { spec } = draft
   const fc = spec.fireControl
+  // A bureau fits nothing newer than the tender's year allows.
+  const nightOk = (id: string): boolean => available('fireControl.night', id, generation)
+  const computerOk = (id: string): boolean => available('fireControl.computer', id, generation)
   if (typeof lesson !== 'string') {
     draft.pattern[lesson.zone] *= DESIGNER.lessonArmour
     return true
   }
   switch (lesson) {
     case 'night': {
-      const night = nextOf(NIGHT_SIGHTS, fc.night)
+      const night = nextOf(NIGHT_SIGHTS, fc.night, nightOk)
       if (night) fc.night = night
       return night !== null
     }
@@ -288,7 +294,7 @@ function learn(draft: Draft, lesson: Lesson): boolean {
         fc.stabiliser = stabiliser
         return true
       }
-      const computer = nextOf(COMPUTERS, fc.computer)
+      const computer = nextOf(COMPUTERS, fc.computer, computerOk)
       if (computer) fc.computer = computer
       return computer !== null
     }
@@ -298,7 +304,7 @@ function learn(draft: Draft, lesson: Lesson): boolean {
         fc.rangefinder = rangefinder
         return true
       }
-      const computer = nextOf(COMPUTERS, fc.computer)
+      const computer = nextOf(COMPUTERS, fc.computer, computerOk)
       if (computer) {
         fc.computer = computer
         return true
@@ -345,7 +351,7 @@ function learn(draft: Draft, lesson: Lesson): boolean {
 export function reviseRival(draft: Draft, bureau: BureauId, limits: Limits, lessons: readonly Lesson[]): Draft | null {
   const next: Draft = { spec: copyOf(draft.spec), pattern: { ...draft.pattern } }
   let changed = false
-  for (const lesson of lessons) changed = learn(next, lesson) || changed
+  for (const lesson of lessons) changed = learn(next, lesson, limits.generation ?? 1) || changed
   if (!changed) return null
   return settle(next.spec, next.pattern, BUREAUS[bureau], limits) ? next : null
 }

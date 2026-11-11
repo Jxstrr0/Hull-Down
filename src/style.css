@@ -334,6 +334,8 @@ body {
   text-transform: uppercase;
 }
 .opt-tag-off { border-color: var(--ink-dim); color: var(--ink-dim); }
+.opt-locked { border-style: dashed; cursor: not-allowed; }
+.opt-locked .opt-name, .opt-locked .opt-note { color: var(--ink-dim); }
 .opt-note { font-size: 0.88rem; color: var(--ink-dim); }
 .opt-delta { font-family: var(--font-mono); font-size: 0.82rem; }
 .opt-warn { font-size: 0.85rem; color: var(--pencil); }

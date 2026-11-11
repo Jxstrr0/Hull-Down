@@ -4,6 +4,11 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Generation two parts, first three** (0.11.0.0): a thermal sight, a
+  digital computer and a layered composite armour insert. They show in the
+  office as locked ("Generation 2") until a later tender opens them. The
+  names and numbers are my picks; say if you want others. More parts come
+  with the rest of PR 11.
 - **The archive stays on the phone** (0.10.4.0): it is kept in this
   browser and survives a new career, but it is not in the save code or the
   backup file yet. Say if you want it carried in those.
@@ -219,6 +224,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.11.0.0, PR 11a: technology generations.** Every tender now carries a
+  generation, and a design cannot fit a part newer than its tender allows
+  (a new fault, "Not to be had yet"). First generation-two parts: thermal
+  sight, digital computer, layered composite. The office shows them locked
+  with a "Generation 2" tag; the armour material list greys them out. Rival
+  bureaus keep to what the tender allows. Nothing unlocks them yet: the
+  second tender comes in the next slices.
 - **0.10.4.0, PR 10e: the bureau archive.** The Bureau tab ends with "The
   archive": one page for every tank the army has taken, with its
   production, tanks built, stops, exercise results, fees, packages and a

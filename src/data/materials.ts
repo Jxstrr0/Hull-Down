@@ -1,4 +1,4 @@
-// Armour materials for generation one: weight, cost, and how well each
+// Armour materials: weight, cost, and how well each
 // resists the two kinds of threat.
 // Game-level abstractions, not engineering data.
 
@@ -24,6 +24,8 @@ export const MATERIALS = {
   // The gap itself is empty; the weight and cost are its brackets and spacers.
   airGap: { densityTM3: 0.3, costPerTKr: 20_000, ke: 0, ce: 0.2, maxMm: 200, needsPlates: true },
   compositeInsert: { densityTM3: 4.2, costPerTKr: 38_000, ke: 0.7, ce: 1.3, maxMm: 300, needsPlates: true },
+  // Generation two (src/data/tech.ts).
+  layeredComposite: { densityTM3: 4.6, costPerTKr: 64_000, ke: 0.95, ce: 1.7, maxMm: 300, needsPlates: true },
 } as const satisfies Record<string, Material>
 export type MaterialId = keyof typeof MATERIALS
 export const MATERIAL_IDS = Object.keys(MATERIALS) as MaterialId[]

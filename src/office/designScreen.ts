@@ -16,6 +16,8 @@ import {
 import { DEFAULT_THREAT, THREATS, type Round } from '../data/ammo'
 import { ZONES, type ZoneId } from '../data/materials'
 import { GUNS } from '../data/parts'
+import { TECH_FIELDS, type TechField } from '../data/tech'
+import { generationOf } from '../sim/vehicle/tech'
 import { TUNING } from '../data/tuning'
 import { renderArmourTab, type ArmourTabState } from './armourTab'
 import { renderBlueprint, type ZoneTiles } from './blueprint'
@@ -401,6 +403,8 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     return button
   }
 
+  const isTechField = (id: string): id is TechField => (TECH_FIELDS as readonly string[]).includes(id)
+
   function frame(control: Control): HTMLElement {
     const text = STRINGS.controls[control.id]
     const box = el('section', 'ctl')
@@ -426,6 +430,18 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       const text = control.text[option]
       if (!text) continue
       const on = option === current
+      // A part newer than the tender allows is shown, and cannot be picked.
+      const comes = isTechField(control.id) ? generationOf(control.id, option) : 1
+      if (!on && comes > (limits.generation ?? 1)) {
+        const locked = optionButton(`${control.id}:${option}`, false, text, undefined)
+        locked.setAttribute('role', 'radio')
+        locked.setAttribute('aria-disabled', 'true')
+        locked.classList.add('opt-locked')
+        locked.querySelector('.opt-head')?.append(el('span', 'opt-tag opt-tag-off', fill(O.generation, { n: String(comes) })))
+        locked.append(el('span', 'opt-warn', O.notYet))
+        group.append(locked)
+        continue
+      }
       const change = on ? undefined : preview(spec, limits, sheet, (copy) => control.set(copy, option))
       const button = optionButton(`${control.id}:${option}`, on, text, change)
       button.setAttribute('role', 'radio')
@@ -919,6 +935,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     else if (tab === 'saves') parts.push(saves.draw())
     else if (tab === 'armour') {
       parts.push(renderArmourTab({
+        generation: limits.generation ?? 1,
         spec, sheet, state: armourState, commit, goTo, pickZone,
         refresh: () => {
           drawBlueprint()

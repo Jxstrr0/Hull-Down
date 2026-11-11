@@ -103,11 +103,14 @@ export const GUNNERY = {
     none: { uncorrected: 1, setS: 4 },
     mechanical: { uncorrected: 0.55, setS: 2.5 },
     electronic: { uncorrected: 0.15, setS: 1 },
+    digital: { uncorrected: 0.06, setS: 0.6 },
   } satisfies Record<ComputerId, ComputerGunnery>,
   nightSights: {
     none: { seeM: 300, layFactor: 2.5 },
     activeInfrared: { seeM: 800, layFactor: 1.6 },
     imageIntensifier: { seeM: 1300, layFactor: 1.3 },
+    // Night is nearly day through a thermal sight.
+    thermal: { seeM: 2600, layFactor: 1.05 },
   } satisfies Record<NightSightId, NightGunnery>,
   /** Seconds for the commander to find a target and put the gunner on it. */
   find: { plainS: 5, ownSightS: 3 },

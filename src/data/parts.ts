@@ -276,6 +276,8 @@ export const COMPUTERS = {
   none: { massT: 0, volumeM3: 0, costKr: 0, reliability: 1, workload: 6 },
   mechanical: { massT: 0.05, volumeM3: 0.05, costKr: 30_000, reliability: 0.98, workload: 0 },
   electronic: { massT: 0.04, volumeM3: 0.04, costKr: 120_000, reliability: 0.96, workload: -6 },
+  // Generation two (src/data/tech.ts).
+  digital: { massT: 0.03, volumeM3: 0.03, costKr: 210_000, reliability: 0.975, workload: -9 },
 } as const satisfies Record<string, FireControlPart>
 export type ComputerId = keyof typeof COMPUTERS
 
@@ -283,6 +285,8 @@ export const NIGHT_SIGHTS = {
   none: { massT: 0, volumeM3: 0, costKr: 0, reliability: 1, workload: 0 },
   activeInfrared: { massT: 0.09, volumeM3: 0.05, costKr: 35_000, reliability: 0.975, workload: 2 },
   imageIntensifier: { massT: 0.05, volumeM3: 0.04, costKr: 130_000, reliability: 0.97, workload: 0 },
+  // Generation two (src/data/tech.ts).
+  thermal: { massT: 0.08, volumeM3: 0.06, costKr: 380_000, reliability: 0.96, workload: -2 },
 } as const satisfies Record<string, FireControlPart>
 export type NightSightId = keyof typeof NIGHT_SIGHTS
 

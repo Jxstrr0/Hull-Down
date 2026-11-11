@@ -1,6 +1,7 @@
 // The vehicle spec: everything the player chooses. Plain data, safe to save
 // as JSON. The stat sheet (stats.ts) is worked out from it.
 import type { MaterialId, ZoneId } from '../../data/materials'
+import type { Generation } from '../../data/tech'
 import type {
   BarrelId, ComfortId, ComputerId, CoolingId, EngineId, GunId, HullId, LoadingId, NightSightId,
   RangefinderId, RecoilId, SightId, StabiliserId, StowageId, SuspensionId, TransmissionId, TurretId,
@@ -76,4 +77,6 @@ export interface Limits {
   maxWidthM: number
   allowedCalibresMm: readonly number[]
   maxUnitCostKr?: number
+  /** The newest technology allowed (src/data/tech.ts). Generation one when not given. */
+  generation?: Generation
 }
