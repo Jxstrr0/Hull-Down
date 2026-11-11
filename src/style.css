@@ -1008,6 +1008,9 @@ body {
 .duel-opp-kind { font-size: 0.75rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; }
 .duel-opp-name { font-size: 0.95rem; }
 .duel-results { display: flex; flex-direction: column; gap: 16px; }
+.bt-line { font-size: 0.8rem; font-weight: 400; color: var(--ink-dim); }
+.bt-orders { display: flex; flex-direction: column; gap: 4px; }
+.bt-order .duel-pick { grid-template-columns: 1fr; }
 .duel-score { margin: 0 0 4px; font-family: var(--font-mono); font-weight: 600; }
 .duel-bar { display: flex; height: 14px; margin: 4px 0 8px; border: 1.5px solid var(--ink); }
 .duel-bar-part { flex: 1 1 0; min-width: 2px; }

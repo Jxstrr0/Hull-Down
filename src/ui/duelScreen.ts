@@ -30,18 +30,18 @@ export interface DuelScreenArgs {
   fixZone(zone: ZoneId): void
 }
 
-function card(title: string): HTMLElement {
+export function card(title: string): HTMLElement {
   const box = el('section', 'rg-card duel-card')
   box.append(el('h3', 'ds-group-title', title))
   return box
 }
 
 /** Won, lost and drawn as one bar. Each part has its own pattern, and the numbers are written beside it. */
-function scoreBar(series: Pick<DuelSeries, 'won' | 'lost' | 'drawn'>): HTMLElement {
+export function scoreBar(series: Pick<DuelSeries, 'won' | 'lost' | 'drawn'>, label: string = D.barLabel): HTMLElement {
   const n = series.won + series.lost + series.drawn
   const bar = el('div', 'duel-bar')
   bar.setAttribute('role', 'img')
-  bar.setAttribute('aria-label', fill(D.barLabel, {
+  bar.setAttribute('aria-label', fill(label, {
     n: String(n), won: String(series.won), lost: String(series.lost), drawn: String(series.drawn),
   }))
   for (const [kind, count] of [['won', series.won], ['drawn', series.drawn], ['lost', series.lost]] as const) {

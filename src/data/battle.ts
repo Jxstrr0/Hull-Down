@@ -156,6 +156,36 @@ export const BATTLE = {
   wearFactor: 30,
   /** The tanks' places are kept this often for the playback, seconds. */
   trackS: 1,
+  /** Battles fought on a ground for the report. */
+  runs: 12,
+  /** What the report takes to be worth saying. Each is a share, 0..1, unless it says otherwise. */
+  report: {
+    /** The other platoon shot first in at least this share of the battles, or this one did. */
+    shotFirst: 0.6,
+    /** This platoon's rounds hit this much less often than the other's. */
+    missingBy: 0.12,
+    /** Hits that did nothing, of all hits. */
+    bounced: 0.5,
+    /** Hits that got through, of all hits. */
+    gotThrough: 0.6,
+    /** Of the tanks lost, those lost to the ammunition going up, and to fire. */
+    magazine: 0.4,
+    burned: 0.2,
+    /** One plate took at least this share of everything that got through. */
+    onePlate: 0.4,
+    /** A round came in from the side when it was this far round from dead ahead, degrees. */
+    flankDeg: 40,
+    /** Rounds that got through from the side, of all that got through. */
+    flanked: 0.35,
+    /** Tanks that broke down, of all the platoon's tanks in all the battles. */
+    brokeDown: 0.06,
+    /** The platoon lost no more than this share of its tanks while winning most battles. */
+    fewLost: 0.25,
+    /** Fewer rounds than this is too few to say anything about. */
+    fewest: 6,
+    /** How many things the report names. */
+    findings: 3,
+  },
   grounds: {
     // The platoon holds a ridge; four come at it across the open.
     defend: {

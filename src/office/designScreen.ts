@@ -28,7 +28,9 @@ import { NAME_MAX, cleanName, cleanSpec } from '../persist/specCodec'
 import { issueText, renderGunnery, renderReadouts, renderStations } from './readouts'
 import { renderRangeScreen } from '../ui/rangeScreen'
 import { renderCompareScreen, type CompareSide } from '../ui/compareScreen'
+import { renderBattleScreen } from '../ui/battleScreen'
 import { renderDuelScreen } from '../ui/duelScreen'
+import { BATTLE } from '../data/battle'
 import { DUEL } from '../data/duel'
 import { createBureau } from './bureauTab'
 import { createSaves } from './savesTab'
@@ -566,6 +568,31 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     screen.focus({ preventScroll: true })
   }
 
+  /** Three or four of the design against a platoon. */
+  function openBattles(): void {
+    const screen = renderBattleScreen({
+      spec,
+      limits,
+      projectNo: design.projectNo,
+      name: spec.name || X.unnamed,
+      back: () => {
+        closeRange()
+        panel.querySelector<HTMLElement>('[data-key="to-battles"]')?.focus({ preventScroll: true })
+      },
+      fix: (part) => {
+        closeRange()
+        goToPart(part)
+      },
+      fixZone: (zone) => {
+        closeRange()
+        goToPart(`armour.${zone}`)
+      },
+    })
+    range.replaceChildren(screen)
+    root.classList.add('office-away')
+    screen.focus({ preventScroll: true })
+  }
+
   /** The way to the proving ground. A design the shop cannot build does not go. */
   function drawTrials(): HTMLElement {
     const T = O.trials
@@ -597,6 +624,16 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       duels.append(toDuels)
     }
     box.append(duels)
+    const P = STRINGS.battle.entry
+    const battles = el('section', 'protos')
+    battles.append(el('h3', 'ds-group-title', P.title), el('p', 'ctl-note', fill(P.about, { n: String(BATTLE.runs) })))
+    if (sheet.issues.some((issue) => issue.severity === 'error')) battles.append(el('p', 'ctl-issue', T.blocked))
+    else {
+      const toBattles = actionButton('to-battles', P.send)
+      toBattles.addEventListener('click', openBattles)
+      battles.append(toBattles)
+    }
+    box.append(battles)
     box.append(drawPrototypes())
     return box
   }
