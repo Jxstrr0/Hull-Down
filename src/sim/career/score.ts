@@ -117,7 +117,7 @@ export function scoreBid(bid: Trialled, tender: Tender): BidScore {
  * that breaks a limit goes to the bottom. Level bids go to the cheaper tank,
  * then to the one that bid first.
  */
-export function decide(bids: readonly { score: BidScore; unitCostKr: number }[]): number[] {
+export function decide(bids: readonly { score: Pick<BidScore, 'legal' | 'total'>; unitCostKr: number }[]): number[] {
   return bids
     .map((_, index) => index)
     .sort((a, b) => {

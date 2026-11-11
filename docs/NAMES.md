@@ -42,5 +42,8 @@ one, and are never reused, even after a design is scrapped. The player gives
 each design its own name (up to 28 characters); a design without one shows as
 "Unnamed design".
 
-Service designations (what the army calls a tank once it is adopted) are to
-be written in PR 8.
+**Service designations (PR 8c), Kelbo to confirm.** When the army adopts a
+tank it calls it `Model` and the last two figures of the tender's year:
+`Model 81`. A second tank adopted in the same year is `Model 81/2`. An
+upgrade package adds a letter: `Model 81A`, then `Model 81B` (from PR 10).
+The player's own name for the design stays alongside it.

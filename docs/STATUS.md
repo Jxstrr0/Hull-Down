@@ -4,6 +4,20 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Career numbers and the designation** (0.8.2.0), decided without you
+  and easy to change:
+  - Grant for the first tender Kr 22M. First prototype 4 x unit cost,
+    each revision 1.5 x. That just pays for every revision of a tank at
+    the Type 1's price; a dearer tank gets fewer.
+  - Standing starts at 50 of 100 with each body. Army: +12 for winning,
+    +3 for second, -4 below that, -6 for a fourth revision. Ministry: +4
+    won, -2 lost, up to 6 either way for cost, -1 a revision, -4 for the
+    fourth. Pact: up to 8 either way for how many main parts are still
+    the Type 1's.
+  - Service designation "Model 81" (the year), "Model 81/2" for a second
+    that year, a letter for an upgrade later ("Model 81A"). Working
+    scheme, in `docs/NAMES.md`.
+  - You may enter any prototype you built, not only the last.
 - **How a bid is marked** (0.8.0.0), decided without you and easy to
   change: weights protection 30, firepower 25, mobility 15, reliability
   15, cost 15; each failed range test costs 4 marks out of 100; a design
@@ -131,6 +145,17 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.8.2.0, PR 8c: the career itself.** Sim and data only.
+  `src/sim/career/career.ts` is the bureau's run as a plain value that
+  can be saved: the tender it is on, the ministry's grant, three
+  reputations (army, ministry, Pact committee), the prototypes built and
+  the army's decision. A first prototype costs four tanks' worth, a
+  revision one and a half; three revisions are inside the rule and a
+  fourth costs standing with the army and the ministry. The bureau
+  enters any one of its prototypes; the army ranks it with the three
+  rivals' bids. A winner is adopted as "Model 81"; a loser keeps its
+  budget and the career goes on. The Pact counts how many of 16 main
+  parts are still the Type 1's.
 - **0.8.1.0, PR 8b: rival bureaus revise against the tender.** Sim only.
   A rival now bids the way you do: it draws up its tank, sends a
   prototype to the tender's proving ground and duels, reads the report

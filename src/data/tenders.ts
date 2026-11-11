@@ -19,6 +19,8 @@ export interface Tender {
   threats: readonly ThreatTankId[]
   /** How the army weighs a bid. The five add up to 100. */
   weights: Record<ScoreAxis, number>
+  /** What the ministry grants the bureau to build and try its prototypes. */
+  grantKr: number
 }
 
 export const TENDER_IDS = ['improvedType1'] as const
@@ -35,6 +37,7 @@ export const TENDERS: Record<TenderId, Tender> = {
     marks: { ...MARKS_GEN1, hits: { ...MARKS_GEN1.hits, night: 4 } },
     threats: ['warden', 'palisade'],
     weights: { protection: 30, firepower: 25, mobility: 15, reliability: 15, cost: 15 },
+    grantKr: 22_000_000,
   },
 }
 
