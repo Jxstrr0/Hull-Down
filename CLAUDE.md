@@ -29,6 +29,8 @@ trade-offs.
 - Design office: 2D, plain DOM, SVG and canvas.
 - Trials: three.js from npm, loaded only when a trial opens (from PR 4).
 - Hosting: GitHub Pages from GitHub Actions. Merging into `main` deploys.
+  A merge that changes `VERSION` also publishes a GitHub Release
+  (`publish-release.yml`), with that version's `docs/STATUS.md` log line as notes.
   Live at `https://hulldown.longlight.games/` (the old
   `https://jxstrr0.github.io/Hull-Down/` address redirects there).
 - No backend, accounts, analytics, ads or API keys.

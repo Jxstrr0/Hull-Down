@@ -1192,3 +1192,22 @@ body {
   font: inherit;
   cursor: pointer;
 }
+
+/* The crash screen: the game's own paper, a plain account and the save code. */
+.crash { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: 640px; margin: 0 auto; padding: 24px 16px 40px; }
+.crash > * { max-width: 100%; }
+.crash-title { margin: 0; font-family: var(--font-head); font-size: 1.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--pencil); }
+.crash-lead { margin: 0 0 8px; font-size: 1rem; }
+.crash .ds-group-title, .crash-more { align-self: stretch; }
+.crash-more { margin-top: 12px; }
+.crash-more[open] { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.crash-sum { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--ink-dim); font-size: 0.9rem; text-decoration: underline; }
+.crash-sum:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+
+/* Credits, folded away at the foot of the Saves tab. */
+.crd { align-self: stretch; margin-top: 8px; border-top: 1px solid var(--grid); }
+.crd[open] { display: flex; flex-direction: column; gap: 6px; padding-bottom: 12px; }
+.crd-studio { margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 500; }
+.crd .sv-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; }
+.crd-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); }
+.crd-link:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }

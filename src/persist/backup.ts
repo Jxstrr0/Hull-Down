@@ -2,8 +2,9 @@
 // a site's storage without asking, so the game asks the browser to keep it,
 // and every fortnight suggests saving a copy outside the browser.
 import { SAVES } from '../data/saves'
-import type { KeyValue } from './designs'
-import { SAVE_PREFIX } from './saveCode'
+import { loadCareer } from './careerStore'
+import { loadStore, type KeyValue } from './designs'
+import { SAVE_FORMAT, SAVE_PREFIX, type SaveFile } from './saveCode'
 
 /** When the last backup was taken, and when the game was first played, as ISO dates. */
 export const BACKUP_KEY = 'hulldown.backupAt'
@@ -37,6 +38,11 @@ export function codeIn(text: string): string {
   // A code broken over several lines by an editor or a message app: take the lines up to the next gap.
   const end = lines.findIndex((line, index) => index > start && line === '')
   return lines.slice(start, end < 0 ? undefined : end).join('')
+}
+
+/** The save as the browser last kept it: what the crash screen hands over, whatever state the screen was in. */
+export function storedSave(storage: KeyValue): SaveFile {
+  return { format: SAVE_FORMAT, career: loadCareer(storage), designs: loadStore(storage) }
 }
 
 function dateAt(storage: KeyValue, key: string): number | null {

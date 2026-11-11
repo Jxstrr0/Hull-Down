@@ -6,9 +6,11 @@ import '@fontsource/spline-sans-mono/latin-400.css'
 import '@fontsource/spline-sans-mono/latin-500.css'
 import '@fontsource/space-grotesk/latin-500.css'
 import './style.css'
+import { CRASH } from './data/crash'
 import { STRINGS, fill } from './data/strings'
 import { TENDER_IDS, TENDERS } from './data/tenders'
 import { sound, switchSound } from './audio/gameSound'
+import { showCrash, watchForCrashes } from './ui/crash'
 import { renderDesignScreen } from './office/designScreen'
 import { finishLoading } from './ui/loading'
 import { startOffline } from './ui/offline'
@@ -80,6 +82,12 @@ function mount(): void {
   app.append(header, renderDesignScreen(TENDERS[TENDER_IDS[0]]), footer)
 }
 
+watchForCrashes()
 startOffline()
-mount()
+try {
+  mount()
+  if (window.location.hash === CRASH.testHash) showCrash(new Error(STRINGS.crash.testFault))
+} catch (error) {
+  showCrash(error)
+}
 void finishLoading(startedAt)
