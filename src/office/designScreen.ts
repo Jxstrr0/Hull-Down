@@ -88,6 +88,16 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     viewSwitch.append(button)
     return button
   })
+  /** True while the drawing shows what is inside the armour. */
+  let cutaway = false
+  const cutButton = el('button', 'view view-cut', O.cutaway.button)
+  cutButton.type = 'button'
+  cutButton.setAttribute('aria-label', O.cutaway.buttonLabel)
+  cutButton.addEventListener('click', () => {
+    cutaway = !cutaway
+    drawBlueprint()
+  })
+  viewSwitch.append(cutButton)
   const titles = el('div', 'office-titles')
   const projectLine = el('p', 'office-project')
   const nameLine = el('h2', 'office-name')
@@ -245,7 +255,9 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
           pick: pickZone,
         }
       : undefined
-    blueprint.replaceChildren(...renderBlueprint(spec, sheet.geometry, view, goTo, map))
+    cutButton.classList.toggle('view-on', cutaway)
+    cutButton.setAttribute('aria-pressed', cutaway ? 'true' : 'false')
+    blueprint.replaceChildren(...renderBlueprint(spec, sheet.geometry, view, goTo, map, cutaway ? sheet.interior : undefined))
   }
 
   function drawTitle(): void {

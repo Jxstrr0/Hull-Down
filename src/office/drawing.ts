@@ -3,16 +3,24 @@
 // Coordinates are metres, already flipped for SVG (up is negative y).
 import { DRAWING } from '../data/drawing'
 import type { ZoneId } from '../data/materials'
-import { BARRELS, GUNS, HULLS, LOADING, TURRETS } from '../data/parts'
+import { BARRELS, GUNS, HULLS } from '../data/parts'
 import { TUNING } from '../data/tuning'
-import type { Geometry, VehicleSpec } from '../sim/vehicle'
+import { frameOf, type Geometry, type Interior, type ItemKind, type VehicleSpec } from '../sim/vehicle'
 import type { ControlId } from './controls'
 
 export const VIEWS = ['side', 'top', 'front'] as const
 export type View = (typeof VIEWS)[number]
 
 /** Line styles, in the manner of a technical drawing. */
-export type LineStyle = 'solid' | 'thin' | 'hidden' | 'centre' | 'ground' | 'face'
+export type LineStyle = 'solid' | 'thin' | 'hidden' | 'centre' | 'ground' | 'face' | 'item'
+
+/** How the things inside are told apart on the cutaway. Each has its own mark, so none relies on colour. */
+export const CUT_KINDS = ['crew', 'ammo', 'fuel', 'drive', 'gun'] as const
+export type CutKind = (typeof CUT_KINDS)[number]
+
+const CUT_KIND: Record<ItemKind, CutKind> = {
+  crew: 'crew', ammo: 'ammo', autoloader: 'ammo', fuel: 'fuel', engine: 'drive', transmission: 'drive', gun: 'gun', sight: 'gun',
+}
 
 export interface Shape {
   /** SVG path data. */
@@ -23,6 +31,8 @@ export interface Shape {
    * Faces sit in drawing order, so whatever is drawn in front still covers them.
    */
   zone?: ZoneId
+  /** Set on something inside the tank, drawn only on the cutaway. */
+  item?: CutKind
 }
 
 export interface Zone {
@@ -62,6 +72,8 @@ export interface Drawing {
   shapes: Shape[]
   zones: Zone[]
   armourTaps: ArmourTap[]
+  /** The outline of the armour, as path data. What is inside is only drawn within it. Empty when nothing is. */
+  body: string[]
   /** Hull length, length with the gun forward, width and height, for the caption. */
   hullLengthM: number
   overallLengthM: number
@@ -80,6 +92,7 @@ class Pen {
   readonly shapes: Shape[] = []
   readonly zones: Zone[] = []
   readonly armourTaps: ArmourTap[] = []
+  readonly body: string[] = []
   minX = Infinity
   maxX = -Infinity
   minY = Infinity
@@ -138,6 +151,28 @@ class Pen {
     this.face(`${points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${this.p(x, y)}`).join(' ')} Z`, zone)
   }
 
+  /** Something inside the tank, as path data. */
+  item(d: string, kind: CutKind): void {
+    this.shapes.push({ d, line: 'item', item: kind })
+  }
+
+  /** The same as a box, with its marks: a cross for the engine, one stroke for the gearbox. */
+  itemRect(x0: number, y0: number, x1: number, y1: number, kind: CutKind, strokes: 0 | 1 | 2 = 0): void {
+    const box = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]] as const
+    let d = `${box.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${this.p(x, y)}`).join(' ')} Z`
+    if (strokes > 0) d += ` M${this.p(x0, y0)} L${this.p(x1, y1)}`
+    if (strokes > 1) d += ` M${this.p(x0, y1)} L${this.p(x1, y0)}`
+    this.item(d, kind)
+  }
+
+  /** A filled round mark. */
+  itemDot(cx: number, cy: number, radius: number, kind: CutKind): void {
+    const left = this.p(cx - radius, cy)
+    const right = this.p(cx + radius, cy)
+    const r = `${round(radius)} ${round(radius)}`
+    this.item(`M${left} A${r} 0 1 0 ${right} A${r} 0 1 0 ${left} Z`, kind)
+  }
+
   /** A tap zone that picks an armour zone, given in drawing space (y up). */
   armourTap(x0: number, y0: number, x1: number, y1: number, zone: ZoneId): void {
     this.armourTaps.push({ x: round(x0), y: round(-y1), w: round(x1 - x0), h: round(y1 - y0), zone })
@@ -149,44 +184,19 @@ function outline(pen: Pen, points: readonly Point[]): string {
   return `${points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${pen.p(x, y)}`).join(' ')} Z`
 }
 
-function tanDeg(deg: number): number {
-  return Math.tan((deg * Math.PI) / 180)
-}
-
-/** The measurements every view shares. The 3D range builds its tank from the same ones. */
+/** The measurements every view shares, with what only a drawing needs. The 3D range builds its tank from the same ones. */
 export function layout(spec: VehicleSpec, geo: Geometry) {
-  const hull = HULLS[spec.hull.size]
-  const gun = GUNS[spec.gun]
-  const g = TUNING.geometry
-  const length = hull.lengthM
-  const roof = hull.roofHeightM
-  const belly = roof - hull.bodyHeightM
-  const upperH = hull.bodyHeightM * g.upperGlacisShare
-  const lowerH = hull.bodyHeightM - upperH
-  const calibre = gun.calibreMm / 1000
-  const radius = geo.turretRadiusM
-  const turretX = length * DRAWING.turretCentre[spec.hull.engineAt]
-  const gunRootX = turretX - radius * DRAWING.gunRootShare
+  const frame = frameOf(spec, geo)
+  const calibre = GUNS[spec.gun].calibreMm / 1000
   const barrel = calibre * BARRELS[spec.barrel].calibres
-  const bay = DRAWING.engineBay[spec.hull.engineAt]
   return {
-    hull, length, roof, belly, lowerH, calibre, radius, turretX, gunRootX,
-    /** How far back from the nose the upper and lower glacis plates run. */
-    upperRun: upperH * tanDeg(spec.hull.glacisAngleDeg),
-    lowerRun: lowerH * tanDeg(g.lowerGlacisAngleDeg),
-    top: roof + geo.turretHeightM,
-    gunY: roof + geo.turretHeightM * DRAWING.gunHeightShare,
-    muzzleX: gunRootX - barrel,
+    ...frame,
+    hull: HULLS[spec.hull.size],
+    calibre,
+    muzzleX: frame.gunRootX - barrel,
     barrelHalf: (calibre * DRAWING.barrelThicknessCalibres) / 2,
-    extractorX: gunRootX - barrel * DRAWING.extractorAt,
+    extractorX: frame.gunRootX - barrel * DRAWING.extractorAt,
     extractorHalf: (calibre * DRAWING.extractorThicknessCalibres) / 2,
-    trackTop: roof * DRAWING.trackTopShare,
-    trackWidth: spec.runningGear.trackWidthMm / 1000,
-    halfWidth: geo.widthM / 2,
-    bustle: TURRETS[spec.turret.shape].hasBustle ? radius * DRAWING.bustleOverhang : 0,
-    bayStart: length * bay[0],
-    bayEnd: length * bay[1],
-    hasLoader: LOADING[spec.loading].crew > 3,
   }
 }
 
@@ -204,9 +214,11 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
   pen.line(m.muzzleX - DRAWING.marginM, 0, L + DRAWING.marginM, 0, 'ground')
 
   // Hull: nose, upper glacis up to the roof, rear plate, belly, lower glacis.
-  pen.poly([
+  const hullLine: readonly Point[] = [
     [0, belly + m.lowerH], [m.upperRun, roof], [L, roof], [L - DRAWING.rearUndercutM, belly], [m.lowerRun, belly],
-  ], 'solid')
+  ]
+  pen.poly(hullLine, 'solid')
+  pen.body.push(outline(pen, hullLine))
   // The hull side is two armour zones, split half way along.
   const mid = L / 2
   pen.facePoly([[0, belly + m.lowerH], [m.upperRun, roof], [mid, roof], [mid, belly], [m.lowerRun, belly]], 'hullSideFront')
@@ -235,11 +247,12 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
     case 'bustle':
       turret = outline(pen, [
         [xc - R, roof], [xc - R * 0.82, roof + h * 0.6], [xc - R * 0.3, top], [xc + R + m.bustle, top],
-        [xc + R + m.bustle, roof + h * 0.3], [xc + R * 0.92, roof + h * 0.3], [xc + R * 0.92, roof],
+        [xc + R + m.bustle, m.bustleFloor], [xc + R * 0.92, m.bustleFloor], [xc + R * 0.92, roof],
       ])
       break
   }
   pen.path(turret, 'solid')
+  pen.body.push(turret)
   pen.face(turret, 'turretSides')
   // Mantlet, commander's hatch, and the sight head if one is fitted.
   pen.rect(m.gunRootX - 0.05, m.gunY - h * 0.25, m.gunRootX + 0.22, m.gunY + h * 0.25, 'thin')
@@ -452,12 +465,45 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
   pen.armourTap(-edge, ground, edge, roof, 'upperGlacis')
 }
 
-export function drawingOf(spec: VehicleSpec, geo: Geometry, view: View): Drawing {
+/**
+ * What is inside, drawn over a view. The side view looks through the hull
+ * side; the top view looks down through the roofs. `across` picks which way
+ * the page's second direction runs: up (side view) or out to the tank's right (top view).
+ */
+function cutaway(pen: Pen, interior: Interior, across: 'y' | 'z'): void {
+  const head = DRAWING.crewHeadM
+  // Racks, tanks and machinery first, then the gun, then the crew, so the people are never covered.
+  const order = (kind: CutKind): number => (kind === 'crew' ? 2 : kind === 'gun' ? 1 : 0)
+  const items = [...interior.items].sort((a, b) => order(CUT_KIND[a.kind]) - order(CUT_KIND[b.kind]))
+  for (const item of items) {
+    const { box } = item
+    const kind = CUT_KIND[item.kind]
+    const a0 = across === 'y' ? box.y0 : box.z0
+    const a1 = across === 'y' ? box.y1 : box.z1
+    if (item.kind === 'crew') {
+      const cx = (box.x0 + box.x1) / 2
+      if (across === 'y') {
+        // Seen from the side: a head over a body.
+        pen.itemDot(cx, a1 - head, head, kind)
+        pen.itemRect(cx - head * 1.1, Math.max(a0, a1 - head * 6), cx + head * 1.1, a1 - head * 2.3, kind)
+      } else {
+        pen.itemDot(cx, (a0 + a1) / 2, head * 1.5, kind)
+      }
+      continue
+    }
+    pen.itemRect(box.x0, a0, box.x1, a1, kind, item.kind === 'engine' ? 2 : item.kind === 'transmission' ? 1 : 0)
+  }
+}
+
+/** `interior` adds the cutaway: what is inside the armour, on the side and top views. */
+export function drawingOf(spec: VehicleSpec, geo: Geometry, view: View, interior?: Interior): Drawing {
   const m = layout(spec, geo)
   const pen = new Pen()
   if (view === 'side') sideView(pen, spec, geo, m)
   else if (view === 'top') topView(pen, spec, m)
   else frontView(pen, spec, geo, m)
+  if (interior && view === 'side') cutaway(pen, interior, 'y')
+  if (interior && view === 'top') cutaway(pen, interior, 'z')
 
   // Make room for the lines and for the tap zones around them.
   let minX = pen.minX
@@ -476,6 +522,7 @@ export function drawingOf(spec: VehicleSpec, geo: Geometry, view: View): Drawing
     shapes: pen.shapes,
     zones: pen.zones,
     armourTaps: pen.armourTaps,
+    body: interior && view === 'side' ? pen.body : [],
     hullLengthM: m.length,
     overallLengthM: m.length - Math.min(0, m.muzzleX),
     widthM: geo.widthM,

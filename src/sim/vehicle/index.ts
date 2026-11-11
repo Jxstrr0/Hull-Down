@@ -4,8 +4,12 @@ export {
   type Comfort, type Station, type WorkShare,
 } from '../crew/stations'
 export { gunRingMm, gunRounds } from '../gunnery/mount'
+export {
+  ITEM_IDS, ITEM_KINDS, interiorOf, type Box, type Interior, type InteriorItem, type ItemId, type ItemKind,
+} from '../hits/interior'
 export { checkSpec, ISSUE_CODES, type Issue, type IssueCode, type Severity } from './checks'
 export { allTiles, cleanTiles, eraOf, hasTile, setTile, tileCount, tileGrid, type ZoneEra } from './era'
+export { frameOf, type Frame } from './frame'
 export { geometryOf, type Geometry } from './geometry'
 export {
   layerWorth, pathFactor, penetrationAt, protectionOf, stackProtection, tiledVerdictsAgainst, tiledWorth, verdictOf,

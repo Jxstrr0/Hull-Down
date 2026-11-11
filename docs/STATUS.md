@@ -39,6 +39,15 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   through 495 mm, not 460; a short one saves 0.3 t and manages 419 mm. The
   long-stroke mount lets the 125 mm gun sit in a 1900 mm ring (2050 as
   standard); the short-stroke mount needs 2150.
+- **Look inside the tank** (0.6.0.0): tap "Inside" beside Side, Top and
+  Front. Where everything sits was decided without you and is easy to move:
+  the gunner sits ahead of the commander when there is a loader and across
+  from him when there is not; a carousel autoloader lies flat under the
+  turret floor; spare rounds and fuel go either side of the driver and
+  across the hull ahead of the engine (behind the turret if the engine is
+  in front). Blow-out panels only cover rounds kept in the bustle: the
+  bustle holds 24 with a loader, or the autoloader's 18 and 6 more. Say if
+  any of that reads wrong.
 - **Watch a shoot in 3D** (0.5.6.0): Trials tab, any of the three gunnery
   cards, "Watch the run". Three things were decided without you: the long
   waits (finding, ranging, laying, loading) are cut to about a second and a
@@ -61,6 +70,14 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.6.0.0, PR 6a: what is inside the armour.** The first piece of the hit
+  model. Every design now has an inside worked out from its choices: a seat
+  for each crewman, the gun's breech, the gunner's sight, the autoloader,
+  the racks of rounds, the fuel tanks, the engine and the gearbox, each
+  with a place and a size. An "Inside" button on the blueprint draws it on
+  the side and top views, with a key and a line saying where the rounds and
+  the fuel are ("22 in the autoloader under the turret, 6 beside the
+  driver"). Nothing is hit yet; that is 6b.
 - **0.5.6.0, PR 5g: the shoots in 3D.** Each gunnery card on the range
   (halted, on the move, night) has a "Watch the run" button. It plays the
   shoot the tank really fired, target by target: the board stands at its
@@ -267,7 +284,18 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   the loading drill and turret parts that fail in a shoot (0.5.2.0), 5d crew
   stations and their workload (0.5.3.0), 5e comfort and fatigue (0.5.4.0),
   5f barrel length and recoil mount (0.5.5.0), 5g the gunnery tests played
-  back in 3D (0.5.6.0). All seven are done. PR 6 is then 0.6.0.0.
+  back in 3D (0.5.6.0). All seven are done.
+- PR 6 is split too: 6a what is inside the armour and the cutaway
+  (0.6.0.0), 6b a shot followed through the armour and the inside, with the
+  damage it does and the protection systems, 6c the armour trial and the
+  hull-down berm on the range, 6d the after-action report, 6e revision
+  history and the comparison view. The plan calls the first playable
+  0.6.0.0; with the split it is the last of these, and that is where to
+  stop for Kelbo to play and decide on voice.
+- 6a moved the measurements the blueprint shares with the 3D range (turret
+  centre, engine bay, gun height, bustle) from `src/data/drawing.ts` to
+  `src/data/layout.ts`, because the hit model now uses them too. The
+  numbers are the same.
 - 5d retuned three numbers. The first-shot mark went from 21 s to 20 s,
   because the gunner is no longer slowed by the commander's extra jobs (the
   baseline now fires in 18 s; stadia lines and no computer still miss the

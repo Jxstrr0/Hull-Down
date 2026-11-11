@@ -111,9 +111,9 @@ body {
 /* Side / Top / Front switch. */
 .views { flex: none; display: flex; border: 1.5px solid var(--ink); border-radius: 2px; background: var(--paper); }
 .view {
-  min-width: 52px;
+  min-width: 44px;
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 7px;
   border: 0;
   border-right: 1px solid var(--ink-dim);
   background: transparent;
@@ -126,6 +126,15 @@ body {
   cursor: pointer;
 }
 .view:last-child { border-right: 0; }
+/* The cutaway switch sits with the views but is its own thing: on or off. */
+.view-cut { border-left: 2px solid var(--ink); }
+/* On a phone the name gets a line of its own, so the switch does not squeeze it. */
+@media (max-width: 480px) {
+  .office-head { flex-wrap: wrap; gap: 4px 12px; }
+  .office-titles { flex: 1 1 100%; display: flex; align-items: baseline; gap: 8px; }
+  .office-project { flex: none; }
+  .views { margin-left: auto; }
+}
 .view-on { background: var(--ink); color: var(--paper); }
 .view:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
 
@@ -445,6 +454,32 @@ body {
     repeating-linear-gradient(135deg, var(--pencil) 0 1px, transparent 1px 4px),
     repeating-linear-gradient(45deg, var(--pencil) 0 1px, transparent 1px 4px);
 }
+/* The cutaway: what is inside the armour. Each kind has its own mark as well as its own colour. */
+.bp-inside { pointer-events: none; }
+.bp-item { stroke: var(--ink); stroke-width: 1; }
+.bp-item-crew { fill: var(--ink); stroke: none; }
+.bp-item-drive { fill: var(--paper); }
+.bp-item-gun { fill: var(--ink-dim); stroke: none; }
+.cut-ammo line { stroke: var(--pencil); }
+.cut-fuel line { stroke: var(--amber); }
+.bp-swatch-crew { border-radius: 50%; background: var(--ink); }
+.bp-swatch-ammo { background: repeating-linear-gradient(135deg, var(--pencil) 0 1px, transparent 1px 4px); }
+.bp-swatch-fuel { background: repeating-linear-gradient(0deg, var(--amber) 0 1px, transparent 1px 4px); }
+.bp-swatch-drive {
+  background:
+    linear-gradient(to top right, transparent calc(50% - 0.6px), var(--ink) calc(50% - 0.6px) calc(50% + 0.6px), transparent calc(50% + 0.6px)),
+    linear-gradient(to top left, transparent calc(50% - 0.6px), var(--ink) calc(50% - 0.6px) calc(50% + 0.6px), transparent calc(50% + 0.6px));
+}
+.bp-swatch-gun { border-color: var(--ink-dim); background: var(--ink-dim); }
+.bp-inside-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  text-align: center;
+}
+.bp-inside-line { padding: 0 4px; background: var(--paper); }
 .verdict-holds { color: var(--stamp); }
 .verdict-marginal { color: var(--amber); }
 .verdict-fails { color: var(--pencil); }
