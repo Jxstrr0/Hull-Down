@@ -4,6 +4,7 @@
 // back at the part that would change it. Plain data; the words are put to
 // it elsewhere.
 import { BATTLE, BATTLE_GROUND_IDS, type BattleGroundId, type Orders } from '../../data/battle'
+import type { CrewId } from '../../data/gunnery'
 import { ZONES, type ZoneId } from '../../data/materials'
 import type { Combatant, SideNo } from '../duel/duel'
 import { slowestPart, wildestPart, type DuelFixPart } from '../duel/series'
@@ -105,11 +106,12 @@ const SIDE_ZONES: readonly ZoneId[] = ['hullSideFront', 'hullSideRear', 'turretS
  */
 export function runBattleSeries(
   mine: Combatant, theirs: Combatant, groundId: BattleGroundId, orders: Orders, seed: number, count: number = BATTLE.runs,
+  crews?: readonly [CrewId, CrewId],
 ): BattleSeries {
   const ground = BATTLE.grounds[groundId]
   const groundNo = BATTLE_GROUND_IDS.indexOf(groundId)
   const battles: BattleResult[] = []
-  for (let i = 0; i < count; i++) battles.push(runBattle(mine, theirs, groundId, orders, hash32(seed, groundNo, i)))
+  for (let i = 0; i < count; i++) battles.push(runBattle(mine, theirs, groundId, orders, hash32(seed, groundNo, i), crews))
 
   const wonBy = zeroEnds()
   const lostBy = zeroEnds()

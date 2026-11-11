@@ -1,7 +1,7 @@
 // The firing tests: targets come up one at a time and the crew finds, ranges,
 // lays and shoots at each. Every shot is rolled from the seeded dice, so the
 // same tank and seed always shoot the same score.
-import { GUNNERY } from '../../data/gunnery'
+import { GUNNERY, type CrewId } from '../../data/gunnery'
 import { RANGE, type GunneryTestId } from '../../data/range'
 import type { PactRoundId, RoundKind } from '../../data/ammo'
 import {
@@ -88,10 +88,11 @@ function causeOf(parts: Record<MissCause, [number, number]>, acrossM: number, up
   return worst
 }
 
-export function runGunnery(fire: Fire, test: GunneryTestId, seed: number): GunneryRun {
+/** `crew` is who shoots: the range's own trained crew unless it says otherwise. */
+export function runGunnery(fire: Fire, test: GunneryTestId, seed: number, crew: CrewId = RANGE_DAY.crew): GunneryRun {
   const layout = RANGE.gunnery.tests[test]
   const testNo = Object.keys(RANGE.gunnery.tests).indexOf(test)
-  const shoot: Shoot = { ...RANGE_DAY, moving: layout.moving, night: layout.night, hours: RANGE.crewHours }
+  const shoot: Shoot = { ...RANGE_DAY, crew, moving: layout.moving, night: layout.night, hours: RANGE.crewHours }
   const halfW = GUNNERY.target.widthM / 2
   const halfH = GUNNERY.target.heightM / 2
   const first = firstShotS(fire, shoot)

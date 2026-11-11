@@ -3,6 +3,7 @@
 // that does not add up is dropped, so the army simply decides again.
 import { BODIES, CAREER, type Body } from '../data/career'
 import { BUREAU_IDS } from '../data/opponents'
+import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { SCORE_AXES, TENDER_IDS, TENDER_RULES, TENDERS, type ScoreAxis } from '../data/tenders'
 import { CAREER_FORMAT, type BidLine, type Bidder, type Career, type Outcome, type Prototype } from '../sim/career/career'
 import { cleanName, cleanSpec } from './specCodec'
@@ -77,6 +78,14 @@ function cleanOutcome(raw: unknown, prototypes: Prototype[]): Outcome | null {
   return { entered: raw.entered, bids, place, won, designation: won ? designation : null, standing }
 }
 
+/** How a tank is built, or null when the save does not say. */
+function cleanProduction(raw: unknown): Production | null {
+  if (!isObject(raw)) return null
+  const rate = BUILD_RATES.find((id) => id === raw.rate)
+  const quality = BUILD_QUALITIES.find((id) => id === raw.quality)
+  return rate && quality ? { rate, quality } : null
+}
+
 function cleanAdopted(raw: unknown): Career['adopted'] {
   if (!Array.isArray(raw)) return []
   const kept: Career['adopted'] = []
@@ -86,7 +95,12 @@ function cleanAdopted(raw: unknown): Career['adopted'] {
     const designation = cleanName(item.designation)
     if (!designation) continue
     const spec = cleanSpec(item.spec)
-    kept.push({ designation, name: spec.name, year: whole(item.year, 1900, 2200, TENDERS[TENDER_IDS[0]].year), spec })
+    const tender = TENDER_IDS.find((id) => id === item.tender) ?? TENDER_IDS[0]
+    const production = cleanProduction(item.production)
+    kept.push({
+      designation, name: spec.name, year: whole(item.year, 1900, 2200, TENDERS[tender].year), tender, spec,
+      production, years: production ? whole(item.years, 0, SERVICE.years, 0) : 0,
+    })
   }
   return kept
 }

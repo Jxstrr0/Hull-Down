@@ -4,6 +4,30 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **How service life works** (0.10.0.0), decided without you and easy
+  to change. Nothing to see yet; the screen comes in the next PR.
+  - Production is set once, when a tank is adopted. Rate: slow (60 a
+    year, 6% dearer, fewer faults), steady (120), rush (200, 3%
+    cheaper, 30% more faults; the army and the ministry like the speed,
+    +2 each, and dislike slow, -2 each). Quality: economy (10% cheaper,
+    half as many faults again), standard, careful (12% dearer, a third
+    fewer faults). Over the tender's cost ceiling costs 3 with the
+    ministry. The army orders 600.
+  - A field report for each of 6 years. There is no "next contract"
+    yet to hang them on (only one tender exists), so each is asked for
+    with a button. When later tenders exist, finishing one can bring
+    the report instead.
+  - A report has four parts: 40 tanks followed over a year's running;
+    what conscript crews complain of (an overworked station, a tank
+    that is hard to live in, a tank only experts can shoot, three men
+    doing four men's upkeep); conscripts against the range's crew at
+    the firing camp; and an exercise, a platoon with conscript crews
+    against the tender's threat tanks with trained crews, a different
+    ground each year.
+  - Each report moves standing by a point or two, and pays the bureau
+    1% of the cost of the year's tanks (about Kr 2.5M a year for the
+    Type 1 at the steady rate).
+
 - **Watch a battle in 3D** (0.9.3.0): say if the director's camera
   shows the right things, and if it runs smoothly on your phone. Platoon
   battles are open from the Trials tab for now; the plan has them
@@ -176,6 +200,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.10.0.0, PR 10a: production and field reports (sim only).** A tank
+  the army adopts can now be put into production at a rate and a
+  quality, which set what it costs and how often it gives trouble, and
+  the army reports on each of its years in service: breakdowns, crew
+  complaints, how conscripts shoot in it, and an exercise. Saves from
+  before still load. No screen yet: that is PR 10b. Nothing new to
+  test on a phone.
 - **0.9.3.0, PR 9d: the battle in 3D.** Under the map, "Watch it in 3D"
   opens the battle on the ground it was fought on: ridges, woods, all
   the tanks, tracers, hits and wrecks, and the dark for the night
