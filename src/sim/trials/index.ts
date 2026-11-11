@@ -1,7 +1,8 @@
 // The proving ground: every test a prototype is put through, run from its
 // stat sheet. The same tank always gives the same result.
 import { MARKS_GEN1, type ClimateId, type Marks } from '../../data/range'
-import type { StatSheet } from '../vehicle/stats'
+import type { Limits, VehicleSpec } from '../vehicle/spec'
+import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 import { runAcceleration, type AccelerationRun } from './acceleration'
 import { runEndurance, type EnduranceRun } from './endurance'
 import { runObstacles, type ObstacleRun } from './obstacles'
@@ -53,4 +54,19 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     passes: passed.filter(Boolean).length,
     tests: passed.length,
   }
+}
+
+/**
+ * One visit to the range as plain data: the design, the limits it was built
+ * to and the set-up of the tests. It can be handed to another thread whole.
+ */
+export interface RangeJob {
+  spec: VehicleSpec
+  limits: Limits
+  setup: RangeSetup
+}
+
+/** Builds the tank from its design and runs it through the range. The same job always gives the same report. */
+export function runRangeJob(job: RangeJob): RangeReport {
+  return runProvingGround(buildStatSheet(job.spec, job.limits), job.setup)
 }

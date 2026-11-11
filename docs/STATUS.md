@@ -29,6 +29,14 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.4.5.0, PR 4f: the range runs on its own thread.** Sending a design to
+  the proving ground now hands the tests to a Web Worker, a second thread
+  beside the page, and shows the report when it answers. Nothing looks
+  different today, because these three tests take about a thousandth of a
+  second. It matters from PR 5 on, when gunnery and armour trials take real
+  time: the page will stay smooth while they run. A phone that cannot start
+  the worker runs the same tests on the page and gets the same report. This
+  finishes plan stage PR 4.
 - **0.4.4.0, PR 4e: the endurance run in 3D.** The endurance card has a
   "Watch the run" button too. It plays the 300 km as a time-lapse of under
   half a minute: the hours and kilometres count up fast while the tank is
@@ -148,7 +156,8 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   stress-based breakdowns (0.4.1.0), 4c the grey-box 3D range that plays the
   runs back (0.4.2.0), 4d the director camera, pause and scrub (0.4.3.0),
   4e the endurance run played back in 3D as a time-lapse (0.4.4.0), 4f the
-  trials run in a Web Worker so a slow phone stays smooth (0.4.5.0).
+  trials run in a Web Worker so a slow phone stays smooth (0.4.5.0). All six
+  are done.
   PR 5 is then 0.5.0.0.
 - The range marks (12 s to 32 km/h, 50 km/h top speed, the course as built,
   one stop on the endurance run) are a Pact standard for now. Tenders set

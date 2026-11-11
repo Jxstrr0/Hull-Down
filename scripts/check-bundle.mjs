@@ -1,7 +1,9 @@
 // First-load budget (plan section 11): everything the page needs before the
 // title must stay under 3 MB. Code that is only fetched later (the 3D range,
 // loaded when a trial is first watched) does not count. The build manifest
-// says which is which. Runs after every build; a failure fails CI.
+// says which is which. The proving ground's worker is small and is counted
+// with the first load, though it too is fetched later. Runs after every build;
+// a failure fails CI.
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
