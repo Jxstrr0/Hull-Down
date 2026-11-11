@@ -1098,6 +1098,11 @@ body {
 .bu-bid-mine .bu-bid-name { text-decoration: underline; }
 .bu-bid-sum { grid-column: 2; font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-dim); }
 .bu-change { font-size: 0.95rem; }
+.sv .cmp-fold { align-self: stretch; margin-top: 0; border-top: 1px solid var(--grid); }
+.sv-body { display: flex; flex-direction: column; gap: 6px; padding-bottom: 10px; }
+.sv-sub { margin: 6px 0 0; font-family: var(--font-head); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); }
+.sv-lines { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.sv-line { margin: 0; font-size: 0.95rem; }
 
 /* Saves: slots, the backup file and the save code. */
 .sv-actions { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -3,14 +3,18 @@
 // design office's panel and keeps the career between visits.
 import { ADVISOR_MODES, type AdvisorMode } from '../data/advisor'
 import { BODIES } from '../data/career'
+import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { STRINGS, fill } from '../data/strings'
 import { SCORE_AXES, SCORING, TENDER_RULES } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
 import {
-  buildBlock, buildPrototype, enterTender, newCareer, prototypeCostKr, prototypeTrial, tenderIdOf, tenderOf, type Career,
+  buildBlock, buildPrototype, enterTender, newCareer, prototypeCostKr, prototypeTrial, reportOf, serviceYear, serviceYearsLeft,
+  startProduction, tenderIdOf, tenderOf, type Adopted, type Career,
 } from '../sim/career/career'
 import type { BidScore, Trialled } from '../sim/career/score'
-import type { VehicleSpec } from '../sim/vehicle'
+import type { FieldReport } from '../sim/career/service'
+import { buildStatSheet, type VehicleSpec } from '../sim/vehicle'
+import { TENDERS } from '../data/tenders'
 import { loadAdvisorMode, loadCareer, saveAdvisorMode, saveCareer } from '../persist/careerStore'
 import type { KeyValue } from '../persist/designs'
 import { remarkLink, remarkText } from '../ui/advisorWords'
@@ -18,10 +22,15 @@ import {
   axesLine, bidLine, bidderName, blockLine, failedLine, mark, revisionsLine, standingChanges, standingLine, verdictLine,
 } from '../ui/careerWords'
 import { el } from '../ui/dom'
+import {
+  complaintText, exerciseLine, feeLine, fleetLine, lessonLines, productionLines, productionSummary, rateLine, reportStanding,
+  runningLines, serviceTitle, shootLine, yearsLeftLine,
+} from '../ui/serviceWords'
 import { fixed, money } from '../ui/format'
 
 const C = STRINGS.career
 const A = STRINGS.advisor
+const V = STRINGS.service
 
 export interface BureauOptions {
   storage: KeyValue
@@ -67,6 +76,13 @@ export function createBureau(options: BureauOptions): Bureau {
   let restartArmed = false
   let deciding = false
   let working = false
+  /** The rate and quality picked for a tank whose production has not started. */
+  let picked: Production = { ...SERVICE.defaultProduction }
+  let startArmed = false
+  /** Field reports worked out so far, by tank and year. */
+  let reports = new Map<string, FieldReport>()
+  /** The tank whose next report has been asked for. */
+  let reporting: number | null = null
 
   function keep(next: Career): void {
     career = next
@@ -318,8 +334,153 @@ export function createBureau(options: BureauOptions): Bureau {
     box.append(order, el('h4', 'bu-sub', D.standing))
     const changes = el('ul', 'bu-changes')
     for (const change of standingChanges(outcome)) changes.append(el('li', 'bu-change', change.text))
-    box.append(changes, el('p', 'ctl-note', D.next))
+    box.append(changes, el('p', 'ctl-note', outcome.won ? D.nextWon : D.next))
     return box
+  }
+
+  /** A row of choices, one of them on. */
+  function choices<Id extends string>(
+    key: string, label: string, ids: readonly Id[], on: Id, name: (id: Id) => string, pick: (id: Id) => void,
+  ): HTMLElement {
+    const seg = el('div', 'seg')
+    seg.setAttribute('role', 'group')
+    seg.setAttribute('aria-label', label)
+    for (const id of ids) {
+      const item = button(`${key}:${id}`, name(id), id === on ? 'seg-item seg-on' : 'seg-item')
+      item.setAttribute('aria-pressed', id === on ? 'true' : 'false')
+      item.addEventListener('click', () => {
+        pick(id)
+        startArmed = false
+        options.redraw()
+      })
+      seg.append(item)
+    }
+    return seg
+  }
+
+  function drawProduction(tank: Adopted, index: number): HTMLElement[] {
+    const P = V.production
+    const sheet = buildStatSheet(tank.spec, TENDERS[tank.tender].limits)
+    if (tank.production) {
+      return [el('h4', 'bu-sub', P.heading), el('p', 'bu-proto-sum', productionSummary(tank.production, sheet.unitCostKr))]
+    }
+    const out: HTMLElement[] = [el('h4', 'bu-sub', P.heading), el('p', 'ctl-note', P.about)]
+    out.push(
+      el('p', 'bu-label', P.rateLabel),
+      choices('rate', P.rateLabel, BUILD_RATES, picked.rate, (id) => P.rates[id].name, (id) => { picked = { ...picked, rate: id } }),
+      el('p', 'ctl-note', rateLine(picked.rate)),
+      el('p', 'bu-label', P.qualityLabel),
+      choices('quality', P.qualityLabel, BUILD_QUALITIES, picked.quality, (id) => P.qualities[id].name, (id) => { picked = { ...picked, quality: id } }),
+      el('p', 'ctl-note', P.qualities[picked.quality].line),
+    )
+    const rows = el('dl', 'bu-rows')
+    const lines = productionLines(tank, sheet, picked)
+    for (const line of lines) if (!line.bad) row(rows, line.label, line.value)
+    out.push(rows)
+    for (const line of lines) if (line.bad) out.push(el('p', 'ctl-issue', line.value))
+    if (sheet.crewCount < 4) out.push(el('p', 'ctl-note', P.threeMen))
+    const start = button(`service:start:${index}`, startArmed ? P.confirm : P.start, startArmed ? 'btn btn-armed' : 'btn btn-go')
+    start.addEventListener('click', () => {
+      if (!startArmed) startArmed = true
+      else {
+        startArmed = false
+        keep(startProduction(career, index, picked))
+      }
+      options.redraw()
+    })
+    out.push(start)
+    return out
+  }
+
+  function drawReport(report: FieldReport, open: boolean): HTMLElement {
+    const R = V.report
+    const fold = el('details', 'cmp-fold sv-report')
+    fold.dataset.key = `service:report:${report.year}`
+    fold.open = open
+    fold.append(el('summary', 'cmp-fold-title', fill(R.title, { n: String(report.year) })))
+    const body = el('div', 'sv-body')
+    const list = (lines: readonly string[], className = 'sv-line'): HTMLElement => {
+      const ul = el('ul', 'sv-lines')
+      for (const line of lines) ul.append(el('li', className, line))
+      return ul
+    }
+    body.append(
+      el('p', 'bu-proto-sum', fleetLine(report)),
+      el('h5', 'sv-sub', R.running), list(runningLines(report)),
+      el('h5', 'sv-sub', R.crews),
+      report.complaints.length ? list(report.complaints.map(complaintText)) : el('p', 'sv-line', R.content),
+      el('h5', 'sv-sub', R.shoot), el('p', 'sv-line', shootLine(report)),
+      el('h5', 'sv-sub', R.exercise), el('p', 'sv-line', exerciseLine(report)),
+    )
+    const lessons = lessonLines(report)
+    if (lessons.length === 0) body.append(el('p', 'sv-line', R.noLessons))
+    else {
+      const ul = el('ul', 'sv-lines')
+      ul.setAttribute('aria-label', R.lessons)
+      for (const lesson of lessons) {
+        const item = el('li', 'sv-line')
+        const marks = STRINGS.duel.marks
+        item.append(el('span', 'duel-finding-mark', `${lesson.good ? '▲' : '▼'} ${lesson.good ? marks.for : marks.against}`), el('span', '', lesson.text))
+        ul.append(item)
+      }
+      body.append(ul)
+    }
+    const standing = reportStanding(report)
+    if (standing.length) body.append(el('h5', 'sv-sub', R.standing), list(standing.map((each) => each.text)))
+    body.append(el('p', 'bu-proto-sum', feeLine(report)))
+    fold.append(body)
+    return fold
+  }
+
+  function drawYears(tank: Adopted, index: number): HTMLElement[] {
+    const Y = V.years
+    const out: HTMLElement[] = [el('h4', 'bu-sub', Y.heading)]
+    if (tank.years === 0) out.push(el('p', 'ctl-note', Y.none))
+    if (reporting === index) {
+      out.push(el('p', 'bu-busy', Y.working))
+      later(() => {
+        reporting = null
+        if (serviceYearsLeft(career.adopted[index]!) > 0) keep(serviceYear(career, index))
+      })
+    } else if (serviceYearsLeft(tank) > 0) {
+      const next = button(`service:year:${index}`, fill(Y.next, { n: String(tank.years + 1) }), 'btn btn-go')
+      next.addEventListener('click', () => {
+        reporting = index
+        options.redraw()
+      })
+      out.push(next)
+    }
+    out.push(el('p', 'ctl-note', yearsLeftLine(tank)))
+    // The newest first, and open: it is the one just asked for.
+    for (let year = tank.years; year >= 1; year--) {
+      const key = `${index}:${year}`
+      const report = reports.get(key)
+      if (report) {
+        out.push(drawReport(report, year === tank.years))
+        continue
+      }
+      out.push(el('p', 'bu-busy', Y.working))
+      later(() => {
+        const made = reportOf(career, index, year)
+        if (made) reports.set(key, made)
+      })
+      break // One at a time: the rest follow as each is done.
+    }
+    if (serviceYearsLeft(tank) > 0) out.push(el('p', 'ctl-note', Y.about))
+    return out
+  }
+
+  /** One section for each tank the army has adopted, the newest first. */
+  function drawService(): HTMLElement[] {
+    return career.adopted.map((tank, index) => {
+      const box = el('section', 'bu sv')
+      box.dataset.key = `service:${index}`
+      box.append(el('h3', 'ds-group-title', fill(V.heading, { designation: tank.designation })))
+      if (tank.name) box.append(el('p', 'bu-board', serviceTitle(tank)))
+      box.append(...drawProduction(tank, index))
+      if (tank.production) box.append(...drawYears(tank, index))
+      return box
+    }).reverse()
   }
 
   function drawRestart(): HTMLElement {
@@ -336,6 +497,10 @@ export function createBureau(options: BureauOptions): Bureau {
       restartArmed = false
       armed = null
       trials = new Map()
+      reports = new Map()
+      reporting = null
+      startArmed = false
+      picked = { ...SERVICE.defaultProduction }
       read = null
       askedKey = ''
       keep(newCareer(freshSeed()))
@@ -350,6 +515,7 @@ export function createBureau(options: BureauOptions): Bureau {
     const box = el('div', 'bureau')
     const decision = drawDecision()
     if (decision) box.append(decision)
+    box.append(...drawService())
     box.append(drawTender(), drawBureau(), drawAdvisor(spec), drawShop(spec), drawPrototypes(), drawRestart())
     return box
   }
