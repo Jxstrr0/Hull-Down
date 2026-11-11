@@ -1038,3 +1038,34 @@ body {
 .duel-line-time { font-family: var(--font-mono); color: var(--ink-dim); }
 .duel-line-theirs .duel-line-text { padding-left: 10px; border-left: 3px double var(--ink-dim); }
 .duel-line-end { font-weight: 600; }
+
+/* The bureau: the tender, the standing, the chief engineer, the shop and the decision. */
+.bureau { display: flex; flex-direction: column; gap: 22px; }
+.bu { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.bu > * { max-width: 100%; }
+.bu .ds-group-title, .bu-rows, .bu-protos, .bu-order, .bu-remarks, .bu-changes, .bu .seg { align-self: stretch; }
+.bu-sub { margin: 8px 0 0; font-family: var(--font-head); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.bu-rows { margin: 0; border-top: 1px solid var(--grid); }
+.bu-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; padding: 6px 0; border-bottom: 1px solid var(--grid); }
+.bu-label { margin: 0; font-size: 0.9rem; color: var(--ink-dim); }
+.bu-wants { display: block; font-size: 0.8rem; }
+.bu-value { margin: 0; font-family: var(--font-mono); font-size: 0.9rem; text-align: right; }
+.bu-busy { margin: 0; font-style: italic; color: var(--ink-dim); }
+.bu-board { margin: 0; font-weight: 600; }
+.bu-remarks, .bu-protos, .bu-order, .bu-changes { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--grid); }
+.bu-remark, .bu-proto, .bu-bid, .bu-change { padding: 8px 0; border-bottom: 1px solid var(--grid); }
+.bu-remark, .bu-proto { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.bu-said { margin: 0; }
+.bu-proto-name { margin: 0; font-weight: 600; }
+.bu-proto-sum, .bu-proto-fail { margin: 0; font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-dim); }
+.bu-proto-fail { padding-left: 8px; border-left: 4px solid var(--pencil); color: var(--pencil); }
+.bu-proto-total { margin: 0; font-family: var(--font-head); font-size: 1.05rem; font-weight: 700; }
+.bu-stamp { margin: 0; padding: 2px 8px; border: 2px solid var(--stamp); color: var(--stamp); font-family: var(--font-head); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.bu-verdict { margin: 0; padding: 8px 10px; border: 2px solid var(--pencil); color: var(--pencil); font-weight: 600; }
+.bu-verdict-won { border-color: var(--stamp); color: var(--stamp); }
+.bu-bid { display: grid; grid-template-columns: 2em 1fr; gap: 2px 6px; }
+.bu-bid-place { grid-row: 1 / span 3; font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; }
+.bu-bid-name { font-weight: 600; }
+.bu-bid-mine .bu-bid-name { text-decoration: underline; }
+.bu-bid-sum { grid-column: 2; font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-dim); }
+.bu-change { font-size: 0.95rem; }

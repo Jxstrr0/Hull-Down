@@ -30,12 +30,13 @@ import { renderRangeScreen } from '../ui/rangeScreen'
 import { renderCompareScreen, type CompareSide } from '../ui/compareScreen'
 import { renderDuelScreen } from '../ui/duelScreen'
 import { DUEL } from '../data/duel'
+import { createBureau } from './bureauTab'
 
 const O = STRINGS.office
 const D = STRINGS.dataSheet
 const X = STRINGS.office.designs
 
-const TABS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults', 'trials', 'designs'] as const
+const TABS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults', 'trials', 'bureau', 'designs'] as const
 type Tab = (typeof TABS)[number]
 
 /** The weight bar is drawn a little longer than the limit, so going over shows. */
@@ -169,6 +170,25 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     tabButtons.set(id, button)
     tabList.append(button)
   }
+
+  /** The career: the tender, the prototype shop and the army's decision. */
+  const bureau = createBureau({
+    storage,
+    spec: () => spec,
+    goToPart: (part) => {
+      goToPart(part)
+    },
+    toFaults: () => {
+      tab = 'faults'
+      panel.scrollTop = 0
+      drawTabs()
+      drawPanel()
+      showTab()
+    },
+    redraw: () => {
+      if (tab === 'bureau') drawPanel()
+    },
+  })
 
   /** The proving ground takes over the whole screen while it is open. */
   const range = el('div', 'range-holder')
@@ -825,6 +845,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     else if (tab === 'faults') parts.push(drawFaults())
     else if (tab === 'designs') parts.push(drawDesigns())
     else if (tab === 'trials') parts.push(drawTrials())
+    else if (tab === 'bureau') parts.push(bureau.draw())
     else if (tab === 'armour') {
       parts.push(renderArmourTab({
         spec, sheet, state: armourState, commit, goTo, pickZone,

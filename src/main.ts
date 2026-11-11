@@ -7,7 +7,7 @@ import '@fontsource/spline-sans-mono/latin-500.css'
 import '@fontsource/space-grotesk/latin-500.css'
 import './style.css'
 import { STRINGS, fill } from './data/strings'
-import { PACT_LIMITS_GEN1 } from './data/tuning'
+import { TENDER_IDS, TENDERS } from './data/tenders'
 import { renderDesignScreen } from './office/designScreen'
 import { finishLoading } from './ui/loading'
 import { applyTheme, loadTheme, otherTheme, type Theme } from './ui/theme'
@@ -57,7 +57,7 @@ function mount(): void {
   build.textContent = `v${__GAME_VERSION__} · ${__BUILD_SHA__} · ${__BUILD_DATE__}`
   footer.append(studio, build)
 
-  app.append(header, renderDesignScreen(PACT_LIMITS_GEN1), footer)
+  app.append(header, renderDesignScreen(TENDERS[TENDER_IDS[0]].limits), footer)
 }
 
 mount()

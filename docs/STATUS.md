@@ -4,6 +4,9 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Try a tender** (0.8.6.0): Bureau tab. Tell me if the Type 1 as issued
+  placing third of four feels right, and whether the tab reads well on
+  your phone.
 - **The chief engineer's name** (0.8.5.0): working name Radek Stanek.
   Say if you want another.
 - **Career numbers and the designation** (0.8.2.0), decided without you
@@ -147,6 +150,15 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.8.6.0, PR 8g: the Bureau tab.** The career can now be played. A
+  new Bureau tab in the design office shows the tender (limits, grant, how
+  the army weighs a bid), the budget and standing, the chief engineer with
+  his three settings and "Look at" links, the prototype shop, each
+  prototype's marks and failed tests, and the army's decision with the
+  order of merit. The career is kept in the browser (`hulldown.career`,
+  `hulldown.advisor`) and survives a reload. The design office now also
+  flags a design over the tender's unit cost ceiling. Still to come in
+  PR 8: 8h save slots, save code and backup on screen.
 - **0.8.5.0, PR 8f: the chief engineer.** No screen yet.
   `src/sim/career/advisor.ts` reviews a design against the tender on
   paper, the same every time and quick enough to run after every change.
