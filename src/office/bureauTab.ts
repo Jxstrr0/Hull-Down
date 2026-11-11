@@ -65,6 +65,8 @@ export interface Bureau {
   guide: (spec: VehicleSpec, faults: number) => GuideState | null
   /** The career as it stands now. */
   career: () => Career
+  /** Throw the career away and start a new one, with new luck. Designs are kept. */
+  restart: () => void
 }
 
 /** A seed for a new career. The sim never rolls its own: it is handed this. */
@@ -882,6 +884,22 @@ export function createBureau(options: BureauOptions): Bureau {
     return box
   }
 
+  function restart(): void {
+    restartArmed = false
+    nextArmed = false
+    armed = null
+    trials = new Map()
+    reports = new Map()
+    reporting = null
+    startArmed = false
+    upgradeArmed = ''
+    picked = { ...SERVICE.defaultProduction }
+    read = null
+    askedKey = ''
+    keep(newCareer(freshSeed()))
+    options.redraw()
+  }
+
   function drawRestart(): HTMLElement {
     const R = C.restart
     const box = el('section', 'bu')
@@ -893,19 +911,7 @@ export function createBureau(options: BureauOptions): Bureau {
         options.redraw()
         return
       }
-      restartArmed = false
-      nextArmed = false
-      armed = null
-      trials = new Map()
-      reports = new Map()
-      reporting = null
-      startArmed = false
-      upgradeArmed = ''
-      picked = { ...SERVICE.defaultProduction }
-      read = null
-      askedKey = ''
-      keep(newCareer(freshSeed()))
-      options.redraw()
+      restart()
     })
     box.append(again)
     return box
@@ -938,5 +944,5 @@ export function createBureau(options: BureauOptions): Bureau {
     return guideState(career, spec, faults, trial?.score ?? null)
   }
 
-  return { draw, guide, career: () => career }
+  return { draw, guide, career: () => career, restart }
 }
