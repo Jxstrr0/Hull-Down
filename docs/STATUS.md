@@ -4,6 +4,16 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Intelligence files** (0.11.4.0): the Bureau tab now has a file on each
+  Accord tank the tender names, with figures as ranges that close in on
+  the truth. Four grades: Rumour (25% either way), Report (12%), Assessed
+  (5%), Confirmed. A file gains a grade for each prototype built and when
+  the army decides, and two for each tender since. The Warden is confirmed
+  from the start. **Design question for you:** the files are for reading
+  only so far. The armour test shot, the chief engineer and the duels all
+  still use the true figures, so nothing "turns out better than feared"
+  yet. Making the estimates bite (the office only shows you the estimate
+  until the file is confirmed) is a bigger change: say if you want it.
 - **Research** (0.11.3.0): the generation-two parts now have to be
   researched before they can be fitted. Three projects on the Bureau tab:
   "Digital fire control" Kr 4.00M, "Thermal imaging" Kr 6.00M (needs the
@@ -247,6 +257,10 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.11.4.0, PR 11e: intelligence files.** A file on each Accord tank the
+  tender expects to meet: gun, front armour, weight and speed as ranges
+  that sharpen with every prototype built and every tender that passes.
+  The truth is always inside the range. Shown on the Bureau tab. 806 tests.
 - **0.11.3.0, PR 11d: research.** The bureau pays for research projects
   that unlock the generation-two parts (digital computer, thermal sight,
   layered composite). A research card on the Bureau tab; unresearched parts

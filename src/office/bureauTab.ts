@@ -8,6 +8,7 @@ import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/
 import { STRINGS, fill } from '../data/strings'
 import { SCORE_AXES, SCORING, TENDER_IDS, TENDER_RULES, type Tender } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
+import { intelFiles } from '../sim/career/intel'
 import {
   buildBlock, buildPrototype, enterTender, research, researchBlock, researchOpen, fitUpgrade, newCareer, nextTender, tendersLeft, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
   serviceSpec, serviceYear, serviceYearsLeft, startProduction, tenderIdOf, tenderOf, upgradeBlock, upgradesLeft, type Adopted,
@@ -170,6 +171,27 @@ export function createBureau(options: BureauOptions): Bureau {
     const weights = el('dl', 'bu-rows')
     for (const axis of SCORE_AXES) row(weights, C.axes[axis], fill(T.weight, { n: String(tender.weights[axis]) }))
     box.append(weights)
+    return box
+  }
+
+  /** What is known of the Accord tanks the tender names, and how surely. */
+  function drawIntel(): HTMLElement {
+    const I = C.intel
+    const box = el('section', 'bu')
+    box.append(el('h3', 'ds-group-title', I.heading), el('p', 'ctl-note', I.about))
+    for (const file of intelFiles(career)) {
+      box.append(el('h4', 'bu-sub', fill(I.file, { name: STRINGS.opponents.threats[file.threat].name, grade: I.grades[file.grade] })))
+      box.append(el('p', 'ctl-note', I.gradeNotes[file.grade]))
+      const rows = el('dl', 'bu-rows')
+      for (const figure of file.figures) {
+        const unit = I.units[figure.fact]
+        const value = figure.low === figure.high
+          ? fill(I.exact, { n: String(figure.low), unit })
+          : fill(I.range, { low: String(figure.low), high: String(figure.high), unit })
+        row(rows, I.facts[figure.fact], value)
+      }
+      box.append(rows)
+    }
     return box
   }
 
@@ -721,7 +743,7 @@ export function createBureau(options: BureauOptions): Bureau {
     const decision = drawDecision()
     if (decision) box.append(decision)
     box.append(...drawService(spec))
-    box.append(drawTender(), drawBureau())
+    box.append(drawTender(), drawIntel(), drawBureau())
     const lab = drawResearch()
     if (lab) box.append(lab)
     box.append(drawAdvisor(spec), drawShop(spec), drawPrototypes(), drawArchive(), drawRestart())
