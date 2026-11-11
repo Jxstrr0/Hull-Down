@@ -152,6 +152,20 @@ interface Side {
   jammedNext: boolean
 }
 
+/** What the gunner's sense needs to know about a tank in a fight. A duel's side is one; so is a tank in a battle. */
+export interface Fighter {
+  tank: Combatant
+  /** The height hidden by the ridge, metres. Nought in the open. */
+  hiddenM: number
+  alive: boolean
+  gunOut: boolean
+  crewOut: Set<StationId>
+  aimAt: AimAt
+  loaded: number
+  wasted: { hull: number; turret: number }
+  wastedInAll: number
+}
+
 function deg(rad: number): number {
   return (rad * 180) / PI
 }
@@ -166,22 +180,22 @@ function shootOf(side: Side, ground: DuelGround): Shoot {
 }
 
 /** A tank that can still fight: in one piece, with a gun that works and somebody to lay it. */
-function fights(side: Side): boolean {
+export function fights(side: Fighter): boolean {
   return side.alive && !side.gunOut && !(side.crewOut.has('commander') && side.crewOut.has('gunner'))
 }
 
 /** How much longer the turret crew takes over everything, for the men it has lost. */
-function turretPace(side: Side): number {
+export function turretPace(side: Fighter): number {
   const k = DUEL.crewOut
   return (side.crewOut.has('commander') ? k.commanderPace : 1) * (side.crewOut.has('gunner') ? k.gunnerPace : 1)
 }
 
-function loadPace(side: Side): number {
+export function loadPace(side: Fighter): number {
   return !side.tank.sheet.fire.feed.auto && side.crewOut.has('loader') ? DUEL.crewOut.loaderPace : 1
 }
 
 /** The heights of the target the gunner can choose between, and the one he is laying on. */
-function aimHeight(target: Side, aimAt: AimAt): number {
+export function aimHeight(target: Fighter, aimAt: AimAt): number {
   const f = target.tank.sheet.target.shell.frame
   const low = Math.max(target.hiddenM, f.belly)
   switch (aimAt) {
@@ -194,12 +208,12 @@ function aimHeight(target: Side, aimAt: AimAt): number {
   }
 }
 
-function hullShows(target: Side): boolean {
+function hullShows(target: Fighter): boolean {
   return target.tank.sheet.target.shell.frame.roof - target.hiddenM >= DUEL.worthAimingM
 }
 
 /** After a hit that did nothing, the gunner tries the other part of the target, and then the other round. */
-function rethink(shooter: Side, target: Side, hit: HitResult): void {
+export function rethink(shooter: Fighter, target: Fighter, hit: HitResult): void {
   if (hit.zone === null) return
   if (hit.through) {
     shooter.wasted = { hull: 0, turret: 0 }
@@ -438,6 +452,6 @@ export function runDuel(a: Combatant, b: Combatant, groundId: DuelGroundId, seed
   }
 }
 
-function hasSmoke(side: Side): boolean {
+export function hasSmoke(side: Fighter): boolean {
   return side.tank.sheet.target.spec.protection.smokeLaunchers
 }
