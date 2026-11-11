@@ -4,8 +4,13 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Try a tank in service** (0.10.1.0): win the tender (a Type 1 with
+  the image-intensifier night sight and the laser rangefinder usually
+  does), then on the Bureau tab set production and read the six field
+  reports. Say if the reports read clearly and if the choices feel like
+  real ones.
 - **How service life works** (0.10.0.0), decided without you and easy
-  to change. Nothing to see yet; the screen comes in the next PR.
+  to change.
   - Production is set once, when a tank is adopted. Rate: slow (60 a
     year, 6% dearer, fewer faults), steady (120), rush (200, 3%
     cheaper, 30% more faults; the army and the ministry like the speed,
@@ -200,6 +205,10 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.10.1.0, PR 10b: production and field reports on the Bureau tab.**
+  A tank the army adopts gets its own section: pick the build rate and
+  the quality, see what they do to cost, trouble and standing, start
+  production, then read a field report for each of six years.
 - **0.10.0.0, PR 10a: production and field reports (sim only).** A tank
   the army adopts can now be put into production at a rate and a
   quality, which set what it costs and how often it gives trouble, and
