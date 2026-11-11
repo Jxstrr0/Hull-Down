@@ -14,7 +14,7 @@ import {
 const T = TENDERS.improvedType1
 const SHEET = buildStatSheet(BASELINE_SPEC, T.limits)
 const TANK: Adopted = {
-  designation: 'Model 81', name: 'Night owl', year: 1981, tender: 'improvedType1', spec: BASELINE_SPEC, production: null, years: 0,
+  designation: 'Model 81', name: 'Night owl', year: 1981, tender: 'improvedType1', spec: BASELINE_SPEC, production: null, years: 0, contract: null, upgrades: [],
 }
 const STEADY: Production = SERVICE.defaultProduction
 

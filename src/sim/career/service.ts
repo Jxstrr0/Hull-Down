@@ -19,6 +19,7 @@ import { runEndurance } from '../trials/endurance'
 import { runGunnery } from '../trials/gunnery'
 import type { VehicleSpec } from '../vehicle/spec'
 import type { StatSheet } from '../vehicle/stats'
+import type { UpgradeAsk } from './upgrade'
 
 // Names the rolls of each part of a report apart.
 const ROLL = { running: 1, shoot: 2, exercise: 3 } as const
@@ -75,6 +76,8 @@ export interface FieldReport {
   standing: Record<Body, number>
   /** The bureau's fee on the year's tanks. */
   royaltyKr: number
+  /** What the army would have changed, when the year showed something a package could mend. */
+  ask: UpgradeAsk | null
 }
 
 /** What a tank costs as the factory builds it. */
@@ -152,6 +155,31 @@ function complaintsOf(sheet: StatSheet, shoot: FieldReport['shoot']): Complaint[
   return out
 }
 
+/** True when the year's running was bad enough for the army to mark the bureau down. */
+function ranBadly(running: Running): boolean {
+  const R = SERVICE.running
+  return running.stops / running.tanks >= R.badStops || running.towed / running.tanks >= R.badTowedShare
+}
+
+/**
+ * What the army asks for after a year like this. Breakdowns come first,
+ * then what the exercise showed, then what the crews say.
+ */
+export function askOf(report: Pick<FieldReport, 'running' | 'exercise' | 'complaints'>): UpgradeAsk | null {
+  if (ranBadly(report.running)) return { kind: 'reliability' }
+  for (const lesson of report.exercise.lessons) {
+    if (lesson.good) continue
+    if ((lesson.kind === 'holed' || lesson.kind === 'flanked') && lesson.zone) return { kind: 'protection', zone: lesson.zone }
+    if (lesson.kind === 'outdrawn') return { kind: 'firstShot' }
+    if (lesson.kind === 'brokeDown') return { kind: 'reliability' }
+  }
+  for (const complaint of report.complaints) {
+    if (complaint.kind === 'workload') return { kind: 'workload' }
+    if (complaint.kind === 'comfort') return { kind: 'comfort' }
+  }
+  return null
+}
+
 /**
  * The army's report on a year of a tank's service: how it ran, what its
  * crews say, how conscripts shot in it and how a platoon did on exercise.
@@ -190,9 +218,8 @@ export function fieldReport(
   }
 
   const R = SERVICE.running
-  const stopsEach = running.stops / running.tanks
-  const bad = stopsEach >= R.badStops || running.towed / running.tanks >= R.badTowedShare
-  const good = !bad && stopsEach <= R.goodStops && running.towed === 0
+  const bad = ranBadly(running)
+  const good = !bad && running.stops / running.tanks <= R.goodStops && running.towed === 0
   const standing: Record<Body, number> = {
     army:
       (bad ? R.army.bad : good ? R.army.good : 0) +
@@ -206,5 +233,6 @@ export function fieldReport(
   return {
     year, built, fleet, faults: serviceFaults(sheet, production, year), running, shoot, complaints, exercise, standing,
     royaltyKr: Math.round((built * sheet.unitCostKr * SERVICE.royaltyShare) / 1000) * 1000,
+    ask: askOf({ running, exercise, complaints }),
   }
 }

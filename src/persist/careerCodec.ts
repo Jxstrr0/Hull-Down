@@ -2,10 +2,12 @@
 // are pulled into range, designs are cleaned part by part, and a decision
 // that does not add up is dropped, so the army simply decides again.
 import { BODIES, CAREER, type Body } from '../data/career'
+import { ZONES } from '../data/materials'
 import { BUREAU_IDS } from '../data/opponents'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { SCORE_AXES, TENDER_IDS, TENDER_RULES, TENDERS, type ScoreAxis } from '../data/tenders'
 import { CAREER_FORMAT, type BidLine, type Bidder, type Career, type Outcome, type Prototype } from '../sim/career/career'
+import { UPGRADE_ASK_KINDS, type Upgrade, type UpgradeAsk } from '../sim/career/upgrade'
 import { cleanName, cleanSpec } from './specCodec'
 
 const MAX_PROTOTYPES = 1 + TENDER_RULES.revisions + CAREER.extraRevisions
@@ -86,6 +88,32 @@ function cleanProduction(raw: unknown): Production | null {
   return rate && quality ? { rate, quality } : null
 }
 
+function cleanAsk(raw: unknown): UpgradeAsk | null {
+  if (!isObject(raw)) return null
+  const kind = UPGRADE_ASK_KINDS.find((id) => id === raw.kind)
+  if (!kind) return null
+  if (kind !== 'protection') return { kind }
+  const zone = ZONES.find((id) => id === raw.zone)
+  return zone ? { kind, zone } : null
+}
+
+/** Packages are lettered in the order they were fitted, and none is fitted after a year the tank has not had. */
+function cleanUpgrades(raw: unknown, years: number): Upgrade[] {
+  if (!Array.isArray(raw)) return []
+  const kept: Upgrade[] = []
+  let after = 0
+  for (const item of raw as unknown[]) {
+    const letter = SERVICE.upgrade.letters[kept.length]
+    if (!letter) break
+    if (!isObject(item) || !isObject(item.spec)) continue
+    const ask = cleanAsk(item.ask)
+    if (!ask) continue
+    after = whole(item.afterYear, after, years, after)
+    kept.push({ letter, afterYear: after, spec: cleanSpec(item.spec), ask })
+  }
+  return kept
+}
+
 function cleanAdopted(raw: unknown): Career['adopted'] {
   if (!Array.isArray(raw)) return []
   const kept: Career['adopted'] = []
@@ -99,8 +127,12 @@ function cleanAdopted(raw: unknown): Career['adopted'] {
     const production = cleanProduction(item.production)
     kept.push({
       designation, name: spec.name, year: whole(item.year, 1900, 2200, TENDERS[tender].year), tender, spec,
-      production, years: production ? whole(item.years, 0, SERVICE.years, 0) : 0,
+      production, years: production ? whole(item.years, 0, SERVICE.years, 0) : 0, contract: null, upgrades: [],
     })
+    const tank = kept[kept.length - 1]!
+    tank.upgrades = cleanUpgrades(item.upgrades, tank.years)
+    // A contract is open only on a tank with service and room for a package left.
+    if (production && tank.years < SERVICE.years && tank.upgrades.length < SERVICE.upgrade.letters.length) tank.contract = cleanAsk(item.contract)
   }
   return kept
 }

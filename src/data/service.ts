@@ -81,4 +81,37 @@ export const SERVICE = {
     lessons: 2,
     army: { won: 1, lost: -1 },
   },
+  /**
+   * Upgrade contracts: a package fitted to the tanks already built, inside
+   * the weight, room and cooling the design had to spare when it was adopted.
+   */
+  upgrade: {
+    /** Packages one tank can take in its service life, and the letter each adds to its designation. */
+    letters: ['A', 'B', 'C'],
+    /** What cannot be changed on a tank that is already built: the hull, the turret, the gun and what they are built round. */
+    fixed: [
+      'hull.size', 'hull.glacisAngleDeg', 'hull.engineAt', 'turret.shape', 'turret.ringMm', 'gun', 'loading',
+      'runningGear.suspension', 'runningGear.roadWheels', 'powerpack.cooling',
+    ],
+    /** Working the package up and proving it costs this many of the tank. */
+    workUnits: 1,
+    /** What the ministry pays for a package the army accepts. */
+    feeKr: 4_000_000,
+    standing: { army: 3, ministry: 1 },
+    /** What each kind of contract asks for, at least. */
+    asks: {
+      /** Points on the reliability figure. */
+      reliability: 4,
+      /** Share more protection on the plate named, against kinetic rounds. */
+      protection: 0.1,
+      /** Share off the time to the first shot. */
+      firstShot: 0.1,
+      /** Points off the workload of the busiest station. */
+      workload: 4,
+      /** Points on comfort. */
+      comfort: 10,
+    },
+  },
 } as const
+
+export type FixedPart = (typeof SERVICE.upgrade.fixed)[number]
