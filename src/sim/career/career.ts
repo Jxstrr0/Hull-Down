@@ -123,6 +123,29 @@ export function newCareer(seed: number): Career {
   return career
 }
 
+/** True when there is a tender after this one. */
+export function tendersLeft(career: Career): boolean {
+  return career.tenderNo < TENDER_IDS.length - 1
+}
+
+/**
+ * The bureau goes on to the next tender once the army has decided this one.
+ * What is left of the budget is kept and the new grant added to it; the
+ * prototypes stay behind. Throws when this tender is undecided or the last.
+ */
+export function nextTender(career: Career): Career {
+  if (!career.outcome) throw new Error('the tender is not decided yet')
+  if (!tendersLeft(career)) throw new Error('there is no later tender')
+  const next: Career = { ...career, tenderNo: career.tenderNo + 1, prototypes: [], outcome: null }
+  next.budgetKr = career.budgetKr + tenderOf(next).grantKr
+  return next
+}
+
+/** The limits a package for a tank in service is held to: its own tender's, with the technology of today. */
+export function upgradeLimits(career: Career, tank: Adopted): Tender['limits'] {
+  return { ...TENDERS[tank.tender].limits, generation: tenderOf(career).limits.generation }
+}
+
 /** True when two specs build the same tank. The name is paint: it does not count. */
 function sameTank(a: VehicleSpec, b: VehicleSpec): boolean {
   return JSON.stringify({ ...a, name: '' }) === JSON.stringify({ ...b, name: '' })
@@ -384,7 +407,7 @@ export type UpgradeBlock = (typeof UPGRADE_BLOCKS)[number]
 export function upgradeBlock(career: Career, index: number, spec: VehicleSpec): UpgradeBlock | null {
   const tank = career.adopted[index]
   if (!tank?.contract || upgradesLeft(tank) === 0) return 'none'
-  const limits = TENDERS[tank.tender].limits
+  const limits = upgradeLimits(career, tank)
   const now = serviceSpec(tank)
   if (sameTank(now, spec)) return 'same'
   if (fixedPartsChanged(tank.spec, spec).length > 0) return 'fixed'

@@ -1,7 +1,7 @@
 // The proving ground report: what the range found, test by test, with a link
 // back to the part that would fix each failure. A run can be watched in 3D;
 // that code is only fetched when the player asks for it.
-import { GROUNDS, RANGE, RUN_PART_IDS, type RunPartId } from '../data/range'
+import { GROUNDS, RANGE, RUN_PART_IDS, type Marks, type RunPartId } from '../data/range'
 import { RENDER } from '../data/render'
 import { STRINGS, fill } from '../data/strings'
 import {
@@ -40,6 +40,8 @@ export interface RangeScreenArgs {
   spec: VehicleSpec
   /** The limits the design was built to. The range builds the tank again from the design. */
   limits: Limits
+  /** What the tender asks of a prototype. */
+  marks: Marks
   sheet: StatSheet
   projectNo: number
   back(): void
@@ -575,7 +577,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   }
 
   // The tests run on another thread, so a long trial never freezes the page.
-  void runRange({ spec: args.spec, limits: args.limits, setup: { seed: args.projectNo } }).then((report) => {
+  void runRange({ spec: args.spec, limits: args.limits, setup: { seed: args.projectNo, marks: args.marks } }).then((report) => {
     // The player may have gone back to the office before the range answered.
     if (!root.isConnected) return
     waiting.remove()

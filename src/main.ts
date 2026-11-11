@@ -57,7 +57,7 @@ function mount(): void {
   build.textContent = `v${__GAME_VERSION__} · ${__BUILD_SHA__} · ${__BUILD_DATE__}`
   footer.append(studio, build)
 
-  app.append(header, renderDesignScreen(TENDERS[TENDER_IDS[0]].limits), footer)
+  app.append(header, renderDesignScreen(TENDERS[TENDER_IDS[0]]), footer)
 }
 
 mount()

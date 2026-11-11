@@ -35,6 +35,9 @@ import { renderDuelScreen } from '../ui/duelScreen'
 import { BATTLE } from '../data/battle'
 import { DUEL } from '../data/duel'
 import { createBureau } from './bureauTab'
+import type { Marks } from '../data/range'
+import type { Tender } from '../data/tenders'
+import { tenderOf } from '../sim/career/career'
 import { createSaves } from './savesTab'
 import { dropCareer, saveCareer } from '../persist/careerStore'
 import { SAVE_FORMAT } from '../persist/saveCode'
@@ -60,7 +63,10 @@ function deltaText(change: Preview): string {
   return fill(O.delta, { mass, cost })
 }
 
-export function renderDesignScreen(limits: Limits): HTMLElement {
+export function renderDesignScreen(first: Tender): HTMLElement {
+  // The tender the bureau is on sets the limits and the proving ground's marks. It changes when the career moves on.
+  let limits: Limits = first.limits
+  let marks: Marks = first.marks
   // The browser's storage can be blocked. Touch it only inside these, where failure is handled.
   const storage = {
     getItem: (key: string) => window.localStorage.getItem(key),
@@ -200,6 +206,14 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       design.spec.name = name
       spec = design.spec
       commit(() => undefined)
+    },
+    tender: (tender) => {
+      limits = tender.limits
+      marks = tender.marks
+      sheet = buildStatSheet(spec, limits)
+      drawTop()
+      drawTabs()
+      drawBlueprint()
     },
     redraw: () => {
       if (tab === 'bureau') drawPanel()
@@ -547,6 +561,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     const screen = renderRangeScreen({
       spec,
       limits,
+      marks,
       sheet,
       projectNo: design.projectNo,
       back: () => {
@@ -987,6 +1002,11 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     commit(() => undefined)
   })
 
+  // A saved career may be on a later tender than the first.
+  const now = tenderOf(bureau.career())
+  limits = now.limits
+  marks = now.marks
+  sheet = buildStatSheet(spec, limits)
   drawTop()
   drawTabs()
   drawPanel()
