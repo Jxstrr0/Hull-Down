@@ -145,6 +145,18 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.8.4.0, PR 8e: save slots, the backup file and the reminder.** No
+  screen yet. Three save slots kept in the IndexedDB database `hulldown`
+  (`src/persist/slots.ts`), falling back to memory where a browser will
+  not open one. Each slot lists when it was saved, the tender's year,
+  whether it was won and how many designs are in the chest; what is read
+  back goes through the same cleaning and migrations as a save code. The
+  backup file is `hull-down-backup-YYYY-MM-DD.txt` with the code on a
+  line of its own, and a code is found again even if an editor broke it
+  over lines. The game notes the first day it was played and the last
+  backup under `hulldown.` keys and counts 14 days to the reminder; it
+  also asks the browser not to clear its storage. Checked against a real
+  browser database in a headless phone browser.
 - **0.8.3.0, PR 8d: the save code.** No screen yet. A whole save (the
   career and the plan chest) packs into one line of text that starts
   `HD1:`: deflated, base64url, with a checksum, so a code spoiled in
