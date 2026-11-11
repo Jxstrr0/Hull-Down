@@ -11,6 +11,7 @@ import { TENDER_IDS, TENDERS } from './data/tenders'
 import { sound, switchSound } from './audio/gameSound'
 import { renderDesignScreen } from './office/designScreen'
 import { finishLoading } from './ui/loading'
+import { startOffline } from './ui/offline'
 import { applyTheme, loadTheme, otherTheme, type Theme } from './ui/theme'
 
 const startedAt = performance.now()
@@ -79,5 +80,6 @@ function mount(): void {
   app.append(header, renderDesignScreen(TENDERS[TENDER_IDS[0]]), footer)
 }
 
+startOffline()
 mount()
 void finishLoading(startedAt)
