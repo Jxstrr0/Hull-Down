@@ -185,6 +185,44 @@ export const RENDER = {
     /** At night the sky and the fog go dark and the lights are turned down to this share. */
     nightLight: 0.22,
   },
+  /** A platoon battle, played back. Up to eight tanks on the ground at once. */
+  battle: {
+    /** Seconds of battle shown in each second of watching. */
+    rate: 3,
+    /** The most the whole scene may hold, so a phone draws it at speed. A test builds every ground and counts. */
+    maxTriangles: 12000,
+    maxMeshes: 260,
+    theirTank: '#6d6248',
+    theirTankDark: '#40392b',
+    /** How far the camera sees, and where the haze starts and ends, metres. */
+    farM: 4200,
+    fog: { nearM: 500, farM: 3800 },
+    /** The ground reaches this far past the edge of the battle, metres. */
+    marginM: 1200,
+    /** A ridge is a low mound this long, deep and high, its crest this far ahead of the tank behind it. */
+    ridge: { longM: 150, deepM: 36, highM: 2.2, aheadM: 12, sides: 10 },
+    /** A wood is this many trees of this size, with this many sides each. */
+    wood: { trees: 12, heightM: 16, radiusM: 6, sides: 5, colour: '#3f4a34' },
+    /** The camera that travels with a tank: behind and above it, looking this far past it along its gun. */
+    chase: { backM: 19, upM: 6.5, aheadM: 90, lookUpM: 2 },
+    /** The camera that stands by a tank being put out of the fight: this far off, this high, for this long (battle seconds). */
+    close: { awayM: 24, upM: 6, holdS: 7, leadS: 0.8 },
+    /** The director stays with one tank at least this long before it goes to another, battle seconds. */
+    minCutS: 9,
+    /** It goes to a tank this long before that tank fires or is hit. */
+    leadS: 1.5,
+    /** A round in the air, the flash at the muzzle and the flash where a round strikes. */
+    tracerLongM: 16,
+    tracerThickM: 0.45,
+    flashM: 2.6,
+    flashS: 0.35,
+    strikeM: 3.2,
+    strikeS: 0.5,
+    /** A smoke screen round a tank, and the smoke standing over one put out of the fight. */
+    screenM: 9,
+    wreckSmoke: { puffs: 3, sizeM: 3.2, riseM: 4.5 },
+    nightLight: 0.3,
+  },
   /** The open ground lies a hair under the lane, so the two never fight over a pixel. */
   ground: { sizeM: 1400, underM: 0.03 },
   tank: {

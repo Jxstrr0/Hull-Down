@@ -4,16 +4,18 @@
 // is words and numbers, never a colour alone.
 import { BATTLE, BATTLE_GROUND_IDS, type BattleGroundId, type Orders } from '../data/battle'
 import type { ZoneId } from '../data/materials'
+import type { TankLook } from '../render/battleScene'
 import { STRINGS, fill } from '../data/strings'
 import { DEFAULT_ORDERS } from '../sim/battle/battle'
 import { runBattleSeries, type BattleFixPart, type BattleSeries } from '../sim/battle/series'
-import { combatantOf } from '../sim/duel/duel'
+import { combatantOf, type Combatant } from '../sim/duel/duel'
 import type { Limits, VehicleSpec } from '../sim/vehicle'
 import {
   battleFindingText, battleFixText, battleGroundText, battleLines, battleResultWord, battleSeriesLines, orderChoices,
   type OrderChoice,
 } from './battleWords'
 import { createBattleMap, type BattleMap } from './battleMap'
+import { createBattleWatch, type BattleWatch } from './battleWatch'
 import { el } from './dom'
 import { card, scoreBar } from './duelScreen'
 import { opponentsFor, seriesScore, type Opponent } from './duelWords'
@@ -33,6 +35,11 @@ export interface BattleScreenArgs {
   fix(part: BattleFixPart): void
   /** Leave the battles and open the Armour tab at one zone. */
   fixZone(zone: ZoneId): void
+}
+
+/** What the 3D view needs to draw a tank. */
+function lookOf(tank: Combatant): TankLook {
+  return { spec: tank.sheet.target.spec, geometry: tank.sheet.geometry }
 }
 
 export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
@@ -137,7 +144,7 @@ export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
   }
 
   /** The result card: the score, the sums, what decided it, and a battle to read. */
-  const resultCard = (series: BattleSeries): HTMLElement => {
+  const resultCard = (series: BattleSeries, foe: Combatant): HTMLElement => {
     const box = card(B.resultTitle)
     box.dataset.key = 'battle-result'
     const score = el('p', 'duel-score', seriesScore(series))
@@ -155,11 +162,14 @@ export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
     const body = el('div', 'duel-one')
     fold.append(body)
     let map: BattleMap | null = null
+    let watch: BattleWatch | null = null
     const drawBattle = (): void => {
       const battle = series.battles[at]
       if (!battle) return
       map?.stop()
+      watch?.stop()
       map = createBattleMap(battle, at + 1)
+      watch = createBattleWatch(battle, at + 1, lookOf(me), lookOf(foe))
       const nav = el('div', 'duel-nav')
       const step = (key: string, label: string, aria: string, to: number): HTMLButtonElement => {
         const button = el('button', 'btn duel-step', label)
@@ -188,7 +198,7 @@ export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
         item.append(el('span', 'duel-line-time', fill(D.time, { n: fixed(line.atS, 0) })), el('span', 'duel-line-text', line.text))
         lines.append(item)
       }
-      body.replaceChildren(nav, map.root, lines)
+      body.replaceChildren(nav, map.root, watch.root, lines)
     }
     drawBattle()
 
@@ -246,7 +256,7 @@ export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
     // Let the "fighting" line paint before the sums start.
     setTimeout(() => {
       if (mine !== run || !root.isConnected) return
-      results.replaceChildren(resultCard(runBattleSeries(me, chosen.tank, ground, orders, args.projectNo)))
+      results.replaceChildren(resultCard(runBattleSeries(me, chosen.tank, ground, orders, args.projectNo), chosen.tank))
     }, 0)
   }
 

@@ -1030,6 +1030,12 @@ body {
 .bm-slider { flex: 1; min-width: 0; height: 44px; accent-color: var(--ink); }
 .bm-status { margin: 0; font-family: var(--font-mono); font-size: 0.82rem; }
 .bm-key { margin: 4px 0 0; }
+.bw { margin: 8px 0; }
+.bw-open, .bw-close { min-height: 44px; }
+.bw-view { padding: 0 0 8px; }
+.bw-view > :not(.rg-view-stage) { margin-left: 8px; margin-right: 8px; }
+.bw-cams .seg-item { padding: 0 2px; font-size: 0.82rem; }
+.bw-cams .seg-item:disabled { opacity: 0.5; }
 .bt-order .duel-pick { grid-template-columns: 1fr; }
 .duel-score { margin: 0 0 4px; font-family: var(--font-mono); font-weight: 600; }
 .duel-bar { display: flex; height: 14px; margin: 4px 0 8px; border: 1.5px solid var(--ink); }
