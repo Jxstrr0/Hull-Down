@@ -4,6 +4,11 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Try the duels** (0.7.3.0): Trials tab, "Send it to the duels". Say
+  if the report reads clearly, if the opponents feel fair (the Type 1 as
+  it stands beats the light rival and the Warden, and loses to the heavy
+  rival, the firepower rival and the Palisade), and whether you want to
+  watch a duel in 3D (not built; the plan leaves 3D battles to PR 9).
 - **How a duel is fought** (0.7.1.0), decided without you and easy to
   change: the five grounds and their ranges; a fight is called off as a
   draw after 4 minutes; crews have been in the tank 2 hours; a hull-down
@@ -121,6 +126,14 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.7.3.0, PR 7d: the duel screen.** Trials tab, "Send it to the
+  duels". Pick one of five opponents (three rival bureaus, two Accord
+  tanks) and read what is known of its tank, the score over all five
+  grounds, and a card for each ground: won, lost and drawn as numbers and
+  a patterned bar, who got the first round off, how each tank's rounds
+  went, up to three things that decided it (each marked For or Against,
+  with a fix button that opens the control or the plate), and any one of
+  the 20 duels told round by round. PR 7 is done with this.
 - **0.7.2.0, PR 7c: a duel fought many times, and what decided it.** The
   last piece with nothing on screen. A duel is fought 20 times on each
   ground and the results added up: won, lost and drawn; who got the first
@@ -443,8 +456,8 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   stop for Kelbo to play and decide on voice.
 - PR 7 (duels) is split as well: 7a the opponents, built by bot designers
   (0.7.0.0); then 7b the one-against-one fight and the single-tank AI, 7c
-  runs over several seeds and the duel report, 7d the duel screen in the
-  Trials tab. Kelbo said to carry on past the first playable on 11
+  runs over several seeds and the duel report (0.7.2.0), 7d the duel
+  screen in the Trials tab (0.7.3.0). All four are done. Kelbo said to carry on past the first playable on 11
   November 2026; voice is still his to decide.
 - 6a moved the measurements the blueprint shares with the 3D range (turret
   centre, engine bay, gun height, bustle) from `src/data/drawing.ts` to
