@@ -5,12 +5,14 @@
 import { BASELINE_SPEC } from '../../data/baseline'
 import { BODIES, CAREER, STANDARD_PARTS, type Body, type StandardPart } from '../../data/career'
 import { BUREAU_IDS, type BureauId } from '../../data/opponents'
+import { SERVICE, type Production } from '../../data/service'
 import { TENDER_IDS, TENDER_RULES, TENDERS, type ScoreAxis, type Tender, type TenderId } from '../../data/tenders'
 import { hash32 } from '../rng'
 import type { VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet } from '../vehicle/stats'
 import { rivalBid } from './rival'
 import { decide, scoreBid, trialBid, type BidScore, type Trialled } from './score'
+import { fieldReport, serviceUnitCostKr, type FieldReport } from './service'
 
 export const CAREER_FORMAT = 1
 
@@ -62,7 +64,21 @@ export interface Career {
   /** Null until the army has decided. */
   outcome: Outcome | null
   /** Tanks of the bureau's the army has adopted, oldest first. */
-  adopted: { designation: string; name: string; year: number; spec: VehicleSpec }[]
+  adopted: Adopted[]
+}
+
+/** A tank of the bureau's in the army's hands. */
+export interface Adopted {
+  designation: string
+  name: string
+  /** The year of the tender it won, and the tender. */
+  year: number
+  tender: TenderId
+  spec: VehicleSpec
+  /** How the factory builds it. Null until the bureau has said. */
+  production: Production | null
+  /** Years of service the army has reported on. */
+  years: number
 }
 
 // Names the roll that gives each tender its own luck.
@@ -242,8 +258,84 @@ export function enterTender(career: Career, prototypeNo: number): Career {
 
   const designation = won ? designationOf(tender.year, career.adopted.filter((each) => each.year === tender.year).length) : null
   const adopted = designation
-    ? [...career.adopted, { designation, name: prototype.spec.name, year: tender.year, spec: structuredClone(prototype.spec) }]
+    ? [...career.adopted, {
+      designation, name: prototype.spec.name, year: tender.year, tender: tenderIdOf(career), spec: structuredClone(prototype.spec),
+      production: null, years: 0,
+    }]
     : career.adopted
   return { ...career, reputation, adopted, outcome: { entered: prototypeNo, bids, place, won, designation, standing } }
 }
 
+
+// Names the roll that gives each tank in service its own luck.
+const SERVICE_LUCK = 92
+
+/** The luck of one adopted tank's years in service. */
+export function serviceSeed(career: Career, index: number): number {
+  return hash32(career.seed, SERVICE_LUCK, index)
+}
+
+function adoptedAt(career: Career, index: number): Adopted {
+  const tank = career.adopted[index]
+  if (!tank) throw new Error(`no adopted tank ${index}`)
+  return tank
+}
+
+function withStanding(career: Career, change: Record<Body, number>): { reputation: Record<Body, number>; standing: Record<Body, number> } {
+  const reputation = { ...career.reputation }
+  const standing = { ...change }
+  for (const body of BODIES) {
+    const after = clampStanding(career.reputation[body] + change[body])
+    standing[body] = after - career.reputation[body]
+    reputation[body] = after
+  }
+  return { reputation, standing }
+}
+
+/** What the bureau's choice of rate and quality does to its standing, before the limits are applied. */
+export function productionStanding(tank: Adopted, production: Production): Record<Body, number> {
+  const rate = SERVICE.rates[production.rate]
+  const tender = TENDERS[tank.tender]
+  const unitKr = serviceUnitCostKr(buildStatSheet(tank.spec, tender.limits).unitCostKr, production)
+  return {
+    army: rate.army,
+    ministry: rate.ministry + (unitKr > tender.limits.maxUnitCostKr ? SERVICE.overCeilingMinistry : 0),
+    pact: 0,
+  }
+}
+
+/** Sets how an adopted tank is built. It is set once: the line is tooled for it. */
+export function startProduction(career: Career, index: number, production: Production): Career {
+  const tank = adoptedAt(career, index)
+  if (tank.production) throw new Error('production has already started')
+  const { reputation } = withStanding(career, productionStanding(tank, production))
+  const adopted = career.adopted.map((each, at) => (at === index ? { ...each, production: { ...production } } : each))
+  return { ...career, reputation, adopted }
+}
+
+/** Years of service still to be reported on. Nought before production starts. */
+export function serviceYearsLeft(tank: Adopted): number {
+  return tank.production ? Math.max(0, SERVICE.years - tank.years) : 0
+}
+
+/** The army's report on one of a tank's years in service, counted from one. Null for a year it has not had. */
+export function reportOf(career: Career, index: number, year: number): FieldReport | null {
+  const tank = career.adopted[index]
+  if (!tank?.production || year < 1 || year > tank.years) return null
+  return fieldReport(tank.spec, TENDERS[tank.tender], tank.production, year, serviceSeed(career, index))
+}
+
+/**
+ * A year of service passes for an adopted tank: the army reports, the
+ * bureau's standing moves and its fee on the year's tanks is paid.
+ */
+export function serviceYear(career: Career, index: number): Career {
+  const tank = adoptedAt(career, index)
+  if (!tank.production) throw new Error('production has not started')
+  if (serviceYearsLeft(tank) === 0) throw new Error('the tank has had all its years')
+  const year = tank.years + 1
+  const report = fieldReport(tank.spec, TENDERS[tank.tender], tank.production, year, serviceSeed(career, index))
+  const { reputation } = withStanding(career, report.standing)
+  const adopted = career.adopted.map((each, at) => (at === index ? { ...each, years: year } : each))
+  return { ...career, reputation, budgetKr: career.budgetKr + report.royaltyKr, adopted }
+}

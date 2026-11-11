@@ -8,6 +8,7 @@ import type { RoundKind } from '../../data/ammo'
 import { BATTLE, type BattleGround, type BattleGroundId, type Lane, type Orders, type Post } from '../../data/battle'
 import type { StationId } from '../../data/crew'
 import { DUEL } from '../../data/duel'
+import type { CrewId } from '../../data/gunnery'
 import { TUNING } from '../../data/tuning'
 import { PI, detAtan, detAtan2, detLog } from '../det'
 import {
@@ -211,6 +212,7 @@ export const DEFAULT_ORDERS: Orders = { range: 'long', pace: 'careful' }
  */
 export function runBattle(
   mine: Combatant, theirs: Combatant, groundId: BattleGroundId, orders: Orders, seed: number,
+  crews: readonly [CrewId, CrewId] = [DUEL.crew, DUEL.crew],
 ): BattleResult {
   const ground: BattleGround = BATTLE.grounds[groundId]
   const bothOrders: [Orders, Orders] = [orders, ground.theirOrders]
@@ -281,7 +283,7 @@ export function runBattle(
     return true
   }
   const shootOf = (tank: Tank): Shoot => ({
-    moving: tank.moving, night: ground.night, crew: DUEL.crew, hours: DUEL.crewHours,
+    moving: tank.moving, night: ground.night, crew: crews[tank.side], hours: DUEL.crewHours,
   })
   const mates = (tank: Tank): Tank[] => tanks.filter((each) => each.side === tank.side && each !== tank)
   const enemies = (tank: Tank): Tank[] => tanks.filter((each) => each.side !== tank.side)
