@@ -4,6 +4,11 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **How a bid is marked** (0.8.0.0), decided without you and easy to
+  change: weights protection 30, firepower 25, mobility 15, reliability
+  15, cost 15; each failed range test costs 4 marks out of 100; a design
+  that breaks a limit is thrown out. The first tender's catch is the
+  night shoot: the Type 1 as issued fails it.
 - **Try the duels** (0.7.3.0): Trials tab, "Send it to the duels". Say
   if the report reads clearly, if the opponents feel fair (the Type 1 as
   it stands beats the light rival and the Warden, and loses to the heavy
@@ -126,6 +131,19 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.8.0.0, PR 8a: the first tender and how a bid is marked.** Sim and
+  data only; nothing new on screen. `src/data/tenders.ts` holds the first
+  tender (1981, an improved Type 1: the Pact limits, a unit-cost ceiling
+  of Kr 3.2M, the usual range marks but four night targets hit, duels with
+  the Warden and the Palisade) and the scoring table.
+  `src/sim/career/score.ts` puts any bid through that proving ground and
+  those duels, marks it out of 100 on protection, firepower, mobility,
+  reliability and cost, weighs the five as the tender says, takes marks
+  off for each range test failed, and ranks the bids. PR 8 is split to
+  keep each piece phone-sized: 8a this, 8b rivals revise against the
+  tender, 8c the career (phases, budget, revisions, reputations, the
+  decision, designations), 8d saves and the `HD1:` code, 8e the chief
+  engineer, 8f the career screens.
 - **0.7.3.0, PR 7d: the duel screen.** Trials tab, "Send it to the
   duels". Pick one of five opponents (three rival bureaus, two Accord
   tanks) and read what is known of its tank, the score over all five
