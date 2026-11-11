@@ -27,7 +27,7 @@ The player's bureau is "State Tank Design Bureau" for now.
 
 | Name | What it is | Status |
 | --- | --- | --- |
-| Pattern 3 | The Radan baseline tank every Pact design starts from. | Working name (PR 1), Kelbo to confirm |
+| Type 1 | The Radan baseline tank every Pact design starts from. | Chosen by Kelbo (0.6.6.0); was the working name "Pattern 3" |
 
 ## Designation scheme
 

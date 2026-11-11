@@ -1,9 +1,9 @@
 // The Radan baseline design: the licence-built tank the bureau starts from
-// (plan section 16, Q5). "Pattern 3" is a working name; see docs/NAMES.md.
+// (plan section 16, Q5). Kelbo named it "Type 1"; see docs/NAMES.md.
 import type { VehicleSpec } from '../sim/vehicle/spec'
 
 export const BASELINE_SPEC: VehicleSpec = {
-  name: 'Pattern 3',
+  name: 'Type 1',
   hull: { size: 'medium', glacisAngleDeg: 68, engineAt: 'rear' },
   turret: { shape: 'castDome', ringMm: 2100 },
   gun: 'smooth125',

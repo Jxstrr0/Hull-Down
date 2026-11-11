@@ -2,6 +2,10 @@
 // and how every readout moved. Every mark is an arrow and a word, never a
 // colour alone.
 import { STRINGS, fill } from '../data/strings'
+import type { RangeReport } from '../sim/trials'
+import type { Limits } from '../sim/vehicle'
+import { compareTrials } from '../office/compareTrials'
+import { runRange } from './rangeRunner'
 import { READOUT_GROUPS, compareBuilds, type Build, type Move, type ReadoutMove } from '../office/compare'
 import { el } from './dom'
 import { fixed, signed } from './format'
@@ -18,7 +22,67 @@ export interface CompareSide {
 export interface CompareScreenArgs {
   earlier: CompareSide
   later: CompareSide
+  /** The limits both were built to, and the luck of the day: the range runs them both again. */
+  limits: Limits
+  seed: number
   back(): void
+}
+
+const SVG = 'http://www.w3.org/2000/svg'
+const T = C.trials
+
+function svg(tag: string, attrs: Record<string, string>): SVGElement {
+  const node = document.createElementNS(SVG, tag)
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value)
+  return node
+}
+
+/** Speed against time for both builds: the later one a solid line, the earlier a faint dashed ghost. */
+function ghostChart(before: RangeReport, after: RangeReport, a: string, b: string): HTMLElement {
+  const w = 320
+  const h = 110
+  const pad = { left: 4, right: 4, top: 14, bottom: 4 }
+  const markKmh = after.marks.topKmh
+  const span = (report: RangeReport): number => (report.acceleration.trace.vMs.length - 1) * report.acceleration.trace.stepS
+  const spanS = Math.max(span(before), span(after))
+  const peakKmh = Math.max(before.acceleration.topKmh, after.acceleration.topKmh, markKmh) * 1.08
+  const px = (s: number): number => pad.left + (s / spanS) * (w - pad.left - pad.right)
+  const py = (kmh: number): number => h - pad.bottom - (kmh / peakKmh) * (h - pad.top - pad.bottom)
+  const line = (report: RangeReport): string => {
+    const { vMs, stepS } = report.acceleration.trace
+    const every = Math.max(1, Math.floor(vMs.length / 160))
+    const points: string[] = []
+    vMs.forEach((v, index) => {
+      if (index % every === 0 || index === vMs.length - 1) points.push(`${fixed(px(index * stepS), 1)},${fixed(py(v * 3.6), 1)}`)
+    })
+    return points.join(' ')
+  }
+  const chart = svg('svg', { viewBox: `0 0 ${w} ${h}`, class: 'rg-chart', role: 'img' })
+  chart.setAttribute('aria-label', fill(T.chartLabel, {
+    a, b, aTop: fixed(before.acceleration.topKmh, 0), bTop: fixed(after.acceleration.topKmh, 0),
+  }))
+  const markY = fixed(py(markKmh), 1)
+  chart.append(
+    svg('line', { x1: String(pad.left), x2: String(w - pad.right), y1: String(h - pad.bottom), y2: String(h - pad.bottom), class: 'rg-axis' }),
+    svg('line', { x1: String(pad.left), x2: String(w - pad.right), y1: markY, y2: markY, class: 'rg-mark' }),
+    svg('polyline', { points: line(before), class: 'rg-line cmp-ghost' }),
+    svg('polyline', { points: line(after), class: 'rg-line' }),
+  )
+  const markText = svg('text', { x: String(pad.left + 2), y: fixed(py(markKmh) - 4, 1), class: 'rg-chart-text' })
+  markText.textContent = fill(T.chartMark, { n: String(markKmh) })
+  const endText = svg('text', { x: String(w - pad.right - 2), y: String(h - pad.bottom - 5), class: 'rg-chart-text', 'text-anchor': 'end' })
+  endText.textContent = fill(T.chartEnd, { n: fixed(spanS, 0) })
+  chart.append(markText, endText)
+  const box = el('div', 'rg-chart-box')
+  box.append(chart)
+  return box
+}
+
+/** A value with a tick or a cross and the words, when the thing has a mark to meet. */
+function marked(className: string, text: string, passed: boolean | null): HTMLElement {
+  const span = el('span', className, passed === null ? text : `${passed ? '✓' : '✗'} ${text}`)
+  if (passed !== null) span.setAttribute('aria-label', `${text}, ${passed ? T.passMark : T.failMark}`)
+  return span
 }
 
 function card(title: string): HTMLElement {
@@ -124,6 +188,38 @@ export function renderCompareScreen(args: CompareScreenArgs): HTMLElement {
     fold.append(list)
     readouts.append(fold)
   }
-  root.append(readouts, el('p', 'ds-note', C.note))
+  root.append(readouts)
+
+  // --- At the range ---------------------------------------------------------
+  const trials = card(T.title)
+  trials.dataset.key = 'cmp-trials'
+  const waiting = el('p', 'rg-waiting', T.running)
+  waiting.setAttribute('role', 'status')
+  trials.append(el('p', 'ctl-note', T.about), waiting)
+  root.append(trials, el('p', 'ds-note', C.note))
+  const job = (side: CompareSide) => runRange({ spec: side.build.spec, limits: args.limits, setup: { seed: args.seed } })
+  void Promise.all([job(earlier), job(later)]).then(([before, after]) => {
+    if (!root.isConnected) return
+    waiting.remove()
+    trials.append(
+      el('h4', 'cmp-group', T.chartTitle),
+      ghostChart(before, after, earlier.label, later.label),
+      el('p', 'ctl-note cmp-key', fill(T.chartKey, { a: earlier.label, b: later.label })),
+    )
+    const list = el('dl', 'cmp-rows')
+    for (const each of compareTrials(before, after)) {
+      const line = el('div', `cmp-row${each.move === 'same' ? ' cmp-still' : ''}`)
+      line.dataset.key = `cmp-trial-${each.key}`
+      line.append(el('dt', 'cmp-label', each.label))
+      const value = el('dd', 'cmp-value')
+      value.append(marked('cmp-before', each.before, each.beforePassed), el('span', 'cmp-arrow', '→'), marked('cmp-after', each.after, each.afterPassed))
+      value.append(each.verdict
+        ? el('span', `cmp-mark cmp-${each.verdict}`, `${ARROW[each.move]} ${C[each.verdict]}`)
+        : el('span', 'cmp-mark cmp-nochange', T.same))
+      line.append(value)
+      list.append(line)
+    }
+    trials.append(list)
+  })
   return root
 }

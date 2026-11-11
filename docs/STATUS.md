@@ -94,7 +94,6 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   roadside, and one stop is allowed. A part 10 % over its rating breaks in
   about three runs in four. The same project always gets the same luck, so
   sending it again changes nothing; only a design change does.
-- Confirm or replace the working name "Pattern 3" for the Radan baseline tank.
 - Choose how the hidden studio-site listing gets its cover image (see Notes).
 - Say if the project numbers ("Project 101", counting up, never reused) suit
   you, or if you want a different scheme. See `docs/NAMES.md`.
@@ -104,6 +103,16 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.6.6.0, PR 6g: trial results side by side, with a ghost.** The
+  side-by-side screen now sends both builds through the range under the
+  same conditions and shows every measured thing for each: tests passed,
+  the sprint, top speed, each obstacle, the endurance run, hits on each
+  shoot, time to first shot, the loading drill, rounds through the armour
+  and the height over the berm. Each has a tick or a cross for the mark
+  and an arrow with "better" or "worse". The speed chart draws the later
+  build as a solid line and the earlier as a faint dashed ghost. The
+  Radan baseline is now named "Type 1" (Kelbo's choice). This is the
+  first playable: design, proving ground and report work end to end.
 - **0.6.5.0, PR 6f: prototype revisions and the side-by-side view.**
   Sending a design to the range now builds a prototype and keeps it as a
   numbered revision (only when the build has changed; a new name does not
@@ -377,7 +386,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   hull-down berm on the range, 6d the after-action report (0.6.3.0), 6e
   the report's share card (0.6.4.0), 6f prototype revisions and the
   side-by-side view of two designs (0.6.5.0), 6g trial results side by
-  side with the earlier revision as a ghost.
+  side with the earlier revision as a ghost (0.6.6.0). All seven are done.
   (The share card was first folded into 6d; it is its own small PR so the
   report stays readable on a phone.) The plan calls the first playable
   0.6.0.0; with the split it is the last of these, and that is where to
