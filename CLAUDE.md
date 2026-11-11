@@ -29,8 +29,8 @@ trade-offs.
 - Design office: 2D, plain DOM, SVG and canvas.
 - Trials: three.js from npm, loaded only when a trial opens (from PR 4).
 - Hosting: GitHub Pages from GitHub Actions. Merging into `main` deploys.
-  Live at `https://jxstrr0.github.io/Hull-Down/` until the custom domain
-  `hulldown.longlight.games` is set up.
+  Live at `https://hulldown.longlight.games/` (the old
+  `https://jxstrr0.github.io/Hull-Down/` address redirects there).
 - No backend, accounts, analytics, ads or API keys.
 
 ## Folders

@@ -9,7 +9,7 @@ shows why.
 
 **Status:** early scaffold (0.1.0.0). There is nothing to play yet.
 
-- Play: https://jxstrr0.github.io/Hull-Down/ (later https://hulldown.longlight.games/)
+- Play: https://hulldown.longlight.games/
 - Plan: [`docs/HULL-DOWN-PLAN.md`](docs/HULL-DOWN-PLAN.md)
 - Progress: [`docs/STATUS.md`](docs/STATUS.md)
 
