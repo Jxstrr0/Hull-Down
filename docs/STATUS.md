@@ -4,6 +4,9 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Try the armour toy** (plan stage PR 3 is done at 0.3.3.0): Armour tab,
+  protection map, reactive tiles and the test shot. Say what feels wrong,
+  slow or confusing before PR 4 (mobility and the 3D range) starts.
 - Confirm or replace the working name "Pattern 3" for the Radan baseline tank.
 - Choose how the hidden studio-site listing gets its cover image (see Notes).
 - Say if the project numbers ("Project 101", counting up, never reused) suit
@@ -14,6 +17,14 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.3.3.0, PR 3d: the quick test shot.** A "Test shot" box in the Armour
+  tab fires the chosen round at the zone you are working on. Pick the angle
+  (square on, or 15 to 60 degrees off), and where the zone has reactive tiles,
+  whether the shot meets a tile or bare plate. The section view shows how far
+  the round gets, and a list under it shows what each layer took from it. A
+  kinetic round that meets the plate more than 80 degrees from square skids
+  off. The answer comes with its margin of error (12 %). This finishes plan
+  stage PR 3: the armour is a small toy to try.
 - **0.3.2.0, PR 3c: reactive tiles.** A "Reactive tiles" box at the bottom of
   the Armour tab. Each zone has a grid of tile places; tap a place to fit or
   strip a tile. Places under a hatch, a sight or the exhaust are blocked, and

@@ -637,3 +637,48 @@ body {
 }
 .tile:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
 .tiles-bulk { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+
+/* The test shot: its controls, the shot on the section view, and the layer-by-layer list. */
+.slab-tile { fill: var(--ink); }
+.sec-shot-live { stroke-dasharray: none; stroke-width: 2.2; fill: none; }
+.sec-shot { fill: none; }
+.sec-shot-unsure { stroke-dasharray: 7 5; }
+.shot-meets { margin-top: 8px; }
+.sec-stop { stroke: var(--pencil); stroke-width: 2.4; vector-effect: non-scaling-stroke; }
+@media (prefers-reduced-motion: no-preference) {
+  .sec-shot-fired { stroke-dasharray: 1; animation: shot-in 0.4s ease-out; }
+}
+@keyframes shot-in {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+.seg { display: flex; margin: 8px 0 0; border: 1.5px solid var(--ink); border-radius: 2px; }
+.seg-item {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.seg-item + .seg-item { border-left: 1px solid var(--ink-dim); }
+.seg-on { background: var(--ink); color: var(--paper); font-weight: 600; }
+.seg-item:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+.shot-steps { margin: 8px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--grid); }
+.shot-step {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--grid);
+  font-size: 0.88rem;
+}
+.shot-step-name { min-width: 0; }
+.shot-step-value { flex: none; font-family: var(--font-mono); font-size: 0.8rem; }
+.shot-step-stop { font-weight: 700; }
+.shot-step-off { color: var(--ink-dim); }
+.shot-result { margin: 8px 0; font-size: 0.95rem; font-weight: 600; }

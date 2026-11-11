@@ -51,4 +51,9 @@ export const SECTION = {
   /** The drawing is never narrower than this, so thin plate looks thin. */
   minWidthMm: 1200,
   arrowMm: 34,
+  /** How thick a reactive tile is drawn, and the gap between it and the plate. */
+  tileMm: 40,
+  tileGapMm: 12,
+  /** How far a round that skids off is drawn running up the plate, as a share of the strip. */
+  skidShare: 0.45,
 } as const

@@ -65,6 +65,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
   let view: View = 'side'
   const armourState: ArmourTabState = {
     zone: 'upperGlacis', zonesScroll: 0, threat: DEFAULT_THREAT, rangeM: TUNING.protection.defaultRangeM, mapOpen: false,
+    angleDeg: 0, atTile: true,
   }
 
   const root = el('section', 'office')
