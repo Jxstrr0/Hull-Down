@@ -4,6 +4,45 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Sound, first slice** (0.16.0.0): the range playbacks now have sound,
+  all of it made in the browser with no files. The engine note comes
+  from the engine you fitted (a diesel chugs, the multi-fuel is rougher,
+  the turbine whines) and rises and falls through the gears; the tracks
+  clatter with speed; the gun is lower and longer the bigger the
+  calibre; and a hit (the board rings), a miss (the round tears past)
+  and a round that falls short (a thud in the ground) each sound
+  different. A "Sound on / Sound off" button sits beside Blueprint and
+  is remembered. **I cannot hear it from here**, so every level is a
+  first guess: tell me what is too loud, too quiet or just wrong and I
+  will retune `src/data/audio.ts`. Still to come in PR 16: the free
+  recordings you asked for layered over the gun and the strikes (next
+  slice), then battles, then the office.
+- **Range officer voice: the quote you asked for.** Nothing has been
+  generated. The script sheet, 12 short lines, one speaker:
+
+  | Line | Speaker | Text | File | Characters |
+  | --- | --- | --- | --- | --- |
+  | RO-01 | Range officer | Range is clear. Carry on. | `public/audio/voice/ro-01-range-clear.mp3` | 25 |
+  | RO-02 | Range officer | Target up. | `public/audio/voice/ro-02-target-up.mp3` | 10 |
+  | RO-03 | Range officer | Hit. | `public/audio/voice/ro-03-hit.mp3` | 4 |
+  | RO-04 | Range officer | Miss. Short. | `public/audio/voice/ro-04-miss-short.mp3` | 12 |
+  | RO-05 | Range officer | Miss. Over. | `public/audio/voice/ro-05-miss-over.mp3` | 11 |
+  | RO-06 | Range officer | Miss. Left. | `public/audio/voice/ro-06-miss-left.mp3` | 11 |
+  | RO-07 | Range officer | Miss. Right. | `public/audio/voice/ro-07-miss-right.mp3` | 12 |
+  | RO-08 | Range officer | Target down. No shot fired. | `public/audio/voice/ro-08-no-shot.mp3` | 27 |
+  | RO-09 | Range officer | Target not seen. | `public/audio/voice/ro-09-not-seen.mp3` | 16 |
+  | RO-10 | Range officer | Stoppage. The loader has a jam. | `public/audio/voice/ro-10-jam.mp3` | 31 |
+  | RO-11 | Range officer | Cease fire. Shoot complete. | `public/audio/voice/ro-11-cease-fire.mp3` | 27 |
+  | RO-12 | Range officer | Breakdown on the lane. Recovery is on its way. | `public/audio/voice/ro-12-breakdown.mp3` | 46 |
+
+  That is 232 characters. ElevenLabs charges about one credit a
+  character on its standard voice models, so **about 232 credits for
+  one take of every line, about 464 if it makes its usual two takes
+  to choose from**, out of your 2,700. I would pick one stock voice (no
+  credits to pick) and ask for one take first. The exact figure shows
+  before anything is spent; if it is more than 464 I stop and ask
+  again. Say yes, change the lines, or say no and the range stays
+  wordless.
 - **Picture quality** (0.15.3.0): a setting on the Trials tab, Auto,
   High, Medium or Low, as you chose. On Auto the game times each 3D
   playback and steps down a tier if it runs under 40 frames a second
@@ -411,6 +450,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.16.0.0, PR 16a: sound on the range.** First slice of plan PR 16. `src/data/audio.ts` holds every number and the cue map (gun, hit, miss, short). `src/audio/cues.ts` works out what a playback should sound like from what it shows (engine note from the engine and gearbox, track beat from speed, gun from calibre, one cue a round fired and one a round landed), with tests. `src/audio/sound.ts` makes it with the browser's own synth: no sound files, nothing fetched. A Sound button in the header, kept under `hulldown.sound`. First load 770 KB.
 - **0.15.3.0, PR 15d: picture quality.** Last slice of plan PR 15. Three tiers in `src/data/graphics.ts` (pixel ratio, smooth edges, how much of the woods is planted). `src/render/frameMeter.ts` times the frames of every 3D view; on Auto the game steps down when the device is slow and remembers it under `hulldown.graphics`. A picker and the last measured frame rate on the Trials tab. First load 762 KB.
 - **0.15.2.0, PR 15c: scenery on the range.** Third slice of plan PR 15. `src/render/scenery.ts` lays out woods, skyline hills, a range tower and warning flags as a plain list of shapes, the same on every device, and `buildSolids` joins them into one mesh a colour. On the strip, the course and the shoots. A test holds each range to 5,200 triangles and keeps the lane and the camera side clear. A `density` setting thins the woods, ready for the graphics tiers.
 - **0.15.1.0, PR 15b: the paint shop.** Second slice of plan PR 15. Four cosmetic paint schemes in `src/data/paint.ts`, picked on the Trials tab and kept beside the design (`SavedDesign.paint`), so a repaint is never a new build. Two are camouflage: `src/render/camo.ts` makes a small repeating pattern in code (no image files), the same on every device, and the tank's plate is painted with it in the range and battle 3D views. No more meshes or triangles than a plain tank. First load 758 KB.

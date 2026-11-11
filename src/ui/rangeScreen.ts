@@ -14,6 +14,8 @@ import type { Limits, StatSheet, VehicleSpec } from '../sim/vehicle'
 import { VIEWS, type ViewId } from '../render/director'
 import type { RangeView, RunSource } from '../render/rangeScene'
 import type { ReelFrame } from '../render/shootReel'
+import { createShootEar, droneAt, voiceOf } from '../audio/cues'
+import { sound } from '../audio/gameSound'
 import { afterActionCard } from './afterAction'
 import { armourCards } from './armourCards'
 import { el } from './dom'
@@ -215,8 +217,13 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     return ''
   }
 
+  const voice = voiceOf(args.spec)
+
   const openView = async (source: RunSource, slot: HTMLElement, opener: HTMLButtonElement): Promise<void> => {
     closeView()
+    // Opened by a tap, which is when a browser lets sound begin.
+    sound.wake()
+    const ear = createShootEar()
     const test = source.test
     const box = el('div', 'rg-view')
     const stage = el('div', 'rg-view-stage')
@@ -287,6 +294,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     closeView = (): void => {
       closed = true
       view?.dispose()
+      sound.still()
       slot.replaceChildren()
       opener.hidden = false
       closeView = (): void => {}
@@ -297,6 +305,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     })
     toggle.addEventListener('click', () => {
       heldWhilePlaying = false
+      sound.wake()
       if (playing) view?.pause()
       else view?.play()
     })
@@ -334,6 +343,9 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
         onFrame: (frame) => {
           // The bar follows the run, except under a finger.
           if (!heldWhilePlaying) scrub.value = String(frame.timeS)
+          // The tank is heard while the run plays, and not while it is held still.
+          if (playing) sound.drone(voice, droneAt(voice, frame.speedKmh))
+          if ('fire' in source && frame.shoot) for (const cue of ear.hear(source.run, frame.shoot, playing)) sound.cue(cue, voice.calibreMm)
           if (source.test === 'endurance' && frame.lapse) {
             const lapse = frame.lapse
             const km = fixed(lapse.km, 0)

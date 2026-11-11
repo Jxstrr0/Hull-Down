@@ -8,6 +8,7 @@ import '@fontsource/space-grotesk/latin-500.css'
 import './style.css'
 import { STRINGS, fill } from './data/strings'
 import { TENDER_IDS, TENDERS } from './data/tenders'
+import { sound, switchSound } from './audio/gameSound'
 import { renderDesignScreen } from './office/designScreen'
 import { finishLoading } from './ui/loading'
 import { applyTheme, loadTheme, otherTheme, type Theme } from './ui/theme'
@@ -43,7 +44,25 @@ function mount(): void {
     showTheme()
   })
   showTheme()
-  header.append(title, toggle)
+
+  const mute = document.createElement('button')
+  mute.className = 'bar-theme'
+  mute.type = 'button'
+  mute.dataset.key = 'sound'
+  const showSound = (): void => {
+    mute.textContent = sound.on() ? STRINGS.sound.on : STRINGS.sound.off
+    mute.setAttribute('aria-pressed', String(sound.on()))
+    mute.setAttribute('aria-label', sound.on() ? STRINGS.sound.turnOff : STRINGS.sound.turnOn)
+  }
+  mute.addEventListener('click', () => {
+    switchSound(!sound.on())
+    showSound()
+  })
+  showSound()
+  const buttons = document.createElement('div')
+  buttons.className = 'bar-buttons'
+  buttons.append(mute, toggle)
+  header.append(title, buttons)
 
   const footer = document.createElement('footer')
   footer.className = 'foot'
