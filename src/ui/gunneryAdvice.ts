@@ -3,7 +3,7 @@
 // here, so it can be tested.
 import { GUNNERY } from '../data/gunnery'
 import type { STRINGS } from '../data/strings'
-import type { GunneryRun, MissCause, ShotRecord } from '../sim/trials'
+import type { GunneryRun, MissCause, ShotRecord, TurretPartId } from '../sim/trials'
 import type { StatSheet, VehicleSpec } from '../sim/vehicle'
 
 type FixPart = keyof typeof STRINGS.controls
@@ -28,6 +28,11 @@ export function slowFix(sheet: StatSheet, spec: VehicleSpec): FixPart {
   ways.sort((a, b) => b.seconds - a.seconds)
   // With the quickest of everything, only an easier tank to fight is left.
   return ways.find((way) => !way.best)?.part ?? 'crew.comfort'
+}
+
+/** The control where a turret part that failed is chosen. */
+export function faultFix(part: TurretPartId): FixPart {
+  return `fireControl.${part}`
 }
 
 /** The control that would have got more hits in this test. */

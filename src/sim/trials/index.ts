@@ -1,14 +1,19 @@
 // The proving ground: every test a prototype is put through, run from its
 // stat sheet. The same tank always gives the same result.
-import { GUNNERY_TEST_IDS, MARKS_GEN1, type ClimateId, type GunneryTestId, type Marks } from '../../data/range'
+import { GUNNERY_TEST_IDS, MARKS_GEN1, RANGE, type ClimateId, type GunneryTestId, type Marks } from '../../data/range'
 import type { Limits, VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
+import { unit } from '../rng'
+import { TURRET_PARTS, type TurretPart, type TurretPartId } from '../gunnery/fire'
 import { runAcceleration, type AccelerationRun } from './acceleration'
+import { runLoadingDrill, type DrillRun } from './drill'
 import { runEndurance, type EnduranceRun } from './endurance'
 import { runGunnery, type GunneryRun } from './gunnery'
 import { runObstacles, type ObstacleRun } from './obstacles'
 
 export { runAcceleration, stepTime, type AccelerationRun, type Trace } from './acceleration'
+export { runLoadingDrill, type DrillRound, type DrillRun } from './drill'
+export { TURRET_PARTS, type TurretPartId } from '../gunnery/fire'
 export {
   runEndurance, type EnduranceEvent, type EnduranceLeg, type EnduranceRun, type EnduranceSetup, type PartLoad,
 } from './endurance'
@@ -21,6 +26,8 @@ export {
 
 /** A firing test with its marks applied. Only the halted test is timed. */
 export type GunneryResult = GunneryRun & {
+  /** A turret part that failed before the shoot, which the crew did without. Null when all of it worked. */
+  fault: TurretPartId | null
   hitsPassed: boolean
   /** Null when the test has no time mark. */
   timePassed: boolean | null
@@ -37,6 +44,7 @@ export interface RangeReport {
   obstacles: ObstacleRun
   endurance: EnduranceRun & { passed: boolean }
   gunnery: Record<GunneryTestId, GunneryResult>
+  drill: DrillRun & { passed: boolean }
   /** Tests passed and tests run. */
   passes: number
   tests: number
@@ -49,6 +57,19 @@ export interface RangeSetup {
   climate?: ClimateId
 }
 
+// Names the rolls for turret parts apart from the shots.
+const FAULTS = 55
+
+/** The first turret part to let the crew down in this shoot, if any does. */
+function faultIn(parts: TurretPart[], testNo: number, seed: number): TurretPart | null {
+  for (const part of parts) {
+    // Each part keeps its own roll whatever else is fitted, so changing one part does not move another's luck.
+    const partNo = TURRET_PARTS.indexOf(part.id)
+    if (unit(seed, FAULTS, testNo, partNo) < (1 - part.reliability) * RANGE.gunnery.faultShare) return part
+  }
+  return null
+}
+
 export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeReport {
   const marks = setup.marks ?? MARKS_GEN1
   const run = runAcceleration(sheet.drive)
@@ -59,19 +80,25 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   const long = runEndurance(sheet.drive, sheet.wear, { seed: setup.seed, climate: setup.climate })
   const endurance = { ...long, passed: long.finished && long.stops <= marks.enduranceStops }
   const gunnery = {} as Record<GunneryTestId, GunneryResult>
-  for (const id of GUNNERY_TEST_IDS) {
-    const shot = runGunnery(sheet.fire, id, setup.seed)
+  for (const [testNo, id] of GUNNERY_TEST_IDS.entries()) {
+    const fault = faultIn(sheet.turret, testNo, setup.seed)
+    const shot = runGunnery(fault ? fault.without : sheet.fire, id, setup.seed)
     const hitsPassed = shot.hits >= marks.hits[id]
     const timePassed = id === 'halted' ? shot.firstShotS !== null && shot.firstShotS <= marks.firstShotS : null
-    gunnery[id] = { ...shot, hitsPassed, timePassed, passed: hitsPassed && timePassed !== false }
+    gunnery[id] = { ...shot, fault: fault ? fault.id : null, hitsPassed, timePassed, passed: hitsPassed && timePassed !== false }
   }
-  const passed = [acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed)]
+  const loading = runLoadingDrill(sheet.fire, setup.seed)
+  const drill = { ...loading, passed: loading.rpm >= marks.drillRpm }
+  const passed = [
+    acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
+  ]
   return {
     marks,
     acceleration,
     obstacles,
     endurance,
     gunnery,
+    drill,
     passes: passed.filter(Boolean).length,
     tests: passed.length,
   }

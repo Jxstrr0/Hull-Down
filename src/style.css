@@ -798,6 +798,9 @@ body {
 .rg-leg { fill: none; stroke: var(--ink-dim); stroke-width: 1; }
 .rg-event { fill: var(--pencil); stroke: var(--pencil); stroke-width: 1; stroke-linejoin: round; }
 .rg-event-end { fill: none; stroke-width: 2.5; stroke-linecap: round; }
+.rg-drill-bar { fill: var(--ink-dim); }
+.rg-drill-slow { fill: var(--pencil); }
+.rg-drill-letter { fill: var(--ink); font-weight: 700; }
 .rg-board-box { max-width: 260px; margin: 8px auto; }
 .rg-board-target { fill: none; stroke: var(--ink); stroke-width: 1.5; }
 .rg-board-hit { fill: var(--stamp); }

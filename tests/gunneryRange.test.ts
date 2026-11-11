@@ -184,9 +184,9 @@ describe('what the firing tests reward', () => {
 })
 
 describe('the range report', () => {
-  it('counts the three firing tests', () => {
+  it('counts the three firing tests and the loading drill', () => {
     const report = runProvingGround(build(), { seed: 101 })
-    expect(report.tests).toBe(3 + GUNNERY_TEST_IDS.length)
+    expect(report.tests).toBe(3 + GUNNERY_TEST_IDS.length + 1)
     for (const id of GUNNERY_TEST_IDS) {
       const run = report.gunnery[id]
       expect(run.test).toBe(id)

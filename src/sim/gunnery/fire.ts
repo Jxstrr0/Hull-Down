@@ -3,7 +3,9 @@
 // range shoots by it. Game-level abstractions, not engineering data.
 import { pactRounds, type PactRoundId, type RoundKind } from '../../data/ammo'
 import { CREWS, GUNNERY, type CrewId } from '../../data/gunnery'
-import { GUNS, LOADING } from '../../data/parts'
+import {
+  COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS,
+} from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { detExp } from '../det'
 import type { VehicleSpec } from '../vehicle/spec'
@@ -120,6 +122,38 @@ export function fireOf(spec: VehicleSpec, crewWorkload: number): Fire {
       clearS: L.clearS,
     },
   }
+}
+
+/** The turret parts that can let the crew down during a shoot. */
+export const TURRET_PARTS = ['sight', 'rangefinder', 'stabiliser', 'computer', 'night', 'commanderSight'] as const
+export type TurretPartId = (typeof TURRET_PARTS)[number]
+
+export interface TurretPart {
+  id: TurretPartId
+  /** 0..1 chance it gets through a long trial with no trouble. */
+  reliability: number
+  /** How the tank shoots with this part out of action. */
+  without: Fire
+}
+
+/**
+ * The design as it is left when each turret part fails: the crew falls back
+ * on the plainest way of doing that part's job. A part that is already the
+ * plainest has nothing to fail and is left out.
+ */
+export function turretFallbacks(spec: VehicleSpec): { id: TurretPartId; reliability: number; spec: VehicleSpec }[] {
+  const fc = spec.fireControl
+  const out: { id: TurretPartId; reliability: number; spec: VehicleSpec }[] = []
+  const without = (id: TurretPartId, reliability: number, change: Partial<VehicleSpec['fireControl']>): void => {
+    out.push({ id, reliability, spec: { ...spec, fireControl: { ...fc, ...change } } })
+  }
+  if (fc.sight !== 'daySight') without('sight', SIGHTS[fc.sight].reliability, { sight: 'daySight' })
+  if (fc.rangefinder !== 'stadiametric') without('rangefinder', RANGEFINDERS[fc.rangefinder].reliability, { rangefinder: 'stadiametric' })
+  if (fc.stabiliser !== 'none') without('stabiliser', STABILISERS[fc.stabiliser].reliability, { stabiliser: 'none' })
+  if (fc.computer !== 'none') without('computer', COMPUTERS[fc.computer].reliability, { computer: 'none' })
+  if (fc.night !== 'none') without('night', NIGHT_SIGHTS[fc.night].reliability, { night: 'none' })
+  if (fc.commanderSight) without('commanderSight', COMMANDER_SIGHT.reliability, { commanderSight: false })
+  return out
 }
 
 /** How long a round takes to reach a range, and how fast it is going when it gets there. */
