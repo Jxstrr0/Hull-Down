@@ -22,7 +22,7 @@ import { renderBlueprint, type ZoneTiles } from './blueprint'
 import { VIEWS, ZONE_VIEW, type View } from './drawing'
 import {
   MAX_DESIGNS, addDesign, currentDesign, keepRevision, lastRevision, loadStore, openDesign, restoreRevision, sameBuild, saveStore,
-  scrapDesign, type KeyValue,
+  scrapDesign,
 } from '../persist/designs'
 import { NAME_MAX, cleanName, cleanSpec } from '../persist/specCodec'
 import { issueText, renderGunnery, renderReadouts, renderStations } from './readouts'
@@ -31,12 +31,15 @@ import { renderCompareScreen, type CompareSide } from '../ui/compareScreen'
 import { renderDuelScreen } from '../ui/duelScreen'
 import { DUEL } from '../data/duel'
 import { createBureau } from './bureauTab'
+import { createSaves } from './savesTab'
+import { dropCareer, saveCareer } from '../persist/careerStore'
+import { SAVE_FORMAT } from '../persist/saveCode'
 
 const O = STRINGS.office
 const D = STRINGS.dataSheet
 const X = STRINGS.office.designs
 
-const TABS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults', 'trials', 'bureau', 'designs'] as const
+const TABS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults', 'trials', 'bureau', 'designs', 'saves'] as const
 type Tab = (typeof TABS)[number]
 
 /** The weight bar is drawn a little longer than the limit, so going over shows. */
@@ -55,9 +58,10 @@ function deltaText(change: Preview): string {
 
 export function renderDesignScreen(limits: Limits): HTMLElement {
   // The browser's storage can be blocked. Touch it only inside these, where failure is handled.
-  const storage: KeyValue = {
-    getItem: (key) => window.localStorage.getItem(key),
-    setItem: (key, value) => window.localStorage.setItem(key, value),
+  const storage = {
+    getItem: (key: string) => window.localStorage.getItem(key),
+    setItem: (key: string, value: string) => window.localStorage.setItem(key, value),
+    removeItem: (key: string) => window.localStorage.removeItem(key),
   }
   const store = loadStore(storage)
   let design = currentDesign(store)
@@ -190,6 +194,22 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     },
   })
 
+  /** Save slots, the save code and the backup file. */
+  const saves = createSaves({
+    storage,
+    snapshot: () => ({ format: SAVE_FORMAT, career: bureau.career(), designs: store }),
+    // The loaded save goes into the browser's storage and the page starts again from it.
+    restore: (save) => {
+      const ok = saveStore(storage, save.designs) && (save.career ? saveCareer(storage, save.career) : dropCareer(storage))
+      if (ok) window.location.reload()
+      return ok
+    },
+    redraw: () => {
+      drawTabs()
+      if (tab === 'saves') drawPanel()
+    },
+  })
+
   /** The proving ground takes over the whole screen while it is open. */
   const range = el('div', 'range-holder')
   root.append(top, tabList, panel, range)
@@ -319,7 +339,12 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       const name = O.tabs[id]
       let text: string = name
       let label: string = name
-      if (id === 'faults') {
+      if (id === 'saves') {
+        if (saves.due()) {
+          text = fill(STRINGS.saves.tabDue, { name })
+          label = fill(STRINGS.saves.tabDueLabel, { name })
+        }
+      } else if (id === 'faults') {
         if (sheet.issues.length > 0) text = label = fill(O.faultsCount, { name, count: String(sheet.issues.length) })
       } else if (id === 'armour' || isPartTab(id)) {
         const faulty = id === 'armour'
@@ -846,6 +871,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     else if (tab === 'designs') parts.push(drawDesigns())
     else if (tab === 'trials') parts.push(drawTrials())
     else if (tab === 'bureau') parts.push(bureau.draw())
+    else if (tab === 'saves') parts.push(saves.draw())
     else if (tab === 'armour') {
       parts.push(renderArmourTab({
         spec, sheet, state: armourState, commit, goTo, pickZone,
