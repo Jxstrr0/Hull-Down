@@ -1081,6 +1081,32 @@ export const STRINGS = {
     },
     note: 'Pact standard marks for a generation-one tank. A tender will set its own.',
   },
+  opponents: {
+    bureaus: {
+      heavy: {
+        name: 'Heavy Machine Plant No. 2',
+        line: 'Builds to the weight limit and puts the armour on the front.',
+      },
+      light: {
+        name: 'Tractor Works No. 7',
+        line: 'Builds small and cheap, with a hand-loaded gun and plain sights.',
+      },
+      firepower: {
+        name: 'Ordnance Institute No. 4',
+        line: 'Builds around the biggest gun and the best sights on the parts list.',
+      },
+    },
+    threats: {
+      warden: {
+        name: 'Warden',
+        line: 'The Accord\'s standard tank. A 105 mm rifled gun, a loader, good sights and plain steel armour.',
+      },
+      palisade: {
+        name: 'Palisade',
+        line: 'Said to be the Accord\'s next tank. A 120 mm gun behind layered armour, and slow for it.',
+      },
+    },
+  },
   theme: {
     toPaper: 'Paper',
     toBlueprint: 'Blueprint',

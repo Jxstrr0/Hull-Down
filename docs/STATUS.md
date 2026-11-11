@@ -4,6 +4,17 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Names for the opponents** (0.7.0.0), all working names: the rival
+  bureaus "Heavy Machine Plant No. 2", "Tractor Works No. 7" and "Ordnance
+  Institute No. 4", and the Accord tanks "Warden" and "Palisade". Say if
+  you want others. Also say if three rivals is right (the plan says two or
+  three), and whether the Palisade should be in from the start or held
+  back as a later surprise.
+- **Voice** is still open: the plan says to decide it after the first
+  playable. Nothing is generated without a quote and your yes.
+- **The cover image** for the hidden studio listing: free from the game's
+  own blueprint, or one Higgsfield picture (the account showed 0 credits
+  and no price could be quoted without submitting).
 - **Try the armour toy** (plan stage PR 3 is done at 0.3.3.0): Armour tab,
   protection map, reactive tiles and the test shot. Say what feels wrong,
   slow or confusing; fixes can go in at any point.
@@ -103,6 +114,15 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.7.0.0, PR 7a: who the tank is measured against.** Nothing new on
+  screen yet; this is the groundwork for duels. Three rival bureaus each
+  have a way of thinking (heavy and well protected; light and cheap;
+  firepower first), and a bot designer builds each one's tank from the
+  same parts list, under the same limits and checks as the player's. The
+  same bureau and seed always give the same tank; different seeds give
+  different ones. Two Accord threat tanks are drawn up from the same parts
+  but fire Accord rounds: the Warden (105 mm, plain steel) and the Palisade
+  (120 mm, layered armour). Their numbers are in `src/data/opponents.ts`.
 - **0.6.6.0, PR 6g: trial results side by side, with a ghost.** The
   side-by-side screen now sends both builds through the range under the
   same conditions and shows every measured thing for each: tests passed,
@@ -391,6 +411,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   report stays readable on a phone.) The plan calls the first playable
   0.6.0.0; with the split it is the last of these, and that is where to
   stop for Kelbo to play and decide on voice.
+- PR 7 (duels) is split as well: 7a the opponents, built by bot designers
+  (0.7.0.0); then 7b the one-against-one fight and the single-tank AI, 7c
+  runs over several seeds and the duel report, 7d the duel screen in the
+  Trials tab. Kelbo said to carry on past the first playable on 11
+  November 2026; voice is still his to decide.
 - 6a moved the measurements the blueprint shares with the 3D range (turret
   centre, engine bay, gun height, bustle) from `src/data/drawing.ts` to
   `src/data/layout.ts`, because the hit model now uses them too. The
