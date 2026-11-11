@@ -1441,15 +1441,15 @@ export const STRINGS = {
   tenders: {
     tank2016: {
       name: 'A tank for a watched battlefield',
-      brief: 'Fifteen years on. The Palisade B is still what the Accord fields, but the army has watched what small wars abroad do to tanks, and wants above all a tank that comes back: the range now drops a bomblet from a drone on the hull roof and the turret roof, and both must hold. A top-attack missile is fired at the turret roof for the record. The Pact has rebuilt its bridges to carry 48 t, and the ministry will pay more than it ever has. Generation three parts are allowed as the bureau works them up.',
+      brief: 'Fifteen years on. The Palisade B is still what the Accord fields, but the army has watched what small wars abroad do to tanks, and the range now drops a bomblet from a drone on the hull roof and the turret roof, and both must hold. A top-attack missile is fired at the turret roof for the record. But the army has a whole fleet to replace. Above all it wants a tank it can buy in numbers and keep running: cost counts for most, then reliability. The Pact has rebuilt its bridges to carry 48 t. Generation three parts are allowed as the bureau works them up.',
     },
     tank2001: {
       name: 'A tank for the new century',
-      brief: 'Twenty years on. The Accord has rebuilt its Palisade around a long-rod round and a thermal sight, and its infantry carry tandem warheads that set off reactive tiles before the main charge arrives. The army wants a tank that can meet both, shoots as well by night as by day, and still crosses a Pact bridge. Generation two parts are allowed.',
+      brief: 'Twenty years on. The Accord has rebuilt its Palisade around a long-rod round and a thermal sight, and its infantry carry tandem warheads that set off reactive tiles before the main charge arrives. The army wants a tank that can meet both, shoots as well by night as by day, and still crosses a Pact bridge. Protection and firepower count for most. Generation two parts are allowed.',
     },
     improvedType1: {
       name: 'An improved Type 1',
-      brief: 'The army wants the Type 1 made better without a new production line. Above all it wants a tank that can fight at night: the night shoot is marked harder than the Type 1 as issued can manage. Three other bureaus are bidding.',
+      brief: 'The army wants the Type 1 made better without a new production line. Above all it wants a tank that can fight at night: the night shoot is marked harder than the Type 1 as issued can manage. Firepower counts for most, then mobility. Three other bureaus are bidding.',
     },
   },
   career: {
