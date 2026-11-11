@@ -195,6 +195,23 @@ function repair(spec: VehicleSpec, issue: Issue): boolean {
     case 'missileNeedsComputer':
       spec.ammo.shaped = 'supplied'
       return true
+    // More drawn than made: the auxiliary power unit first, and failing that the active protection comes off.
+    case 'overPowerBudget':
+      if (!spec.powerpack.apu) {
+        spec.powerpack.apu = true
+        return true
+      }
+      if (spec.protection.active !== 'none') {
+        spec.protection.active = 'none'
+        return true
+      }
+      return false
+    case 'turretNeedsAutoloader':
+      spec.loading = 'carousel'
+      return true
+    case 'turretNeedsComputer':
+      spec.fireControl.computer = 'digital'
+      return true
     default:
       // Rings, wheels, tracks and weight are set by `fit` and `armourUp`, which run again after every repair.
       return false
@@ -270,6 +287,9 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   if (later.night) spec.fireControl.night = later.night
   if (later.kinetic) spec.ammo.kinetic = later.kinetic
   if (later.shaped) spec.ammo.shaped = later.shaped
+  if (later.turret) spec.turret.shape = later.turret
+  if (later.active) spec.protection.active = later.active
+  if (later.apu) spec.powerpack.apu = true
   // A gun outside the tender's calibres is no use: the bureau takes the biggest gun that is allowed.
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 
