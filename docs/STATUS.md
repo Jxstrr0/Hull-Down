@@ -59,6 +59,11 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   a spall liner). A track in the way takes 20 mm off a kinetic round and
   60 mm off a shaped charge, and breaks 60% of the time. Say if any of
   these feel too harsh or too kind once you can play the armour trial.
+- **How revisions are kept** (0.6.5.0): one is recorded each time a
+  changed design goes to the range, numbered from 1, twelve kept per
+  design (the oldest goes). They cost nothing and have no limit yet: the
+  three-plus-a-costly-fourth rule arrives with the career. Say if you
+  would rather press a button to keep one, or keep more or fewer.
 - **What the after-action report calls decisive** (0.6.3.0): it names
   three things, ranked in this order: a plate that had to hold and did
   not; the ammunition exploding; a fire nobody put out; rounds finding
@@ -99,6 +104,16 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.6.5.0, PR 6f: prototype revisions and the side-by-side view.**
+  Sending a design to the range now builds a prototype and keeps it as a
+  numbered revision (only when the build has changed; a new name does not
+  count). The Trials tab lists them with weight and cost, can put any one
+  back on the board (two taps), and can set any two side by side, or one
+  against the drawing board: parts changed, armour changed layer by layer
+  and tile by tile, weight by area, and every readout that moved, each
+  with an arrow and the word better or worse. Readouts that did not move
+  fold away. Old saves read as having no revisions yet. Trial results
+  side by side, with the ghost, are 6g.
 - **0.6.4.0, PR 6e: the report's share card.** At the foot of the
   after-action report, "Make a share card" draws the report as one
   picture, 1080 by 1350: the design's name, project number and weight, the
@@ -360,8 +375,9 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   (0.6.0.0), 6b a shot followed through the armour and the inside, with the
   damage it does and the protection systems, 6c the armour trial and the
   hull-down berm on the range, 6d the after-action report (0.6.3.0), 6e
-  the report's share card (0.6.4.0), 6f revision history and the
-  comparison view.
+  the report's share card (0.6.4.0), 6f prototype revisions and the
+  side-by-side view of two designs (0.6.5.0), 6g trial results side by
+  side with the earlier revision as a ghost.
   (The share card was first folded into 6d; it is its own small PR so the
   report stays readable on a phone.) The plan calls the first playable
   0.6.0.0; with the split it is the last of these, and that is where to

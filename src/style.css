@@ -926,3 +926,58 @@ body {
 .sc-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .sc-save { display: inline-flex; align-items: center; text-decoration: none; }
 .sc-status { margin: 8px 0 0; }
+
+/* Prototype revisions and the side-by-side comparison. */
+.protos { align-self: stretch; margin-top: 18px; }
+.proto-list { list-style: none; margin: 0 0 12px; padding: 0; border-top: 1px solid var(--grid); }
+.proto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--grid);
+}
+.proto-words { display: flex; flex-direction: column; min-width: 0; }
+.proto-name { font-weight: 600; }
+.proto-sum { font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-dim); }
+.proto-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.proto-picker { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.proto-pick-label { font-size: 0.85rem; color: var(--ink-dim); }
+.proto-select {
+  min-height: 44px;
+  width: 100%;
+  padding: 0 8px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+}
+.proto-select:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+.cmp-rows { margin: 0; }
+.cmp-row { padding: 6px 0; border-bottom: 1px solid var(--grid); }
+.cmp-label { font-size: 0.85rem; color: var(--ink-dim); }
+.cmp-value {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+.cmp-armour .cmp-value { flex-direction: column; }
+.cmp-armour .cmp-arrow { display: none; }
+.cmp-armour .cmp-after::before { content: '→ '; }
+.cmp-before { color: var(--ink-dim); }
+.cmp-after { font-weight: 600; }
+.cmp-mark { margin-left: auto; font-family: var(--font-ui); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+.cmp-better { color: var(--stamp); }
+.cmp-worse { color: var(--pencil); }
+.cmp-still .cmp-value, .cmp-still .cmp-after { color: var(--ink-dim); font-weight: 400; }
+.cmp-group { margin: 12px 0 2px; font-family: var(--font-head); font-size: 0.95rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.cmp-fold { margin-top: 12px; }
+.cmp-fold-title { padding: 14px 0; cursor: pointer; font-weight: 600; }

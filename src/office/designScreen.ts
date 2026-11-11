@@ -21,11 +21,13 @@ import { renderArmourTab, type ArmourTabState } from './armourTab'
 import { renderBlueprint, type ZoneTiles } from './blueprint'
 import { VIEWS, ZONE_VIEW, type View } from './drawing'
 import {
-  MAX_DESIGNS, addDesign, currentDesign, loadStore, openDesign, saveStore, scrapDesign, type KeyValue,
+  MAX_DESIGNS, addDesign, currentDesign, keepRevision, lastRevision, loadStore, openDesign, restoreRevision, sameBuild, saveStore,
+  scrapDesign, type KeyValue,
 } from '../persist/designs'
 import { NAME_MAX, cleanName, cleanSpec } from '../persist/specCodec'
 import { issueText, renderGunnery, renderReadouts, renderStations } from './readouts'
 import { renderRangeScreen } from '../ui/rangeScreen'
+import { renderCompareScreen, type CompareSide } from '../ui/compareScreen'
 
 const O = STRINGS.office
 const D = STRINGS.dataSheet
@@ -465,6 +467,10 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
   }
 
   function openRange(): void {
+    // The shop builds a prototype of the design as it stands, and keeps it.
+    keepRevision(design)
+    kept = saveStore(storage, store)
+    drawPanel()
     const screen = renderRangeScreen({
       spec,
       limits,
@@ -509,7 +515,110 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       send.addEventListener('click', openRange)
       box.append(send)
     }
-    box.append(el('p', 'ctl-note', T.more))
+    box.append(drawPrototypes())
+    return box
+  }
+
+  /** Which two builds the comparison is set to, by revision number; nought is the drawing board. */
+  let pickEarlier: number | null = null
+  let pickLater: number | null = null
+
+  function openCompare(earlier: CompareSide, later: CompareSide): void {
+    const screen = renderCompareScreen({
+      earlier,
+      later,
+      back: () => {
+        closeRange()
+        panel.querySelector<HTMLElement>('[data-key="compare-go"]')?.focus({ preventScroll: true })
+      },
+    })
+    range.replaceChildren(screen)
+    root.classList.add('office-away')
+    screen.focus({ preventScroll: true })
+  }
+
+  /** The prototypes built from this design, and the way to set two of them side by side. */
+  function drawPrototypes(): HTMLElement {
+    const P = O.compare
+    const box = el('section', 'protos')
+    box.append(el('h3', 'ds-group-title', P.title), el('p', 'ctl-note', P.about))
+    const revisions = design.revisions
+    const last = lastRevision(design)
+    if (!last) {
+      box.append(el('p', 'ctl-note', P.none))
+      return box
+    }
+    // The newest revision the board is the same build as, if it is any of them.
+    const match = [...revisions].reverse().find((revision) => sameBuild(revision.spec, spec))
+    const boardChanged = !match
+    const where = match === last ? P.boardSame : match ? P.boardBack : P.boardChanged
+    box.append(el('p', 'ctl-note', fill(where, { n: String((match ?? last).no) })))
+
+    const sides = new Map<number, CompareSide>()
+    for (const revision of revisions) {
+      sides.set(revision.no, {
+        label: fill(P.revision, { n: String(revision.no) }),
+        build: { spec: revision.spec, sheet: buildStatSheet(revision.spec, limits) },
+      })
+    }
+    if (boardChanged) sides.set(0, { label: P.board, build: { spec, sheet } })
+
+    const list = el('ol', 'proto-list')
+    list.setAttribute('aria-label', P.listLabel)
+    for (const revision of revisions) {
+      const side = sides.get(revision.no)!
+      const item = el('li', 'proto')
+      const words = el('div', 'proto-words')
+      words.append(
+        el('span', 'proto-name', revision === last ? `${side.label} · ${P.latest}` : side.label),
+        el('span', 'proto-sum', fill(P.summary, { mass: fixed(side.build.sheet.massT, 1), cost: money(side.build.sheet.unitCostKr) })),
+      )
+      item.append(words)
+      if (!sameBuild(revision.spec, spec)) {
+        const restore = actionButton(`proto-restore-${revision.no}`, P.restore)
+        twoTap(restore, P.restore, P.restoreConfirm, () => {
+          restoreRevision(design, revision.no)
+          showCurrent()
+        })
+        item.append(restore)
+      }
+      list.append(item)
+    }
+    box.append(list)
+
+    // The order the two are offered in: oldest first, the board last.
+    const order = [...sides.keys()].sort((a, b) => (a === 0 ? 1 : b === 0 ? -1 : a - b))
+    if (order.length < 2) return box
+    if (pickEarlier === null || !sides.has(pickEarlier)) pickEarlier = order[order.length - 2]!
+    if (pickLater === null || !sides.has(pickLater)) pickLater = order[order.length - 1]!
+
+    const pickers = el('div', 'proto-pick')
+    const picker = (key: string, label: string, chosen: number, set: (no: number) => void): HTMLElement => {
+      const wrap = el('label', 'proto-picker')
+      wrap.append(el('span', 'proto-pick-label', label))
+      const select = el('select', 'proto-select')
+      select.dataset.key = key
+      for (const no of order) {
+        const option = el('option', '', sides.get(no)!.label)
+        option.value = String(no)
+        option.selected = no === chosen
+        select.append(option)
+      }
+      select.addEventListener('change', () => set(Number(select.value)))
+      wrap.append(select)
+      return wrap
+    }
+    pickers.append(
+      picker('compare-earlier', P.pickEarlier, pickEarlier, (no) => { pickEarlier = no }),
+      picker('compare-later', P.pickLater, pickLater, (no) => { pickLater = no }),
+    )
+    const go = actionButton('compare-go', P.go)
+    go.addEventListener('click', () => {
+      const earlier = sides.get(pickEarlier ?? -1)
+      const later = sides.get(pickLater ?? -1)
+      if (earlier && later) openCompare(earlier, later)
+    })
+    box.append(pickers, go)
     return box
   }
 
@@ -563,6 +672,8 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
   /** Put whichever design the store says is current on the board. */
   function showCurrent(): void {
     design = currentDesign(store)
+    pickEarlier = null
+    pickLater = null
     spec = design.spec
     panel.scrollTop = 0
     commit(() => undefined)
