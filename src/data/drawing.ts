@@ -39,3 +39,16 @@ export const DRAWING = {
   tapSkyM: 0.85,
   tapGroundM: 0.5,
 } as const
+
+/** The armour section view, in millimetres of drawing. */
+export const SECTION = {
+  /** Height of the strip of plate that is drawn. */
+  stripMm: 220,
+  /** Length of the shot line before the plate and after it. */
+  leadMm: 170,
+  tailMm: 90,
+  marginMm: 25,
+  /** The drawing is never narrower than this, so thin plate looks thin. */
+  minWidthMm: 1200,
+  arrowMm: 34,
+} as const

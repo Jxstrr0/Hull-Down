@@ -64,6 +64,10 @@ export interface TurretPart extends Part {
   sideFactor: number
   /** Multiplier on roof armour area. */
   roofFactor: number
+  /** How far the front plates lean back from upright, degrees. More slope is more plate for the same cover. */
+  frontSlopeDeg: number
+  /** The same for the side plates. */
+  sideSlopeDeg: number
   /** Gun depression in degrees before other effects. */
   depressionDeg: number
   /** Can carry a bustle autoloader and blow-out panels. */
@@ -73,19 +77,23 @@ export interface TurretPart extends Part {
 export const TURRETS = {
   castDome: {
     massT: 0.7, volumeM3: 0, costKr: 180_000, reliability: 1,
-    heightM: 0.72, volumeFactor: 0.42, sideFactor: 1.0, roofFactor: 0.75, depressionDeg: 5, hasBustle: false,
+    heightM: 0.72, volumeFactor: 0.42, sideFactor: 1.0, roofFactor: 0.75, frontSlopeDeg: 35, sideSlopeDeg: 30,
+    depressionDeg: 5, hasBustle: false,
   },
   weldedWedge: {
     massT: 0.8, volumeM3: 0, costKr: 230_000, reliability: 1,
-    heightM: 0.82, volumeFactor: 0.5, sideFactor: 1.1, roofFactor: 1.0, depressionDeg: 7, hasBustle: false,
+    heightM: 0.82, volumeFactor: 0.5, sideFactor: 1.1, roofFactor: 1.0, frontSlopeDeg: 50, sideSlopeDeg: 10,
+    depressionDeg: 7, hasBustle: false,
   },
   lowProfile: {
     massT: 0.65, volumeM3: 0, costKr: 210_000, reliability: 1,
-    heightM: 0.62, volumeFactor: 0.36, sideFactor: 0.95, roofFactor: 0.9, depressionDeg: 4, hasBustle: false,
+    heightM: 0.62, volumeFactor: 0.36, sideFactor: 0.95, roofFactor: 0.9, frontSlopeDeg: 40, sideSlopeDeg: 25,
+    depressionDeg: 4, hasBustle: false,
   },
   bustle: {
     massT: 1.1, volumeM3: 0, costKr: 290_000, reliability: 1,
-    heightM: 0.85, volumeFactor: 0.62, sideFactor: 1.35, roofFactor: 1.3, depressionDeg: 8, hasBustle: true,
+    heightM: 0.85, volumeFactor: 0.62, sideFactor: 1.35, roofFactor: 1.3, frontSlopeDeg: 15, sideSlopeDeg: 5,
+    depressionDeg: 8, hasBustle: true,
   },
 } as const satisfies Record<string, TurretPart>
 export type TurretId = keyof typeof TURRETS

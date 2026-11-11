@@ -1,6 +1,6 @@
 // Constraint checks. Each issue names the part to fix, so the design office
 // can show it in red with a "fix it" link.
-import { ZONES } from '../../data/materials'
+import { MATERIALS, ZONES } from '../../data/materials'
 import { COOLING, ENGINES, GUNS, HULLS, LOADING, STOWAGE, SUSPENSIONS, TRANSMISSIONS, TURRETS } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import type { Geometry } from './geometry'
@@ -29,6 +29,8 @@ export const ISSUE_CODES = [
   'roundsOutOfRange',
   'tooManyLayers',
   'layerThicknessOutOfRange',
+  'layerNeedsPlates',
+  'zoneUnarmoured',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -97,11 +99,21 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
     if (layers.length > lim.maxLayersPerZone) {
       error('tooManyLayers', `armour.${zone}`, layers.length, lim.maxLayersPerZone)
     }
+    if (layers.length === 0) warn('zoneUnarmoured', `armour.${zone}`)
     for (const layer of layers) {
-      if (!(layer.mm > 0 && layer.mm <= lim.maxLayerMm)) {
-        error('layerThicknessOutOfRange', `armour.${zone}`, layer.mm, lim.maxLayerMm)
+      const most = Math.min(lim.maxLayerMm, MATERIALS[layer.material].maxMm)
+      if (!(layer.mm >= lim.minLayerMm && layer.mm <= most)) {
+        error('layerThicknessOutOfRange', `armour.${zone}`, layer.mm, most)
       }
     }
+    // An insert or a gap must have a solid plate on each side of it.
+    const loose = layers.some((layer, index) => {
+      if (!MATERIALS[layer.material].needsPlates) return false
+      const outer = layers[index - 1]
+      const inner = layers[index + 1]
+      return !outer || !inner || MATERIALS[outer.material].needsPlates || MATERIALS[inner.material].needsPlates
+    })
+    if (loose) error('layerNeedsPlates', `armour.${zone}`)
   }
 
   // Space

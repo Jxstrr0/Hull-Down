@@ -11,10 +11,10 @@ export const TUNING = {
     lowerGlacisAngleDeg: 55,
     /** Turret outer radius = ring radius + this. */
     turretOverhangM: 0.2,
-    /** Each front-quarter plate: factor x radius x height. */
-    turretFrontFactor: 0.8,
-    /** Both side plates together: factor x radius x height x shape side factor. */
-    turretSideFactor: 2.4,
+    /** Each front-quarter plate, seen from the front: factor x radius x height. Slope makes the plate bigger. */
+    turretFrontFactor: 0.655,
+    /** Both side plates together, seen from the side: factor x radius x height x shape side factor. */
+    turretSideFactor: 2.08,
     turretRearFactor: 1.4,
     mantletWidthM: 0.8,
     mantletHeightShare: 0.5,
@@ -25,7 +25,12 @@ export const TUNING = {
   },
   limits: {
     maxLayersPerZone: 4,
+    /** No layer of any material is thicker than this. Each material has its own, lower limit. */
     maxLayerMm: 600,
+    minLayerMm: 5,
+    layerStepMm: 5,
+    /** Thickness of a layer when it is first added. */
+    newLayerMm: 20,
     glacisAngleDeg: { min: 45, max: 75 },
     trackWidthMm: { min: 480, max: 700 },
     fuelL: { min: 400, max: 1800 },

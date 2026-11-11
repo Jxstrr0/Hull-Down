@@ -10,6 +10,8 @@ import {
   CONTROLS, PART_TABS, fixTarget, preview, type ChoiceControl, type Control, type ControlId, type NumberControl,
   type PartTab, type Preview, type ToggleControl,
 } from './controls'
+import { ZONES, type ZoneId } from '../data/materials'
+import { renderArmourTab, type ArmourTabState } from './armourTab'
 import { renderBlueprint } from './blueprint'
 import { VIEWS, type View } from './drawing'
 import {
@@ -22,7 +24,7 @@ const O = STRINGS.office
 const D = STRINGS.dataSheet
 const X = STRINGS.office.designs
 
-const TABS = [...PART_TABS, 'readouts', 'faults', 'designs'] as const
+const TABS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults', 'designs'] as const
 type Tab = (typeof TABS)[number]
 
 /** The weight bar is drawn a little longer than the limit, so going over shows. */
@@ -55,6 +57,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
   /** A control to scroll to and mark after the next panel draw. */
   let flagged: ControlId | undefined
   let view: View = 'side'
+  const armourState: ArmourTabState = { zone: 'upperGlacis', zonesScroll: 0 }
 
   const root = el('section', 'office')
   root.setAttribute('aria-label', O.label)
@@ -147,6 +150,12 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     return sheet.issues.filter((issue) => issue.part === id)
   }
 
+  /** Slide the row of tabs so the open one can be seen. */
+  function showTab(): void {
+    const button = tabButtons.get(tab)
+    if (button) tabList.scrollLeft = button.offsetLeft - (tabList.clientWidth - button.offsetWidth) / 2
+  }
+
   /** Open a control's tab and mark the control. */
   function goTo(id: ControlId): void {
     const target = fixTarget(id)
@@ -155,6 +164,31 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     flagged = target.id
     drawTabs()
     drawPanel()
+    showTab()
+  }
+
+  /** The armour zone a fault's part names, if it names one. `armour` alone means the armour as a whole. */
+  function armourZoneOf(part: string): ZoneId | 'any' | undefined {
+    if (part === 'armour') return 'any'
+    return ZONES.find((zone) => part === `armour.${zone}`)
+  }
+
+  /** Open the place where a fault is fixed. False when the design office has none for it. */
+  function goToPart(part: string): boolean {
+    const zone = armourZoneOf(part)
+    if (zone) {
+      if (zone !== 'any') armourState.zone = zone
+      tab = 'armour'
+      panel.scrollTop = 0
+      drawTabs()
+      drawPanel()
+      showTab()
+      panel.focus({ preventScroll: true })
+      return true
+    }
+    const target = fixTarget(part)
+    if (target) goTo(target.id)
+    return target !== undefined
   }
 
   function drawBlueprint(): void {
@@ -204,8 +238,10 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       let label: string = name
       if (id === 'faults') {
         if (sheet.issues.length > 0) text = label = fill(O.faultsCount, { name, count: String(sheet.issues.length) })
-      } else if (isPartTab(id)) {
-        const faulty = CONTROLS.some((control) => control.tab === id && issuesFor(control.id).length > 0)
+      } else if (id === 'armour' || isPartTab(id)) {
+        const faulty = id === 'armour'
+          ? sheet.issues.some((issue) => armourZoneOf(issue.part) !== undefined)
+          : CONTROLS.some((control) => control.tab === id && issuesFor(control.id).length > 0)
         if (faulty) {
           text = `${name} !`
           label = fill(O.tabHasFaults, { name })
@@ -350,18 +386,16 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
         el('span', 'ds-fault-text', issueText(issue)),
       )
       item.append(words)
-      const target = fixTarget(issue.part)
-      if (target) {
+      if (fixTarget(issue.part) || armourZoneOf(issue.part)) {
         const fix = el('button', 'fix', O.fixIt)
         fix.type = 'button'
-        fix.dataset.key = `fix:${issue.code}`
-        fix.addEventListener('click', () => goTo(target.id))
+        fix.dataset.key = `fix:${issue.code}:${issue.part}`
+        fix.addEventListener('click', () => goToPart(issue.part))
         item.append(fix)
       }
       list.append(item)
     }
     box.append(list)
-    if (sheet.issues.some((issue) => issue.part.startsWith('armour'))) box.append(el('p', 'ctl-note', O.armourLater))
     box.append(startAgain)
     return box
   }
@@ -503,6 +537,18 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     if (tab === 'readouts') parts.push(renderReadouts(sheet, limits))
     else if (tab === 'faults') parts.push(drawFaults())
     else if (tab === 'designs') parts.push(drawDesigns())
+    else if (tab === 'armour') {
+      parts.push(renderArmourTab({
+        spec, sheet, state: armourState, commit, goTo, redraw: drawPanel,
+        nudge: (change) => {
+          change(spec)
+          sheet = buildStatSheet(spec, limits)
+          drawTop()
+          drawTabs()
+          return sheet
+        },
+      }))
+    }
     else {
       for (const control of CONTROLS) {
         if (control.tab !== tab) continue

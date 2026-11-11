@@ -120,9 +120,11 @@ describe('trade-offs', () => {
     expect(mixed.rollup.costKr.armour).toBeGreaterThan(steel.rollup.costKr.armour)
   })
 
-  it('an air gap weighs nothing', () => {
+  it('an air gap weighs only its brackets, far less than plate', () => {
     const spaced = build((s) => s.armour.hullSideFront.push({ material: 'airGap', mm: 200 }))
-    expect(spaced.massT).toBe(base.massT)
+    const plated = build((s) => s.armour.hullSideFront.push({ material: 'rolledSteel', mm: 200 }))
+    expect(spaced.massT).toBeGreaterThan(base.massT)
+    expect(spaced.massT - base.massT).toBeLessThan((plated.massT - base.massT) / 20)
   })
 
   it('more fuel goes further and weighs more', () => {

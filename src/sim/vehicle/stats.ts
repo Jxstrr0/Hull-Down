@@ -4,9 +4,11 @@ import {
   COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, LOADING, NIGHT_SIGHTS,
   RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU,
 } from '../../data/parts'
+import type { ZoneId } from '../../data/materials'
 import { TUNING } from '../../data/tuning'
 import { checkSpec, type Issue } from './checks'
 import { geometryOf, type Geometry } from './geometry'
+import { protectionOf, type ZoneProtection } from './protection'
 import { rollupOf, type Rollup } from './rollup'
 import type { Limits, VehicleSpec } from './spec'
 
@@ -54,6 +56,8 @@ export interface StatSheet {
     /** Engine power the cooling could still handle. */
     coolingHp: number
   }
+  /** What each armour zone stops, against a level shot at its face. */
+  protection: Record<ZoneId, ZoneProtection>
   issues: Issue[]
 }
 
@@ -155,6 +159,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
       volumeM3: rollup.capacityM3 - rollup.usedM3,
       coolingHp: cooling.capacityHp - engine.powerHp,
     },
+    protection: protectionOf(spec, geometry),
     issues: checkSpec(spec, limits, geometry, rollup),
   }
 }
