@@ -748,6 +748,24 @@ body {
 .rg-mark { stroke: var(--pencil); stroke-width: 1; stroke-dasharray: 5 4; }
 .rg-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
 .rg-chart-text { fill: var(--ink-dim); font-family: var(--font-mono); font-size: 9px; }
+.rg-watch { margin: 4px 0; }
+.rg-view { margin: 4px 0 8px; border: 1px solid var(--grid); }
+/* The stage wears the range's own sky, in either look, until the picture arrives. */
+.rg-view-stage { position: relative; aspect-ratio: 16 / 10; background: #aeb7bd; }
+.rg-view-stage canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.rg-view-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 16px;
+  color: #1f3558;
+  text-align: center;
+}
+.rg-view-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; }
+.rg-view-readout { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 0.82rem; }
 .rg-run { fill: var(--grid); }
 .rg-leg { fill: none; stroke: var(--ink-dim); stroke-width: 1; }
 .rg-event { fill: var(--pencil); stroke: var(--pencil); stroke-width: 1; stroke-linejoin: round; }

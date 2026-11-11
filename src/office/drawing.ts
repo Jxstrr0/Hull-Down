@@ -153,8 +153,8 @@ function tanDeg(deg: number): number {
   return Math.tan((deg * Math.PI) / 180)
 }
 
-/** The measurements every view shares. */
-function layout(spec: VehicleSpec, geo: Geometry) {
+/** The measurements every view shares. The 3D range builds its tank from the same ones. */
+export function layout(spec: VehicleSpec, geo: Geometry) {
   const hull = HULLS[spec.hull.size]
   const gun = GUNS[spec.gun]
   const g = TUNING.geometry
@@ -190,7 +190,7 @@ function layout(spec: VehicleSpec, geo: Geometry) {
   }
 }
 
-type Layout = ReturnType<typeof layout>
+export type Layout = ReturnType<typeof layout>
 
 /** The barrel runs along x. `axis` is its height (side view) or its offset from the centre line (top view). */
 function barrel(pen: Pen, m: Layout, axis: number): void {

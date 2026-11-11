@@ -33,5 +33,9 @@ export default defineConfig({
   },
   build: {
     target: 'es2022',
+    // scripts/check-bundle.mjs reads the manifest to tell the first load from what is fetched later.
+    manifest: true,
+    // three.js is one large chunk, fetched only when a run is first watched.
+    chunkSizeWarningLimit: 700,
   },
 })

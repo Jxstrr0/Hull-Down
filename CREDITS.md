@@ -27,6 +27,12 @@ the plan names these fonts.
 | `@fontsource/spline-sans-mono` | Spline Sans Mono | The Spline Sans Mono Project Authors | https://github.com/SorkinType/SplineSansMono | SIL OFL 1.1 | None |
 | `@fontsource/space-grotesk` | Space Grotesk (studio pieces only) | The Space Grotesk Project Authors | https://github.com/floriankarsten/space-grotesk | SIL OFL 1.1 | None |
 
+## Libraries (npm packages, shipped in the build)
+
+| Package | What it does | Authors | Source | Licence | Changes |
+| --- | --- | --- | --- | --- | --- |
+| `three` 0.187.0 | Draws the 3D range. Loaded only when a run is first watched. | three.js authors | https://github.com/mrdoob/three.js | MIT | None |
+
 ## Code adapted from other Longlight games
 
 | File | From |
