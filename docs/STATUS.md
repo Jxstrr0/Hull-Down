@@ -4,6 +4,7 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Sound in the office (0.16.3.0).** You asked for every tap to click. The click is deliberately very quiet; the pencil, warning and stamp are louder. Say if the click gets tiresome (it can drop to key moments only) or if any of the four is the wrong sound. Still to come in PR 16: wind outdoors (your pick), then the cue map is complete.
 - **Sound in the battles (0.16.2.0).** I chose: you hear the fight from the tank the camera follows (switch camera, switch ears); sounds halve in loudness every 350 m but never vanish; at most four new bangs per picture so a salvo is not a wall of noise. The three new strike sounds (ricochet, held, penetration) are synth only and are first guesses: say if you cannot tell them apart by ear. Still to come in PR 16: the office and ambience.
 - **Free recordings** (0.16.1.0): three public-domain (CC0) recordings
   from OpenGameArt are now laid over the synth: a cannon shot for the
@@ -458,6 +459,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.16.3.0, PR 16d: sound in the office.** Kelbo chose "every tap too". Every button, tab and fold makes a quiet click; changing the design makes a pencil scratch; the moment a design goes over the weight limit there is a soft two-note warning instead; entering a prototype for the tender brings the stamp down. A press that makes its own sound does not also click, and a dragged slider does not rattle. All synth, no files.
 - **0.16.2.0, PR 16c: sound in the battles.** Watching a battle now has sound, heard from beside the tank the camera is with: its engine and tracks, every gun (each side with its own calibre), and a different sound for each way a round lands: a ricochet, a hit the armour holds, a penetration, a round into the ridge, a miss. Far-off sounds are quieter. Nothing plays while paused or while the bar is dragged. Still synth only for the three new strike sounds.
 - **0.16.1.0, PR 16b: free recordings over the synth.** Second slice of plan PR 16. Three CC0 recordings from OpenGameArt (`public/audio/gun.mp3`, `hit.mp3`, `short.mp3`; originals in `art/third-party/sounds/`), listed in `CREDITS.md`. `AUDIO.recordings` says which cue each belongs to and how loud; `src/audio/sound.ts` fetches them when sound first starts and plays them over the synth, slowed for a bigger gun. Without them the synth plays alone.
 - **0.16.0.0, PR 16a: sound on the range.** First slice of plan PR 16. `src/data/audio.ts` holds every number and the cue map (gun, hit, miss, short). `src/audio/cues.ts` works out what a playback should sound like from what it shows (engine note from the engine and gearbox, track beat from speed, gun from calibre, one cue a round fired and one a round landed), with tests. `src/audio/sound.ts` makes it with the browser's own synth: no sound files, nothing fetched. A Sound button in the header, kept under `hulldown.sound`. First load 770 KB.

@@ -1,6 +1,8 @@
 // The design office, first version: pick parts, watch the weight bar move,
 // read the faults and jump to the part that fixes them.
 // The blueprint on top is drawn from the same spec, and tapping it opens a part.
+import { officeSound } from '../audio/gameSound'
+import { changeCue } from '../audio/office'
 import type { KineticIssue, ShapedIssue } from '../data/ammo'
 import { BASELINE_SPEC } from '../data/baseline'
 import { STRINGS, fill } from '../data/strings'
@@ -415,9 +417,11 @@ export function renderDesignScreen(first: Tender): HTMLElement {
 
   /** Apply a change to the design and redraw everything. */
   function commit(change: (spec: VehicleSpec) => void): void {
+    const wasOver = sheet.massT > limits.maxMassT
     change(spec)
     kept = saveStore(storage, store)
     sheet = buildStatSheet(spec, limits)
+    officeSound(changeCue(wasOver, sheet.massT > limits.maxMassT))
     drawTop()
     drawTabs()
     drawPanel()

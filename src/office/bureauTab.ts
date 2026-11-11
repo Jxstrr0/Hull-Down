@@ -1,6 +1,7 @@
 // The bureau: the tender in hand, the money and standing, the chief
 // engineer, the prototype shop and the army's decision. It draws into the
 // design office's panel and keeps the career between visits.
+import { officeSound } from '../audio/gameSound'
 import { ADVISOR_MODES, type AdvisorMode } from '../data/advisor'
 import { BODIES } from '../data/career'
 import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_KINDS, type CustomerId, type NeedId } from '../data/export'
@@ -391,6 +392,7 @@ export function createBureau(options: BureauOptions): Bureau {
         if (armed === prototype.no) {
           item.append(el('p', 'bu-busy', M.deciding))
           later(() => {
+            officeSound('stamp')
             keep(enterTender(career, prototype.no))
             deciding = false
             armed = null
