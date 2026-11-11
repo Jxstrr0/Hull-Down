@@ -203,6 +203,23 @@ export const AUDIO = {
     ],
   } satisfies Record<CueId, CueLayer[]>,
 
+  /** Outdoors, while a playback runs: light wind, and nothing else. No music. */
+  wind: {
+    gain: 0.05,
+    /** The wind is noise with the top taken off, Hz. */
+    lowHz: 420,
+    q: 0.5,
+    /** Gusts: how often it swells, a second, and how deep the swell is, 0 to 1. */
+    gustHz: 0.13,
+    gustDepth: 0.7,
+    /** A thin whistle on top of it, as a share of the wind, and its band, Hz. */
+    whistle: 0.25,
+    whistleHz: 1500,
+    whistleQ: 4,
+    /** Seconds it takes to come up, so it is never a sudden hiss. */
+    riseS: 0.8,
+  },
+
   /** The design office: quiet sounds for what the player does. */
   office: {
     /** What counts as a tap: anything on the page that is pressed. */

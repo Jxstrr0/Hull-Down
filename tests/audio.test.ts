@@ -258,6 +258,27 @@ describe('the synth', () => {
     expect(fake.calls.get('stop')).toBe(fake.calls.get('start'))
   })
 
+  it('makes one wind outdoors, keeps it while pictures come, and gives it back', () => {
+    const fake = fakeContext()
+    const sound = createSound(true, () => fake.context)
+    sound.air()
+    const started = fake.calls.get('start')
+    expect(started).toBeGreaterThan(0)
+    sound.air()
+    sound.air()
+    expect(fake.calls.get('start')).toBe(started)
+    expect(fake.calls.get('stop')).toBeUndefined()
+    sound.still()
+    expect(fake.calls.get('stop')).toBe(started)
+    // Quiet enough to sit under everything else, and never sudden.
+    expect(AUDIO.wind.gain).toBeLessThan(AUDIO.engine.gain * AUDIO.engine.idleGain)
+    expect(AUDIO.wind.riseS).toBeGreaterThan(AUDIO.fadeS)
+    // Switched off, there is no wind at all.
+    sound.setOn(false)
+    sound.air()
+    expect(fake.calls.get('start')).toBe(started)
+  })
+
   it('lays a recording over a cue once it has arrived, and plays the synth alone until then', async () => {
     const fake = fakeContext()
     const asked: string[] = []

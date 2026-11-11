@@ -155,6 +155,7 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
           if (!held) scrub.value = String(frame.timeS)
           // The battle is heard from beside the tank the camera is with, while it plays.
           if (playing) {
+            sound.air()
             for (const cue of battleCuesBetween(battle, heardS, frame.timeS, frame.tank, calibres)) sound.cue(cue.id, cue)
             const voice = voices[battle.tanks[frame.tank]?.side ?? 0]
             const drone = droneAt(voice, battleSpeedKmh(battle, frame.tank, frame.timeS))
