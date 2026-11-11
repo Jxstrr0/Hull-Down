@@ -5,9 +5,10 @@ import {
   RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU,
 } from '../../data/parts'
 import type { ZoneId } from '../../data/materials'
-import { GROUNDS } from '../../data/range'
+import { GROUNDS, RUN_PART_IDS } from '../../data/range'
 import { TUNING } from '../../data/tuning'
 import { driveOf, maxSlopeDeg, topSpeedOf, type Drive } from '../mobility/drive'
+import { survivalOf, type Wear } from '../reliability/wear'
 import { checkSpec, type Issue } from './checks'
 import { geometryOf, type Geometry } from './geometry'
 import { protectionOf, type ZoneProtection } from './protection'
@@ -54,14 +55,17 @@ export interface StatSheet {
     transmission: number
     suspension: number
     cooling: number
+    tracks: number
   }
-  /** 0..100. Chance of finishing an endurance run with nothing broken. */
+  /** The parts an endurance run wears, with what each carries and is rated for. */
+  wear: Wear
+  /** 0..100. Chance of getting through an endurance run with nothing giving trouble. */
   reliabilityIndex: number
   /** 10..100. Higher is a harder tank to fight. */
   crewWorkload: number
   /** Room left for future upgrades. */
   growth: {
-    /** Tonnes before the first weight limit (transmission, suspension or the hard limit). */
+    /** Tonnes before the first weight limit (transmission, suspension, tracks or the hard limit). */
     massT: number
     /** Cubic metres of free space inside. */
     volumeM3: number
@@ -75,12 +79,6 @@ export interface StatSheet {
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value
-}
-
-/** Reliability multiplier for a part working at `ratio` of its rating. */
-export function stressFactor(ratio: number): number {
-  if (ratio <= 1) return 1
-  return Math.max(TUNING.reliability.floor, 1 - TUNING.reliability.overloadPenalty * (ratio - 1))
 }
 
 export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
@@ -111,20 +109,26 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
 
   // Stress and reliability
   const suspensionRatedT = rollup.stations * suspension.ratedPerStationT
+  const trackRatedT = spec.runningGear.trackWidthMm * TUNING.tracks.ratedTPerMm
   const stress = {
     transmission: massT / transmission.ratedT,
     suspension: massT / suspensionRatedT,
     cooling: engine.powerHp / cooling.capacityHp,
+    tracks: massT / trackRatedT,
+  }
+  const wear: Wear = {
+    engine: { reliability: engine.reliability, have: engine.powerHp, rated: cooling.capacityHp },
+    cooling: { reliability: cooling.reliability, have: 0, rated: null },
+    transmission: { reliability: transmission.reliability, have: massT, rated: transmission.ratedT },
+    suspension: { reliability: suspension.reliability, have: massT, rated: suspensionRatedT },
+    tracks: { reliability: TUNING.tracks.reliability, have: massT, rated: trackRatedT },
   }
   let reliability =
-    engine.reliability * stressFactor(stress.cooling) *
-    cooling.reliability *
-    transmission.reliability * stressFactor(stress.transmission) *
-    suspension.reliability * stressFactor(stress.suspension) *
     gun.reliability * loading.reliability *
     SIGHTS[fc.sight].reliability * RANGEFINDERS[fc.rangefinder].reliability *
     STABILISERS[fc.stabiliser].reliability * COMPUTERS[fc.computer].reliability *
     NIGHT_SIGHTS[fc.night].reliability
+  for (const id of RUN_PART_IDS) reliability *= survivalOf(id, wear[id])
   if (fc.commanderSight) reliability *= COMMANDER_SIGHT.reliability
   if (spec.powerpack.apu) reliability *= APU.reliability
   if (spec.protection.fireSuppression) reliability *= FIRE_SUPPRESSION.reliability
@@ -138,7 +142,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     (fc.commanderSight ? COMMANDER_SIGHT.workload : 0) +
     transmission.workload + COMFORT[spec.crew.comfort].workload
 
-  const massCeilingT = Math.min(transmission.ratedT, suspensionRatedT, limits.maxMassT)
+  const massCeilingT = Math.min(transmission.ratedT, suspensionRatedT, trackRatedT, limits.maxMassT)
 
   return {
     name: spec.name,
@@ -166,6 +170,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
       gunDepressionDeg: turret.depressionDeg + spareRingDeg + loaderDeg,
     },
     stress,
+    wear,
     reliabilityIndex: reliability * 100,
     crewWorkload: clamp(workload, c.workloadMin, c.workloadMax),
     growth: {

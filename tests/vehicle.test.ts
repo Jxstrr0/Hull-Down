@@ -8,7 +8,7 @@ import {
 import { STRINGS } from '../src/data/strings'
 import { PACT_LIMITS_GEN1, TUNING } from '../src/data/tuning'
 import {
-  AREAS, ISSUE_CODES, buildStatSheet, stressFactor, type IssueCode, type Limits, type StatSheet, type VehicleSpec,
+  AREAS, ISSUE_CODES, buildStatSheet, type IssueCode, type Limits, type StatSheet, type VehicleSpec,
 } from '../src/sim/vehicle'
 
 /** The baseline with one change made to it. */
@@ -268,15 +268,6 @@ describe('constraint checks', () => {
   })
 })
 
-describe('reliability under stress', () => {
-  it('is untouched up to the rated load, then falls to a floor', () => {
-    expect(stressFactor(0.5)).toBe(1)
-    expect(stressFactor(1)).toBe(1)
-    expect(stressFactor(1.1)).toBeLessThan(1)
-    expect(stressFactor(1.2)).toBeLessThan(stressFactor(1.1))
-    expect(stressFactor(5)).toBe(TUNING.reliability.floor)
-  })
-})
 
 describe('the parts tables', () => {
   it('give a finite stat sheet for every part swapped into the baseline', () => {

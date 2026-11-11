@@ -1,11 +1,15 @@
 // The proving ground: every test a prototype is put through, run from its
 // stat sheet. The same tank always gives the same result.
-import { MARKS_GEN1, type Marks } from '../../data/range'
+import { MARKS_GEN1, type ClimateId, type Marks } from '../../data/range'
 import type { StatSheet } from '../vehicle/stats'
 import { runAcceleration, type AccelerationRun } from './acceleration'
+import { runEndurance, type EnduranceRun } from './endurance'
 import { runObstacles, type ObstacleRun } from './obstacles'
 
 export { runAcceleration, stepTime, type AccelerationRun, type Trace } from './acceleration'
+export {
+  runEndurance, type EnduranceEvent, type EnduranceLeg, type EnduranceRun, type EnduranceSetup, type PartLoad,
+} from './endurance'
 export {
   courseLayout, runObstacles, type CourseSpan, type ObstacleCause, type ObstacleResult, type ObstacleRun,
 } from './obstacles'
@@ -18,22 +22,35 @@ export interface RangeReport {
     passed: boolean
   }
   obstacles: ObstacleRun
+  endurance: EnduranceRun & { passed: boolean }
   /** Tests passed and tests run. */
   passes: number
   tests: number
 }
 
-export function runProvingGround(sheet: StatSheet, marks: Marks = MARKS_GEN1): RangeReport {
+export interface RangeSetup {
+  /** Names the luck of the run. The same tank and seed always give the same result. */
+  seed: number
+  marks?: Marks
+  climate?: ClimateId
+}
+
+export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeReport {
+  const marks = setup.marks ?? MARKS_GEN1
   const run = runAcceleration(sheet.drive)
   const sprintPassed = run.sprintS !== null && run.sprintS <= marks.sprintS
   const topPassed = run.topKmh >= marks.topKmh
   const acceleration = { ...run, sprintPassed, topPassed, passed: sprintPassed && topPassed }
   const obstacles = runObstacles(sheet.drive)
+  const long = runEndurance(sheet.drive, sheet.wear, { seed: setup.seed, climate: setup.climate })
+  const endurance = { ...long, passed: long.finished && long.stops <= marks.enduranceStops }
+  const passed = [acceleration.passed, obstacles.passed, endurance.passed]
   return {
     marks,
     acceleration,
     obstacles,
-    passes: (acceleration.passed ? 1 : 0) + (obstacles.passed ? 1 : 0),
-    tests: 2,
+    endurance,
+    passes: passed.filter(Boolean).length,
+    tests: passed.length,
   }
 }

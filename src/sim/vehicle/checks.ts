@@ -22,6 +22,7 @@ export const ISSUE_CODES = [
   'transmissionOverloaded',
   'suspensionOverloaded',
   'coolingOverloaded',
+  'tracksOverloaded',
   'wheelsOutOfRange',
   'glacisAngleOutOfRange',
   'trackWidthOutOfRange',
@@ -143,6 +144,10 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   const cooling = COOLING[spec.powerpack.cooling]
   if (engine.powerHp > cooling.capacityHp) {
     warn('coolingOverloaded', 'powerpack.cooling', engine.powerHp, cooling.capacityHp)
+  }
+  const trackRatedT = spec.runningGear.trackWidthMm * TUNING.tracks.ratedTPerMm
+  if (rollup.totalMassT > trackRatedT) {
+    warn('tracksOverloaded', 'runningGear.trackWidthMm', rollup.totalMassT, trackRatedT)
   }
 
   return issues

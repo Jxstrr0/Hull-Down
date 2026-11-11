@@ -262,24 +262,25 @@ describe('obstacle course', () => {
 })
 
 describe('proving ground report', () => {
-  it('passes the baseline on both tests', () => {
-    const report = runProvingGround(build())
-    expect(report.tests).toBe(2)
-    expect(report.passes).toBe(2)
+  it('passes the baseline on every test', () => {
+    const report = runProvingGround(build(), { seed: 1 })
+    expect(report.tests).toBe(3)
+    expect(report.passes).toBe(3)
     expect(report.acceleration.passed).toBe(true)
     expect(report.obstacles.passed).toBe(true)
+    expect(report.endurance.passed).toBe(true)
   })
 
   it('marks a weak engine down on top speed', () => {
-    const report = runProvingGround(build((s) => { s.powerpack.engine = 'diesel580' }))
+    const report = runProvingGround(build((s) => { s.powerpack.engine = 'diesel580' }), { seed: 1 })
     expect(report.acceleration.sprintPassed).toBe(true)
     expect(report.acceleration.topPassed).toBe(false)
     expect(report.acceleration.passed).toBe(false)
-    expect(report.passes).toBe(0)
+    expect(report.obstacles.passed).toBe(false)
   })
 
   it('uses the marks it is given', () => {
-    const report = runProvingGround(build(), { sprintS: 5, topKmh: 70 })
+    const report = runProvingGround(build(), { seed: 1, marks: { ...MARKS_GEN1, sprintS: 5, topKmh: 70 } })
     expect(report.acceleration.sprintPassed).toBe(false)
     expect(report.acceleration.topPassed).toBe(false)
   })

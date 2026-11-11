@@ -1,4 +1,4 @@
-export { buildStatSheet, stressFactor, type StatSheet } from './stats'
+export { buildStatSheet, type StatSheet } from './stats'
 export { checkSpec, ISSUE_CODES, type Issue, type IssueCode, type Severity } from './checks'
 export { allTiles, cleanTiles, eraOf, hasTile, setTile, tileCount, tileGrid, type ZoneEra } from './era'
 export { geometryOf, type Geometry } from './geometry'
