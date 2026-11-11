@@ -115,6 +115,8 @@ export const CONTROLS: readonly Control[] = [
   choice('loading', 'gun', texts(LOADING, P.loading), (s) => s.loading, (s, v) => { s.loading = v }),
   number('ammo.rounds', 'gun', L.rounds, 1, 'rounds', (s) => s.ammo.rounds, (s, v) => { s.ammo.rounds = v }),
   choice('ammo.stowage', 'gun', texts(STOWAGE, P.stowage), (s) => s.ammo.stowage, (s, v) => { s.ammo.stowage = v }),
+  choice('ammo.kinetic', 'gun', P.kineticIssues, (s) => s.ammo.kinetic, (s, v) => { s.ammo.kinetic = v }),
+  choice('ammo.shaped', 'gun', P.shapedIssues, (s) => s.ammo.shaped, (s, v) => { s.ammo.shaped = v }),
 
   choice('fireControl.sight', 'fireControl', texts(SIGHTS, P.sights),
     (s) => s.fireControl.sight, (s, v) => { s.fireControl.sight = v }),

@@ -369,6 +369,8 @@ export const STRINGS = {
     loading: { label: 'Loading', note: '' },
     'ammo.rounds': { label: 'Rounds carried', note: 'Rounds beyond what the autoloader holds go in racks around the crew.' },
     'ammo.stowage': { label: 'Ammunition stowage', note: 'How the rounds outside the autoloader are kept.' },
+    'ammo.kinetic': { label: 'Kinetic round', note: 'The Pact\'s round for the gun, or one the bureau has developed.' },
+    'ammo.shaped': { label: 'Shaped-charge round', note: 'The Pact\'s round for the gun, or one the bureau has developed.' },
     'fireControl.sight': { label: 'Gunner\'s sight', note: '' },
     'fireControl.rangefinder': { label: 'Rangefinder', note: '' },
     'fireControl.stabiliser': { label: 'Stabiliser', note: '' },
@@ -424,6 +426,15 @@ export const STRINGS = {
       loader: { name: 'Fourth crewman', note: 'A human loader. Simple and dependable, but the turret must be tall enough to stand in.' },
       carousel: { name: 'Carousel autoloader', note: 'Rounds sit in a ring under the turret. Three crew and a steady rate of fire.' },
       bustleLoader: { name: 'Bustle autoloader', note: 'Rounds sit behind the turret, away from the crew. Fast. Needs a bustle turret.' },
+    },
+    kineticIssues: {
+      supplied: { name: 'Pact sabot', note: 'What the Pact supplies for the gun. Nothing to develop, nothing extra to pay.' },
+      longRod: { name: 'Long rod', note: 'A longer dart of the bureau\'s own. Goes through a quarter more and loses less with range. Too long for a carousel autoloader.' },
+    },
+    shapedIssues: {
+      supplied: { name: 'Pact shaped charge', note: 'What the Pact supplies for the gun.' },
+      tandem: { name: 'Tandem warhead', note: 'Two charges: the first sets off a reactive tile, the second does the work. Goes through a little more.' },
+      gunMissile: { name: 'Gun-launched missile', note: 'Fired from the barrel and steered to the target. Slow and dear, and it very seldom misses. Needs a smoothbore gun and a digital computer.' },
     },
     stowage: {
       plainRacks: { name: 'Plain racks', note: 'Light and cheap. No protection if hit.' },
@@ -652,6 +663,9 @@ export const STRINGS = {
     tilesNeedPlate: 'Reactive tiles need a plate to bolt on to. Add a layer or strip the tiles.',
     notYetAvailable: 'Not to be had yet: this is generation {value} technology, and this tender is generation {limit}.',
     notResearched: 'The bureau has not researched this yet. Pay for the work on the Bureau tab, or fit something else.',
+    rodTooLongForCarousel: 'The long rod is too long for a carousel autoloader. Fit a bustle autoloader or a loader, or carry the Pact round.',
+    missileNeedsSmoothbore: 'A gun-launched missile cannot be fired from a rifled gun: the spin would wreck it. Fit a smoothbore.',
+    missileNeedsComputer: 'A gun-launched missile is steered by the digital computer. Fit one, or carry another round.',
   },
   materials: {
     rolledSteel: { name: 'Rolled steel', note: 'The standard plate. Good against everything, and heavy.' },
@@ -718,6 +732,8 @@ export const STRINGS = {
     ownTitle: 'Ammunition for this gun',
     notSupplied: 'The Pact does not supply this calibre. Tarnovia would have to make these rounds itself.',
     kinds: { kinetic: 'Kinetic', shaped: 'Shaped charge' },
+    own: '{round}: {issue}',
+    missile: 'Guided. {speed} m/s. Goes through {pen} mm at any range.',
     kinetic: '{kind}. {speed} m/s. Goes through {pen} mm at the muzzle and {far} mm at 2000 m.',
     shaped: '{kind}. {speed} m/s. Goes through {pen} mm at any range.',
     note: 'Millimetres of plain steel plate, hit square on, fired from the barrel fitted. You choose the load for each trial later.',
@@ -1467,6 +1483,9 @@ export const STRINGS = {
         digitalComputer: { name: 'Digital fire control', about: 'Unlocks the digital ballistic computer: a quicker and truer firing solution.' },
         thermalSight: { name: 'Thermal imaging', about: 'Unlocks the thermal sight: sees by heat, by night and through smoke.' },
         layeredArmour: { name: 'Layered armour', about: 'Unlocks layered composite: more protection for its weight against both kinds of round.' },
+        longRodRound: { name: 'Long-rod round', about: 'A kinetic round of the bureau\'s own: a longer dart that goes through a quarter more.' },
+        tandemRound: { name: 'Tandem warhead', about: 'A shaped-charge round of the bureau\'s own, with a first charge to set off reactive tiles.' },
+        gunMissile: { name: 'Gun-launched missile', about: 'A guided missile fired from the gun. Needs a smoothbore and the digital computer.' },
       },
     },
     standing: {

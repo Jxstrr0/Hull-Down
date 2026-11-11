@@ -1,6 +1,7 @@
 // The design office, first version: pick parts, watch the weight bar move,
 // read the faults and jump to the part that fixes them.
 // The blueprint on top is drawn from the same spec, and tapping it opens a part.
+import type { KineticIssue, ShapedIssue } from '../data/ammo'
 import { BASELINE_SPEC } from '../data/baseline'
 import { STRINGS, fill } from '../data/strings'
 import {
@@ -794,15 +795,19 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     box.append(el('h3', 'ctl-label', supplied ? R.title : R.ownTitle))
     if (!supplied) box.append(el('p', 'ctl-note', R.notSupplied))
     const list = el('dl', 'ds-rows')
-    for (const { id, round } of gunRounds(spec)) {
+    for (const { id, issue, round } of gunRounds(spec)) {
       const row = el('div', 'ammo')
       const line = round.kind === 'kinetic'
         ? fill(R.kinetic, {
             kind: R.kinds.kinetic, speed: String(round.speedMs), pen: fixed(round.penMm, 0),
             far: fixed(penetrationAt(round, 2000), 0),
           })
-        : fill(R.shaped, { kind: R.kinds.shaped, speed: String(round.speedMs), pen: fixed(round.penMm, 0) })
-      row.append(el('dt', 'opt-name', STRINGS.rounds[id]), el('dd', 'ammo-line', line))
+        : fill(issue === 'gunMissile' ? R.missile : R.shaped, { kind: R.kinds.shaped, speed: String(round.speedMs), pen: fixed(round.penMm, 0) })
+      const issueName = round.kind === 'kinetic'
+        ? STRINGS.parts.kineticIssues[issue as KineticIssue].name
+        : STRINGS.parts.shapedIssues[issue as ShapedIssue].name
+      const name = issue === 'supplied' ? STRINGS.rounds[id] : fill(R.own, { round: STRINGS.rounds[id], issue: issueName })
+      row.append(el('dt', 'opt-name', name), el('dd', 'ammo-line', line))
       list.append(row)
     }
     box.append(list, el('p', 'ctl-note', R.note))

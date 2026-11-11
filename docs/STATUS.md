@@ -4,6 +4,18 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **The bureau's own ammunition** (0.11.5.0): three rounds to research and
+  then pick on the Gun tab. "Long rod" (Kr 5.00M to research; goes through
+  a quarter more, loses less with range; too long for a carousel
+  autoloader; Kr 1,500 a round). "Tandem warhead" (Kr 4.00M; a tenth more,
+  and reactive tiles do little against it; Kr 1,000 a round). "Gun-launched
+  missile" (Kr 7.00M, needs Digital fire control; slow, very accurate,
+  goes through 30% more; smoothbore and digital computer only; Kr 6,000 a
+  round). Names, numbers and what each asks of the tank are my picks. Two
+  things to know: a tank carries one kinetic and one shaped round, so the
+  missile takes the place of the shaped charge; and the trial reports still
+  call the round by its Pact name ("125 mm sabot") even when it is a long
+  rod. Rivals carry Pact rounds only.
 - **Intelligence files** (0.11.4.0): the Bureau tab now has a file on each
   Accord tank the tender names, with figures as ranges that close in on
   the truth. Four grades: Rumour (25% either way), Report (12%), Assessed
@@ -257,6 +269,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.11.5.0, PR 11f: the bureau's own ammunition.** Long rod, tandem
+  warhead and gun-launched missile: three research projects, two new
+  choices on the Gun tab, three new faults (rod and carousel, missile and
+  rifled gun, missile and no digital computer), dearer rounds in the unit
+  cost. Old designs load on Pact rounds. 814 tests. This closes plan PR 11.
 - **0.11.4.0, PR 11e: intelligence files.** A file on each Accord tank the
   tender expects to meet: gun, front armour, weight and speed as ranges
   that sharpen with every prototype built and every tender that passes.

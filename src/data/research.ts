@@ -3,7 +3,7 @@
 // soon as its generation is. Game-level numbers.
 import type { TechField } from './tech'
 
-export const RESEARCH_IDS = ['digitalComputer', 'thermalSight', 'layeredArmour'] as const
+export const RESEARCH_IDS = ['digitalComputer', 'thermalSight', 'layeredArmour', 'longRodRound', 'tandemRound', 'gunMissile'] as const
 export type ResearchId = (typeof RESEARCH_IDS)[number]
 
 export interface Project {
@@ -20,4 +20,9 @@ export const RESEARCH: Record<ResearchId, Project> = {
   // The thermal picture is made by the digital computer's electronics.
   thermalSight: { field: 'fireControl.night', part: 'thermal', costKr: 6_000_000, needs: ['digitalComputer'] },
   layeredArmour: { field: 'material', part: 'layeredComposite', costKr: 5_000_000, needs: [] },
+  // The bureau's own ammunition (plan 7.5).
+  longRodRound: { field: 'ammo.kinetic', part: 'longRod', costKr: 5_000_000, needs: [] },
+  tandemRound: { field: 'ammo.shaped', part: 'tandem', costKr: 4_000_000, needs: [] },
+  // The missile is steered by the digital computer.
+  gunMissile: { field: 'ammo.shaped', part: 'gunMissile', costKr: 7_000_000, needs: ['digitalComputer'] },
 }
