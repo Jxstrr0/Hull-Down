@@ -140,3 +140,9 @@ export const PACT_LIMITS_GEN1 = {
   /** Pact ammunition standard: calibres in common supply. */
   allowedCalibresMm: [100, 115, 125] as readonly number[],
 } as const
+
+/** The Pact's limits for generation three: its bridges have been rebuilt to a heavier class. */
+export const PACT_LIMITS_GEN3 = {
+  ...PACT_LIMITS_GEN1,
+  maxMassT: 48,
+} as const

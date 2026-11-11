@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { BUREAU_IDS, THREAT_TANK_IDS } from '../src/data/opponents'
 import { SCORE_AXES, SCORING, TENDER_IDS, TENDERS } from '../src/data/tenders'
-import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
+import { PACT_LIMITS_GEN1, PACT_LIMITS_GEN3 } from '../src/data/tuning'
 import { designRival } from '../src/sim/ai/designer'
 import { decide, scoreBid, trialBid, type BidScore } from '../src/sim/career/score'
 
@@ -18,7 +18,9 @@ describe('the tenders', () => {
     for (const id of TENDER_IDS) {
       const tender = TENDERS[id]
       expect(SCORE_AXES.reduce((sum, axis) => sum + tender.weights[axis], 0)).toBe(100)
-      expect(tender.limits.maxMassT).toBeLessThanOrEqual(PACT_LIMITS_GEN1.maxMassT)
+      // The Pact rebuilt its bridges for generation three; the rail width never changed.
+      const pact = (tender.limits.generation ?? 1) >= 3 ? PACT_LIMITS_GEN3 : PACT_LIMITS_GEN1
+      expect(tender.limits.maxMassT).toBeLessThanOrEqual(pact.maxMassT)
       expect(tender.limits.maxWidthM).toBeLessThanOrEqual(PACT_LIMITS_GEN1.maxWidthM)
       expect(tender.limits.maxUnitCostKr).toBeGreaterThan(SCORING.cost.bestKr)
       expect(tender.threats.length).toBeGreaterThan(0)

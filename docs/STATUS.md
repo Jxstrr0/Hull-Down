@@ -4,6 +4,15 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **The tender of 2016** (0.13.0.0): a third tender, "A tank for a watched
+  battlefield", opens after the tender of 2001. Weight limit 48 t (the
+  Pact rebuilt its bridges: a new rule I made up, so the roof armour and
+  protection systems to come have room), unit cost up to Kr 8.00M, grant
+  Kr 60M, protection weighed at 35 in 100. Only the Palisade B is named
+  as a threat so far and the trial marks are those of 2001: the
+  generation-three parts and threats (active protection, top attack,
+  drones, the unmanned turret) arrive in the next slices. Name, brief and
+  every number are my picks.
 - **Export trials** (0.12.3.0): before it orders, a customer runs twelve
   of the tank over the endurance run on its own ground. Desert: cooling
   manages 85% of its rating. Jungle: the ground pounds the suspension and
@@ -322,6 +331,9 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.13.0.0, PR 13a: the tender of 2016.** `tank2016` in
+  `src/data/tenders.ts` (generation three); `PACT_LIMITS_GEN3` in
+  `src/data/tuning.ts` raises the bridge class to 48 t. No new parts yet.
 - **0.12.3.0, PR 12d: export trials.** `exportTrial`, `strained` and
   `orderOf` in `src/sim/career/exportDesk.ts`; jungle and mountain join
   desert in `CLIMATES` (`src/data/range.ts`), each with how hard its ground
