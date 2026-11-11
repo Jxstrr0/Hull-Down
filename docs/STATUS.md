@@ -4,6 +4,20 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **How a platoon battle is fought** (0.9.0.0), decided without you and
+  easy to change. You can judge these once the battle screen is in:
+  - Grounds: hold a ridge (3 of yours against 4), a meeting (4 against
+    4), attack a ridge (4 of yours against 3), a night meeting (3
+    against 3). Called off after 10 minutes.
+  - Your two orders. Range: "long" opens fire as soon as a target is
+    seen and an attack stops at the last ridge; "close" holds a
+    defender's fire to 1,000 m and sends an attack on into the open.
+    Pace: "careful" moves half the platoon at a time and stops to shoot;
+    "fast" goes straight on and shoots on the move. For a defender,
+    "fast" means shifting along the ridge after every three rounds.
+  - A tank behind a ridge that has not fired is not seen by day beyond
+    about 900 m. A holding platoon wins if the attack runs out of time.
+
 - **Try the saves** (0.8.7.0): Saves tab. Send yourself a save code and
   paste it back, ideally on another device.
 - **Try a tender** (0.8.6.0): Bureau tab. Tell me if the Type 1 as issued
@@ -151,6 +165,16 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 11 November 2026).
 
 ## Log
+
+- **0.9.0.0, PR 9a: the platoon battle, sim only.** Nothing new on
+  screen yet. Three or four tanks a side (never more than eight) on four
+  grounds: holding a ridge, a meeting, an attack on a ridge, a meeting at
+  night. Each tank finds, lays and fires as in a duel, and rounds now
+  come in from the side they were really fired from. Tanks go from ridge
+  to ridge, share targets out, pass on what they find by radio, fire
+  smoke, and can break down. The platoon takes two orders: open fire at
+  long range or hold until close, and move carefully or fast. A battle
+  takes about 3 ms to work out.
 
 - **0.8.7.0, PR 8h: the Saves tab. PR 8 is complete.** Three save slots
   (IndexedDB `hulldown`), a save code to show, copy and paste back, and a
