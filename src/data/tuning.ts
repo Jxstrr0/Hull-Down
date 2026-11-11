@@ -105,10 +105,23 @@ export const TUNING = {
     loaderDepressionBonusDeg: 1,
   },
   reliability: {
-    /** Loss of reliability per unit of overload (load / rated - 1). */
-    overloadPenalty: 2.5,
-    /** A stressed part never drops below this share of its normal reliability. */
-    floor: 0.2,
+    /**
+     * Wear builds up over an endurance run as (distance / length) to this
+     * power, so trouble comes late in the run more than early.
+     */
+    wearShape: 2,
+    /**
+     * How fast an overloaded part breaks: the failures to expect in a run
+     * from a part worked at twice its rating on every leg. So a part 1% over
+     * its rating, on every leg, adds 0.6 of a failure.
+     */
+    overloadHazard: 60,
+  },
+  tracks: {
+    /** 0..1 chance a set of tracks gets through an endurance run unstressed. */
+    reliability: 0.97,
+    /** Tank weight a track carries for each millimetre of its width, tonnes. */
+    ratedTPerMm: 0.076,
   },
   crew: {
     workloadBase: { 3: 62, 4: 50 },

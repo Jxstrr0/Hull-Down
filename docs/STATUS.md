@@ -7,9 +7,14 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 - **Try the armour toy** (plan stage PR 3 is done at 0.3.3.0): Armour tab,
   protection map, reactive tiles and the test shot. Say what feels wrong,
   slow or confusing; fixes can go in at any point.
-- **Try the Trials tab** (0.4.0.0). Say if the range marks feel fair: the
+- **Try the Trials tab** (0.4.1.0). Say if the range marks feel fair: the
   light hull cannot cross the standard trench, and the smallest engine only
   climbs the slope in a tank of about 34 to 36 t or less.
+- **Say how the endurance run should treat luck.** As built: every part
+  within its rating gives trouble about one run in five, mended at the
+  roadside, and one stop is allowed. A part 10 % over its rating breaks in
+  about three runs in four. The same project always gets the same luck, so
+  sending it again changes nothing; only a design change does.
 - Confirm or replace the working name "Pattern 3" for the Radan baseline tank.
 - Choose how the hidden studio-site listing gets its cover image (see Notes).
 - Say if the project numbers ("Project 101", counting up, never reused) suit
@@ -20,6 +25,18 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.4.1.0, PR 4b: the endurance run.** A third range test: 300 km over
+  road, range tracks, hills and rough ground. Each part has a load it is
+  rated for. Within it, a part gives trouble now and then and the crew mends
+  it at the roadside. Over it, trouble comes fast: narrow tracks get thrown
+  again and again, an overloaded suspension breaks arms, and an overloaded
+  transmission or an engine too hot for its cooling breaks for good and the
+  tank is towed in. The report draws the run leg by leg with a mark where
+  each thing broke, and lists every overloaded part with a "Fix" button,
+  whether or not it broke this time. To pass, the tank has to finish with no
+  more than one stop. Tracks now have a weight rating that grows with their
+  width, with a new warning in the Faults tab. The Reliability readout comes
+  from the same model, so it now drops hard for an overloaded part.
 - **0.4.0.0, PR 4a: how the tank moves, and the first two range tests.** A
   new Trials tab sends a design with no faults to the proving ground, which
   opens as its own screen. Two tests so far. Acceleration and top speed: a
@@ -100,8 +117,14 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   stress-based breakdowns (0.4.1.0), 4c the grey-box 3D range that plays the
   runs back (0.4.2.0), 4d the director camera, pause and scrub (0.4.3.0).
   PR 5 is then 0.5.0.0.
-- The range marks (12 s to 32 km/h, 50 km/h top speed, the course as built)
-  are a Pact standard for now. Tenders set their own marks in PR 8.
+- The range marks (12 s to 32 km/h, 50 km/h top speed, the course as built,
+  one stop on the endurance run) are a Pact standard for now. Tenders set
+  their own marks in PR 8.
+- The endurance run's luck is seeded by the project number. The sim also
+  knows a desert climate (cooling sheds 15 % less), with no screen for it
+  yet: export trials are PR 12. Sights, autoloaders and the other turret
+  parts count in the Reliability readout but are not worn by the endurance
+  run; they get their turn in the gunnery tests (PR 5).
 - Reactive tiles work once in a real trial. That wear arrives with the hit
   model in PR 6; the design office shows a fresh tile.
 - The section view shows armour only. The interior (crew, ammunition, fuel,

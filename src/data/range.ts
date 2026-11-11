@@ -24,6 +24,41 @@ export type GroundId = keyof typeof GROUNDS
 export const OBSTACLES = ['trench', 'step', 'mud', 'slope'] as const
 export type ObstacleId = (typeof OBSTACLES)[number]
 
+export interface Climate {
+  /** Share of its home rating a cooling system manages here. */
+  cooling: number
+}
+
+export const CLIMATES = {
+  /** Tarnovia and its neighbours. Parts are rated for this. */
+  temperate: { cooling: 1 },
+  /** A hot export range. */
+  desert: { cooling: 0.85 },
+} as const satisfies Record<string, Climate>
+export type ClimateId = keyof typeof CLIMATES
+
+export interface RunPart {
+  /** What works the part: `drive` is pulling the tank along, `ride` is the pounding from the ground. Null for a part with no rated load. */
+  works: 'drive' | 'ride' | null
+  /** True when the rating is a cooling rating, which falls in a hot climate. */
+  heat: boolean
+  /** True when breaking it while overloaded ends the run. The others are mended at the roadside. */
+  wrecks: boolean
+  /** Hours the crew takes to mend it. */
+  repairH: number
+}
+
+/** The parts an endurance run wears, in the order the range inspects them. */
+export const RUN_PARTS = {
+  engine: { works: 'drive', heat: true, wrecks: true, repairH: 3 },
+  cooling: { works: null, heat: false, wrecks: false, repairH: 1 },
+  transmission: { works: 'drive', heat: false, wrecks: true, repairH: 4 },
+  suspension: { works: 'ride', heat: false, wrecks: false, repairH: 2 },
+  tracks: { works: 'ride', heat: false, wrecks: false, repairH: 0.75 },
+} as const satisfies Record<string, RunPart>
+export type RunPartId = keyof typeof RUN_PARTS
+export const RUN_PART_IDS = Object.keys(RUN_PARTS) as RunPartId[]
+
 export const RANGE = {
   /** The sim's fixed time step, seconds. */
   stepS: 0.05,
@@ -68,6 +103,22 @@ export const RANGE = {
     /** An obstacle not cleared in this time is failed. */
     timeoutS: 90,
   },
+  endurance: {
+    climate: 'temperate',
+    /** The run is worked out a stretch at a time, this long. Each leg is a whole number of them. */
+    stepKm: 1,
+    /**
+     * The legs, in order. `drive` and `ride` are how hard the leg works a part,
+     * as a share of the load it is rated for: a part at its rating is safe on
+     * every leg. `pace` is the share of its top speed on that ground the tank holds.
+     */
+    legs: [
+      { id: 'road', km: 90, ground: 'hard', drive: 0.75, ride: 0.7, pace: 0.8 },
+      { id: 'tracks', km: 110, ground: 'firm', drive: 0.85, ride: 0.85, pace: 0.65 },
+      { id: 'hills', km: 50, ground: 'firm', drive: 1, ride: 0.85, pace: 0.35 },
+      { id: 'rough', km: 50, ground: 'firm', drive: 0.9, ride: 1, pace: 0.4 },
+    ],
+  },
 } as const
 
 /** What the Pact asks of a generation-one tank. A tender sets its own marks later. */
@@ -76,5 +127,7 @@ export const MARKS_GEN1 = {
   sprintS: 12,
   /** Speed held on the strip, km/h at least. */
   topKmh: 50,
+  /** Stops for repairs on the endurance run, at most. */
+  enduranceStops: 1,
 } as const
-export type Marks = { sprintS: number; topKmh: number }
+export type Marks = { sprintS: number; topKmh: number; enduranceStops: number }
