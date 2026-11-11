@@ -3,15 +3,18 @@ import { BASELINE_SPEC } from '../src/data/baseline'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../src/data/service'
 import { STRINGS } from '../src/data/strings'
 import { TENDERS } from '../src/data/tenders'
-import type { Adopted } from '../src/sim/career/career'
+import {
+  buildPrototype, enterTender, newCareer, serviceYear, startProduction, type Adopted,
+} from '../src/sim/career/career'
 import { fieldReport, type Complaint } from '../src/sim/career/service'
 import { buildStatSheet } from '../src/sim/vehicle/stats'
 import {
   complaintText, exerciseLine, faultsLine, feeLine, fleetLine, lessonLines, productionLines, productionSummary, rateLine,
-  reportStanding, runningLines, serviceTitle, shootLine, yearsLeftLine,
+  reportStanding, runningLines, serviceTitle, shootLine, yearsLeftLine, askText, fittedLine, upgradeCheck,
 } from '../src/ui/serviceWords'
 
 const T = TENDERS.improvedType1
+const U = STRINGS.service.upgrade
 const SHEET = buildStatSheet(BASELINE_SPEC, T.limits)
 const TANK: Adopted = {
   designation: 'Model 81', name: 'Night owl', year: 1981, tender: 'improvedType1', spec: BASELINE_SPEC, production: null, years: 0, contract: null, upgrades: [],
@@ -124,4 +127,41 @@ describe('the words of a field report', () => {
     expect(reportStanding(report)).toEqual([{ body: 'army', text: 'The army: down 2' }])
     expect(reportStanding({ ...report, standing: { army: 0, ministry: 0, pact: 0 } })).toEqual([])
   })
+})
+
+describe('upgrade contract words', () => {
+  const LASER = structuredClone(BASELINE_SPEC)
+  LASER.fireControl.night = 'imageIntensifier'
+  LASER.fireControl.rangefinder = 'laser'
+  const EASIER = structuredClone(LASER)
+  EASIER.crew.comfort = 'improved'
+  const career = serviceYear(startProduction(enterTender(buildPrototype(newCareer(2), LASER), 1), 0, STEADY), 0)
+
+  it('say what the army asks for', () => {
+    expect(askText({ kind: 'workload' })).toBe(U.asks.workload)
+    expect(askText({ kind: 'protection', zone: 'upperGlacis' })).toContain('upper glacis')
+    expect(fittedLine({ designation: 'Model 81' }, { letter: 'A', afterYear: 2, spec: LASER, ask: { kind: 'firstShot' } }))
+      .toBe('Model 81A · after year 2 · a faster first shot')
+  })
+
+  it('judge the board against the contract', () => {
+    expect(upgradeCheck(newCareer(1), 0, LASER)).toBeNull()
+    const same = upgradeCheck(career, 0, LASER)!
+    expect(same.block).toBe('same')
+    expect(same.blockText).toBe(U.blocks.same)
+    expect(same.met).toBe(false)
+    const good = upgradeCheck(career, 0, EASIER)!
+    expect(good.block).toBeNull()
+    expect(good.blockText).toBe('')
+    expect(good.met).toBe(true)
+    expect(good.designation).toBe(`${career.adopted[0]!.designation}A`)
+    expect(good.rows[0]!.value).toContain(U.orLess)
+    expect(good.rows.map((row) => row.label)).toEqual([U.measures.workload, U.weight, U.cooling, U.cost, U.fee])
+    const rebuilt = structuredClone(EASIER)
+    rebuilt.turret.ringMm += 100
+    expect(upgradeCheck(career, 0, rebuilt)!.blockText).toContain(STRINGS.controls['turret.ringMm'].label.toLowerCase())
+    const heavy = structuredClone(EASIER)
+    heavy.armour.upperGlacis[0]!.mm += 60
+    expect(upgradeCheck(career, 0, heavy)!.blockText).toMatch(/Too heavy: \d+\.\d t/)
+  }, 30_000)
 })
