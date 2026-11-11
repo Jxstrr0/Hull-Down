@@ -1,5 +1,6 @@
 export { buildStatSheet, stressFactor, type StatSheet } from './stats'
 export { checkSpec, ISSUE_CODES, type Issue, type IssueCode, type Severity } from './checks'
 export { geometryOf, type Geometry } from './geometry'
+export { layerWorth, pathFactor, protectionOf, stackProtection, type ZoneProtection } from './protection'
 export { rollupOf, AREAS, type Area, type Rollup } from './rollup'
 export type { ArmourLayer, Limits, VehicleSpec } from './spec'

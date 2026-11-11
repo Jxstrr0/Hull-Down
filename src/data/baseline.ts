@@ -32,7 +32,7 @@ export const BASELINE_SPEC: VehicleSpec = {
     hullSideRear: [{ material: 'rolledSteel', mm: 45 }],
     hullRear: [{ material: 'rolledSteel', mm: 40 }],
     hullRoof: [{ material: 'rolledSteel', mm: 20 }],
-    belly: [{ material: 'rolledSteel', mm: 16 }],
+    belly: [{ material: 'rolledSteel', mm: 15 }],
     turretFrontLeft: [{ material: 'castSteel', mm: 350 }],
     turretFrontRight: [{ material: 'castSteel', mm: 350 }],
     mantlet: [{ material: 'castSteel', mm: 250 }],

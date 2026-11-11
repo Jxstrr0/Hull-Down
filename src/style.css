@@ -227,6 +227,7 @@ body {
 .chip-bad { color: var(--pencil); font-weight: 500; }
 
 .tabs {
+  position: relative;
   flex: none;
   display: flex;
   overflow-x: auto;
@@ -341,6 +342,89 @@ body {
   cursor: pointer;
 }
 .num-slider { flex: 1; min-width: 0; height: 44px; accent-color: var(--ink); }
+
+/* Armour tab: a row of zones, what the zone stops, its section, its layers. */
+.armour { display: flex; flex-direction: column; gap: 12px; }
+.swatch-defs { position: absolute; }
+.zones { display: flex; gap: 6px; margin: 0 -16px; padding: 0 16px 2px; overflow-x: auto; scrollbar-width: none; }
+.zones::-webkit-scrollbar { display: none; }
+.zone {
+  flex: none;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--ink-dim);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.zone-on { border-color: var(--ink); background: var(--ink); color: var(--paper); font-weight: 600; }
+.zone:focus-visible, .layer-material:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+
+/* The two protection numbers stay at the top of the panel while the layers scroll under them. */
+.prot {
+  position: sticky;
+  top: -14px;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  margin: 0 -16px;
+  padding: 6px 16px;
+  background: var(--paper);
+}
+.prot-box { flex: 1; min-width: 0; padding: 3px 8px; border: 1.5px solid var(--ink); }
+.prot-value { margin: 0; font-family: var(--font-mono); font-size: 1.25rem; font-weight: 500; white-space: nowrap; }
+
+.sec { margin: 10px 0 0; }
+.sec-svg { display: block; width: 100%; max-height: 110px; overflow: visible; }
+.slab { stroke: var(--ink); stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.slab-airGap { fill: none; stroke-dasharray: 4 3; }
+.hatch line { stroke: var(--ink); }
+.hatch circle { fill: var(--ink); }
+.sec-shot { stroke: var(--pencil); stroke-width: 1.5; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+.sec-arrow { fill: var(--pencil); }
+.sec-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  font-family: var(--font-head);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.layer { padding: 10px 0 12px; border-bottom: 1px solid var(--grid); }
+.layer-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.layer-name {
+  font-family: var(--font-head);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.layer-pick { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.swatch { flex: none; width: 28px; height: 28px; }
+.layer-material {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 8px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+}
+.layer-note { margin: 6px 0 0; font-family: var(--font-mono); font-size: 0.8rem; }
+.layer-about { font-family: var(--font-ui); font-size: 0.88rem; color: var(--ink-dim); }
+.armour .btn { margin-top: 10px; }
 
 /* Readouts: the stat sheet's numbers, one group after another. */
 .ds { display: flex; flex-direction: column; gap: 18px; }

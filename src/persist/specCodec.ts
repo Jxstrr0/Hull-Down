@@ -28,7 +28,8 @@ function cleanLayers(raw: unknown, fallback: ArmourLayer[]): ArmourLayer[] {
     if (typeof item !== 'object' || item === null) continue
     const { material, mm } = item as { material?: unknown; mm?: unknown }
     if (!isMaterial(material) || typeof mm !== 'number' || !(mm > 0)) continue
-    layers.push({ material, mm: Math.min(TUNING.limits.maxLayerMm, Math.round(mm)) })
+    const most = Math.min(TUNING.limits.maxLayerMm, MATERIALS[material].maxMm)
+    layers.push({ material, mm: Math.min(most, Math.max(TUNING.limits.minLayerMm, Math.round(mm))) })
   }
   return layers
 }

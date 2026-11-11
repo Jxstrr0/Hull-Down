@@ -1,5 +1,5 @@
 // Sizes worked out from the spec: armour zone areas, turret size, outer dimensions.
-import { type ZoneId } from '../../data/materials'
+import { ZONES, type ZoneId } from '../../data/materials'
 import { HULLS, LOADING, TURRETS } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { PI, detCos } from '../det'
@@ -8,6 +8,8 @@ import type { VehicleSpec } from './spec'
 export interface Geometry {
   /** Armour plate area of each zone, square metres. */
   zoneAreaM2: Record<ZoneId, number>
+  /** How far each zone's plate leans away from square to a level shot at its face, degrees. */
+  zoneSlopeDeg: Record<ZoneId, number>
   turretHeightM: number
   turretRadiusM: number
   /** Usable space inside the turret. */
@@ -40,11 +42,20 @@ export function geometryOf(spec: VehicleSpec): Geometry {
   const lowerHeight = hull.bodyHeightM - upperHeight
   const side = hull.lengthM * hull.bodyHeightM
   const deck = hull.lengthM * hull.bodyWidthM
-  const front = g.turretFrontFactor * radius * height
+
+  const zoneSlopeDeg = Object.fromEntries(ZONES.map((zone) => [zone, 0])) as Record<ZoneId, number>
+  zoneSlopeDeg.upperGlacis = spec.hull.glacisAngleDeg
+  zoneSlopeDeg.lowerGlacis = g.lowerGlacisAngleDeg
+  zoneSlopeDeg.turretFrontLeft = turret.frontSlopeDeg
+  zoneSlopeDeg.turretFrontRight = turret.frontSlopeDeg
+  zoneSlopeDeg.turretSides = turret.sideSlopeDeg
+  /** A sloped plate is bigger than the face it covers. */
+  const stretch = (zone: ZoneId): number => 1 / detCos(degToRad(zoneSlopeDeg[zone]))
+  const front = g.turretFrontFactor * radius * height * stretch('turretFrontLeft')
 
   const zoneAreaM2: Record<ZoneId, number> = {
-    upperGlacis: (hull.bodyWidthM * upperHeight) / detCos(degToRad(spec.hull.glacisAngleDeg)),
-    lowerGlacis: (hull.bodyWidthM * lowerHeight) / detCos(degToRad(g.lowerGlacisAngleDeg)),
+    upperGlacis: hull.bodyWidthM * upperHeight * stretch('upperGlacis'),
+    lowerGlacis: hull.bodyWidthM * lowerHeight * stretch('lowerGlacis'),
     // Both sides together; each zone is half the hull length.
     hullSideFront: side,
     hullSideRear: side,
@@ -54,13 +65,14 @@ export function geometryOf(spec: VehicleSpec): Geometry {
     turretFrontLeft: front,
     turretFrontRight: front,
     mantlet: g.mantletWidthM * height * g.mantletHeightShare,
-    turretSides: g.turretSideFactor * radius * height * turret.sideFactor,
+    turretSides: g.turretSideFactor * radius * height * turret.sideFactor * stretch('turretSides'),
     turretRear: g.turretRearFactor * radius * height,
     turretRoof: disc * turret.roofFactor,
   }
 
   return {
     zoneAreaM2,
+    zoneSlopeDeg,
     turretHeightM: height,
     turretRadiusM: radius,
     turretVolumeM3: disc * height * turret.volumeFactor,

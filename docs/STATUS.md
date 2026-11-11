@@ -14,6 +14,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.3.0.0, PR 3a: armour layers.** A new Armour tab. Pick one of the 13
+  zones, build its stack of up to four layers (material and thickness), and
+  see what it stops against kinetic rounds and shaped charges. A section view
+  draws the layers to scale, leaning at the plate's slope, with a level shot
+  through them. Each material has its own strengths and a thickest plate;
+  inserts and air gaps need a steel plate on both sides. Slope now costs
+  weight on the turret as well as the glacis. The baseline is now 42.0 t.
 - **0.2.3.0, PR 2c: save, load, names and project numbers.** Designs are
   kept on the device as you work and are still there after a reload. A new
   Designs tab names the design, starts a new one from the baseline, copies or
@@ -44,6 +51,12 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 - PR 2 is split into three small PRs: 2a parts and readouts (0.2.1.0), 2b the
   blueprint drawing (0.2.2.0), 2c save, load, names and project numbers
   (0.2.3.0). PR 3 is then 0.3.0.0, so PR 6 lands on 0.6.0.0 as the plan says.
+- PR 3 is split the same way: 3a armour layers, protection numbers and the
+  section view (0.3.0.0), 3b armour zones on the blueprint, the Pact
+  ammunition lists and the two protection maps (0.3.1.0), 3c ERA tiles and the
+  quick test shot (0.3.2.0). PR 4 is then 0.4.0.0.
+- The section view shows armour only. The interior (crew, ammunition, fuel,
+  engine) joins it in PR 6, when the hit model needs an interior layout.
 - Left out of the spec on purpose, to be added when their PR needs them:
   barrel length, recoil system and gunnery numbers (PR 5), driver position
   and crew stations (PR 6, when hits need them), protection values per zone

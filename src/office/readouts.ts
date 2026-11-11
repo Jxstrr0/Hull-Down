@@ -1,4 +1,5 @@
 // The full readouts: every number on the stat sheet, grouped for a phone.
+import { ZONES } from '../data/materials'
 import { STRINGS, fill } from '../data/strings'
 import { AREAS, type Issue, type IssueCode, type Limits, type StatSheet } from '../sim/vehicle'
 import { el } from '../ui/dom'
@@ -93,6 +94,10 @@ export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
       [r.spareVolume, unit(u.cubicMetres, sheet.growth.volumeM3, 1)],
       [r.spareCooling, unit(u.hp, sheet.growth.coolingHp, 0)],
     ]),
+    group(D.groups.protection, ZONES.map((zone): [string, string] => [
+      STRINGS.zones[zone].name,
+      fill(u.protection, { ke: fixed(sheet.protection[zone].keMm, 0), ce: fixed(sheet.protection[zone].ceMm, 0) }),
+    ])),
     weightGroup(sheet),
     el('p', 'ds-note', D.note),
   )
