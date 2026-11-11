@@ -12,6 +12,7 @@ import { VIEWS, type ViewId } from '../render/director'
 import type { RangeView, RunSource } from '../render/rangeScene'
 import { el } from './dom'
 import { fixed } from './format'
+import { gunneryCards } from './gunneryCards'
 import { runRange } from './rangeRunner'
 
 const R = STRINGS.range
@@ -508,7 +509,11 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     long.append(...watch({ test: 'endurance', run: e }), runChart(e), longLines)
     if (over.length === 0) long.append(el('p', 'ctl-note rg-note', E.allWithin))
     long.append(el('p', 'ctl-note rg-note', E.note))
-    root.append(summary, accel, course, long, el('p', 'ds-note', R.note))
+    root.append(
+      summary, accel, course, long,
+      ...gunneryCards(report, sheet, args.spec, { card, line, fixButton }),
+      el('p', 'ds-note', R.note),
+    )
   }
 
   // The tests run on another thread, so a long trial never freezes the page.

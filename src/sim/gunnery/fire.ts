@@ -144,23 +144,50 @@ function within(half: number, sigma: number): number {
   return sigma <= 0 ? 1 : erf(half / (sigma * Math.SQRT2))
 }
 
-/** How far a first shot is likely to land from the middle of the target, metres: across, and up or down. */
-export function missOf(fire: Fire, round: FireRound, rangeM: number, shoot: Shoot): { acrossM: number; upM: number } {
+/** What pushes a shot off its mark, each as one standard deviation in metres at the target. */
+export interface ShotErrors {
+  /** The gunner's aim. Fresh for every shot, across and up alike. */
+  layM: number
+  /** The round's own scatter. Fresh for every shot, across and up alike. */
+  scatterM: number
+  /** Wind, tilt and wear the computer did not allow for. The same for every shot at one target. */
+  driftAcrossM: number
+  driftUpM: number
+  /** A range read wrong, which puts the shot over or under. The same for every shot at one target. */
+  rangingM: number
+  /** The rocking of a moving tank. Fresh for every shot. */
+  shakeAcrossM: number
+  shakeUpM: number
+}
+
+export function errorsOf(fire: Fire, round: FireRound, rangeM: number, shoot: Shoot): ShotErrors {
   const crew = CREWS[shoot.crew]
   const km = rangeM / 1000
   const flight = flightOf(round, rangeM)
-  const lay = fire.layMil * crew.aim * (shoot.night ? fire.night.layFactor : 1) * km
-  const scatter = round.scatterMil * km
   const drift = fire.uncorrected * G.driftMPerS2 * flight.timeS * flight.timeS
   // A range read wrong puts the shot over or under: by more, the steeper the round is falling.
   const rangeErrorM = Math.max(fire.ranging.errorShare * rangeM, fire.ranging.minErrorM) *
     crew.aim * (shoot.night ? fire.ranging.nightFactor : 1)
   const fall = (TUNING.mobility.gravityMs2 * flight.timeS) / flight.speedMs
   const shake = shoot.moving ? km : 0
-  const base = lay * lay + scatter * scatter
   return {
-    acrossM: Math.sqrt(base + sq(drift * (1 - G.driftUpShare)) + sq(fire.moving.acrossMil * shake)),
-    upM: Math.sqrt(base + sq(drift * G.driftUpShare) + sq(rangeErrorM * fall) + sq(fire.moving.upMil * shake)),
+    layM: fire.layMil * crew.aim * (shoot.night ? fire.night.layFactor : 1) * km,
+    scatterM: round.scatterMil * km,
+    driftAcrossM: drift * (1 - G.driftUpShare),
+    driftUpM: drift * G.driftUpShare,
+    rangingM: rangeErrorM * fall,
+    shakeAcrossM: fire.moving.acrossMil * shake,
+    shakeUpM: fire.moving.upMil * shake,
+  }
+}
+
+/** How far a first shot is likely to land from the middle of the target, metres: across, and up or down. */
+export function missOf(fire: Fire, round: FireRound, rangeM: number, shoot: Shoot): { acrossM: number; upM: number } {
+  const e = errorsOf(fire, round, rangeM, shoot)
+  const base = sq(e.layM) + sq(e.scatterM)
+  return {
+    acrossM: Math.sqrt(base + sq(e.driftAcrossM) + sq(e.shakeAcrossM)),
+    upM: Math.sqrt(base + sq(e.driftUpM) + sq(e.rangingM) + sq(e.shakeUpM)),
   }
 }
 
@@ -187,22 +214,40 @@ export function firstShotS(fire: Fire, shoot: Shoot): number {
 }
 
 /**
+ * Seconds to get the next round into the gun when `fired` rounds have already
+ * gone, with no jam. Past its ready rounds a machine is fed by hand.
+ */
+export function loadS(fire: Fire, fired: number, shoot: Shoot): number {
+  const feed = fire.feed
+  if (feed.readyRounds !== null) {
+    return fired < feed.readyRounds ? feed.freshS : feed.handFeedS * fire.pace * CREWS[shoot.crew].pace
+  }
+  const tired = Math.min(feed.tirePerRound * fired, feed.tireMax)
+  return feed.freshS * (1 + tired) * (shoot.moving ? feed.movingFactor : 1) * CREWS[shoot.crew].pace
+}
+
+/** Seconds a jam costs: the crew has to clear it. */
+export function jamS(fire: Fire, shoot: Shoot): number {
+  return fire.feed.clearS * fire.pace * CREWS[shoot.crew].pace
+}
+
+/** True while the machine, not the crew, is feeding the gun. Only then can it jam. */
+export function machineFed(fire: Fire, fired: number): boolean {
+  return fire.feed.readyRounds !== null && fired < fire.feed.readyRounds
+}
+
+/** Seconds to bring the gun back on to the target after a shot. */
+export function relayS(fire: Fire, shoot: Shoot): number {
+  return fire.times.relayS * fire.pace * CREWS[shoot.crew].pace
+}
+
+/**
  * Seconds from one shot to the next, when `fired` rounds have already gone.
- * A jam is counted at its average cost; the loading drill rolls for each one.
+ * A jam is counted at its average cost; the range rolls for each one.
  */
 export function cycleS(fire: Fire, fired: number, shoot: Shoot): number {
-  const feed = fire.feed
-  const crewPace = fire.pace * CREWS[shoot.crew].pace
-  let load: number
-  if (feed.readyRounds !== null) {
-    load = fired < feed.readyRounds
-      ? feed.freshS + feed.jamPerRound * feed.clearS * crewPace
-      : feed.handFeedS * crewPace
-  } else {
-    const tired = Math.min(feed.tirePerRound * fired, feed.tireMax)
-    load = feed.freshS * (1 + tired) * (shoot.moving ? feed.movingFactor : 1) * CREWS[shoot.crew].pace
-  }
-  return Math.max(load, fire.times.relayS * crewPace)
+  const jam = machineFed(fire, fired) ? fire.feed.jamPerRound * jamS(fire, shoot) : 0
+  return Math.max(loadS(fire, fired, shoot) + jam, relayS(fire, shoot))
 }
 
 /** Rounds a minute kept up over the long shoot. */

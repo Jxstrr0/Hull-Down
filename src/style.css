@@ -798,6 +798,12 @@ body {
 .rg-leg { fill: none; stroke: var(--ink-dim); stroke-width: 1; }
 .rg-event { fill: var(--pencil); stroke: var(--pencil); stroke-width: 1; stroke-linejoin: round; }
 .rg-event-end { fill: none; stroke-width: 2.5; stroke-linecap: round; }
+.rg-board-box { max-width: 260px; margin: 8px auto; }
+.rg-board-target { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.rg-board-hit { fill: var(--stamp); }
+.rg-board-miss { fill: none; stroke: var(--pencil); stroke-width: 1.6; stroke-linecap: round; }
+.rg-board-key { margin: 0; padding: 4px 6px; border-top: 1px solid var(--grid); font-size: 0.8rem; color: var(--ink-dim); white-space: pre-wrap; }
+.rg-target-missed { padding-left: 8px; border-left: 4px solid var(--grid); }
 .rg-lines { margin: 0; padding: 0; list-style: none; }
 .rg-line-item { padding: 9px 0; border-bottom: 1px solid var(--grid); }
 .rg-line-failed { padding-left: 8px; border-left: 4px solid var(--pencil); }
