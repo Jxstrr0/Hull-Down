@@ -3,11 +3,13 @@
 // design office's panel and keeps the career between visits.
 import { ADVISOR_MODES, type AdvisorMode } from '../data/advisor'
 import { BODIES } from '../data/career'
+import { CUSTOMER_IDS, CUSTOMERS, NEED_KINDS, type NeedId } from '../data/export'
 import { RESEARCH } from '../data/research'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { STRINGS, fill } from '../data/strings'
 import { SCORE_AXES, SCORING, TENDER_IDS, TENDER_RULES, type Tender } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
+import { customerChecks, exportOpen } from '../sim/career/exportDesk'
 import { intelFiles } from '../sim/career/intel'
 import {
   buildBlock, buildPrototype, enterTender, research, researchBlock, researchOpen, fitUpgrade, newCareer, nextTender, tendersLeft, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
@@ -669,6 +671,59 @@ export function createBureau(options: BureauOptions): Bureau {
     }).reverse()
   }
 
+  /** A need's figure in words: a part fitted or not, money, or a number with its unit. */
+  function needText(need: NeedId, value: number): string {
+    const X = C.exportDesk
+    if (NEED_KINDS[need] === 'fitted') return value >= 1 ? X.fitted : X.notFitted
+    if (need === 'unitCostKr') return money(value)
+    const places = need === 'groundPressure' ? 2 : need === 'rangeKm' ? 0 : 1
+    return fill(X.figure, { n: fixed(value, places), unit: X.units[need as keyof typeof X.units] })
+  }
+
+  /** The customers abroad, what each asks, and how the bureau's tanks in service measure up. */
+  function drawExport(): HTMLElement | null {
+    if (!exportOpen(career)) return null
+    const X = C.exportDesk
+    const box = el('section', 'bu')
+    box.dataset.key = 'export'
+    box.append(el('h3', 'ds-group-title', X.heading), el('p', 'ctl-note', X.about))
+    const tanks = career.adopted.map((tank) => {
+      const spec = serviceSpec(tank)
+      return { name: serviceDesignation(tank), spec, sheet: buildStatSheet(spec, TENDERS[tank.tender].limits) }
+    }).reverse()
+    for (const id of CUSTOMER_IDS) {
+      const customer = CUSTOMERS[id]
+      const words = X.customers[id]
+      box.append(el('h4', 'bu-sub', fill(X.title, { name: words.name, climate: X.climates[customer.climate] })))
+      box.append(el('p', 'ctl-note', `${words.line} ${fill(X.order, { n: String(customer.tanks) })}`))
+      const rows = el('dl', 'bu-rows')
+      const first = tanks[0]
+      if (first) for (const check of customerChecks(id, first.spec, first.sheet)) row(rows, X.needs[check.need], needText(check.need, check.want))
+      box.append(rows)
+      const list = el('ul', 'sv-lines')
+      for (const tank of tanks) {
+        const checks = customerChecks(id, tank.spec, tank.sheet)
+        const missed = checks.filter((check) => !check.met)
+        if (missed.length === 0) {
+          list.append(el('li', 'sv-line', fill(X.suits, { tank: tank.name })))
+          continue
+        }
+        const item = el('li', 'sv-line', fill(X.short, { tank: tank.name, n: String(missed.length), of: String(checks.length) }))
+        const why = el('ul', 'sv-lines')
+        for (const check of missed) {
+          const line = NEED_KINDS[check.need] === 'fitted'
+            ? fill(X.lacks, { need: X.needs[check.need] })
+            : fill(X.has, { need: X.needs[check.need], have: needText(check.need, check.have) })
+          why.append(el('li', 'sv-line', line))
+        }
+        item.append(why)
+        list.append(item)
+      }
+      box.append(list)
+    }
+    return box
+  }
+
   /** The archive: one page a tank, the newest first. */
   function drawArchive(): HTMLElement {
     const A = STRINGS.archive
@@ -743,6 +798,8 @@ export function createBureau(options: BureauOptions): Bureau {
     const decision = drawDecision()
     if (decision) box.append(decision)
     box.append(...drawService(spec))
+    const desk = drawExport()
+    if (desk) box.append(desk)
     box.append(drawTender(), drawIntel(), drawBureau())
     const lab = drawResearch()
     if (lab) box.append(lab)

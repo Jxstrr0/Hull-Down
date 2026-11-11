@@ -16,6 +16,9 @@ aircraft or weapon name.
 | Kamen Pact | The eastern-style bloc Tarnovia belongs to. | Decided (Q1) |
 | Radan Union | The larger power that leads the Pact. | Decided (Q1) |
 | Northern Accord | The western-style alliance; source of the threat tanks. | Decided (Q1) |
+| Emirate of Dahrat | Export customer: desert. | Working name (0.12.0.0), Kelbo to confirm |
+| Republic of Ilandu | Export customer: jungle. | Working name (0.12.0.0), Kelbo to confirm |
+| Kingdom of Tolmar | Export customer: mountain. | Working name (0.12.0.0), Kelbo to confirm |
 
 ## Money
 
