@@ -1,5 +1,5 @@
 // Proportions for the blueprint drawing. These only decide how the tank is
-// drawn. Nothing here feeds the simulation.
+// drawn. Nothing here feeds the simulation; where things sit is in layout.ts.
 export const DRAWING = {
   /** Drawn thickness of the barrel, in calibres. Its length comes from the barrel fitted. */
   barrelThicknessCalibres: 1.5,
@@ -7,8 +7,6 @@ export const DRAWING = {
   extractorAt: 0.45,
   extractorLengthM: 0.55,
   extractorThicknessCalibres: 2.4,
-  /** Top of the track run, as a share of the hull roof height. */
-  trackTopShare: 0.62,
   /** Track loop: how far it stops short of the hull ends, and the corner cut. */
   trackInsetFrontM: 0.1,
   trackInsetRearM: 0.05,
@@ -18,19 +16,11 @@ export const DRAWING = {
   /** Share of the room between wheel centres that a wheel fills. */
   wheelFill: 0.92,
   hubShare: 0.35,
-  /** Turret centre along the hull, measured from the nose, by engine position. */
-  turretCentre: { rear: 0.45, front: 0.62 },
-  /** Gun axis height up the turret. */
-  gunHeightShare: 0.45,
-  /** Where the barrel leaves the turret, as a share of the turret radius ahead of centre. */
-  gunRootShare: 0.9,
-  /** Rear overhang of a bustle turret, as a share of the turret radius. */
-  bustleOverhang: 0.7,
   hatchRadiusM: 0.27,
+  /** A crewman's head on the cutaway. */
+  crewHeadM: 0.13,
   cupolaHeightM: 0.18,
   sightHeadM: { width: 0.3, height: 0.3 },
-  /** Engine bay, as shares of hull length from the nose, by engine position. */
-  engineBay: { rear: [0.68, 0.97], front: [0.2, 0.42] },
   rearUndercutM: 0.15,
   /** Blank space kept around the drawing, in metres. */
   marginM: 0.3,

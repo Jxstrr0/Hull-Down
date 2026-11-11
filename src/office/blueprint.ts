@@ -5,11 +5,12 @@
 import type { TileGrid } from '../data/era'
 import type { ZoneId } from '../data/materials'
 import { STRINGS, fill } from '../data/strings'
-import { hasTile, type Geometry, type VehicleSpec, type Verdict } from '../sim/vehicle'
+import { hasTile, type Geometry, type Interior, type VehicleSpec, type Verdict } from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { fixed } from '../ui/format'
 import type { ControlId } from './controls'
-import { drawingOf, type View } from './drawing'
+import { CUT_KINDS, drawingOf, type View } from './drawing'
+import { insideLines } from './inside'
 
 const SVG = 'http://www.w3.org/2000/svg'
 const O = STRINGS.office
@@ -91,6 +92,29 @@ function verdictDefs(unit: number): SVGDefsElement {
   return defs
 }
 
+/** Hatching for what is inside, so the cutaway does not rely on colour: slanted lines for ammunition, level lines for fuel. */
+function cutDefs(unit: number, body: readonly string[]): SVGDefsElement {
+  const defs = svg('defs', {})
+  const n = (value: number): string => String(Math.round(value * unit * 1000) / 1000)
+  const size = 4
+  const tile = (kind: string, x0: number, y0: number, x1: number, y1: number): void => {
+    const pattern = svg('pattern', { id: `cut-${kind}`, width: n(size), height: n(size), patternUnits: 'userSpaceOnUse', class: `cut-tile cut-${kind}` })
+    pattern.append(
+      svg('rect', { width: n(size), height: n(size), class: 'map-ground' }),
+      svg('line', { x1: n(x0), y1: n(y0), x2: n(x1), y2: n(y1), 'stroke-width': n(1.2) }),
+    )
+    defs.append(pattern)
+  }
+  tile('ammo', 0, size, size, 0)
+  tile('fuel', 0, size / 2, size, size / 2)
+  if (body.length > 0) {
+    const clip = svg('clipPath', { id: 'cut-body' })
+    for (const d of body) clip.append(svg('path', { d }))
+    defs.append(clip)
+  }
+  return defs
+}
+
 function tapZone(
   root: SVGSVGElement, zone: { x: number; y: number; w: number; h: number }, label: string, act: () => void,
 ): void {
@@ -109,9 +133,9 @@ function tapZone(
 
 /** The drawing and its caption, ready to put in the blueprint box. */
 export function renderBlueprint(
-  spec: VehicleSpec, geo: Geometry, view: View, go: (id: ControlId) => void, map?: BlueprintMap,
+  spec: VehicleSpec, geo: Geometry, view: View, go: (id: ControlId) => void, map?: BlueprintMap, interior?: Interior,
 ): Element[] {
-  const drawing = drawingOf(spec, geo, view)
+  const drawing = drawingOf(spec, geo, view, interior)
   const { box } = drawing
   const root = svg('svg', {
     class: 'bp-svg',
@@ -124,7 +148,20 @@ export function renderBlueprint(
   root.style.aspectRatio = `${box.w} / ${box.h}`
   if (map?.verdicts) root.append(verdictDefs(box.w / 330))
 
+  // What is inside goes on last, over the running gear, and only within the armour.
+  const inside = svg('g', { class: 'bp-inside' })
+  if (interior) {
+    root.append(cutDefs(box.w / 330, drawing.body))
+    if (drawing.body.length > 0) inside.style.clipPath = 'url(#cut-body)'
+  }
+
   for (const shape of drawing.shapes) {
+    if (shape.item) {
+      const mark = svg('path', { d: shape.d, class: `bp-item bp-item-${shape.item}` })
+      if (shape.item === 'ammo' || shape.item === 'fuel') mark.style.fill = `url(#cut-${shape.item})`
+      inside.append(mark)
+      continue
+    }
     if (!shape.zone) {
       root.append(svg('path', { d: shape.d, class: `bp-${shape.line}` }))
       continue
@@ -156,6 +193,8 @@ export function renderBlueprint(
     if (shape.zone === map.selected) root.append(svg('path', { d: shape.d, class: 'bp-face bp-face-on' }))
   }
 
+  if (interior) root.append(inside)
+
   if (map) {
     for (const tap of drawing.armourTaps) {
       tapZone(root, tap, fill(O.armour.pickZone, { name: STRINGS.zones[tap.zone].name }), () => map.pick(tap.zone))
@@ -180,6 +219,20 @@ export function renderBlueprint(
       legend.append(item)
     }
     return [root, legend]
+  }
+  if (interior) {
+    const C = O.cutaway
+    if (view === 'front') return [root, el('p', 'bp-caption', C.frontNote)]
+    const legend = el('p', 'bp-caption bp-legend')
+    legend.setAttribute('aria-label', C.legendLabel)
+    for (const kind of CUT_KINDS) {
+      const item = el('span', 'bp-key')
+      item.append(el('span', `bp-swatch bp-swatch-${kind}`), C.kinds[kind])
+      legend.append(item)
+    }
+    const list = el('ul', 'bp-inside-list')
+    for (const line of insideLines(interior)) list.append(el('li', 'bp-inside-line', line))
+    return [root, legend, list]
   }
   const caption = el('p', 'bp-caption', fill(O.captions[view], {
     l: fixed(drawing.hullLengthM, 2),

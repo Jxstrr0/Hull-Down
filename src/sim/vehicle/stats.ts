@@ -11,6 +11,7 @@ import { busiestOf, comfortOf, stationsOf, type Comfort, type Station } from '..
 import { fireOf, quoteOf, turretFallbacks, type Fire, type GunneryQuote, type TurretPart } from '../gunnery/fire'
 import { gunRingMm } from '../gunnery/mount'
 import { driveOf, maxSlopeDeg, topSpeedOf, type Drive } from '../mobility/drive'
+import { interiorOf, type Interior } from '../hits/interior'
 import { survivalOf, type Wear } from '../reliability/wear'
 import { checkSpec, type Issue } from './checks'
 import { geometryOf, type Geometry } from './geometry'
@@ -87,6 +88,8 @@ export interface StatSheet {
   }
   /** What each armour zone stops, against a level shot at its face. */
   protection: Record<ZoneId, ZoneProtection>
+  /** What is inside the armour and where. The hit model follows a shot through it. */
+  interior: Interior
   issues: Issue[]
 }
 
@@ -195,6 +198,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
       coolingHp: cooling.capacityHp - engine.powerHp,
     },
     protection: protectionOf(spec, geometry),
+    interior: interiorOf(spec, geometry),
     issues: checkSpec(spec, limits, geometry, rollup),
   }
 }
