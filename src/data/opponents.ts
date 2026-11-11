@@ -70,6 +70,8 @@ export const DESIGNER = {
   /** Each turn short of space puts this many rounds and litres ashore. */
   shedRounds: 2,
   shedFuelL: 100,
+  /** A plate that let a round through at trial is made this much thicker, as a share of the bureau's pattern, at the next revision. */
+  lessonArmour: 1.15,
 } as const
 
 export const BUREAUS = {

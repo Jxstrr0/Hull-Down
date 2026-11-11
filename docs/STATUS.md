@@ -131,6 +131,16 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.8.1.0, PR 8b: rival bureaus revise against the tender.** Sim only.
+  A rival now bids the way you do: it draws up its tank, sends a
+  prototype to the tender's proving ground and duels, reads the report
+  and revises, up to three times (the same rule as yours). A failed
+  shoot gets the next better sight, stabiliser or rangefinder; a failed
+  sprint or slope a stronger engine; a failed trench a longer hull; a
+  holed plate more of the armour, taken from elsewhere inside the same
+  weight. A revision that marks no better is dropped. The heavy bureau
+  is now real competition: over 30 trial seeds it beat a Type 1 with
+  only a better night sight about two times in three.
 - **0.8.0.0, PR 8a: the first tender and how a bid is marked.** Sim and
   data only; nothing new on screen. `src/data/tenders.ts` holds the first
   tender (1981, an improved Type 1: the Pact limits, a unit-cost ceiling

@@ -99,7 +99,7 @@ describe('marking a bid', () => {
         expect(bid.duels.map((each) => each.threat)).toEqual([...T.threats])
       }
     }
-  })
+  }, 30_000)
 })
 
 describe('the decision', () => {
