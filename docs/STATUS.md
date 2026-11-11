@@ -12,6 +12,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.2.2.0, PR 2b: the blueprint.** Side, top and front views drawn from the
+  spec, with a Side / Top / Front switch. The drawing changes with the hull,
+  glacis, turret, gun, wheels, tracks, engine position, hatches and sights.
+  Tapping a part of the drawing opens its control. "Start again" moved to the
+  Faults tab.
 - **0.2.1.0, PR 2a: design office, parts and readouts.** Pick parts on seven
   tabs, sliders for the numbers, a live weight bar and headline numbers, a
   Readouts tab, and a Faults tab whose "Fix it" buttons jump to the part.

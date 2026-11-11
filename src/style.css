@@ -45,7 +45,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 16px;
+  padding: 4px 16px;
   border-bottom: 2px solid var(--ink);
 }
 
@@ -83,7 +83,7 @@ body {
 }
 
 .office-top {
-  padding: 10px 16px 12px;
+  padding: 8px 16px 10px;
   border-bottom: 2px solid var(--ink);
   background-image:
     linear-gradient(var(--grid) 1px, transparent 1px),
@@ -94,30 +94,72 @@ body {
 .office-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .office-name {
   margin: 0;
+  padding: 0 4px;
+  background: var(--paper);
   font-family: var(--font-head);
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.office-based { margin: 0; font-size: 0.8rem; color: var(--ink-dim); }
-.office-reset {
-  flex: none;
+
+/* Side / Top / Front switch. */
+.views { flex: none; display: flex; border: 1.5px solid var(--ink); border-radius: 2px; background: var(--paper); }
+.view {
+  min-width: 52px;
   min-height: 44px;
-  max-width: 50%;
-  padding: 4px 12px;
+  padding: 0 10px;
+  border: 0;
+  border-right: 1px solid var(--ink-dim);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.view:last-child { border-right: 0; }
+.view-on { background: var(--ink); color: var(--paper); }
+.view:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+
+/* The blueprint: ink lines on the grid, in the manner of a technical drawing. */
+.bp { margin-top: 6px; }
+.bp-svg { display: block; width: 100%; max-height: 150px; margin: 0 auto; overflow: visible; }
+.bp-svg path { vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.bp-solid { fill: var(--paper); stroke: var(--ink); stroke-width: 1.6; }
+.bp-thin { fill: none; stroke: var(--ink); stroke-width: 1; }
+.bp-hidden { fill: none; stroke: var(--ink-dim); stroke-width: 1; stroke-dasharray: 5 3; }
+.bp-centre { fill: none; stroke: var(--ink-dim); stroke-width: 0.8; stroke-dasharray: 12 3 2 3; }
+.bp-ground { fill: none; stroke: var(--ink); stroke-width: 2.2; }
+.bp-zone { fill: transparent; stroke: none; cursor: pointer; vector-effect: non-scaling-stroke; }
+.bp-zone:focus { outline: none; }
+.bp-zone:focus-visible, .bp-zone:active { stroke: var(--pencil); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.bp-caption {
+  margin: 2px 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  text-align: center;
+}
+
+.again { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: 20px; }
+.office-reset {
+  min-height: 44px;
+  padding: 4px 14px;
   border: 1.5px solid var(--ink-dim);
   border-radius: 2px;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   cursor: pointer;
 }
 .office-reset-armed { border-color: var(--pencil); color: var(--pencil); font-weight: 600; }
 
 /* Weight bar: one segment for each area, and a tick at the limit. */
-.wbar { margin-top: 8px; }
+.wbar { margin-top: 6px; }
 .wbar-track {
   position: relative;
   display: flex;
@@ -143,8 +185,10 @@ body {
 .wbar-over .wbar-spare { color: var(--pencil); font-weight: 500; }
 .wbar-over .wbar-track { border-color: var(--pencil); }
 
-.chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0 0; }
-.chip { padding: 4px 8px; border: 1px solid var(--ink-dim); background: var(--paper); min-width: 0; }
+/* Headline numbers: one row that scrolls sideways on a narrow phone. */
+.chips { display: flex; gap: 6px; margin: 8px -16px 0; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: 1 0 auto; padding: 3px 8px; border: 1px solid var(--ink-dim); background: var(--paper); }
 .chip-label {
   font-family: var(--font-head);
   font-size: 0.68rem;
@@ -350,24 +394,26 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 4px 12px;
-  padding: 8px 16px;
-  font-size: 0.75rem;
+  gap: 0 12px;
+  padding: 3px 16px;
+  border-top: 1px solid var(--grid);
+  font-size: 0.68rem;
 }
 .foot-studio {
   font-family: 'Space Grotesk', system-ui, sans-serif;
   font-weight: 500;
   color: var(--ink);
   text-decoration: none;
-  padding: 6px 0;
+  padding: 2px 0;
 }
 .foot-studio:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
-.foot-build { font-family: var(--font-mono); color: var(--ink-dim); padding: 6px 0; }
+.foot-build { font-family: var(--font-mono); color: var(--ink-dim); padding: 2px 0; }
 
 /* Landscape phones and desktop: summary on the left, parts on the right. */
 @media (orientation: landscape) and (min-width: 640px) {
   .office { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; grid-template-rows: auto 1fr; }
   .office-top { grid-row: 1 / -1; border-bottom: 0; border-right: 2px solid var(--ink); overflow-y: auto; }
-  .chips { grid-template-columns: repeat(2, 1fr); }
+  .chips { flex-wrap: wrap; }
+  .bp-svg { max-height: 130px; }
   .panel { max-width: 720px; }
 }
