@@ -1,3 +1,4 @@
+import type { MeshLambertMaterial } from 'three'
 import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { CAMO, DEFAULT_PAINT, PAINT, PAINT_IDS, cleanPaint } from '../src/data/paint'
@@ -115,7 +116,7 @@ describe('paint on a saved design', () => {
 
 describe('a painted tank', () => {
   it('carries its pattern on the plate only, and is no more meshes or triangles than a plain one', async () => {
-    const { Mesh, MeshLambertMaterial } = await import('three')
+    const { Mesh } = await import('three')
     const { Kit } = await import('../src/render/rangeScene')
     const { buildTank, tonesOf } = await import('../src/render/tankModel')
     const { tankShapeOf, tankTriangles } = await import('../src/render/tankShape')
@@ -131,7 +132,7 @@ describe('a painted tank', () => {
         meshes++
         const corners = node.geometry.getAttribute('position').count
         triangles += corners / 3
-        const material = node.material as InstanceType<typeof MeshLambertMaterial>
+        const material = node.material as MeshLambertMaterial
         if (material.map) {
           patterned++
           expect(node.geometry.getAttribute('uv').count).toBe(corners)
