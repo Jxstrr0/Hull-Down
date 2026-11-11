@@ -4,6 +4,9 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **The archive stays on the phone** (0.10.4.0): it is kept in this
+  browser and survives a new career, but it is not in the save code or the
+  backup file yet. Say if you want it carried in those.
 - **Try an upgrade** (0.10.3.0): with a tank in service, read the year 1
   report. If the army opens a contract, tap "Put the service tank on the
   drawing board" twice, change something that answers it (Crew tab,
@@ -216,6 +219,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.10.4.0, PR 10e: the bureau archive.** The Bureau tab ends with "The
+  archive": one page for every tank the army has taken, with its
+  production, tanks built, stops, exercise results, fees, packages and a
+  line for each year. A page opens when the tank goes into production, is
+  brought up to date as reports are read, and is kept when a new career
+  starts (`hulldown.archive`, the newest 40 tanks). This finishes plan
+  PR 10.
 - **0.10.3.0, PR 10d: upgrade contracts on the Bureau tab.** A tank in
   service now shows its upgrade contract: what the army asks for, the
   design on the drawing board judged against it (the figure asked about,
