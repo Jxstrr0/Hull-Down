@@ -2014,6 +2014,21 @@ export const STRINGS = {
     turnOn: 'Sound is off. Turn it on',
     turnOff: 'Sound is on. Turn it off',
   },
+  offline: {
+    heading: 'Offline and home screen',
+    about: 'Once it has loaded, Hull Down opens with no signal. A new version downloads quietly and is used the next time the game is opened.',
+    kept: {
+      getting: 'Getting a copy ready for playing offline.',
+      ready: 'Ready to play with no signal.',
+      cannot: 'This browser is not keeping a copy, so the game needs a signal to open.',
+    },
+    add: 'Add to home screen',
+    ways: {
+      installed: 'Hull Down is running from the home screen.',
+      iphone: 'To add Hull Down to the home screen on an iPhone or iPad: tap Share in the browser, then Add to Home Screen.',
+      menu: 'To add Hull Down to the home screen: open the browser menu and choose Install app or Add to home screen.',
+    },
+  },
   credit: '© 2026 Kelbo / Longlight Interactive',
   studioLink: 'https://longlight.games/',
   studioName: 'Longlight Interactive',

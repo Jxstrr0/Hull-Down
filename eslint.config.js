@@ -23,6 +23,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // The service worker runs in its own kind of browser context.
+    files: ['scripts/sw.template.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
+  {
     // The sim is pure: no three.js, no DOM, no Math.random, no Date.now.
     // tests/simPurity.test.ts scans the same folder as a second line of defence.
     files: ['src/sim/**/*.ts'],

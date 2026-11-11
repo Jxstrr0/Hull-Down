@@ -17,6 +17,11 @@ the plan names these fonts.
 | `public/brand/longlight-logo-dark.svg` | Official Longlight logo for dark backgrounds, copied unchanged from Jxstrr0/Kelbo.Website `assets/press/`. |
 | `public/brand/longlight-logo-light.svg` | Official Longlight logo for light backgrounds, copied unchanged from the same place. |
 | `public/icons/icon.svg` | Hull Down icon, drawn for this game. |
+| `public/icons/icon-192.png` | The same icon as a picture, for the home screen. |
+| `public/icons/icon-512.png` | The same icon, larger. |
+| `public/icons/icon-maskable-512.png` | The same icon on square paper, for phones that cut icons to their own shape. |
+| `public/icons/apple-touch-icon.png` | The same icon on square paper, for the iPhone home screen. |
+| `public/manifest.webmanifest` | Tells a phone how to add Hull Down to the home screen. Written for this game. |
 
 ## Fonts (npm packages, self-hosted in the build)
 
