@@ -4,7 +4,7 @@ import type { KineticIssue, ShapedIssue } from '../../data/ammo'
 import type { MaterialId, ZoneId } from '../../data/materials'
 import type { Generation } from '../../data/tech'
 import type {
-  BarrelId, ComfortId, ComputerId, CoolingId, EngineId, GunId, HullId, LoadingId, NightSightId,
+  ActiveId, BarrelId, ComfortId, ComputerId, CoolingId, EngineId, GunId, HullId, LoadingId, NightSightId,
   RangefinderId, RecoilId, SightId, StabiliserId, StowageId, SuspensionId, TransmissionId, TurretId,
 } from '../../data/parts'
 
@@ -62,6 +62,8 @@ export interface VehicleSpec {
     smokeLaunchers: boolean
     fireSuppression: boolean
     spallLiner: boolean
+    /** Active protection: none, soft kill or hard kill (src/data/parts.ts). */
+    active: ActiveId
   }
   crew: {
     comfort: ComfortId

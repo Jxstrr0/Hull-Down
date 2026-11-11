@@ -19,6 +19,8 @@ export interface SerialResult extends ArmourSerial {
   /** Rounds that got through the armour. */
   through: number
   held: boolean
+  /** Rounds active protection dealt with before they struck. */
+  defeated: number
   /** The worst that came of any round in the serial. */
   worst: Outcome
 }
@@ -66,7 +68,8 @@ export function runArmourTrial(
     const through = shots.filter((shot) => shot.hit.through).length
     const worst = shots.reduce<Outcome>(
       (worstYet, shot) => (OUTCOMES.indexOf(shot.hit.outcome) > OUTCOMES.indexOf(worstYet) ? shot.hit.outcome : worstYet), 'missed')
-    return { ...serial, shots, through, held: through === 0, worst }
+    const defeated = shots.filter((shot) => shot.hit.defeated !== undefined).length
+    return { ...serial, shots, through, held: through === 0, defeated, worst }
   })
   const failed: ZoneId[] = []
   for (const result of results) {

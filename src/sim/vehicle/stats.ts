@@ -2,7 +2,7 @@
 // These are estimates. The proving ground has the final word.
 import {
   COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, LOADING, NIGHT_SIGHTS,
-  RANGEFINDERS, RECOILS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU,
+  RANGEFINDERS, RECOILS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU, ACTIVE,
 } from '../../data/parts'
 import type { ZoneId } from '../../data/materials'
 import { GROUNDS, RUN_PART_IDS } from '../../data/range'
@@ -15,6 +15,7 @@ import { interiorOf, type Interior } from '../hits/interior'
 import { targetOf, type Target } from '../hits/trace'
 import { survivalOf, type Wear } from '../reliability/wear'
 import { checkSpec, type Issue } from './checks'
+import { electricsOf, type Electrics } from './electrics'
 import { geometryOf, type Geometry } from './geometry'
 import { protectionOf, type ZoneProtection } from './protection'
 import { rollupOf, type Rollup } from './rollup'
@@ -70,6 +71,8 @@ export interface StatSheet {
   }
   /** The parts an endurance run wears, with what each carries and is rated for. */
   wear: Wear
+  /** Electrical power drawn and made. */
+  electrics: Electrics
   /** 0..100. Chance of getting through an endurance run with nothing giving trouble. */
   reliabilityIndex: number
   /** The crew, commander first, and how hard each station is to work. */
@@ -151,6 +154,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
   if (fc.commanderSight) reliability *= COMMANDER_SIGHT.reliability
   if (spec.powerpack.apu) reliability *= APU.reliability
   if (spec.protection.fireSuppression) reliability *= FIRE_SUPPRESSION.reliability
+  reliability *= ACTIVE[spec.protection.active].reliability
 
   const crew = stationsOf(spec)
   const fire = fireOf(spec)
@@ -193,6 +197,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     stress,
     wear,
     reliabilityIndex: reliability * 100,
+    electrics: electricsOf(spec),
     crew,
     comfort: comfortOf(spec),
     crewWorkload: busiestOf(crew).workload,

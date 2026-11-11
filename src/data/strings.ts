@@ -388,6 +388,7 @@ export const STRINGS = {
     'protection.smokeLaunchers': { label: 'Smoke', note: '' },
     'protection.fireSuppression': { label: 'Fire', note: '' },
     'protection.spallLiner': { label: 'Lining', note: '' },
+    'protection.active': { label: 'Active protection', note: 'Deals with rockets and missiles before they strike. It draws electrical power: see Readouts.' },
     'crew.comfort': { label: 'Crew comfort', note: 'A crew that is cold, cramped and tired fights worse.' },
   },
   parts: {
@@ -492,6 +493,11 @@ export const STRINGS = {
     smokeLaunchers: { name: 'Smoke launchers', note: 'Throw a smoke screen to break contact.' },
     fireSuppression: { name: 'Fire suppression', note: 'Finds and puts out a fire in the engine or crew space.' },
     spallLiner: { name: 'Spall liner', note: 'A lining that catches fragments knocked off the inside of the armour.' },
+    active: {
+      none: { name: 'None', note: 'The armour has to do it all.' },
+      softKill: { name: 'Soft kill', note: 'Warning sensors, smoke and jammers that throw off about half the guided missiles sent at it. Nothing against a rocket. Draws 4 kW.' },
+      hardKill: { name: 'Hard kill', note: 'Radar and launchers that shoot down about four in five rockets and missiles, from any side or above. Heavy, dear, and draws 12 kW.' },
+    },
     comfort: {
       basic: { name: 'Basic', note: 'Bare steel and a hard seat.' },
       standard: { name: 'Standard', note: 'Heating, padding and a little elbow room.' },
@@ -540,6 +546,7 @@ export const STRINGS = {
       depression: 'Gun depression',
       reliability: 'Reliability',
       workload: 'Busiest station',
+      electrics: 'Electrical power',
       spareMass: 'Weight in hand',
       spareVolume: 'Space left inside',
       spareCooling: 'Cooling in hand',
@@ -563,6 +570,7 @@ export const STRINGS = {
       degrees: '{n}°',
       outOf100: '{n} of 100',
       busiest: '{name}, {n} of 100',
+      kwOf: '{draw} kW drawn of {supply} kW made',
       cubicMetres: '{n} m³',
       hp: '{n} hp',
       share: '{t} t · {pct}%',
@@ -665,6 +673,7 @@ export const STRINGS = {
     notResearched: 'The bureau has not researched this yet. Pay for the work on the Bureau tab, or fit something else.',
     rodTooLongForCarousel: 'The long rod is too long for a carousel autoloader. Fit a bustle autoloader or a loader, or carry the Pact round.',
     missileNeedsSmoothbore: 'A gun-launched missile cannot be fired from a rifled gun: the spin would wreck it. Fit a smoothbore.',
+    overPowerBudget: 'The systems fitted draw {value} kW and the tank makes {limit} kW. Fit the auxiliary power unit, or a lighter system.',
     missileNeedsComputer: 'A gun-launched missile is steered by the digital computer. Fit one, or carry another round.',
   },
   materials: {
@@ -909,6 +918,7 @@ export const STRINGS = {
       tiles: '{n} met a reactive tile.',
       bare: '{n} found bare plate between the tiles, or a tile already used up.',
       track: 'A track was broken on the way.',
+      defeated: 'Active protection dealt with {n} before they struck.',
       worst: {
         noHarm: 'Nothing vital was hit.',
         firepower: 'Worst of it: the gun out of use.',
@@ -1549,6 +1559,8 @@ export const STRINGS = {
         layeredArmour: { name: 'Layered armour', about: 'Unlocks layered composite: more protection for its weight against both kinds of round.' },
         longRodRound: { name: 'Long-rod round', about: 'A kinetic round of the bureau\'s own: a longer dart that goes through a quarter more.' },
         tandemRound: { name: 'Tandem warhead', about: 'A shaped-charge round of the bureau\'s own, with a first charge to set off reactive tiles.' },
+        softKill: { name: 'Soft-kill protection', about: 'Unlocks soft-kill active protection: sensors, smoke and jammers that throw guided missiles off.' },
+        hardKill: { name: 'Hard-kill protection', about: 'Unlocks hard-kill active protection: it shoots down rockets and missiles on their way in.' },
         gunMissile: { name: 'Gun-launched missile', about: 'A guided missile fired from the gun. Needs a smoothbore and the digital computer.' },
       },
     },

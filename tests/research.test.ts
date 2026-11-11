@@ -44,7 +44,8 @@ describe('research in a career', () => {
     const first = newCareer(3)
     expect(researchOpen(first)).toEqual([])
     expect(researchBlock(first, 'digitalComputer')).toBe('tooNew')
-    expect(researchOpen(secondTender())).toEqual([...RESEARCH_IDS])
+    // Hard-kill protection is generation three: it waits for the tender of 2016.
+    expect(researchOpen(secondTender())).toEqual(RESEARCH_IDS.filter((id) => id !== 'hardKill'))
   })
 
   it('takes the money and unlocks the part', () => {

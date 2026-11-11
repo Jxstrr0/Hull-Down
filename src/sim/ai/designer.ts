@@ -260,7 +260,7 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   spec.powerpack.engine = pick('engine')
   spec.powerpack.fuelL = philosophy.fuelL
   spec.runningGear.suspension = pick('suspension')
-  spec.protection = { smokeLaunchers: true, fireSuppression: pick('fireSuppression'), spallLiner: pick('spallLiner') }
+  spec.protection = { smokeLaunchers: true, fireSuppression: pick('fireSuppression'), spallLiner: pick('spallLiner'), active: 'none' }
   spec.crew.comfort = pick('comfort')
   for (const zone of ZONES) spec.era[zone] = philosophy.tiles.includes(zone) ? allTiles(zone) : 0
   // What the bureau has moved on to by the tender's year.

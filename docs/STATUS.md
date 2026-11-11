@@ -4,6 +4,20 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Active protection and electrical power** (0.13.2.0): a new choice on
+  the Crew and protection tab. Soft kill (generation two, research
+  Kr 4.0M; 0.25 t, Kr 320,000, draws 4 kW) throws off about half the
+  guided missiles and does nothing about rockets. Hard kill (generation
+  three, research Kr 9.0M after soft kill; 0.9 t, Kr 1.1M, draws 12 kW)
+  shoots down about four in five rockets and missiles, top-attack
+  included. Neither touches a round from a gun or a bomblet from a drone,
+  so the roof still needs its plate. The tank makes 8 kW from its
+  generator and 8 kW more with the auxiliary power unit, so hard kill
+  cannot be fitted without the unit: a new fault says so. Readouts shows
+  power drawn and made. For now it counts at the armour trial only; duel
+  and battle opponents fire gun rounds, which it leaves alone. All
+  numbers, and soft kill arriving with the tender of 2001, are my picks
+  (the plan says "generations two and three").
 - **Roof threats** (0.13.1.0): the range of 2016 fires three new serials.
   A drone bomblet (goes through 70 mm) is dropped on the turret roof and
   the hull roof, and both must hold or the armour test is failed. A
@@ -344,6 +358,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.13.2.0, PR 13c: active protection and power demands.** `protection.active` (none, soft kill, hard kill) with two research projects, an electrical power budget (`electricsOf`, fault `overPowerBudget`), and rockets and missiles marked by how they fly so `traceShot` can have active protection deal with them. The armour trial report says how many it dealt with.
 - **0.13.1.0, PR 13b: top-attack and drone threats, roof protection.** Two new threats and the generation-three trial marks: bomblets on both roofs must hold, a top-attack missile is fired for the record. The tender of 2016 uses them and its brief says so.
 - **0.13.0.0, PR 13a: the tender of 2016.** `tank2016` in
   `src/data/tenders.ts` (generation three); `PACT_LIMITS_GEN3` in

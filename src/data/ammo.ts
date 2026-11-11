@@ -18,6 +18,12 @@ export interface Round {
   lossPerKmMm: number
   /** A shaped charge with a small charge in front that sets off a reactive tile before the main one arrives. */
   tandem?: boolean
+  /**
+   * How it gets there, when it is not fired from a gun. A rocket flies
+   * straight; a missile is steered all the way. Both are slow enough for
+   * active protection (src/data/parts.ts) to do something about.
+   */
+  flight?: 'rocket' | 'missile'
 }
 
 /**
@@ -81,14 +87,14 @@ export const THREATS = {
   accord120Sabot: { kind: 'kinetic', speedMs: 1650, spreadM: 0.35, penMm: 520, lossPerKmMm: 35 },
   autocannon: { kind: 'kinetic', speedMs: 1100, spreadM: 0.9, penMm: 70, lossPerKmMm: 20 },
   accord105Shaped: { kind: 'shaped', speedMs: 1170, spreadM: 0.6, penMm: 420, lossPerKmMm: 0 },
-  infantryRocket: { kind: 'shaped', speedMs: 300, spreadM: 3, penMm: 320, lossPerKmMm: 0 },
-  guidedMissile: { kind: 'shaped', speedMs: 200, spreadM: 0.5, penMm: 580, lossPerKmMm: 0 },
+  infantryRocket: { kind: 'shaped', speedMs: 300, spreadM: 3, penMm: 320, lossPerKmMm: 0, flight: 'rocket' },
+  guidedMissile: { kind: 'shaped', speedMs: 200, spreadM: 0.5, penMm: 580, lossPerKmMm: 0, flight: 'missile' },
   // Generation two: what the Accord fields from about 2000.
   accord120LongRod: { kind: 'kinetic', speedMs: 1680, spreadM: 0.3, penMm: 640, lossPerKmMm: 30 },
-  tandemRocket: { kind: 'shaped', speedMs: 280, spreadM: 2.5, penMm: 520, lossPerKmMm: 0, tandem: true },
-  tandemMissile: { kind: 'shaped', speedMs: 240, spreadM: 0.4, penMm: 820, lossPerKmMm: 0, tandem: true },
+  tandemRocket: { kind: 'shaped', speedMs: 280, spreadM: 2.5, penMm: 520, lossPerKmMm: 0, tandem: true, flight: 'rocket' },
+  tandemMissile: { kind: 'shaped', speedMs: 240, spreadM: 0.4, penMm: 820, lossPerKmMm: 0, tandem: true, flight: 'missile' },
   // Generation three: what comes down on the roof.
-  topAttackMissile: { kind: 'shaped', speedMs: 180, spreadM: 0.4, penMm: 280, lossPerKmMm: 0 },
+  topAttackMissile: { kind: 'shaped', speedMs: 180, spreadM: 0.4, penMm: 280, lossPerKmMm: 0, flight: 'missile' },
   droneBomblet: { kind: 'shaped', speedMs: 40, spreadM: 0.6, penMm: 70, lossPerKmMm: 0 },
 } as const satisfies Record<string, Round>
 export type ThreatId = keyof typeof THREATS
