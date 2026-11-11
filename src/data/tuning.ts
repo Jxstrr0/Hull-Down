@@ -31,6 +31,12 @@ export const TUNING = {
     fuelL: { min: 400, max: 1800 },
     rounds: { min: 20, max: 60 },
     ringStepMm: 50,
+    /** What the design office sliders offer. The hull and gun narrow these further. */
+    ringMm: { min: 1800, max: 2400 },
+    roadWheels: { min: 5, max: 7 },
+    glacisStepDeg: 1,
+    trackStepMm: 20,
+    fuelStepL: 50,
   },
   mass: {
     /** Tonnes per litre of fuel, with its tank. */

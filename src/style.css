@@ -74,71 +74,209 @@ body {
 }
 .bar-theme:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
 
-.sheet {
+/* The design office. Portrait: summary on top, tabs, then a scrolling panel. */
+.office {
   flex: 1;
   min-height: 0;
-  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.office-top {
+  padding: 10px 16px 12px;
+  border-bottom: 2px solid var(--ink);
   background-image:
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
-.sheet-frame {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  border: 2px solid var(--ink);
-}
-
-/* The drawing area. It scrolls when the sheet pinned to it is taller. */
-.sheet-field {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 16px;
-  background: var(--paper);
-}
-
-.sheet-stamp {
-  margin: 0;
-  padding: 8px 16px;
-  border: 3px double var(--stamp);
-  border-radius: 4px;
-  color: var(--stamp);
-  font-family: var(--font-head);
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  transform: rotate(-7deg);
-}
-
-/* Data sheet: a design's numbers, one group after another. */
-.ds { display: flex; flex-direction: column; gap: 18px; max-width: 560px; margin: 0 auto; }
-
-.ds-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; }
-.ds-head .sheet-stamp { font-size: 1rem; padding: 6px 12px; transform: rotate(-4deg); }
-.ds-name {
+.office-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.office-name {
   margin: 0;
   font-family: var(--font-head);
-  font-size: 1.7rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.ds-intro { margin: 4px 0 0; font-size: 0.95rem; color: var(--ink-dim); }
-
-.ds-weight {
-  margin: 0;
-  padding: 10px 12px;
-  border: 2px solid var(--ink);
-  font-family: var(--font-mono);
-  font-size: 1.15rem;
-  font-weight: 500;
-  text-align: center;
+.office-based { margin: 0; font-size: 0.8rem; color: var(--ink-dim); }
+.office-reset {
+  flex: none;
+  min-height: 44px;
+  max-width: 50%;
+  padding: 4px 12px;
+  border: 1.5px solid var(--ink-dim);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  cursor: pointer;
 }
+.office-reset-armed { border-color: var(--pencil); color: var(--pencil); font-weight: 600; }
 
+/* Weight bar: one segment for each area, and a tick at the limit. */
+.wbar { margin-top: 8px; }
+.wbar-track {
+  position: relative;
+  display: flex;
+  height: 18px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  overflow: hidden;
+}
+.wbar-seg { height: 100%; background: var(--ink); border-right: 1px solid var(--paper); transition: width 0.25s ease-out; }
+.wbar-seg-alt { background: var(--ink-dim); }
+.wbar-limit { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed var(--pencil); }
+.wbar-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 0 4px;
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+.wbar-mass { font-weight: 500; }
+.wbar-over .wbar-spare { color: var(--pencil); font-weight: 500; }
+.wbar-over .wbar-track { border-color: var(--pencil); }
+
+.chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0 0; }
+.chip { padding: 4px 8px; border: 1px solid var(--ink-dim); background: var(--paper); min-width: 0; }
+.chip-label {
+  font-family: var(--font-head);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip-value { margin: 0; font-family: var(--font-mono); font-size: 0.9rem; white-space: nowrap; }
+.chip-bad { color: var(--pencil); font-weight: 500; }
+
+.tabs {
+  flex: none;
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 2px solid var(--ink);
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: none;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 0;
+  border-right: 1px solid var(--grid);
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tab-on { background: var(--ink); color: var(--paper); }
+.tab-faulty:not(.tab-on) { color: var(--pencil); }
+.tab:focus-visible { outline: 3px solid var(--pencil); outline-offset: -3px; }
+
+.panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.panel:focus { outline: none; }
+
+/* One control: a label, a note, then options or a slider. */
+.ctl { scroll-margin-top: 8px; }
+.ctl-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 4px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--ink);
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ctl-note { margin: 0 0 8px; font-size: 0.9rem; color: var(--ink-dim); }
+.ctl-issue { margin: 0 0 8px; padding: 6px 8px; border-left: 4px solid var(--pencil); color: var(--pencil); font-size: 0.9rem; }
+.ctl-faulty .ctl-label { border-bottom-color: var(--pencil); }
+.ctl-flag { outline: 2px dashed var(--pencil); outline-offset: 6px; }
+
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--ink-dim);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+.opt-on { border: 2.5px solid var(--ink); padding: 7px 9px; }
+.opt:focus-visible, .num-step:focus-visible, .fix:focus-visible, .office-reset:focus-visible {
+  outline: 3px solid var(--pencil);
+  outline-offset: 2px;
+}
+.opt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.opt-name { font-weight: 600; }
+.opt-tag {
+  flex: none;
+  padding: 1px 6px;
+  border: 1.5px solid var(--stamp);
+  color: var(--stamp);
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.opt-tag-off { border-color: var(--ink-dim); color: var(--ink-dim); }
+.opt-note { font-size: 0.88rem; color: var(--ink-dim); }
+.opt-delta { font-family: var(--font-mono); font-size: 0.82rem; }
+.opt-warn { font-size: 0.85rem; color: var(--pencil); }
+
+.num { display: flex; align-items: center; gap: 10px; }
+.num-value { font-family: var(--font-mono); font-size: 1rem; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.num-step {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.num-slider { flex: 1; min-width: 0; height: 44px; accent-color: var(--ink); }
+
+/* Readouts: the stat sheet's numbers, one group after another. */
+.ds { display: flex; flex-direction: column; gap: 18px; }
 .ds-group-title {
   margin: 0 0 4px;
   padding-bottom: 4px;
@@ -149,7 +287,6 @@ body {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-
 .ds-rows { margin: 0; }
 .ds-row {
   display: flex;
@@ -161,15 +298,24 @@ body {
 }
 .ds-label { font-size: 0.95rem; }
 .ds-value { margin: 0; font-family: var(--font-mono); font-size: 0.95rem; text-align: right; }
-
 .ds-bars, .ds-faults { margin: 0; padding: 0; list-style: none; }
 .ds-bar { padding: 7px 0; border-bottom: 1px solid var(--grid); }
 .ds-bar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .ds-bar-track { height: 6px; margin-top: 5px; border: 1px solid var(--ink-dim); }
 .ds-bar-fill { height: 100%; background: var(--ink); }
+.ds-note { margin: 0; color: var(--pencil); font-size: 0.95rem; font-style: italic; }
 
+/* Faults: what is wrong, and a button that jumps to the part. */
 .ds-clear { margin: 0; padding: 7px 0; color: var(--stamp); font-weight: 600; }
-.ds-fault { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--grid); }
+.ds-fault {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--grid);
+}
+.ds-fault-words { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ds-fault-kind {
   font-family: var(--font-head);
   font-size: 0.8rem;
@@ -178,50 +324,25 @@ body {
   text-transform: uppercase;
 }
 .ds-fault-error .ds-fault-kind { color: var(--pencil); }
-
-.ds-note { margin: 0; color: var(--pencil); font-size: 0.95rem; font-style: italic; }
-
-.title-block {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-top: 2px solid var(--ink);
-  background: var(--paper);
-}
-
-.tb-head {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--ink);
+.fix {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--pencil);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--pencil);
   font-family: var(--font-head);
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  cursor: pointer;
 }
-.tb-country { font-weight: 600; color: var(--ink-dim); }
 
-.tb-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--ink);
+@media (prefers-reduced-motion: reduce) {
+  .wbar-seg { transition: none; }
 }
-.tb-cell:nth-child(even) { border-right: 1px solid var(--ink); }
-.tb-cell:nth-last-child(-n + 2) { border-bottom: 0; }
-
-.tb-label {
-  font-family: var(--font-head);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-.tb-value { font-family: var(--font-mono); font-size: 0.95rem; }
 
 /* Studio piece: the credit line uses the studio font. Its colour follows the
    page ink so it stays readable on both looks. */
@@ -243,17 +364,10 @@ body {
 .foot-studio:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
 .foot-build { font-family: var(--font-mono); color: var(--ink-dim); padding: 6px 0; }
 
-/* Landscape phones and desktop: title block beside the drawing. */
+/* Landscape phones and desktop: summary on the left, parts on the right. */
 @media (orientation: landscape) and (min-width: 640px) {
-  .sheet-frame { flex-direction: row; }
-  .title-block {
-    grid-template-columns: 1fr;
-    align-content: end;
-    width: 240px;
-    border-top: 0;
-    border-left: 2px solid var(--ink);
-  }
-  .tb-cell { border-right: 0 !important; border-bottom: 1px solid var(--ink) !important; }
-  .tb-cell:last-child { border-bottom: 0 !important; }
-  .tb-head { border-top: 1px solid var(--ink); }
+  .office { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; grid-template-rows: auto 1fr; }
+  .office-top { grid-row: 1 / -1; border-bottom: 0; border-right: 2px solid var(--ink); overflow-y: auto; }
+  .chips { grid-template-columns: repeat(2, 1fr); }
+  .panel { max-width: 720px; }
 }

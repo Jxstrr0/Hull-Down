@@ -12,6 +12,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.2.1.0, PR 2a: design office, parts and readouts.** Pick parts on seven
+  tabs, sliders for the numbers, a live weight bar and headline numbers, a
+  Readouts tab, and a Faults tab whose "Fix it" buttons jump to the part.
+  Each option shows what it would do to weight and cost, and any fault it
+  would cause. The design is not saved yet (PR 2c).
 - **0.2.0.0, PR 1: the vehicle model.** Spec format, generation-one parts,
   materials and tuning tables, weight, space and cost roll-up, derived stats,
   constraint checks that name the part to fix. The Radan baseline ("Pattern
@@ -23,9 +28,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Notes
 
-- Left out of the PR 1 spec on purpose, to be added when their PR needs them:
+- PR 2 is split into three small PRs: 2a parts and readouts (0.2.1.0), 2b the
+  blueprint drawing (0.2.2.0), 2c save, load, names and project numbers
+  (0.2.3.0). PR 3 is then 0.3.0.0, so PR 6 lands on 0.6.0.0 as the plan says.
+- Left out of the spec on purpose, to be added when their PR needs them:
   barrel length, recoil system and gunnery numbers (PR 5), driver position
-  (PR 2), protection values per zone (PR 3).
+  and crew stations (PR 6, when hits need them), protection values per zone
+  (PR 3).
 - All PR 1 numbers are first-pass game values. Expect them to move once
   trials exist.
 - The repo is `Jxstrr0/Hull-Down` (the plan said `HullDown`). The live site
