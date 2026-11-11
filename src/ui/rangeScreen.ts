@@ -7,10 +7,12 @@ import { STRINGS, fill } from '../data/strings'
 import {
   type AccelerationRun, type EnduranceEvent, type EnduranceRun, type GunneryRun, type ObstacleResult, type RangeReport,
 } from '../sim/trials'
+import type { ZoneId } from '../data/materials'
 import type { Limits, StatSheet, VehicleSpec } from '../sim/vehicle'
 import { VIEWS, type ViewId } from '../render/director'
 import type { RangeView, RunSource } from '../render/rangeScene'
 import type { ReelFrame } from '../render/shootReel'
+import { armourCards } from './armourCards'
 import { el } from './dom'
 import { fixed } from './format'
 import { placeOf } from './gunneryAdvice'
@@ -41,6 +43,8 @@ export interface RangeScreenArgs {
   back(): void
   /** Leave the range and open the control that fixes a failure. */
   fix(part: FixPart): void
+  /** Leave the range and open the Armour tab at one zone. */
+  fixZone(zone: ZoneId): void
 }
 
 function svg(tag: string, attrs: Record<string, string>): SVGElement {
@@ -373,6 +377,17 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     return button
   }
 
+  const fixZone = (zone: ZoneId, key: string): HTMLButtonElement => {
+    const button = el('button', 'fix rg-fix', fill(R.armour.fixZone, { zone: STRINGS.zones[zone].name }))
+    button.type = 'button'
+    button.dataset.key = `range-fix:${key}`
+    button.addEventListener('click', () => {
+      closeView()
+      args.fixZone(zone)
+    })
+    return button
+  }
+
   // --- Head ---------------------------------------------------------------
   const head = el('div', 'rg-head')
   const back = el('button', 'btn rg-back', `‹ ${R.back}`)
@@ -546,6 +561,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     root.append(
       summary, accel, course, long,
       ...gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch }),
+      ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }),
       el('p', 'ds-note', R.note),
     )
   }

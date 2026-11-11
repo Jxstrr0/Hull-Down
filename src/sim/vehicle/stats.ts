@@ -12,6 +12,7 @@ import { fireOf, quoteOf, turretFallbacks, type Fire, type GunneryQuote, type Tu
 import { gunRingMm } from '../gunnery/mount'
 import { driveOf, maxSlopeDeg, topSpeedOf, type Drive } from '../mobility/drive'
 import { interiorOf, type Interior } from '../hits/interior'
+import { targetOf, type Target } from '../hits/trace'
 import { survivalOf, type Wear } from '../reliability/wear'
 import { checkSpec, type Issue } from './checks'
 import { geometryOf, type Geometry } from './geometry'
@@ -90,6 +91,8 @@ export interface StatSheet {
   protection: Record<ZoneId, ZoneProtection>
   /** What is inside the armour and where. The hit model follows a shot through it. */
   interior: Interior
+  /** The tank as something to shoot at. The armour trial runs on this. */
+  target: Target
   issues: Issue[]
 }
 
@@ -158,6 +161,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
 
   const massCeilingT = Math.min(transmission.ratedT, suspensionRatedT, trackRatedT, limits.maxMassT)
 
+  const interior = interiorOf(spec, geometry)
   return {
     name: spec.name,
     geometry,
@@ -198,7 +202,8 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
       coolingHp: cooling.capacityHp - engine.powerHp,
     },
     protection: protectionOf(spec, geometry),
-    interior: interiorOf(spec, geometry),
+    interior,
+    target: targetOf(spec, geometry, interior),
     issues: checkSpec(spec, limits, geometry, rollup),
   }
 }

@@ -1,6 +1,8 @@
 // The proving ground: what the ground is like, how the tests are laid out
 // and the marks a tank has to reach. Game-level abstractions, not
 // engineering data.
+import type { ThreatId } from './ammo'
+import type { ZoneId } from './materials'
 
 export interface Ground {
   /** Drag at a crawl, as a share of the tank's weight. */
@@ -119,6 +121,25 @@ export const RANGE = {
       { id: 'rough', km: 50, ground: 'firm', drive: 0.9, ride: 1, pace: 0.4 },
     ],
   },
+  armour: {
+    /** Rounds fired in each serial. */
+    shots: 3,
+    /** How far from the middle of the plate the shots are spread, as a share of its half-size. */
+    spread: 0.7,
+    /** Tries at laying a shot on the named plate before the range aims at its middle. */
+    tries: 6,
+  },
+  berm: {
+    /**
+     * The ridge is rounded: the further back down it a tank sits, the steeper
+     * it stands and the more it must dip its gun. Radius of the curve, metres.
+     */
+    radiusM: 100,
+    /** The steepest the back of the ridge gets, degrees. */
+    maxSlopeDeg: 14,
+    /** The bore must clear the crest by this much, metres. */
+    clearM: 0.3,
+  },
   /**
    * The shoots and the loading drill come at the end of a day on the range:
    * the crew has been in the tank this many hours and is that much slower.
@@ -178,6 +199,17 @@ export const RANGE = {
 export type GunneryTestId = keyof typeof RANGE.gunnery.tests
 export const GUNNERY_TEST_IDS = Object.keys(RANGE.gunnery.tests) as GunneryTestId[]
 
+/** One serial of the armour trial: a few rounds of one kind at one zone. */
+export interface ArmourSerial {
+  zone: ZoneId
+  threat: ThreatId
+  rangeM: number
+  /** How far off square the rounds come in, degrees. */
+  angleDeg: number
+  /** True when the zone must hold for the trial to be passed. The others are fired for the record. */
+  gate: boolean
+}
+
 /** What the Pact asks of a generation-one tank. A tender sets its own marks later. */
 export const MARKS_GEN1 = {
   /** Standing start to the sprint speed, seconds at most. */
@@ -192,6 +224,29 @@ export const MARKS_GEN1 = {
   firstShotS: 22,
   /** Rounds a minute kept up through the loading drill, at least. */
   drillRpm: 3.3,
+  /**
+   * The armour trial. The front must keep out the standard Accord tank
+   * rounds at long range and the infantry's rocket close in; the sides must
+   * keep out an infantry carrier's cannon. The rest is fired on for the
+   * record, so the weak places are known.
+   */
+  armour: [
+    { zone: 'upperGlacis', threat: 'accord105Sabot', rangeM: 2000, angleDeg: 0, gate: true },
+    { zone: 'upperGlacis', threat: 'accord105Shaped', rangeM: 1000, angleDeg: 0, gate: true },
+    { zone: 'turretFrontLeft', threat: 'accord105Sabot', rangeM: 2000, angleDeg: 0, gate: true },
+    { zone: 'turretFrontRight', threat: 'accord105Sabot', rangeM: 2000, angleDeg: 30, gate: true },
+    { zone: 'turretFrontRight', threat: 'infantryRocket', rangeM: 200, angleDeg: 0, gate: true },
+    { zone: 'hullSideFront', threat: 'autocannon', rangeM: 1000, angleDeg: 0, gate: true },
+    { zone: 'turretSides', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: true },
+    { zone: 'turretFrontLeft', threat: 'accord105Shaped', rangeM: 1000, angleDeg: 0, gate: false },
+    { zone: 'lowerGlacis', threat: 'accord105Sabot', rangeM: 1000, angleDeg: 0, gate: false },
+    { zone: 'mantlet', threat: 'accord105Sabot', rangeM: 1000, angleDeg: 0, gate: false },
+    { zone: 'hullSideFront', threat: 'infantryRocket', rangeM: 200, angleDeg: 0, gate: false },
+    { zone: 'hullSideRear', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: false },
+    { zone: 'hullRear', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: false },
+  ] as readonly ArmourSerial[],
+  /** Height showing over the crest of the berm with the gun laid level, metres at most. */
+  bermShowsM: 1.9,
 } as const
 export type Marks = {
   sprintS: number
@@ -200,4 +255,6 @@ export type Marks = {
   hits: Record<GunneryTestId, number>
   firstShotS: number
   drillRpm: number
+  armour: readonly ArmourSerial[]
+  bermShowsM: number
 }

@@ -478,6 +478,10 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
         closeRange()
         goToPart(part)
       },
+      fixZone: (zone) => {
+        closeRange()
+        goToPart(`armour.${zone}`)
+      },
     })
     range.replaceChildren(screen)
     root.classList.add('office-away')

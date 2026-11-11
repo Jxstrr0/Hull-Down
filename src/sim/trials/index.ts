@@ -6,12 +6,16 @@ import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 import { unit } from '../rng'
 import { TURRET_PARTS, type TurretPart, type TurretPartId } from '../gunnery/fire'
 import { runAcceleration, type AccelerationRun } from './acceleration'
+import { runArmourTrial, type ArmourRun } from './armour'
+import { runBerm, type BermRun } from './berm'
 import { runLoadingDrill, type DrillRun } from './drill'
 import { runEndurance, type EnduranceRun } from './endurance'
 import { runGunnery, type GunneryRun } from './gunnery'
 import { runObstacles, type ObstacleRun } from './obstacles'
 
 export { runAcceleration, stepTime, type AccelerationRun, type Trace } from './acceleration'
+export { runArmourTrial, type ArmourRun, type SerialResult, type TrialShot } from './armour'
+export { runBerm, type BermRun } from './berm'
 export { runLoadingDrill, type DrillRound, type DrillRun } from './drill'
 export { TURRET_PARTS, type TurretPartId } from '../gunnery/fire'
 export {
@@ -45,6 +49,8 @@ export interface RangeReport {
   endurance: EnduranceRun & { passed: boolean }
   gunnery: Record<GunneryTestId, GunneryResult>
   drill: DrillRun & { passed: boolean }
+  armour: ArmourRun & { passed: boolean }
+  berm: BermRun & { passed: boolean }
   /** Hours the crew had been in the tank when the shoots and the drill came round. */
   crewHours: number
   /** Tests passed and tests run. */
@@ -91,8 +97,13 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   }
   const loading = runLoadingDrill(sheet.fire, setup.seed)
   const drill = { ...loading, passed: loading.rpm >= marks.drillRpm }
+  const shots = runArmourTrial(sheet.target, sheet.geometry.zoneSlopeDeg, marks.armour, setup.seed)
+  const armour = { ...shots, passed: shots.failed.length === 0 }
+  const ridge = runBerm(sheet.interior.frame, sheet.firepower.gunDepressionDeg)
+  const berm = { ...ridge, passed: ridge.showsM <= marks.bermShowsM }
   const passed = [
     acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
+    armour.passed, berm.passed,
   ]
   return {
     marks,
@@ -101,6 +112,8 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     endurance,
     gunnery,
     drill,
+    armour,
+    berm,
     crewHours: RANGE.crewHours,
     passes: passed.filter(Boolean).length,
     tests: passed.length,

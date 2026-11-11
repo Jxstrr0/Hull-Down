@@ -863,3 +863,29 @@ body {
 .rg-line-text { margin: 3px 0 0; font-size: 0.9rem; }
 .rg-fix { margin-top: 8px; }
 .rg-note { margin: 8px 0 0; }
+.rg-sub {
+  margin: 12px 0 0;
+  font-family: var(--font-head);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.rg-fold { margin-top: 12px; border-top: 1px solid var(--grid); }
+.rg-fold-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.rg-fold-head .rg-sub { margin: 0; }
+.rg-fold-count { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-dim); }
+.rg-fold-head:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+/* The berm: the part of the tank over the crest is drawn in ink, the rest faint and broken. */
+.rg-berm-ground { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.rg-berm-tank polygon { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round; }
+.rg-berm-gun { stroke: var(--ink); stroke-width: 2; }
+.rg-berm-hidden polygon { stroke: var(--ink-dim); stroke-dasharray: 2 2; fill: none; }
+.rg-berm-hidden .rg-berm-gun { stroke: var(--ink-dim); stroke-dasharray: 2 2; }
+.rg-berm-shown polygon { fill: var(--ink); fill-opacity: 0.18; }
