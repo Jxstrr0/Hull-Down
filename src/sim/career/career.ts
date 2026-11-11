@@ -9,6 +9,7 @@ import { BUREAU_IDS, type BureauId } from '../../data/opponents'
 import { RESEARCH, RESEARCH_IDS, type ResearchId } from '../../data/research'
 import type { RunPartId } from '../../data/range'
 import { SERVICE, type Production } from '../../data/service'
+import { fill, STRINGS } from '../../data/strings'
 import { TENDER_IDS, TENDER_RULES, TENDERS, type ScoreAxis, type Tender, type TenderId } from '../../data/tenders'
 import { hash32 } from '../rng'
 import type { Limits, VehicleSpec } from '../vehicle/spec'
@@ -312,8 +313,9 @@ export function standardShare(spec: VehicleSpec): number {
  * the year. A second tank adopted in the same year is "Model 81/2".
  */
 export function designationOf(year: number, alreadyThatYear: number): string {
-  const base = `Model ${String(year % 100).padStart(2, '0')}`
-  return alreadyThatYear > 0 ? `${base}/${alreadyThatYear + 1}` : base
+  const words = STRINGS.career.designation
+  const slots = { year: String(year % 100).padStart(2, '0'), n: String(alreadyThatYear + 1) }
+  return fill(alreadyThatYear > 0 ? words.later : words.first, slots)
 }
 
 /**

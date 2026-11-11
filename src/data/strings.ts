@@ -1,9 +1,11 @@
 // Every piece of text the player reads lives here, so it can be checked and
-// later translated. PR 14 adds the test that fails on hard-coded text elsewhere.
+// later translated. `tests/hardCodedText.test.ts` fails on text written anywhere else.
 export const STRINGS = {
   title: 'Hull Down',
   bureau: 'State Tank Design Bureau',
   country: 'Tarnovia',
+  // Tarnovian korona, in the house style
+  money: { millions: 'Kr {n}M', thousands: 'Kr {n}k', ones: 'Kr {n}' },
   office: {
     label: 'Design office',
     project: 'Project {n}',
@@ -1430,6 +1432,8 @@ export const STRINGS = {
     },
   },
   career: {
+    // What the army calls a tank it adopts: the last two figures of the year, and a number for a second that year
+    designation: { first: 'Model {year}', later: 'Model {year}/{n}' },
     tender: {
       heading: 'Tender of {year}: {name}',
       limits: 'The limits',

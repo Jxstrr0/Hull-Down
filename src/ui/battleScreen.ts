@@ -43,7 +43,7 @@ function lookOf(tank: Combatant): TankLook {
 }
 
 export function renderBattleScreen(args: BattleScreenArgs): HTMLElement {
-  const root = el('section', 'range duel battle')
+  const root = el('section', 'range duel')
   root.tabIndex = -1
   root.setAttribute('aria-label', B.screenTitle)
 
