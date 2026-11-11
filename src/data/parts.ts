@@ -198,7 +198,7 @@ export type StowageId = keyof typeof STOWAGE
 // --- Fire control ---------------------------------------------------------
 
 export interface FireControlPart extends Part {
-  /** Change to crew workload (negative is easier). Gunnery effects arrive in PR 5. */
+  /** Change to crew workload (negative is easier). What the part does to a shot is in `data/gunnery.ts`. */
   workload: number
 }
 

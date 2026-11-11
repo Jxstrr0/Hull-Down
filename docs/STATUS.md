@@ -29,6 +29,18 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.5.0.0, PR 5a: the gunnery model.** The design office now works out how
+  the tank shoots, and shows it in a Gunnery box at the foot of the Gun and
+  Fire control tabs and on Readouts: time to first shot (halted and on the
+  move), rate of fire fresh and kept up over 20 rounds, the chance of a hit
+  on the move and at night, and a table of first-round hit chance at 500 to
+  2500 m for each round. A rifled gun groups its shots tighter; a smoothbore
+  throws them faster and flatter, so it forgives a badly judged range. A
+  better rangefinder mostly helps slow rounds at long range. A tank with no
+  stabiliser halts to shoot; one-plane wanders sideways on the move. A human
+  loader tires round by round, sooner with a heavy round or a cramped
+  turret; an autoloader keeps its pace, loses a little to jams, and is fed
+  by hand once it is empty. No range tests for it yet: they are 5b.
 - **0.4.5.0, PR 4f: the range runs on its own thread.** Sending a design to
   the proving ground now hands the tests to a Web Worker, a second thread
   beside the page, and shows the report when it answers. Nothing looks
@@ -158,7 +170,15 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   4e the endurance run played back in 3D as a time-lapse (0.4.4.0), 4f the
   trials run in a Web Worker so a slow phone stays smooth (0.4.5.0). All six
   are done.
-  PR 5 is then 0.5.0.0.
+- PR 5 is split as well: 5a the gunnery model and its readouts (0.5.0.0),
+  5b the static, moving and night gunnery tests on the range, 5c crew
+  stations, comfort, fatigue and the loading drill, 5d barrel length and
+  recoil system, 5e the gunnery tests played back in 3D. PR 6 is then
+  0.6.0.0.
+- Gunnery numbers are quoted for the proving ground's trained crew.
+  Conscripts aim 30 % wider and take 35 % longer; that starts to matter in
+  field reports (PR 8). The scatter of the Pact rounds was retuned in 5a so
+  rifled and smoothbore guns differ: rifled rounds group tighter.
 - The range marks (12 s to 32 km/h, 50 km/h top speed, the course as built,
   one stop on the endurance run) are a Pact standard for now. Tenders set
   their own marks in PR 8.

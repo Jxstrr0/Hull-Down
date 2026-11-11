@@ -18,23 +18,27 @@ export interface Round {
   lossPerKmMm: number
 }
 
-/** What the Pact supplies, by gun. */
+/**
+ * What the Pact supplies, by gun. A rifled gun spins its rounds, which keeps
+ * them tight on the target; a smoothbore throws them faster and flatter, and
+ * they scatter more.
+ */
 export const PACT_ROUNDS = {
   rifled100: {
-    sabot100: { kind: 'kinetic', speedMs: 1415, spreadM: 0.5, penMm: 310, lossPerKmMm: 40 },
-    shaped100: { kind: 'shaped', speedMs: 900, spreadM: 0.7, penMm: 380, lossPerKmMm: 0 },
+    sabot100: { kind: 'kinetic', speedMs: 1415, spreadM: 0.35, penMm: 310, lossPerKmMm: 40 },
+    shaped100: { kind: 'shaped', speedMs: 900, spreadM: 0.5, penMm: 380, lossPerKmMm: 0 },
   },
   smooth115: {
-    sabot115: { kind: 'kinetic', speedMs: 1615, spreadM: 0.55, penMm: 380, lossPerKmMm: 45 },
-    shaped115: { kind: 'shaped', speedMs: 950, spreadM: 0.75, penMm: 440, lossPerKmMm: 0 },
+    sabot115: { kind: 'kinetic', speedMs: 1615, spreadM: 0.6, penMm: 380, lossPerKmMm: 45 },
+    shaped115: { kind: 'shaped', speedMs: 950, spreadM: 0.9, penMm: 440, lossPerKmMm: 0 },
   },
   smooth125: {
-    sabot125: { kind: 'kinetic', speedMs: 1700, spreadM: 0.5, penMm: 460, lossPerKmMm: 40 },
-    shaped125: { kind: 'shaped', speedMs: 905, spreadM: 0.7, penMm: 500, lossPerKmMm: 0 },
+    sabot125: { kind: 'kinetic', speedMs: 1700, spreadM: 0.55, penMm: 460, lossPerKmMm: 40 },
+    shaped125: { kind: 'shaped', speedMs: 905, spreadM: 0.85, penMm: 500, lossPerKmMm: 0 },
   },
   rifled120: {
-    sabot120: { kind: 'kinetic', speedMs: 1370, spreadM: 0.4, penMm: 420, lossPerKmMm: 30 },
-    shaped120: { kind: 'shaped', speedMs: 1100, spreadM: 0.55, penMm: 440, lossPerKmMm: 0 },
+    sabot120: { kind: 'kinetic', speedMs: 1370, spreadM: 0.3, penMm: 420, lossPerKmMm: 30 },
+    shaped120: { kind: 'shaped', speedMs: 1100, spreadM: 0.45, penMm: 440, lossPerKmMm: 0 },
   },
 } as const satisfies Record<GunId, Record<string, Round>>
 

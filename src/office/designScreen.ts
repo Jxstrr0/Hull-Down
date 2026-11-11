@@ -24,7 +24,7 @@ import {
   MAX_DESIGNS, addDesign, currentDesign, loadStore, openDesign, saveStore, scrapDesign, type KeyValue,
 } from '../persist/designs'
 import { NAME_MAX, cleanName, cleanSpec } from '../persist/specCodec'
-import { issueText, renderReadouts } from './readouts'
+import { issueText, renderGunnery, renderReadouts } from './readouts'
 import { renderRangeScreen } from '../ui/rangeScreen'
 
 const O = STRINGS.office
@@ -683,6 +683,7 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
         else parts.push(drawToggle(control))
       }
       if (tab === 'gun') parts.push(drawAmmo())
+      if (tab === 'gun' || tab === 'fireControl') parts.push(renderGunnery(sheet))
     }
     panel.replaceChildren(...parts)
     panel.setAttribute('aria-label', O.tabs[tab])
