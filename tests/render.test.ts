@@ -521,18 +521,19 @@ describe('the 3D range stays out of the first load', () => {
     expect(outside.filter((file) => loadsAtOnce(readRepoFile(file), /from\s+'three(\/[^']*)?'/))).toEqual([])
   })
 
-  it('keeps three.js in the one file that draws', () => {
+  it('keeps three.js in the two files that draw', () => {
     const users = sources.filter((file) => /from\s+'three(\/[^']*)?'/.test(readRepoFile(file)))
-    expect(users).toEqual(['src/render/rangeScene.ts'])
+    expect(users).toEqual(['src/render/battleScene.ts', 'src/render/rangeScene.ts'])
   })
 
   it('lets nothing outside src/render load the scene when the page opens', () => {
     const outside = sources.filter((file) => !file.startsWith('src/render/'))
-    expect(outside.filter((file) => loadsAtOnce(readRepoFile(file), /render\/rangeScene'/))).toEqual([])
+    expect(outside.filter((file) => loadsAtOnce(readRepoFile(file), /render\/(rangeScene|battleScene)'/))).toEqual([])
   })
 
   it('opens the scene only when asked', () => {
     expect(readRepoFile('src/ui/rangeScreen.ts')).toMatch(/await import\('\.\.\/render\/rangeScene'\)/)
+    expect(readRepoFile('src/ui/battleWatch.ts')).toMatch(/await import\('\.\.\/render\/battleScene'\)/)
   })
 
   it('uses the version of three.js the studio uses', () => {
