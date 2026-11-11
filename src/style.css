@@ -1137,6 +1137,25 @@ body {
   font: inherit;
 }
 
+/* The guided first contract: a card at the top of every page. */
+.guide { border: 2px solid var(--ink); border-left-width: 6px; padding: 10px 12px; }
+.guide-away { border: 0; padding: 0; }
+.guide-heading { margin: 0; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); }
+.guide-title { margin: 2px 0 6px; font-family: 'Archivo Narrow', sans-serif; font-size: 1.1rem; }
+.guide-text { margin: 0 0 10px; }
+.guide-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.guide-toggle {
+  min-height: 44px;
+  padding: 4px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Tap-to-explain: the words on the page, and the meaning of the one tapped. */
 .gloss { border-top: 2px solid var(--ink); padding-top: 10px; }
 .gloss-title { margin: 0; font-family: 'Archivo Narrow', sans-serif; font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase; }

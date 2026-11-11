@@ -1860,6 +1860,49 @@ export const STRINGS = {
   },
   // Tap-to-explain: plain words for someone who knows nothing about tanks. `find` lists the
   // beginnings of the words on screen that each entry explains, in small letters.
+  guide: {
+    heading: 'Your first contract',
+    step: 'Step {n} of {of}',
+    hide: 'Hide the guide',
+    show: 'Show the first-contract guide',
+    toBureau: 'Open the Bureau tab',
+    steps: {
+      night: {
+        title: 'Fix the night shoot',
+        text: 'The army wants the Type 1 made better. Its one clear failing: the tender asks for 4 hits at night, and the old infrared sight cannot make them. Open Fire control and fit a better night sight. Watch the weight and the cost as you do: every part is a trade.',
+        action: 'Open the night sight',
+      },
+      faults: {
+        title: 'Clear the faults',
+        text: 'The night sight is changed, but the design now has a fault that would stop it being built. The Faults tab lists each one with a button that takes you to the part.',
+        action: 'Open the Faults tab',
+      },
+      build: {
+        title: 'Build the prototype',
+        text: 'The night sight is changed. Change anything else you like, or leave the rest alone: one sure improvement is enough this time. Then open the Bureau tab and build the prototype. The proving ground tries it for you.',
+      },
+      trial: {
+        title: 'At the proving ground',
+        text: 'Prototype {n} is on the range. Its marks will be on the Bureau tab in a moment.',
+      },
+      revise: {
+        title: 'Read the report',
+        text: 'Prototype {n} failed {failed} of its tests. On the Bureau tab the chief engineer says what to look at. Change the design and build a revision, or enter the prototype as it is.',
+      },
+      enter: {
+        title: 'Enter the tender',
+        text: 'Prototype {n} passed every test. On the Bureau tab, tap the button to enter it, then tap again to confirm. The army marks it against three other bureaus.',
+      },
+      won: {
+        title: 'Adopted',
+        text: 'The army chose your tank. That is the whole game in small: design, trial, report, fix. On the Bureau tab you can start production and go on to the next tender, where the other bureaus will revise their tanks as you do. The guide ends here.',
+      },
+      lost: {
+        title: 'Not this time',
+        text: 'Another bureau won. The order of merit on the Bureau tab shows where its tank did better. From there you can go on to the next tender, or start the career again and try a different fix.',
+      },
+    },
+  },
   glossary: {
     heading: 'Words on this page',
     hint: 'Tap a word to see what it means.',

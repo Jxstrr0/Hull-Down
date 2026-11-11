@@ -8,6 +8,8 @@ import { lessonsOf, rivalBid } from '../src/sim/career/rival'
 import { scoreBid, trialBid } from '../src/sim/career/score'
 
 const T = TENDERS.improvedType1
+// The first tender holds the rivals to their first drawings, for the newcomer's sake. This is the same tender with the usual rule.
+const OPEN = { ...T, rivalRevisions: TENDER_RULES.revisions }
 const SEEDS = [101, 102, 103, 104, 105, 106, 107, 108]
 // These run dozens of whole tenders; give a slow machine room.
 const SLOW = 30_000
@@ -88,7 +90,7 @@ describe('a rival bid', () => {
     let revised = 0
     for (const seed of SEEDS) {
       for (const bureau of BUREAU_IDS) {
-        const entry = rivalBid(bureau, T, seed)
+        const entry = rivalBid(bureau, OPEN, seed)
         const first = scoreBid(trialBid(draftRival(bureau, T.limits, seed).spec, T, seed), T)
         expect(entry.score.legal).toBe(true)
         expect(entry.revisions).toBeLessThanOrEqual(TENDER_RULES.revisions)
@@ -104,11 +106,11 @@ describe('a rival bid', () => {
     expect(revised).toBeGreaterThan(SEEDS.length)
   }, SLOW)
 
-  it('makes the tender a contest: the Type 1 as issued does not win it', () => {
+  it('makes a tender a contest once the rivals may revise: the Type 1 as issued does not win it', () => {
     let wins = 0
     for (const seed of SEEDS) {
       const mine = scoreBid(trialBid(BASELINE_SPEC, T, seed), T).total
-      const best = Math.max(...BUREAU_IDS.map((bureau) => rivalBid(bureau, T, seed).score.total))
+      const best = Math.max(...BUREAU_IDS.map((bureau) => rivalBid(bureau, OPEN, seed).score.total))
       if (mine > best) wins++
     }
     expect(wins).toBeLessThan(SEEDS.length / 2)
