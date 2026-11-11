@@ -1,0 +1,290 @@
+// Who the bureau's tank is measured against: the rival bureaus bidding on
+// the same tender, and the Northern Accord tanks it may one day meet.
+// A rival's tank is not drawn up here. Each bureau has a way of thinking,
+// and a bot designer (src/sim/ai/designer.ts) builds its tank from the same
+// parts list and under the same limits as the player's.
+// Game-level abstractions, not engineering data.
+import type { ThreatId } from './ammo'
+import type { ZoneId } from './materials'
+import type {
+  BarrelId, ComfortId, ComputerId, EngineId, GunId, HullId, LoadingId, NightSightId, RangefinderId, RecoilId,
+  SightId, StabiliserId, StowageId, SuspensionId, TurretId,
+} from './parts'
+import type { Limits, VehicleSpec } from '../sim/vehicle/spec'
+
+/**
+ * What a bureau reaches for, part by part: its first choice, then what it
+ * settles for. The designer takes the first that fits, and now and then the
+ * second, so no two careers meet quite the same rival.
+ */
+export interface Picks {
+  hull: readonly HullId[]
+  turret: readonly TurretId[]
+  gun: readonly GunId[]
+  barrel: readonly BarrelId[]
+  recoil: readonly RecoilId[]
+  loading: readonly LoadingId[]
+  stowage: readonly StowageId[]
+  engine: readonly EngineId[]
+  suspension: readonly SuspensionId[]
+  sight: readonly SightId[]
+  rangefinder: readonly RangefinderId[]
+  stabiliser: readonly StabiliserId[]
+  computer: readonly ComputerId[]
+  night: readonly NightSightId[]
+  comfort: readonly ComfortId[]
+  commanderSight: readonly boolean[]
+  spallLiner: readonly boolean[]
+  fireSuppression: readonly boolean[]
+}
+
+export interface Philosophy {
+  picks: Picks
+  /** How much of the weight limit the bureau builds up to, 0..1. */
+  massShare: number
+  /**
+   * Where the armour goes. Each zone's plates are the baseline's, made
+   * thicker or thinner by this much, and then all scaled together until the
+   * tank is at its weight.
+   */
+  armour: Record<ZoneId, number>
+  /** Zones that get a full set of reactive tiles. */
+  tiles: readonly ZoneId[]
+  glacisAngleDeg: number
+  rounds: number
+  fuelL: number
+}
+
+export const BUREAU_IDS = ['heavy', 'light', 'firepower'] as const
+export type BureauId = (typeof BUREAU_IDS)[number]
+
+export const DESIGNER = {
+  /** Chance that the bureau takes its second choice for any one part. */
+  secondChoiceShare: 0.25,
+  /** The armour is scaled between these, as a multiple of the bureau's own pattern. */
+  armourScale: { min: 0.3, max: 3 },
+  /** Halvings of that span before the designer settles. */
+  armourSteps: 16,
+  /** Turns the designer takes to put right a design that cannot be built. */
+  repairTurns: 40,
+  /** Each turn short of space puts this many rounds and litres ashore. */
+  shedRounds: 2,
+  shedFuelL: 100,
+} as const
+
+export const BUREAUS = {
+  // Heavy and well protected: the weight limit used to the last tonne, and most of it goes on the front.
+  heavy: {
+    picks: {
+      hull: ['medium', 'heavy'],
+      turret: ['castDome', 'weldedWedge'],
+      gun: ['smooth125', 'smooth115'],
+      barrel: ['standard', 'short'],
+      recoil: ['standard', 'standard'],
+      loading: ['carousel', 'loader'],
+      stowage: ['armouredBins', 'wetStowage'],
+      engine: ['diesel780', 'multiFuel700'],
+      suspension: ['torsionBar', 'torsionBar'],
+      sight: ['daySight', 'improvedDaySight'],
+      rangefinder: ['coincidence', 'coincidence'],
+      stabiliser: ['twoPlane', 'singlePlane'],
+      computer: ['mechanical', 'mechanical'],
+      night: ['activeInfrared', 'activeInfrared'],
+      comfort: ['basic', 'standard'],
+      commanderSight: [false, false],
+      spallLiner: [true, true],
+      fireSuppression: [true, true],
+    },
+    massShare: 1,
+    armour: {
+      upperGlacis: 1.4, lowerGlacis: 1.3, hullSideFront: 1, hullSideRear: 0.9, hullRear: 0.8, hullRoof: 1, belly: 1,
+      turretFrontLeft: 1.4, turretFrontRight: 1.4, mantlet: 1.3, turretSides: 1, turretRear: 0.8, turretRoof: 1,
+    },
+    tiles: [],
+    glacisAngleDeg: 68,
+    rounds: 36,
+    fuelL: 900,
+  },
+  // Light and cheap: a small hull, the small engine, plain parts, and tiles where plate would cost weight.
+  light: {
+    picks: {
+      hull: ['light', 'medium'],
+      turret: ['lowProfile', 'castDome'],
+      gun: ['smooth115', 'rifled100'],
+      barrel: ['standard', 'short'],
+      recoil: ['standard', 'stiff'],
+      loading: ['loader', 'loader'],
+      stowage: ['plainRacks', 'wetStowage'],
+      engine: ['diesel580', 'diesel780'],
+      suspension: ['torsionBar', 'torsionBar'],
+      sight: ['daySight', 'daySight'],
+      rangefinder: ['stadiametric', 'coincidence'],
+      stabiliser: ['singlePlane', 'twoPlane'],
+      computer: ['none', 'mechanical'],
+      night: ['activeInfrared', 'none'],
+      comfort: ['basic', 'basic'],
+      commanderSight: [false, false],
+      spallLiner: [false, false],
+      fireSuppression: [true, false],
+    },
+    massShare: 0.75,
+    armour: {
+      upperGlacis: 1, lowerGlacis: 0.9, hullSideFront: 0.8, hullSideRear: 0.8, hullRear: 0.9, hullRoof: 1, belly: 1,
+      turretFrontLeft: 1, turretFrontRight: 1, mantlet: 1, turretSides: 0.8, turretRear: 0.9, turretRoof: 1,
+    },
+    tiles: ['upperGlacis', 'turretFrontLeft', 'turretFrontRight'],
+    glacisAngleDeg: 70,
+    rounds: 40,
+    fuelL: 800,
+  },
+  // Firepower first: the big gun with the long barrel, and the best sights the parts list has.
+  firepower: {
+    picks: {
+      hull: ['medium', 'heavy'],
+      turret: ['weldedWedge', 'castDome'],
+      gun: ['smooth125', 'smooth125'],
+      barrel: ['long', 'standard'],
+      recoil: ['standard', 'longStroke'],
+      loading: ['carousel', 'carousel'],
+      stowage: ['plainRacks', 'wetStowage'],
+      engine: ['diesel780', 'turbine1000'],
+      suspension: ['torsionBar', 'hydropneumatic'],
+      sight: ['improvedDaySight', 'improvedDaySight'],
+      rangefinder: ['laser', 'coincidence'],
+      stabiliser: ['twoPlane', 'twoPlane'],
+      computer: ['electronic', 'mechanical'],
+      night: ['imageIntensifier', 'activeInfrared'],
+      comfort: ['standard', 'basic'],
+      commanderSight: [true, false],
+      spallLiner: [false, false],
+      fireSuppression: [true, true],
+    },
+    massShare: 0.95,
+    armour: {
+      upperGlacis: 1, lowerGlacis: 1, hullSideFront: 0.9, hullSideRear: 0.9, hullRear: 1, hullRoof: 1, belly: 1,
+      turretFrontLeft: 1, turretFrontRight: 1, mantlet: 1.1, turretSides: 0.9, turretRear: 1, turretRoof: 1,
+    },
+    tiles: [],
+    glacisAngleDeg: 66,
+    rounds: 42,
+    fuelL: 1000,
+  },
+} as const satisfies Record<BureauId, Philosophy>
+
+/** The Accord builds to its own rules: no bridge class of 44 t, and its own calibres. */
+export const ACCORD_LIMITS: Limits = {
+  maxMassT: 60,
+  maxWidthM: 3.7,
+  allowedCalibresMm: [100, 120],
+}
+
+/**
+ * A threat tank as the intelligence file has it. It is drawn up from the
+ * Pact's own parts list, the nearest part standing in for each Accord one,
+ * but it fires Accord rounds.
+ */
+export interface ThreatTank {
+  spec: VehicleSpec
+  /** What it fires, the round it reaches for first at the front. */
+  rounds: readonly ThreatId[]
+}
+
+const NO_TILES: Record<ZoneId, number> = {
+  upperGlacis: 0, lowerGlacis: 0, hullSideFront: 0, hullSideRear: 0, hullRear: 0, hullRoof: 0, belly: 0,
+  turretFrontLeft: 0, turretFrontRight: 0, mantlet: 0, turretSides: 0, turretRear: 0, turretRoof: 0,
+}
+
+export const THREAT_TANK_IDS = ['warden', 'palisade'] as const
+export type ThreatTankId = (typeof THREAT_TANK_IDS)[number]
+
+export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
+  // The Accord's standard tank: a 105 mm rifled gun, a loader, good sights, steel armour.
+  warden: {
+    rounds: ['accord105Sabot', 'accord105Shaped'],
+    spec: {
+      name: '',
+      hull: { size: 'heavy', glacisAngleDeg: 60, engineAt: 'rear' },
+      turret: { shape: 'weldedWedge', ringMm: 2150 },
+      // Stands in for the Accord 105 mm gun: about its weight, and loaded by hand at about its rate.
+      gun: 'rifled100',
+      barrel: 'long',
+      recoil: 'standard',
+      loading: 'loader',
+      ammo: { rounds: 55, stowage: 'plainRacks' },
+      fireControl: {
+        sight: 'improvedDaySight', rangefinder: 'coincidence', stabiliser: 'twoPlane', computer: 'mechanical',
+        night: 'activeInfrared', commanderSight: true,
+      },
+      powerpack: { engine: 'diesel780', transmission: 'hydro50', cooling: 'standard', fuelL: 1400, apu: false },
+      runningGear: { suspension: 'torsionBar', roadWheels: 7, trackWidthMm: 640 },
+      protection: { smokeLaunchers: true, fireSuppression: true, spallLiner: false },
+      crew: { comfort: 'improved' },
+      armour: {
+        upperGlacis: [{ material: 'rolledSteel', mm: 110 }],
+        lowerGlacis: [{ material: 'rolledSteel', mm: 100 }],
+        hullSideFront: [{ material: 'rolledSteel', mm: 70 }],
+        hullSideRear: [{ material: 'rolledSteel', mm: 45 }],
+        hullRear: [{ material: 'rolledSteel', mm: 35 }],
+        hullRoof: [{ material: 'rolledSteel', mm: 30 }],
+        belly: [{ material: 'rolledSteel', mm: 20 }],
+        turretFrontLeft: [{ material: 'castSteel', mm: 230 }],
+        turretFrontRight: [{ material: 'castSteel', mm: 230 }],
+        mantlet: [{ material: 'castSteel', mm: 220 }],
+        turretSides: [{ material: 'castSteel', mm: 90 }],
+        turretRear: [{ material: 'castSteel', mm: 50 }],
+        turretRoof: [{ material: 'castSteel', mm: 30 }],
+      },
+      era: NO_TILES,
+    },
+  },
+  // The tank the Accord is said to be building next: a 120 mm gun behind layered armour, and slow for it.
+  palisade: {
+    rounds: ['accord120Sabot'],
+    spec: {
+      name: '',
+      hull: { size: 'heavy', glacisAngleDeg: 68, engineAt: 'rear' },
+      turret: { shape: 'weldedWedge', ringMm: 2250 },
+      gun: 'rifled120',
+      barrel: 'standard',
+      recoil: 'standard',
+      loading: 'loader',
+      ammo: { rounds: 42, stowage: 'armouredBins' },
+      fireControl: {
+        sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'electronic',
+        night: 'imageIntensifier', commanderSight: true,
+      },
+      powerpack: { engine: 'diesel780', transmission: 'hydro50', cooling: 'standard', fuelL: 1000, apu: true },
+      runningGear: { suspension: 'hydropneumatic', roadWheels: 7, trackWidthMm: 700 },
+      protection: { smokeLaunchers: true, fireSuppression: true, spallLiner: true },
+      crew: { comfort: 'improved' },
+      armour: {
+        upperGlacis: [
+          { material: 'rolledSteel', mm: 60 },
+          { material: 'compositeInsert', mm: 90 },
+          { material: 'rolledSteel', mm: 40 },
+        ],
+        lowerGlacis: [{ material: 'rolledSteel', mm: 80 }],
+        hullSideFront: [{ material: 'rolledSteel', mm: 50 }],
+        hullSideRear: [{ material: 'rolledSteel', mm: 35 }],
+        hullRear: [{ material: 'rolledSteel', mm: 30 }],
+        hullRoof: [{ material: 'rolledSteel', mm: 25 }],
+        belly: [{ material: 'rolledSteel', mm: 20 }],
+        turretFrontLeft: [
+          { material: 'rolledSteel', mm: 100 },
+          { material: 'compositeInsert', mm: 150 },
+          { material: 'rolledSteel', mm: 100 },
+        ],
+        turretFrontRight: [
+          { material: 'rolledSteel', mm: 100 },
+          { material: 'compositeInsert', mm: 150 },
+          { material: 'rolledSteel', mm: 100 },
+        ],
+        mantlet: [{ material: 'castSteel', mm: 260 }],
+        turretSides: [{ material: 'rolledSteel', mm: 50 }],
+        turretRear: [{ material: 'rolledSteel', mm: 30 }],
+        turretRoof: [{ material: 'rolledSteel', mm: 30 }],
+      },
+      era: NO_TILES,
+    },
+  },
+}
