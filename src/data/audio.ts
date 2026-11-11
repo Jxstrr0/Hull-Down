@@ -48,7 +48,7 @@ export interface CueLayer {
   delayS?: number
 }
 
-export const CUE_IDS = ['gun', 'hit', 'miss', 'short', 'ricochet', 'held', 'pierce'] as const
+export const CUE_IDS = ['gun', 'hit', 'miss', 'short', 'ricochet', 'held', 'pierce', 'tap', 'pencil', 'stamp', 'warn'] as const
 export type CueId = (typeof CUE_IDS)[number]
 
 export const AUDIO = {
@@ -180,7 +180,38 @@ export const AUDIO = {
       { kind: 'tone', wave: 'sine', fromHz: 110, toHz: 30, attackS: 0.006, decayS: 0.8, gain: 1, delayS: 0.05 },
       { kind: 'noise', filter: 'lowpass', q: 0.7, fromHz: 1200, toHz: 90, attackS: 0.01, decayS: 1.3, gain: 0.8, delayS: 0.05 },
     ],
+    // In the office. Any button: a small, dry click.
+    tap: [
+      { kind: 'noise', filter: 'bandpass', q: 2, fromHz: 2500, toHz: 1800, attackS: 0.001, decayS: 0.025, gain: 0.5 },
+      { kind: 'tone', wave: 'sine', fromHz: 900, toHz: 600, attackS: 0.001, decayS: 0.03, gain: 0.3 },
+    ],
+    // The design changed: two short strokes of a pencil.
+    pencil: [
+      { kind: 'noise', filter: 'bandpass', q: 2, fromHz: 4200, toHz: 3000, attackS: 0.02, decayS: 0.1, gain: 0.5 },
+      { kind: 'noise', filter: 'bandpass', q: 2, fromHz: 3200, toHz: 4400, attackS: 0.015, decayS: 0.08, gain: 0.4, delayS: 0.1 },
+    ],
+    // A decision: the rubber stamp comes down on the desk.
+    stamp: [
+      { kind: 'tone', wave: 'sine', fromHz: 140, toHz: 60, attackS: 0.002, decayS: 0.18, gain: 1 },
+      { kind: 'noise', filter: 'lowpass', q: 0.7, fromHz: 900, toHz: 200, attackS: 0.002, decayS: 0.12, gain: 0.8 },
+      { kind: 'noise', filter: 'bandpass', q: 1.5, fromHz: 2000, toHz: 1500, attackS: 0.001, decayS: 0.03, gain: 0.4 },
+    ],
+    // The design has just gone over the weight limit: two soft notes, falling.
+    warn: [
+      { kind: 'tone', wave: 'triangle', fromHz: 440, toHz: 438, attackS: 0.01, decayS: 0.16, gain: 0.5 },
+      { kind: 'tone', wave: 'triangle', fromHz: 349, toHz: 347, attackS: 0.01, decayS: 0.28, gain: 0.5, delayS: 0.14 },
+    ],
   } satisfies Record<CueId, CueLayer[]>,
+
+  /** The design office: quiet sounds for what the player does. */
+  office: {
+    /** What counts as a tap: anything on the page that is pressed. */
+    tapOn: 'button, summary, a, select, label, input',
+    /** Loudness of each office sound, 0 to 1. A tap is the quietest. */
+    gain: { tap: 0.25, pencil: 0.45, stamp: 0.8, warn: 0.5 },
+    /** Seconds before the same sound may be heard again: a dragged slider is not a drum roll. */
+    gapS: 0.09,
+  },
 
   /** A battle, heard from beside the tank the camera is with. */
   battle: {
