@@ -2,6 +2,10 @@
 // play and pause, a bar to drag through the battle, and which tank the camera
 // stays with. three.js and the scene are fetched only when the button is
 // pressed. What the camera is doing is always written under the picture.
+import { battleCuesBetween, battleSpeedKmh } from '../audio/battleCues'
+import { droneAt, voiceOf } from '../audio/cues'
+import { sound } from '../audio/gameSound'
+import { AUDIO } from '../data/audio'
 import { STRINGS, fill } from '../data/strings'
 import type { BattleView, TankLook } from '../render/battleScene'
 import type { GraphicsLink } from './rangeScreen'
@@ -28,10 +32,14 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
 
   let view: BattleView | undefined
   let closed = true
+  // How each side sounds: its engine, its gearbox and its gun.
+  const voices = [voiceOf(mine.spec), voiceOf(theirs.spec)] as const
+  const calibres = [voices[0].calibreMm, voices[1].calibreMm] as const
 
   const stop = (): void => {
     closed = true
     view?.dispose()
+    sound.still()
     view = undefined
     slot.replaceChildren()
     opener.hidden = false
@@ -40,6 +48,8 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
   const open = async (): Promise<void> => {
     closed = false
     opener.hidden = true
+    // Opened by a tap, which is when a browser lets sound begin.
+    sound.wake()
     const box = el('div', 'rg-view bw-view')
     const stage = el('div', 'rg-view-stage')
     const status = el('p', 'rg-view-status', W.loading)
@@ -106,6 +116,7 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
     let held = false
     toggle.addEventListener('click', () => {
       held = false
+      sound.wake()
       if (playing) view?.pause()
       else view?.play()
     })
@@ -126,6 +137,8 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
     scrub.addEventListener('input', () => view?.seek(Number(scrub.value)))
 
     let said = ''
+    /** The moment of the battle the last picture showed, for hearing what happened since. */
+    let heardS = 0
     try {
       const { openBattleView } = await import('../render/battleScene')
       if (closed) return
@@ -140,6 +153,15 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
         onMeasured: (fps) => view?.setQuality(graphics.measured(fps)),
         onFrame: (frame) => {
           if (!held) scrub.value = String(frame.timeS)
+          // The battle is heard from beside the tank the camera is with, while it plays.
+          if (playing) {
+            for (const cue of battleCuesBetween(battle, heardS, frame.timeS, frame.tank, calibres)) sound.cue(cue.id, cue)
+            const voice = voices[battle.tanks[frame.tank]?.side ?? 0]
+            const drone = droneAt(voice, battleSpeedKmh(battle, frame.tank, frame.timeS))
+            const share = AUDIO.battle.droneShare
+            sound.drone(voice, { ...drone, engineGain: drone.engineGain * share, trackGain: drone.trackGain * share })
+          }
+          heardS = frame.timeS
           const who = tankName(battle, frame.tank)
           const words = `${fill(W.time, { at: fixed(frame.timeS, 0), n: fixed(battle.endS, 0) })} · ${
             fill(frame.look === 'close' ? W.beside : W.with, { who })}`
