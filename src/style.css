@@ -984,3 +984,57 @@ body {
 .cmp-ghost { opacity: 0.45; stroke-dasharray: 5 4; }
 .cmp-nochange { font-weight: 400; color: var(--ink-dim); }
 .cmp-key { margin-top: 4px; }
+
+/* Duels: who the design meets, the score on each ground, and what decided it. */
+.duel-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.duel-opp {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--ink-dim);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.duel-opp:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+.duel-opp-on { border: 2.5px solid var(--ink); font-weight: 600; }
+.duel-opp-on .duel-opp-name::before { content: '● '; }
+.duel-opp-kind { font-size: 0.75rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.duel-opp-name { font-size: 0.95rem; }
+.duel-results { display: flex; flex-direction: column; gap: 16px; }
+.duel-score { margin: 0 0 4px; font-family: var(--font-mono); font-weight: 600; }
+.duel-bar { display: flex; height: 14px; margin: 4px 0 8px; border: 1.5px solid var(--ink); }
+.duel-bar-part { flex: 1 1 0; min-width: 2px; }
+.duel-bar-part + .duel-bar-part { border-left: 1.5px solid var(--ink); }
+/* Won is solid, lost is hatched, drawn is left empty: three patterns, not three colours. */
+.duel-bar-won { background: var(--ink); }
+.duel-bar-lost { background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 6px); }
+.duel-bar-drawn { background: transparent; }
+.duel-sums { list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
+.duel-sum { padding: 3px 0; border-bottom: 1px solid var(--grid); }
+.duel-findings { list-style: none; margin: 0; padding: 0; }
+.duel-finding { padding: 8px 0; border-bottom: 1px solid var(--grid); }
+.duel-finding-text { margin: 0 0 6px; }
+.duel-finding-mark { display: block; font-family: var(--font-head); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.duel-finding-for .duel-finding-mark { color: var(--stamp); }
+.duel-finding-against .duel-finding-mark { color: var(--pencil); }
+.duel-finding-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.duel-finding-acts .rg-fix { margin-top: 0; }
+.duel-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.duel-step { flex: none; }
+.duel-step:disabled { opacity: 0.4; }
+.duel-where { margin: 0; display: flex; flex-direction: column; align-items: center; font-size: 0.9rem; }
+.duel-where-result { font-family: var(--font-head); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.duel-won { color: var(--stamp); }
+.duel-lost { color: var(--pencil); }
+.duel-lines { list-style: none; margin: 0; padding: 0; }
+.duel-line { display: grid; grid-template-columns: 4.2em 1fr; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--grid); font-size: 0.9rem; }
+.duel-line-time { font-family: var(--font-mono); color: var(--ink-dim); }
+.duel-line-theirs .duel-line-text { padding-left: 10px; border-left: 3px double var(--ink-dim); }
+.duel-line-end { font-weight: 600; }

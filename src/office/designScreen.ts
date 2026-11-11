@@ -28,6 +28,8 @@ import { NAME_MAX, cleanName, cleanSpec } from '../persist/specCodec'
 import { issueText, renderGunnery, renderReadouts, renderStations } from './readouts'
 import { renderRangeScreen } from '../ui/rangeScreen'
 import { renderCompareScreen, type CompareSide } from '../ui/compareScreen'
+import { renderDuelScreen } from '../ui/duelScreen'
+import { DUEL } from '../data/duel'
 
 const O = STRINGS.office
 const D = STRINGS.dataSheet
@@ -494,6 +496,31 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     screen.focus({ preventScroll: true })
   }
 
+  /** One against one, against the rivals and the threat tanks. */
+  function openDuels(): void {
+    const screen = renderDuelScreen({
+      spec,
+      limits,
+      projectNo: design.projectNo,
+      name: spec.name || X.unnamed,
+      back: () => {
+        closeRange()
+        panel.querySelector<HTMLElement>('[data-key="to-duels"]')?.focus({ preventScroll: true })
+      },
+      fix: (part) => {
+        closeRange()
+        goToPart(part)
+      },
+      fixZone: (zone) => {
+        closeRange()
+        goToPart(`armour.${zone}`)
+      },
+    })
+    range.replaceChildren(screen)
+    root.classList.add('office-away')
+    screen.focus({ preventScroll: true })
+  }
+
   /** The way to the proving ground. A design the shop cannot build does not go. */
   function drawTrials(): HTMLElement {
     const T = O.trials
@@ -515,6 +542,16 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
       send.addEventListener('click', openRange)
       box.append(send)
     }
+    const E = STRINGS.duel.entry
+    const duels = el('section', 'protos')
+    duels.append(el('h3', 'ds-group-title', E.title), el('p', 'ctl-note', fill(E.about, { n: String(DUEL.runs) })))
+    if (sheet.issues.some((issue) => issue.severity === 'error')) duels.append(el('p', 'ctl-issue', T.blocked))
+    else {
+      const toDuels = actionButton('to-duels', E.send)
+      toDuels.addEventListener('click', openDuels)
+      duels.append(toDuels)
+    }
+    box.append(duels)
     box.append(drawPrototypes())
     return box
   }
