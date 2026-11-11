@@ -7,6 +7,8 @@ export const BASELINE_SPEC: VehicleSpec = {
   hull: { size: 'medium', glacisAngleDeg: 68, engineAt: 'rear' },
   turret: { shape: 'castDome', ringMm: 2100 },
   gun: 'smooth125',
+  barrel: 'standard',
+  recoil: 'standard',
   loading: 'carousel',
   ammo: { rounds: 39, stowage: 'plainRacks' },
   fireControl: {

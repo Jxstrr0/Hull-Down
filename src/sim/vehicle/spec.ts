@@ -2,8 +2,8 @@
 // as JSON. The stat sheet (stats.ts) is worked out from it.
 import type { MaterialId, ZoneId } from '../../data/materials'
 import type {
-  ComfortId, ComputerId, CoolingId, EngineId, GunId, HullId, LoadingId, NightSightId,
-  RangefinderId, SightId, StabiliserId, StowageId, SuspensionId, TransmissionId, TurretId,
+  BarrelId, ComfortId, ComputerId, CoolingId, EngineId, GunId, HullId, LoadingId, NightSightId,
+  RangefinderId, RecoilId, SightId, StabiliserId, StowageId, SuspensionId, TransmissionId, TurretId,
 } from '../../data/parts'
 
 export interface ArmourLayer {
@@ -25,6 +25,8 @@ export interface VehicleSpec {
     ringMm: number
   }
   gun: GunId
+  barrel: BarrelId
+  recoil: RecoilId
   loading: LoadingId
   ammo: {
     rounds: number

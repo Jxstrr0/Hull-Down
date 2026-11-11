@@ -133,6 +133,56 @@ export const GUNS = {
 } as const satisfies Record<string, GunPart>
 export type GunId = keyof typeof GUNS
 
+// --- Barrel ---------------------------------------------------------------
+
+export interface BarrelPart {
+  /** Length in calibres. */
+  calibres: number
+  /** Multiplier on the gun's weight. */
+  massFactor: number
+  /** Multiplier on the gun's cost. */
+  costFactor: number
+  /** Multiplier on the muzzle speed of every round. */
+  speedFactor: number
+  /** Multiplier on how far the muzzle wanders when the tank is moving, or has just stopped. A long barrel whips. */
+  whip: number
+}
+
+/** The guns in `GUNS` are quoted with the standard barrel. */
+export const BARRELS = {
+  short: { calibres: 34, massFactor: 0.9, costFactor: 0.92, speedFactor: 0.94, whip: 0.85 },
+  standard: { calibres: 40, massFactor: 1, costFactor: 1, speedFactor: 1, whip: 1 },
+  long: { calibres: 48, massFactor: 1.14, costFactor: 1.15, speedFactor: 1.05, whip: 1.2 },
+} as const satisfies Record<string, BarrelPart>
+export type BarrelId = keyof typeof BARRELS
+
+// --- Recoil mount ---------------------------------------------------------
+
+export interface RecoilPart {
+  /** Tonnes over the standard mount, which is counted in the gun. */
+  extraMassT: number
+  /** Cubic metres of turret over the standard mount. */
+  extraVolumeM3: number
+  /** Korona over the standard mount. */
+  extraCostKr: number
+  /** 0..1. */
+  reliability: number
+  /** Added to the smallest turret ring the gun needs. A longer stroke spreads the kick, so a smaller ring takes it. */
+  ringMm: number
+  /**
+   * Multiplier on the share of a miss the crew fails to correct with the next
+   * round. A hard kick rocks the tank and hides where the shot fell.
+   */
+  rock: number
+}
+
+export const RECOILS = {
+  stiff: { extraMassT: -0.1, extraVolumeM3: -0.2, extraCostKr: -20_000, reliability: 0.99, ringMm: 100, rock: 1.5 },
+  standard: { extraMassT: 0, extraVolumeM3: 0, extraCostKr: 0, reliability: 1, ringMm: 0, rock: 1 },
+  longStroke: { extraMassT: 0.2, extraVolumeM3: 0.3, extraCostKr: 45_000, reliability: 0.985, ringMm: -150, rock: 0.7 },
+} as const satisfies Record<string, RecoilPart>
+export type RecoilId = keyof typeof RECOILS
+
 // --- Loading --------------------------------------------------------------
 
 export interface LoadingPart extends Part {

@@ -61,6 +61,7 @@ export function renderGunnery(sheet: StatSheet): HTMLElement {
     ...rows,
     [fill(r.hitMoving, quoteRange), percent(q.movingChance, halts ? u.percentHalted : u.percent)],
     [fill(r.hitNight, quoteRange), percent(q.nightChance)],
+    [r.missCorrected, percent(1 - sheet.fire.missLeft)],
   ])
   box.dataset.key = 'gunnery'
 

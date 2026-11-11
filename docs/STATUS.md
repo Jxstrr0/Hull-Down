@@ -33,6 +33,12 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   comes to them tired. Comfort comes from the crew fittings, the suspension
   and where the engine sits; hatches and noise are not counted yet. A fully
   tired crewman is 30 % slower and aims no worse.
+- **Look at barrel length and the recoil mount** (0.5.5.0): Gun tab. The
+  three barrels and three mounts, their names and what each trades were
+  decided without you. A long barrel is +0.4 t and puts the 125 mm sabot
+  through 495 mm, not 460; a short one saves 0.3 t and manages 419 mm. The
+  long-stroke mount lets the 125 mm gun sit in a 1900 mm ring (2050 as
+  standard); the short-stroke mount needs 2150.
 - **Say how the endurance run should treat luck.** As built: every part
   within its rating gives trouble about one run in five, mended at the
   roadside, and one stop is allowed. A part 10 % over its rating breaks in
@@ -48,6 +54,18 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.5.5.0, PR 5f: barrel length and recoil mount.** Two new choices on
+  the Gun tab. Barrel length (short, standard, long): a longer barrel
+  throws every round faster, so rounds fly flatter and kinetic rounds go
+  through more, but it is heavier and dearer and whips when the tank is
+  moving. The blueprint draws the barrel to its length and the ammunition
+  list shows the rounds as that barrel fires them. Recoil mount
+  (short-stroke, standard, long-stroke): a longer stroke lets the gun sit
+  in a smaller turret ring and rocks the tank less, so the gunner sees
+  where a shot fell and corrects the next one better; it costs weight,
+  turret room, money and some reliability. The Gunnery box has a new line
+  for how much of a misjudged range the next round puts right. Designs
+  saved before this load with the standard barrel and mount.
 - **0.5.4.0, PR 5e: comfort and fatigue.** The tank now has a comfort
   score out of 100, from the crew fittings, the suspension and where the
   engine sits. Each crewman tires by the hour: faster at a busy station,
@@ -230,8 +248,8 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   5b the static, moving and night gunnery tests on the range (0.5.1.0), 5c
   the loading drill and turret parts that fail in a shoot (0.5.2.0), 5d crew
   stations and their workload (0.5.3.0), 5e comfort and fatigue (0.5.4.0),
-  5f barrel length and recoil system, 5g the gunnery tests played back in
-  3D. PR 6 is then 0.6.0.0.
+  5f barrel length and recoil mount (0.5.5.0), 5g the gunnery tests played
+  back in 3D. PR 6 is then 0.6.0.0.
 - 5d retuned three numbers. The first-shot mark went from 21 s to 20 s,
   because the gunner is no longer slowed by the commander's extra jobs (the
   baseline now fires in 18 s; stadia lines and no computer still miss the
@@ -268,10 +286,11 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   model in PR 6; the design office shows a fresh tile.
 - The section view shows armour only. The interior (crew, ammunition, fuel,
   engine) joins it in PR 6, when the hit model needs an interior layout.
-- Left out of the spec on purpose, to be added when their PR needs them:
-  barrel length, recoil system and gunnery numbers (PR 5), driver position
-  and crew stations (PR 6, when hits need them), protection values per zone
-  (PR 3).
+- Left out of the spec on purpose, to be added when its PR needs it:
+  driver position and where each crewman sits (PR 6, when hits need them).
+- The recoil mount does not change how fast the gun fires: the loader is
+  always slower than the gun settling. What it changes is how well a miss
+  is corrected, and the turret ring. A heavier tank does not rock less yet.
 - All PR 1 numbers are first-pass game values. Expect them to move once
   trials exist.
 - The repo is `Jxstrr0/Hull-Down` (the plan said `HullDown`). The live site

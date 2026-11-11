@@ -1,17 +1,18 @@
 // The gunnery model: how a design finds, ranges, lays and loads, boiled down
 // to the few numbers a shot needs. The design office quotes from it and the
 // range shoots by it. Game-level abstractions, not engineering data.
-import { pactRounds, type PactRoundId, type RoundKind } from '../../data/ammo'
+import type { PactRoundId, RoundKind } from '../../data/ammo'
 import { CREW, type StationId } from '../../data/crew'
 import { CREWS, GUNNERY, type CrewId } from '../../data/gunnery'
 import {
-  COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS,
+  BARRELS, COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, STABILISERS,
 } from '../../data/parts'
 import { RANGE } from '../../data/range'
 import { TUNING } from '../../data/tuning'
 import { fatigueAfter, slowOf, stationsOf, tiringAt, workloadAt } from '../crew/stations'
 import { detExp } from '../det'
 import type { VehicleSpec } from '../vehicle/spec'
+import { gunRounds } from './mount'
 
 /** One kind of round, as the gun throws it. */
 export interface FireRound {
@@ -53,6 +54,8 @@ export interface Fire {
   ranging: { errorShare: number; minErrorM: number; nightFactor: number }
   /** Share of wind, tilt and wear left uncorrected. */
   uncorrected: number
+  /** Share of a misjudged range or wind still left after the crew sees a shot fall and corrects. */
+  missLeft: number
   /** Shooting from a moving tank. The mils already allow for the ride. */
   moving: { halts: boolean; acrossMil: number; upMil: number; extraS: number }
   night: { seeM: number; layFactor: number }
@@ -94,6 +97,8 @@ export function fireOf(spec: VehicleSpec): Fire {
   const loading = LOADING[spec.loading]
   // A halted tank rocks on its springs whatever they are; only a gun fired on the move feels the ride.
   const ride = stabiliser.halts ? 1 : G.ride[spec.runningGear.suspension]
+  // A long barrel whips as the tank moves, and is still swinging just after a halt.
+  const whip = BARRELS[spec.barrel].whip
   const L = G.loading
   const auto = loading.fixedRof !== null
   const stations = stationsOf(spec)
@@ -101,7 +106,7 @@ export function fireOf(spec: VehicleSpec): Fire {
     1 + (workloadAt(stations, station) - G.pace.referenceWorkload) * G.pace.perPoint
 
   return {
-    rounds: pactRounds(spec.gun).map(({ id, round }) => ({
+    rounds: gunRounds(spec).map(({ id, round }) => ({
       id,
       kind: round.kind,
       speedMs: round.speedMs,
@@ -112,10 +117,12 @@ export function fireOf(spec: VehicleSpec): Fire {
     layMil: sight.layMil,
     ranging: { errorShare: rangefinder.errorShare, minErrorM: rangefinder.minErrorM, nightFactor: rangefinder.nightFactor },
     uncorrected: computer.uncorrected,
+    // A gun that kicks the tank hard hides the fall of shot from the gunner.
+    missLeft: Math.min(1, RANGE.gunnery.correction * RECOILS[spec.recoil].rock),
     moving: {
       halts: stabiliser.halts,
-      acrossMil: stabiliser.acrossMil * ride,
-      upMil: stabiliser.upMil * ride,
+      acrossMil: stabiliser.acrossMil * ride * whip,
+      upMil: stabiliser.upMil * ride * whip,
       extraS: stabiliser.moveS,
     },
     night: { ...G.nightSights[fc.night] },

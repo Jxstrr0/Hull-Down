@@ -1,8 +1,7 @@
 // Proportions for the blueprint drawing. These only decide how the tank is
 // drawn. Nothing here feeds the simulation.
 export const DRAWING = {
-  /** Barrel length and drawn thickness, in calibres. */
-  barrelCalibres: 40,
+  /** Drawn thickness of the barrel, in calibres. Its length comes from the barrel fitted. */
   barrelThicknessCalibres: 1.5,
   /** Fume extractor: where along the barrel (from the turret), how long, how thick. */
   extractorAt: 0.45,

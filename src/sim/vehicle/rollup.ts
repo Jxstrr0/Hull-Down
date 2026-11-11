@@ -1,8 +1,8 @@
 // Adds up weight, space and cost from the spec, grouped by area of the tank.
 import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
 import {
-  APU, COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, HULLS, LOADING,
-  NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, SMOKE_LAUNCHERS, SPALL_LINER, STABILISERS, STOWAGE, SUSPENSIONS,
+  APU, BARRELS, COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, HULLS, LOADING,
+  NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, SMOKE_LAUNCHERS, SPALL_LINER, STABILISERS, STOWAGE, SUSPENSIONS,
   TRANSMISSIONS, TURRETS, type Part,
 } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
@@ -88,7 +88,12 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
   // Firepower: gun, loading, ammunition
   const readyRounds = Math.min(spec.ammo.rounds, loading.readyRounds)
   const stowedRounds = spec.ammo.rounds - readyRounds
-  add('firepower', gun)
+  // The gun is quoted with the standard barrel and mount; the fitted ones move its weight, room and cost.
+  const barrel = BARRELS[spec.barrel]
+  const recoil = RECOILS[spec.recoil]
+  massT.firepower += gun.massT * barrel.massFactor + recoil.extraMassT
+  volumeM3.firepower += gun.volumeM3 + recoil.extraVolumeM3
+  costKr.firepower += gun.costKr * barrel.costFactor + recoil.extraCostKr
   add('firepower', loading)
   add('firepower', stowage)
   massT.firepower += spec.ammo.rounds * gun.roundMassT + stowedRounds * stowage.massPerRoundT
