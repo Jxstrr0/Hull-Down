@@ -190,7 +190,9 @@ export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
       [r.mass, unit(u.tonnes, sheet.massT, 1)],
       [r.cost, money(sheet.unitCostKr)],
       [r.crew, String(sheet.crewCount)],
-      [r.width, fill(u.widthOfLimit, { n: fixed(sheet.geometry.widthM, 2), limit: fixed(limits.maxWidthM, 2) })],
+      [r.width, Number.isFinite(limits.maxWidthM)
+        ? fill(u.widthOfLimit, { n: fixed(sheet.geometry.widthM, 2), limit: fixed(limits.maxWidthM, 2) })
+        : fill(u.widthFree, { n: fixed(sheet.geometry.widthM, 2) })],
       [r.height, unit(u.metres, sheet.geometry.heightM, 2)],
     ]),
     group(D.groups.mobility, [

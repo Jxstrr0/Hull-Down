@@ -1,6 +1,9 @@
 // The design office, first version: pick parts, watch the weight bar move,
 // read the faults and jump to the part that fixes them.
 // The blueprint on top is drawn from the same spec, and tapping it opens a part.
+import { SANDBOX, SANDBOX_LIMIT_IDS } from '../data/sandbox'
+import { loadSandbox, saveSandbox } from '../persist/sandboxStore'
+import { sandboxLimits } from '../sim/vehicle/sandbox'
 import { officeSound } from '../audio/gameSound'
 import { changeCue } from '../audio/office'
 import type { KineticIssue, ShapedIssue } from '../data/ammo'
@@ -84,8 +87,13 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     removeItem: (key: string) => window.localStorage.removeItem(key),
   }
   const store = loadStore(storage)
+  // The sandbox: every part, no money, and a weight limit of the player's choosing. The career waits meanwhile.
+  const sandbox = loadSandbox(storage)
+  /** The limits the office works to: the sandbox's while it is on, the career's otherwise. */
+  const limitsNow = (career: Limits): Limits => (sandbox.on ? sandboxLimits(sandbox.limit) : career)
   let design = currentDesign(store)
   let spec: VehicleSpec = design.spec
+  limits = limitsNow(limits)
   let sheet: StatSheet = buildStatSheet(spec, limits)
   /** False once the browser has refused to keep a design. */
   let kept = true
@@ -233,7 +241,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
       commit(() => undefined)
     },
     tender: (tender) => {
-      limits = careerLimits(bureau.career())
+      limits = limitsNow(careerLimits(bureau.career()))
       marks = tender.marks
       sheet = buildStatSheet(spec, limits)
       drawTop()
@@ -357,14 +365,17 @@ export function renderDesignScreen(first: Tender): HTMLElement {
   }
 
   function drawTitle(): void {
-    projectLine.textContent = fill(O.project, { n: String(design.projectNo) })
+    const project = fill(O.project, { n: String(design.projectNo) })
+    projectLine.textContent = sandbox.on ? fill(O.sandbox.project, { project }) : project
     nameLine.textContent = spec.name || X.unnamed
   }
 
   function drawTop(): void {
     drawTitle()
     drawBlueprint()
-    const scale = limits.maxMassT * BAR_SCALE
+    const free = !Number.isFinite(limits.maxMassT)
+    const scale = free ? Math.max(SANDBOX.barT, sheet.massT) : limits.maxMassT * BAR_SCALE
+    limitMark.hidden = free
     AREAS.forEach((area, index) => {
       const segment = segments[index]
       if (segment) segment.style.width = `${fixed(Math.min(100, (sheet.rollup.massT[area] / scale) * 100), 2)}%`
@@ -372,9 +383,15 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     const spare = limits.maxMassT - sheet.massT
     const over = spare < 0
     bar.classList.toggle('wbar-over', over)
-    bar.setAttribute('aria-label', fill(O.weightBarLabel, { mass: fixed(sheet.massT, 1), limit: fixed(limits.maxMassT, 1) }))
-    barMass.textContent = fill(O.weightOf, { mass: fixed(sheet.massT, 1), limit: fixed(limits.maxMassT, 1) })
-    barSpare.textContent = fill(over ? O.weightOver : O.weightSpare, { n: fixed(Math.abs(spare), 1) })
+    if (free) {
+      bar.setAttribute('aria-label', fill(O.weightBarFree, { mass: fixed(sheet.massT, 1) }))
+      barMass.textContent = fill(O.weightFree, { mass: fixed(sheet.massT, 1) })
+      barSpare.textContent = O.weightNoLimit
+    } else {
+      bar.setAttribute('aria-label', fill(O.weightBarLabel, { mass: fixed(sheet.massT, 1), limit: fixed(limits.maxMassT, 1) }))
+      barMass.textContent = fill(O.weightOf, { mass: fixed(sheet.massT, 1), limit: fixed(limits.maxMassT, 1) })
+      barSpare.textContent = fill(over ? O.weightOver : O.weightSpare, { n: fixed(Math.abs(spare), 1) })
+    }
 
     const u = D.units
     chipCost.textContent = money(sheet.unitCostKr)
@@ -1067,7 +1084,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
   /** The first-contract guide, for the top of the page. Null after the first tender. */
   function drawGuide(): HTMLElement | null {
     const faults = sheet.issues.filter((issue) => issue.severity === 'error').length
-    const state = bureau.guide(spec, faults)
+    const state = sandbox.on ? null : bureau.guide(spec, faults)
     if (!state) return null
     return renderGuide(state, {
       hidden: guideHidden,
@@ -1091,6 +1108,44 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     })
   }
 
+  /** The sandbox switch and its weight limit, at the top of the bureau page. */
+  function drawSandbox(): HTMLElement {
+    const X = O.sandbox
+    const box = el('section', 'ctl')
+    box.dataset.key = 'sandbox'
+    box.append(el('h3', 'ctl-label', X.title), el('p', 'ctl-note', X.note))
+    const change = (next: () => void): void => {
+      next()
+      saveSandbox(storage, sandbox)
+      limits = limitsNow(careerLimits(bureau.career()))
+      commit(() => undefined)
+    }
+    const toggle = optionButton('sandbox-switch', sandbox.on, X.switch, undefined)
+    toggle.querySelector('.opt-tag')?.remove()
+    toggle.querySelector('.opt-head')?.append(el('span', sandbox.on ? 'opt-tag' : 'opt-tag opt-tag-off', sandbox.on ? X.on : X.off))
+    toggle.setAttribute('role', 'switch')
+    toggle.addEventListener('click', () => change(() => { sandbox.on = !sandbox.on }))
+    box.append(toggle)
+    if (!sandbox.on) return box
+    box.append(el('h3', 'ctl-label', X.limitLabel), el('p', 'ctl-note', X.limitNote))
+    const group = el('div', 'opts')
+    group.setAttribute('role', 'radiogroup')
+    group.setAttribute('aria-label', X.limitLabel)
+    for (const id of SANDBOX_LIMIT_IDS) {
+      const pact = SANDBOX.limits[id]
+      const text = X.limits[id]
+      const name = pact ? fill(text.name, { n: fixed(pact.maxMassT, 0) }) : text.name
+      const button = optionButton(`sandbox-limit:${id}`, sandbox.limit === id, { name, note: text.note }, undefined)
+      const chosen = button.querySelector('.opt-tag')
+      if (chosen) chosen.textContent = X.chosen
+      button.setAttribute('role', 'radio')
+      button.addEventListener('click', () => change(() => { sandbox.limit = id }))
+      group.append(button)
+    }
+    box.append(group)
+    return box
+  }
+
   function drawPanel(): void {
     const scroll = panel.scrollTop
     const active = document.activeElement
@@ -1103,7 +1158,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
     else if (tab === 'faults') parts.push(drawFaults())
     else if (tab === 'designs') parts.push(drawDesigns())
     else if (tab === 'trials') parts.push(drawTrials())
-    else if (tab === 'bureau') parts.push(bureau.draw())
+    else if (tab === 'bureau') parts.push(drawSandbox(), sandbox.on ? el('p', 'ctl-note', O.sandbox.waits) : bureau.draw())
     else if (tab === 'saves') parts.push(saves.draw())
     else if (tab === 'armour') {
       parts.push(renderArmourTab({
@@ -1165,7 +1220,7 @@ export function renderDesignScreen(first: Tender): HTMLElement {
 
   // A saved career may be on a later tender than the first.
   const now = tenderOf(bureau.career())
-  limits = careerLimits(bureau.career())
+  limits = limitsNow(careerLimits(bureau.career()))
   marks = now.marks
   sheet = buildStatSheet(spec, limits)
   drawTop()
