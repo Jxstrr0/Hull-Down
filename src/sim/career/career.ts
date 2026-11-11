@@ -13,6 +13,7 @@ import { buildStatSheet } from '../vehicle/stats'
 import { rivalBid } from './rival'
 import { decide, scoreBid, trialBid, type BidScore, type Trialled } from './score'
 import { fieldReport, serviceUnitCostKr, type FieldReport } from './service'
+import { askMeasure, fixedPartsChanged, massCeilingT, type Upgrade, type UpgradeAsk } from './upgrade'
 
 export const CAREER_FORMAT = 1
 
@@ -79,6 +80,10 @@ export interface Adopted {
   production: Production | null
   /** Years of service the army has reported on. */
   years: number
+  /** The upgrade contract the army has open on it, if any. */
+  contract: UpgradeAsk | null
+  /** Packages fitted, oldest first. */
+  upgrades: Upgrade[]
 }
 
 // Names the roll that gives each tender its own luck.
@@ -260,7 +265,7 @@ export function enterTender(career: Career, prototypeNo: number): Career {
   const adopted = designation
     ? [...career.adopted, {
       designation, name: prototype.spec.name, year: tender.year, tender: tenderIdOf(career), spec: structuredClone(prototype.spec),
-      production: null, years: 0,
+      production: null, years: 0, contract: null, upgrades: [],
     }]
     : career.adopted
   return { ...career, reputation, adopted, outcome: { entered: prototypeNo, bids, place, won, designation, standing } }
@@ -322,7 +327,28 @@ export function serviceYearsLeft(tank: Adopted): number {
 export function reportOf(career: Career, index: number, year: number): FieldReport | null {
   const tank = career.adopted[index]
   if (!tank?.production || year < 1 || year > tank.years) return null
-  return fieldReport(tank.spec, TENDERS[tank.tender], tank.production, year, serviceSeed(career, index))
+  return fieldReport(serviceSpec(tank, year), TENDERS[tank.tender], tank.production, year, serviceSeed(career, index))
+}
+
+/**
+ * The tank as the army has it in a year of service: the design as adopted,
+ * or the last package fitted before that year. With no year, as it is now.
+ */
+export function serviceSpec(tank: Adopted, year = Infinity): VehicleSpec {
+  let spec = tank.spec
+  for (const upgrade of tank.upgrades) if (upgrade.afterYear < year) spec = upgrade.spec
+  return spec
+}
+
+/** What the army calls the tank now: its designation and the letter of its last package. */
+export function serviceDesignation(tank: Adopted): string {
+  const last = tank.upgrades[tank.upgrades.length - 1]
+  return last ? `${tank.designation}${last.letter}` : tank.designation
+}
+
+/** Packages the tank can still take. */
+export function upgradesLeft(tank: Adopted): number {
+  return Math.max(0, SERVICE.upgrade.letters.length - tank.upgrades.length)
 }
 
 /**
@@ -334,8 +360,58 @@ export function serviceYear(career: Career, index: number): Career {
   if (!tank.production) throw new Error('production has not started')
   if (serviceYearsLeft(tank) === 0) throw new Error('the tank has had all its years')
   const year = tank.years + 1
-  const report = fieldReport(tank.spec, TENDERS[tank.tender], tank.production, year, serviceSeed(career, index))
+  const report = fieldReport(serviceSpec(tank), TENDERS[tank.tender], tank.production, year, serviceSeed(career, index))
   const { reputation } = withStanding(career, report.standing)
-  const adopted = career.adopted.map((each, at) => (at === index ? { ...each, years: year } : each))
+  // The army opens a contract on what the year showed, if it has none open and the tank has service and room left.
+  // A contract still open when the tank's service ends lapses.
+  const last = year >= SERVICE.years
+  const opens = !tank.contract && !last && upgradesLeft(tank) > 0 ? report.ask : null
+  const adopted = career.adopted.map((each, at) => (at === index ? { ...each, years: year, contract: last ? null : opens ?? each.contract } : each))
   return { ...career, reputation, budgetKr: career.budgetKr + report.royaltyKr, adopted }
+}
+
+/** What working up a package of this design costs the bureau. */
+export function upgradeCostKr(tank: Adopted, spec: VehicleSpec): number {
+  const unitKr = buildStatSheet(spec, TENDERS[tank.tender].limits).unitCostKr
+  return Math.round((unitKr * SERVICE.upgrade.workUnits) / 1000) * 1000
+}
+
+export const UPGRADE_BLOCKS = ['none', 'illegal', 'same', 'fixed', 'mass', 'power', 'ask', 'noMoney'] as const
+/** Why a design cannot be fitted as a package. */
+export type UpgradeBlock = (typeof UPGRADE_BLOCKS)[number]
+
+/** What stops this design being fitted to an adopted tank as its next package, or null when nothing does. */
+export function upgradeBlock(career: Career, index: number, spec: VehicleSpec): UpgradeBlock | null {
+  const tank = career.adopted[index]
+  if (!tank?.contract || upgradesLeft(tank) === 0) return 'none'
+  const limits = TENDERS[tank.tender].limits
+  const now = serviceSpec(tank)
+  if (sameTank(now, spec)) return 'same'
+  if (fixedPartsChanged(tank.spec, spec).length > 0) return 'fixed'
+  const sheet = buildStatSheet(spec, limits)
+  if (sheet.massT > massCeilingT(buildStatSheet(tank.spec, limits))) return 'mass'
+  if (sheet.growth.coolingHp < 0) return 'power'
+  if (sheet.issues.some((issue) => issue.severity === 'error')) return 'illegal'
+  if (!askMeasure(tank.contract, buildStatSheet(now, limits), sheet).met) return 'ask'
+  if (upgradeCostKr(tank, spec) > career.budgetKr) return 'noMoney'
+  return null
+}
+
+/**
+ * Fits a design to an adopted tank as its next package: the bureau pays to
+ * work it up, the ministry pays its fee, and the army's reports from the
+ * next year on are of the upgraded tank. Throws when it cannot be fitted:
+ * ask `upgradeBlock` first.
+ */
+export function fitUpgrade(career: Career, index: number, spec: VehicleSpec): Career {
+  const block = upgradeBlock(career, index, spec)
+  if (block) throw new Error(`package cannot be fitted: ${block}`)
+  const tank = adoptedAt(career, index)
+  const U = SERVICE.upgrade
+  const upgrade: Upgrade = {
+    letter: U.letters[tank.upgrades.length]!, afterYear: tank.years, spec: structuredClone(spec), ask: { ...tank.contract! },
+  }
+  const { reputation } = withStanding(career, { army: U.standing.army, ministry: U.standing.ministry, pact: 0 })
+  const adopted = career.adopted.map((each, at) => (at === index ? { ...each, contract: null, upgrades: [...each.upgrades, upgrade] } : each))
+  return { ...career, reputation, budgetKr: career.budgetKr - upgradeCostKr(tank, spec) + U.feeKr, adopted }
 }

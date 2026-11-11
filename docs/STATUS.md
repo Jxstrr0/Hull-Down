@@ -4,6 +4,11 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Upgrade contract numbers** (0.10.2.0): my picks, yours to change. A
+  package costs one tank's price to work up, pays 4,000,000 kr, gives army
+  +3 and ministry +1. It must add 4 reliability points, or 10% on the plate
+  named, or cut the first shot 10%, or take 4 off workload, or add 10
+  comfort. Three packages a tank (A, B, C).
 - **Try a tank in service** (0.10.1.0): win the tender (a Type 1 with
   the image-intensifier night sight and the laser rangefinder usually
   does), then on the Bureau tab set production and read the six field
@@ -205,6 +210,15 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.10.2.0, PR 10c: upgrade contract rules (no screen yet).** After a
+  year of service the army can open one upgrade contract on a tank, on what
+  the year showed: breakdowns, a plate that was holed, a slow first shot,
+  crew workload or comfort. A package must keep the hull, turret, gun,
+  loading, suspension and cooling, stay inside the weight and cooling the
+  design had to spare, and move the figure the army asked about. Fitting it
+  costs one tank's price, pays a fee, lifts army standing and adds a letter
+  (Model 81A). Reports from the next year are of the upgraded tank. Up to
+  three packages a tank. Rules and saves only; the screen is PR 10d.
 - **0.10.1.0, PR 10b: production and field reports on the Bureau tab.**
   A tank the army adopts gets its own section: pick the build rate and
   the quality, see what they do to cost, trouble and standing, start
