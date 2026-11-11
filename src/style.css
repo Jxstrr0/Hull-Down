@@ -1083,6 +1083,7 @@ body {
 .bu-value { margin: 0; font-family: var(--font-mono); font-size: 0.9rem; text-align: right; }
 .bu-busy { margin: 0; font-style: italic; color: var(--ink-dim); }
 .bu-board { margin: 0; font-weight: 600; }
+.bu-variant { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--grid, #c9d0c8); display: grid; gap: 6px; justify-items: start; }
 .bu-remarks, .bu-protos, .bu-order, .bu-changes { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--grid); }
 .bu-remark, .bu-proto, .bu-bid, .bu-change { padding: 8px 0; border-bottom: 1px solid var(--grid); }
 .bu-remark, .bu-proto { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }

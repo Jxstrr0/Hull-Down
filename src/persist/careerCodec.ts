@@ -149,7 +149,7 @@ function cleanSales(raw: unknown): Sale[] {
     const designation = cleanName(item.designation)
     const tanks = whole(item.tanks, 0, 100_000, 0)
     if (!customer || !designation || tanks === 0 || kept.some((sale) => sale.customer === customer)) continue
-    kept.push({ customer, designation, tanks, feeKr: whole(item.feeKr, 0, 1e12, 0) })
+    kept.push({ customer, designation, tanks, feeKr: whole(item.feeKr, 0, 1e12, 0), variant: isObject(item.variant) ? cleanSpec(item.variant) : null })
   }
   return kept
 }

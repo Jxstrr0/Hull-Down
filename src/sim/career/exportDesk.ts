@@ -7,7 +7,9 @@ import { buildStatSheet } from '../vehicle/stats'
 import type { StatSheet } from '../vehicle/stats'
 import type { VehicleSpec } from '../vehicle/spec'
 import { partKey, unresearched } from '../vehicle/tech'
-import { serviceDesignation, serviceSpec, withStanding, type Career, type Sale } from './career'
+import { sameTank, serviceDesignation, serviceSpec, upgradeLimits, withStanding, type Adopted, type Career, type Sale } from './career'
+import type { FixedPart } from '../../data/service'
+import { fixedPartsChanged } from './upgrade'
 
 /** True once the bureau may look for customers abroad. */
 export function exportOpen(career: Career): boolean {
@@ -98,7 +100,67 @@ export function sell(career: Career, index: number, customer: CustomerId): Caree
   const tank = career.adopted[index]!
   const unitKr = buildStatSheet(serviceSpec(tank), TENDERS[tank.tender].limits).unitCostKr
   const tanks = CUSTOMERS[customer].tanks
-  const sale: Sale = { customer, designation: serviceDesignation(tank), tanks, feeKr: saleFeeKr(tanks, unitKr) }
+  const sale: Sale = { customer, designation: serviceDesignation(tank), tanks, feeKr: saleFeeKr(tanks, unitKr), variant: null }
   const { reputation } = withStanding(career, { army: 0, ministry: EXPORT_DESK.saleMinistry, pact: 0 })
   return { ...career, reputation, budgetKr: career.budgetKr + sale.feeKr, sales: [...career.sales, sale] }
+}
+
+/** The parts of the tank as adopted that a version for a customer may not change: the factory builds it on the same line. */
+export function variantFixed(tank: Adopted, spec: VehicleSpec): FixedPart[] {
+  return fixedPartsChanged(tank.spec, spec).filter((part) => !EXPORT_DESK.variantFree.includes(part))
+}
+
+/** What a version built for a customer is called. */
+export function variantDesignation(tank: Adopted, customer: CustomerId): string {
+  return `${serviceDesignation(tank)}${CUSTOMERS[customer].mark}`
+}
+
+/** What working up a version of this design costs the bureau. */
+export function variantCostKr(career: Career, tank: Adopted, spec: VehicleSpec): number {
+  const unitKr = buildStatSheet(spec, upgradeLimits(career, tank)).unitCostKr
+  return Math.round((unitKr * EXPORT_DESK.variantWorkUnits) / 1000) * 1000
+}
+
+export const VARIANT_BLOCKS = ['closed', 'sold', 'noLine', 'same', 'fixed', 'illegal', 'needs', 'secret', 'standing', 'noMoney'] as const
+/** Why a design cannot be sold to a customer as a version of a tank in service. */
+export type VariantBlock = (typeof VARIANT_BLOCKS)[number]
+
+/**
+ * What stops a design being sold to a customer as a version of a tank in
+ * service, or null when nothing does. It is held to the tank's own tender,
+ * with the technology the bureau has today.
+ */
+export function variantBlock(career: Career, index: number, customer: CustomerId, spec: VehicleSpec): VariantBlock | null {
+  const tank = career.adopted[index]
+  if (!exportOpen(career) || !tank) return 'closed'
+  if (career.sales.some((sale) => sale.customer === customer)) return 'sold'
+  if (!tank.production) return 'noLine'
+  if (sameTank(serviceSpec(tank), spec)) return 'same'
+  if (variantFixed(tank, spec).length > 0) return 'fixed'
+  const sheet = buildStatSheet(spec, upgradeLimits(career, tank))
+  if (sheet.issues.some((issue) => issue.severity === 'error')) return 'illegal'
+  if (customerChecks(customer, spec, sheet).some((check) => !check.met)) return 'needs'
+  if (secrets(spec).length > 0) return 'secret'
+  if (career.reputation.ministry < EXPORT_DESK.ministryStanding) return 'standing'
+  if (variantCostKr(career, tank, spec) > career.budgetKr) return 'noMoney'
+  return null
+}
+
+/**
+ * Sells a design to a customer as a version of a tank in service: the
+ * bureau pays to work it up, the ministry signs the licence and the fee on
+ * the order goes into the budget. Throws when it cannot be sold: ask
+ * `variantBlock` first.
+ */
+export function sellVariant(career: Career, index: number, customer: CustomerId, spec: VehicleSpec): Career {
+  const block = variantBlock(career, index, customer, spec)
+  if (block) throw new Error(`version cannot be sold: ${block}`)
+  const tank = career.adopted[index]!
+  const unitKr = buildStatSheet(spec, upgradeLimits(career, tank)).unitCostKr
+  const tanks = CUSTOMERS[customer].tanks
+  const sale: Sale = {
+    customer, designation: variantDesignation(tank, customer), tanks, feeKr: saleFeeKr(tanks, unitKr), variant: structuredClone(spec),
+  }
+  const { reputation } = withStanding(career, { army: 0, ministry: EXPORT_DESK.saleMinistry, pact: 0 })
+  return { ...career, reputation, budgetKr: career.budgetKr - variantCostKr(career, tank, spec) + sale.feeKr, sales: [...career.sales, sale] }
 }

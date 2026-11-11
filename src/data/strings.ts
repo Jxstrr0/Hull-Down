@@ -1473,7 +1473,7 @@ export const STRINGS = {
     },
     exportDesk: {
       heading: 'Export desk',
-      about: 'With a tank in army service, the bureau may look for customers abroad. Each asks something of the tank that the army did not, and orders once. The ministry must license every sale, and the bureau\'s fee goes into its budget. Versions built for a customer come later.',
+      about: 'With a tank in army service, the bureau may look for customers abroad. Each asks something of the tank that the army did not, and orders once. The ministry must license every sale, and the bureau\'s fee goes into its budget. A tank that falls short can be reworked on the drawing board and sold as a version built for the customer.',
       customers: {
         dahrat: { name: 'Emirate of Dahrat', line: 'Desert: heat, dust and long distances between fuel dumps.' },
         ilandu: { name: 'Republic of Ilandu', line: 'Jungle: soft ground, light bridges and a small budget.' },
@@ -1505,6 +1505,19 @@ export const STRINGS = {
       noLine: '{tank}: production has not started, so there is nothing to sell.',
       secret: 'The ministry will not license the {tank}. This may not leave the country: {names}.',
       standing: 'The ministry will not sign a licence: its opinion of the bureau is {have}, and it wants {want}.',
+      load: 'Put the {tank} on the drawing board',
+      loadConfirm: 'Tap again: this replaces the design on the board',
+      board: 'On the drawing board, as a version of the {tank}:',
+      boardSuits: 'It suits this customer.',
+      boardShort: 'It falls short on {n} of {of}.',
+      variantCost: 'Work-up {cost}, fee {fee}.',
+      sellVariant: 'Sell it as the {designation}',
+      variantBlocks: {
+        fixed: 'A version is built on the same line. It cannot change: {parts}.',
+        illegal: 'The design has faults. Clear the faults first.',
+        noMoney: 'The bureau cannot pay for the work-up ({cost}).',
+      },
+      soldVariant: 'Ordered: {n} of the {tank}, a version built for the customer. Fee paid: {fee}.',
     },
     research: {
       heading: 'Research',

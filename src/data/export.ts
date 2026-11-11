@@ -27,6 +27,8 @@ export interface Customer {
   needs: Partial<Record<NeedId, number>>
   /** Tanks the customer would order. */
   tanks: number
+  /** What a version built for the customer adds to the tank's designation. */
+  mark: string
 }
 
 export const CUSTOMER_IDS = ['dahrat', 'ilandu', 'tolmar'] as const
@@ -34,11 +36,11 @@ export type CustomerId = (typeof CUSTOMER_IDS)[number]
 
 export const CUSTOMERS: Record<CustomerId, Customer> = {
   // Desert: heat and long distances between fuel dumps.
-  dahrat: { climate: 'desert', needs: { heavyCooling: 1, rangeKm: 450, unitCostKr: 2_600_000 }, tanks: 120 },
+  dahrat: { climate: 'desert', needs: { heavyCooling: 1, rangeKm: 450, unitCostKr: 2_600_000 }, tanks: 120, mark: '-D' },
   // Jungle: soft ground, light bridges and a small budget.
-  ilandu: { climate: 'jungle', needs: { maxMassT: 38, groundPressure: 0.82, unitCostKr: 2_000_000 }, tanks: 60 },
+  ilandu: { climate: 'jungle', needs: { maxMassT: 38, groundPressure: 0.82, unitCostKr: 2_000_000 }, tanks: 60, mark: '-J' },
   // Mountain: steep roads, and firing down from the crest of one.
-  tolmar: { climate: 'mountain', needs: { powerToWeight: 20, depressionDeg: 7, unitCostKr: 2_800_000 }, tanks: 80 },
+  tolmar: { climate: 'mountain', needs: { powerToWeight: 20, depressionDeg: 7, unitCostKr: 2_800_000 }, tanks: 80, mark: '-M' },
 }
 
 export const EXPORT_DESK = {
@@ -50,4 +52,8 @@ export const EXPORT_DESK = {
   ministryStanding: 40,
   /** What the ministry thinks of the hard currency a sale brings in, in standing. */
   saleMinistry: 3,
+  /** Working up a version for a customer and proving it costs this many of the tank. */
+  variantWorkUnits: 1,
+  /** What a version may change that a package for a tank already built may not: it is built new. */
+  variantFree: ['powerpack.cooling'] as readonly string[],
 } as const

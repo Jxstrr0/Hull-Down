@@ -83,6 +83,8 @@ export interface Sale {
   tanks: number
   /** The bureau's fee, paid when the order was signed. */
   feeKr: number
+  /** The version built for the customer. Null when it took the tank as the army has it. */
+  variant: VehicleSpec | null
 }
 
 /** A tank of the bureau's in the army's hands. */
@@ -202,7 +204,7 @@ export function research(career: Career, id: ResearchId): Career {
 }
 
 /** True when two specs build the same tank. The name is paint: it does not count. */
-function sameTank(a: VehicleSpec, b: VehicleSpec): boolean {
+export function sameTank(a: VehicleSpec, b: VehicleSpec): boolean {
   return JSON.stringify({ ...a, name: '' }) === JSON.stringify({ ...b, name: '' })
 }
 

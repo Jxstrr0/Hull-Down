@@ -9,11 +9,11 @@ import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/
 import { STRINGS, fill } from '../data/strings'
 import { SCORE_AXES, SCORING, TENDER_IDS, TENDER_RULES, type Tender } from '../data/tenders'
 import { briefing, type Remark } from '../sim/career/advisor'
-import { customerChecks, exportOpen, saleBlock, saleFeeKr, secrets, sell } from '../sim/career/exportDesk'
+import { customerChecks, exportOpen, saleBlock, saleFeeKr, secrets, sell, sellVariant, variantBlock, variantCostKr, variantDesignation, variantFixed } from '../sim/career/exportDesk'
 import { intelFiles } from '../sim/career/intel'
 import {
   buildBlock, buildPrototype, enterTender, research, researchBlock, researchOpen, fitUpgrade, newCareer, nextTender, tendersLeft, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
-  serviceSpec, serviceYear, serviceYearsLeft, startProduction, tenderIdOf, tenderOf, upgradeBlock, upgradesLeft, type Adopted,
+  sameTank, serviceSpec, serviceYear, serviceYearsLeft, startProduction, tenderIdOf, tenderOf, upgradeBlock, upgradeLimits, upgradesLeft, type Adopted,
   type Career,
 } from '../sim/career/career'
 import type { BidScore, Trialled } from '../sim/career/score'
@@ -681,7 +681,7 @@ export function createBureau(options: BureauOptions): Bureau {
   }
 
   /** The customers abroad, what each asks, and how the bureau's tanks in service measure up. */
-  function drawExport(): HTMLElement | null {
+  function drawExport(board: VehicleSpec): HTMLElement | null {
     if (!exportOpen(career)) return null
     const X = C.exportDesk
     const box = el('section', 'bu')
@@ -691,6 +691,26 @@ export function createBureau(options: BureauOptions): Bureau {
       const spec = serviceSpec(tank)
       return { index, name: serviceDesignation(tank), spec, sheet: buildStatSheet(spec, TENDERS[tank.tender].limits) }
     }).reverse()
+    if (career.sales.length < CUSTOMER_IDS.length) {
+      const acts = el('div', 'sv-actions')
+      for (const tank of tanks) {
+        if (!career.adopted[tank.index]!.production || sameTank(tank.spec, board)) continue
+        const key = `export:load:${tank.index}`
+        const on = upgradeArmed === key
+        const load = button(key, on ? X.loadConfirm : fill(X.load, { tank: tank.name }), on ? 'btn btn-armed' : 'btn')
+        load.addEventListener('click', () => {
+          if (upgradeArmed !== key) {
+            upgradeArmed = key
+            options.redraw()
+            return
+          }
+          upgradeArmed = ''
+          options.load(serviceSpec(career.adopted[tank.index]!))
+        })
+        acts.append(load)
+      }
+      if (acts.childElementCount > 0) box.append(acts)
+    }
     for (const id of CUSTOMER_IDS) {
       const customer = CUSTOMERS[id]
       const words = X.customers[id]
@@ -703,7 +723,7 @@ export function createBureau(options: BureauOptions): Bureau {
       const order = career.sales.find((sale) => sale.customer === id)
       if (order) {
         box.append(el('p', 'bu-stamp', X.licensed))
-        box.append(el('p', 'bu-proto-sum', fill(X.sold, { n: String(order.tanks), tank: order.designation, fee: money(order.feeKr) })))
+        box.append(el('p', 'bu-proto-sum', fill(order.variant ? X.soldVariant : X.sold, { n: String(order.tanks), tank: order.designation, fee: money(order.feeKr) })))
         continue
       }
       const list = el('ul', 'sv-lines')
@@ -744,6 +764,55 @@ export function createBureau(options: BureauOptions): Bureau {
         list.append(item)
       }
       box.append(list)
+      // The design on the board, as a version of the newest tank it could be built as.
+      for (const tank of tanks) {
+        const adopted = career.adopted[tank.index]!
+        const block = variantBlock(career, tank.index, id, board)
+        if (block === 'closed' || block === 'sold' || block === 'noLine' || block === 'same') continue
+        const fixed = variantFixed(adopted, board)
+        if (fixed.length > 0 && tanks.some((other) => other !== tank && variantFixed(career.adopted[other.index]!, board).length === 0)) continue
+        const sheet = buildStatSheet(board, upgradeLimits(career, adopted))
+        const checks = customerChecks(id, board, sheet)
+        const missed = checks.filter((check) => !check.met)
+        const part = el('div', 'bu-variant')
+        part.append(el('p', 'bu-board', fill(X.board, { tank: tank.name })))
+        if (block === 'fixed') {
+          const parts = fixed.map((each) => STRINGS.controls[each].label.toLowerCase()).join(', ')
+          part.append(el('p', 'ctl-issue', fill(X.variantBlocks.fixed, { parts })))
+        } else if (block === 'illegal') part.append(el('p', 'ctl-issue', X.variantBlocks.illegal))
+        else {
+          part.append(el('p', 'ctl-note', missed.length === 0 ? X.boardSuits : fill(X.boardShort, { n: String(missed.length), of: String(checks.length) })))
+          if (missed.length > 0) {
+            const why = el('ul', 'sv-lines')
+            for (const check of missed) {
+              const line = NEED_KINDS[check.need] === 'fitted'
+                ? fill(X.lacks, { need: X.needs[check.need] })
+                : fill(X.has, { need: X.needs[check.need], have: needText(check.need, check.have) })
+              why.append(el('li', 'sv-line', line))
+            }
+            part.append(why)
+          }
+          const cost = money(variantCostKr(career, adopted, board))
+          if (block === 'secret') {
+            const names = secrets(board).map((project) => C.research.projects[project].name).join(', ')
+            part.append(el('p', 'ctl-issue', fill(X.secret, { tank: variantDesignation(adopted, id), names })))
+          } else if (block === 'standing') {
+            part.append(el('p', 'ctl-issue', fill(X.standing, { have: String(career.reputation.ministry), want: String(EXPORT_DESK.ministryStanding) })))
+          } else if (block === 'noMoney') part.append(el('p', 'ctl-issue', fill(X.variantBlocks.noMoney, { cost })))
+          else if (block === null) {
+            part.append(el('p', 'bu-proto-sum', fill(X.variantCost, { cost, fee: money(saleFeeKr(customer.tanks, sheet.unitCostKr)) })))
+            const go = button(`bureau:variant:${id}:${tank.index}`, fill(X.sellVariant, { designation: variantDesignation(adopted, id) }), 'btn btn-go')
+            go.addEventListener('click', () => {
+              const now = options.spec()
+              if (variantBlock(career, tank.index, id, now) === null) keep(sellVariant(career, tank.index, id, now))
+              options.redraw()
+            })
+            part.append(go)
+          }
+        }
+        box.append(part)
+        break
+      }
     }
     return box
   }
@@ -822,7 +891,7 @@ export function createBureau(options: BureauOptions): Bureau {
     const decision = drawDecision()
     if (decision) box.append(decision)
     box.append(...drawService(spec))
-    const desk = drawExport()
+    const desk = drawExport(spec)
     if (desk) box.append(desk)
     box.append(drawTender(), drawIntel(), drawBureau())
     const lab = drawResearch()
