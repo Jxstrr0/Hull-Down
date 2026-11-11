@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { RANGE } from '../src/data/range'
 import { RENDER } from '../src/data/render'
+import { STRINGS } from '../src/data/strings'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
+import { VIEWS, shotAt } from '../src/render/director'
 import { courseOutline, coursePath, mudPatch, pointAt, poseAt, stripPath, trenchPit } from '../src/render/path'
 import { frameAt, lengthS, type RunRecord } from '../src/render/playback'
 import { tankShapeOf } from '../src/render/tankShape'
@@ -113,6 +115,93 @@ describe('the ground of the course', () => {
     const top = outline.filter((point) => point.y > -RENDER.course.trenchDepthM - 0.01)
     expect(top.at(-1)!.y).toBeCloseTo(last.y, 6)
     expect(top.at(-1)!.x).toBeCloseTo(last.x + RENDER.course.leadM, 6)
+  })
+})
+
+describe('the camera', () => {
+  const course = coursePath()
+  const strip = stripPath()
+  const layout = courseLayout()
+  const foot = 4
+  const seats = RENDER.camera.seats
+
+  it('has a name on screen for every view', () => {
+    for (const view of VIEWS) expect(STRINGS.range.view.camera[view]).toBeTruthy()
+  })
+
+  it('travels with the tank in the side, behind and above views, on both ranges', () => {
+    for (const view of ['side', 'behind', 'above'] as const) {
+      for (const [test, path, s] of [['acceleration', strip, 400], ['obstacles', course, 60]] as const) {
+        const pose = poseAt(path, s, foot)
+        const shot = shotAt(test, view, path, pose, s)
+        expect(shot.from).toEqual({ x: pose.x - seats[view].backM, y: pose.y + seats[view].upM, z: seats[view].sideM })
+        expect(shot.to).toEqual({ x: pose.x, y: pose.y + RENDER.camera.lookUpM, z: 0 })
+      }
+    }
+  })
+
+  it('always looks at the tank', () => {
+    for (const view of VIEWS) {
+      for (let s = 0; s <= course.lengthM; s += 3) {
+        const pose = poseAt(course, s, foot)
+        expect(shotAt('obstacles', view, course, pose, s).to).toEqual({ x: pose.x, y: pose.y + RENDER.camera.lookUpM, z: 0 })
+      }
+    }
+  })
+
+  it('cuts on the strip where the table says, and nowhere else', () => {
+    const cuts = RENDER.camera.director.acceleration
+    const seatAt = (s: number): string => {
+      const pose = poseAt(strip, s, foot)
+      const from = shotAt('acceleration', 'director', strip, pose, s).from
+      return Object.entries(seats).find(([, seat]) => from.x === pose.x - seat.backM && from.y === seat.upM && from.z === seat.sideM)![0]
+    }
+    expect(cuts[0]!.fromM).toBe(0)
+    for (const [index, cut] of cuts.entries()) {
+      expect(seatAt(cut.fromM)).toBe(cut.seat)
+      const next = cuts[index + 1]
+      expect(seatAt((next ? next.fromM : RANGE.acceleration.stripM) - 1)).toBe(cut.seat)
+    }
+  })
+
+  it('stands still beside each obstacle while the tank goes over it', () => {
+    const stands: number[] = []
+    for (const span of layout.filter((each) => each.id !== 'flat')) {
+      const at = (s: number) => shotAt('obstacles', 'director', course, poseAt(course, s, foot), s).from
+      const before = at(span.fromM - 2)
+      expect(at(span.fromM)).toEqual(before)
+      expect(at(span.toM)).toEqual(before)
+      expect(at(span.toM + RENDER.camera.director.obstacles.holdM)).toEqual(before)
+      // Beside the obstacle, off the lane and above the ground.
+      expect(before.x).toBeGreaterThan(pointAt(course, span.fromM).x)
+      expect(before.x).toBeLessThan(pointAt(course, span.toM).x)
+      expect(before.z).toBeGreaterThan(RENDER.course.widthM / 2)
+      expect(before.y).toBeGreaterThan(pointAt(course, (span.fromM + span.toM) / 2).y)
+      stands.push(before.x)
+    }
+    // Four obstacles, four different places to stand.
+    expect(new Set(stands).size).toBe(4)
+  })
+
+  it('hands the run-out to a camera that travels', () => {
+    const s = course.lengthM - 1
+    const pose = poseAt(course, s, foot)
+    const seat = seats[RENDER.camera.director.obstacles.after]
+    expect(shotAt('obstacles', 'director', course, pose, s).from).toEqual({ x: pose.x - seat.backM, y: pose.y + seat.upM, z: seat.sideM })
+  })
+
+  it('never sits on top of what it looks at', () => {
+    for (const view of VIEWS) {
+      for (const [test, path] of [['acceleration', strip], ['obstacles', course]] as const) {
+        for (let s = 0; s <= path.lengthM; s += 7) {
+          const shot = shotAt(test, view, path, poseAt(path, s, foot), s)
+          const gap = Math.hypot(shot.from.x - shot.to.x, shot.from.y - shot.to.y, shot.from.z - shot.to.z)
+          expect(gap).toBeGreaterThan(5)
+          // Straight down has no "up" to hold the picture level.
+          expect(Math.hypot(shot.from.x - shot.to.x, shot.from.z - shot.to.z)).toBeGreaterThan(1)
+        }
+      }
+    }
   })
 })
 

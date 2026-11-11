@@ -764,7 +764,12 @@ body {
   color: #1f3558;
   text-align: center;
 }
-.rg-view-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; }
+.rg-view-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px 0; }
+.rg-view-toggle { flex: none; min-width: 76px; }
+.rg-view-scrub { flex: 1; min-width: 0; height: 44px; accent-color: var(--ink); }
+.rg-view-views { margin: 6px 8px 8px; }
+.rg-view-views .seg-item { padding: 0 4px; }
+.rg-view-views .seg-item:disabled, .rg-view-toggle:disabled { opacity: 0.5; }
 .rg-view-readout { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 0.82rem; }
 .rg-run { fill: var(--grid); }
 .rg-leg { fill: none; stroke: var(--ink-dim); stroke-width: 1; }

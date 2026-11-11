@@ -9,11 +9,12 @@ import {
 import { RANGE } from '../data/range'
 import { RENDER } from '../data/render'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
+import { shotAt, type RangeTest, type ViewId } from './director'
 import { courseOutline, coursePath, mudPatch, trenchPit, poseAt, stripPath, type Path, type Point } from './path'
-import { frameAt, type RunRecord } from './playback'
+import { frameAt, lengthS, type RunRecord } from './playback'
 import { tankShapeOf, type TankShape } from './tankShape'
 
-export type RangeTest = 'acceleration' | 'obstacles'
+export type { RangeTest, ViewId }
 
 export interface ViewFrame {
   /** Seconds into the run. */
@@ -23,21 +24,36 @@ export interface ViewFrame {
 }
 
 export interface RangeViewArgs {
-  /** The box the picture fills. It is resized with it. */
+  /** The box the picture fills. */
   host: HTMLElement
-  /** Words for a screen reader, in place of the picture. */
+  /** What a screen reader says the picture is. */
   label: string
   test: RangeTest
+  view: ViewId
   spec: VehicleSpec
   geometry: Geometry
   record: RunRecord
+  /** Called with every picture drawn. */
   onFrame(frame: ViewFrame): void
-  onEnd(): void
+  /** Called when the run starts playing, is paused, or reaches its end. */
+  onState(state: ViewState): void
+}
+
+export interface ViewState {
+  playing: boolean
+  /** True when the run has played to its end. */
+  ended: boolean
 }
 
 export interface RangeView {
-  /** Play the run again from the start. */
-  replay(): void
+  /** Seconds the run lasts. */
+  readonly lengthS: number
+  /** Play on from here, or from the start when the run has ended. */
+  play(): void
+  pause(): void
+  /** Show the run at this many seconds in. Playing carries on from there. */
+  seek(timeS: number): void
+  setView(view: ViewId): void
   /** Stop and give back everything the picture was holding. */
   dispose(): void
 }
@@ -187,7 +203,7 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   scene.add(tank)
 
   const cam = RENDER.camera
-  const seat = cam[args.test]
+  let view = args.view
   const camera = new PerspectiveCamera(cam.fovDeg, 1, cam.nearM, cam.farM)
 
   const canvas = renderer.domElement
@@ -209,9 +225,11 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     draw()
   })
 
+  const endS = lengthS(args.record)
   let timeS = 0
   let lastMs = 0
   let ticking = 0
+  let playing = false
   let disposed = false
 
   /** Put the tank and the camera where the run has them at `timeS`, and draw. */
@@ -220,11 +238,18 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     const pose = poseAt(path, frame.s, shape.footprintM)
     tank.position.set(pose.x, pose.y - frame.sinkM, 0)
     tank.rotation.z = pose.pitchRad
-    camera.position.set(pose.x - seat.backM, pose.y + seat.upM, seat.sideM)
-    camera.lookAt(pose.x, pose.y + cam.lookUpM, 0)
+    const shot = shotAt(args.test, view, path, pose, frame.s)
+    camera.position.set(shot.from.x, shot.from.y, shot.from.z)
+    camera.lookAt(shot.to.x, shot.to.y, shot.to.z)
     renderer.render(scene, camera)
     args.onFrame({ timeS, speedKmh: frame.vMs * 3.6, distanceM: frame.s })
     return frame.done
+  }
+
+  function stop(): void {
+    if (ticking !== 0) cancelAnimationFrame(ticking)
+    ticking = 0
+    playing = false
   }
 
   function tick(nowMs: number): void {
@@ -237,22 +262,47 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     }
     const passedS = lastMs === 0 ? 0 : Math.min((nowMs - lastMs) / 1000, RENDER.maxFrameS)
     lastMs = nowMs
-    timeS += passedS * RENDER.playRate[args.test]
-    if (draw()) args.onEnd()
-    else ticking = requestAnimationFrame(tick)
+    timeS = Math.min(timeS + passedS * RENDER.playRate[args.test], endS)
+    if (draw()) {
+      stop()
+      args.onState({ playing: false, ended: true })
+    } else {
+      ticking = requestAnimationFrame(tick)
+    }
   }
 
-  function replay(): void {
-    if (disposed) return
-    timeS = 0
+  function play(): void {
+    if (disposed || playing) return
+    if (timeS >= endS) timeS = 0
     lastMs = 0
-    if (ticking === 0) ticking = requestAnimationFrame(tick)
+    playing = true
+    ticking = requestAnimationFrame(tick)
+    args.onState({ playing: true, ended: false })
+  }
+
+  function pause(): void {
+    if (disposed || !playing) return
+    stop()
+    args.onState({ playing: false, ended: false })
+  }
+
+  function seek(toS: number): void {
+    if (disposed) return
+    timeS = Math.min(Math.max(toS, 0), endS)
+    // While it plays, the next picture is drawn from here anyway.
+    if (!playing) draw()
+  }
+
+  function setView(next: ViewId): void {
+    if (disposed) return
+    view = next
+    if (!playing) draw()
   }
 
   function dispose(): void {
     if (disposed) return
     disposed = true
-    if (ticking !== 0) cancelAnimationFrame(ticking)
+    stop()
     watcher.disconnect()
     kit.dispose()
     renderer.dispose()
@@ -261,6 +311,6 @@ export function openRangeView(args: RangeViewArgs): RangeView {
 
   resize()
   watcher.observe(args.host)
-  replay()
-  return { replay, dispose }
+  play()
+  return { lengthS: endS, play, pause, seek, setView, dispose }
 }

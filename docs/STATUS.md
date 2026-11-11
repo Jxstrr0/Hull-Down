@@ -10,10 +10,10 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 - **Try the Trials tab** (0.4.1.0). Say if the range marks feel fair: the
   light hull cannot cross the standard trench, and the smallest engine only
   climbs the slope in a tank of about 34 to 36 t or less.
-- **Watch a run in 3D** (0.4.2.0): Trials, "Send it to the range", then
+- **Watch a run in 3D** (0.4.3.0): Trials, "Send it to the range", then
   "Watch the run" on the first two tests. It is a grey box on purpose. Say
-  if the speed of the playback or the camera angle feels wrong, and if it
-  stutters on your phone.
+  if the speed of the playback or the cameras feel wrong, if the bar is
+  easy to drag with a thumb, and if it stutters on your phone.
 - **Say how the endurance run should treat luck.** As built: every part
   within its rating gives trouble about one run in five, mended at the
   roadside, and one stop is allowed. A part 10 % over its rating breaks in
@@ -29,6 +29,12 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.4.3.0, PR 4d: pause, scrub and cameras.** The 3D view has a Play /
+  Pause button, a bar that shows how far through the run it is and can be
+  dragged to any moment, and four cameras: Director, Side, Behind and Above.
+  Director is the default. On the strip it cuts between cameras that travel
+  with the tank. On the course a camera stands beside each obstacle and
+  turns to follow the tank over it. At the end the button reads "Again".
 - **0.4.2.0, PR 4c: watch the run in 3D.** The acceleration test and the
   obstacle course each have a "Watch the run" button on the proving ground
   screen. It opens a small 3D view above the numbers and plays the run back:
@@ -131,8 +137,9 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 - PR 4 is split too: 4a the mobility model with the acceleration test and the
   obstacle course, shown as a report (0.4.0.0), 4b the endurance run and
   stress-based breakdowns (0.4.1.0), 4c the grey-box 3D range that plays the
-  runs back (0.4.2.0), 4d the director camera, pause and scrub, with the
-  endurance run played back as a time-lapse (0.4.3.0).
+  runs back (0.4.2.0), 4d the director camera, pause and scrub (0.4.3.0),
+  4e the endurance run played back in 3D as a time-lapse (0.4.4.0), 4f the
+  trials run in a Web Worker so a slow phone stays smooth (0.4.5.0).
   PR 5 is then 0.5.0.0.
 - The range marks (12 s to 32 km/h, 50 km/h top speed, the course as built,
   one stop on the endurance run) are a Pact standard for now. Tenders set
