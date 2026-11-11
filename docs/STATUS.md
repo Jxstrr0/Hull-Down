@@ -4,6 +4,8 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **The chief engineer's name** (0.8.5.0): working name Radek Stanek.
+  Say if you want another.
 - **Career numbers and the designation** (0.8.2.0), decided without you
   and easy to change:
   - Grant for the first tender Kr 22M. First prototype 4 x unit cost,
@@ -145,6 +147,18 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.8.5.0, PR 8f: the chief engineer.** No screen yet.
+  `src/sim/career/advisor.ts` reviews a design against the tender on
+  paper, the same every time and quick enough to run after every change.
+  Worst first: what cannot be built; plates that must hold at the armour
+  trial and will not (with the round that beats them); firing tests it
+  will fail; a slow first shot; loading that will not keep up; the
+  sprint, top speed, obstacles and berm; then design warnings, poor
+  reliability and a unit cost close to the ceiling. Each remark names
+  the control or plate to look at; he never says what to fit. He says
+  six things at most and counts the rest. `src/ui/advisorWords.ts` has
+  his sentences. Three settings: never, when asked, after every change
+  (the default). Working name Radek Stanek.
 - **0.8.4.0, PR 8e: save slots, the backup file and the reminder.** No
   screen yet. Three save slots kept in the IndexedDB database `hulldown`
   (`src/persist/slots.ts`), falling back to memory where a browser will
