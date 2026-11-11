@@ -31,4 +31,11 @@ The player's bureau is "State Tank Design Bureau" for now.
 
 ## Designation scheme
 
-To be written in PR 2 (project numbers) and PR 8 (service designations).
+**Project numbers (PR 2c), Kelbo to confirm.** Every design the bureau starts
+gets a project number, shown as `Project 101`. Numbers start at 101, go up by
+one, and are never reused, even after a design is scrapped. The player gives
+each design its own name (up to 28 characters); a design without one shows as
+"Unnamed design".
+
+Service designations (what the army calls a tank once it is adopted) are to
+be written in PR 8.
