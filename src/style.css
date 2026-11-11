@@ -726,6 +726,17 @@ body {
 .shot-step-stop { font-weight: 700; }
 .shot-step-off { color: var(--ink-dim); }
 .shot-result { margin: 8px 0; font-size: 0.95rem; font-weight: 600; }
+.shot-behind { margin: 12px 0 8px; }
+.shot-behind-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.shot-behind .shot-steps { margin-top: 4px; }
+.shot-behind .shot-step-value { flex: 0 1 auto; text-align: right; }
+.shot-behind-sum { margin: 8px 0; font-size: 0.9rem; font-weight: 600; }
 
 /* The Trials tab and the proving ground report. */
 .trials { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }

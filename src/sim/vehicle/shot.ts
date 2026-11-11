@@ -3,7 +3,7 @@
 // off square to the zone's face. No tile wear, nothing behind the armour and
 // no luck: the answer is an estimate with a stated margin of error.
 // Game-level abstractions, not engineering data.
-import type { Round } from '../../data/ammo'
+import type { Round, RoundKind } from '../../data/ammo'
 import { ERA_TILE } from '../../data/era'
 import { MATERIALS } from '../../data/materials'
 import { TUNING } from '../../data/tuning'
@@ -52,6 +52,8 @@ export interface ShotResult {
   /** The answer could be out by this much either way. */
   marginMm: number
   verdict: Verdict
+  /** What the round can still go through once it is past everything. Nought when it was stopped. */
+  leftMm: number
 }
 
 function rad(deg: number): number {
@@ -63,17 +65,27 @@ export function shotCosine(slopeDeg: number, angleDeg: number): number {
   return detCos(rad(slopeDeg)) * detCos(rad(angleDeg))
 }
 
-export function testShot(layers: readonly ArmourLayer[], slopeDeg: number, setup: ShotSetup): ShotResult {
-  const { round } = setup
-  const penMm = penetrationAt(round, setup.rangeM)
-  const cosine = shotCosine(slopeDeg, setup.angleDeg)
+/** A round meeting a stack of plates along a known line. */
+export interface StackShot {
+  kind: RoundKind
+  /** What the round goes through when it arrives, square on. */
+  penMm: number
+  /** Cosine of the angle between the shot and square-on to the plate. */
+  cosine: number
+  /** True when the shot meets a reactive tile before the plate. */
+  tile: boolean
+}
+
+/** One round through one stack, layer by layer. No luck: the same shot always gives the same answer. */
+export function shotThrough(layers: readonly ArmourLayer[], shot: StackShot): ShotResult {
+  const { penMm, cosine } = shot
   const pathFactor = 1 / cosine
-  const ricochet = round.kind === 'kinetic' && cosine < detCos(rad(TUNING.protection.ricochetDeg))
-  const kinetic = round.kind === 'kinetic'
+  const kinetic = shot.kind === 'kinetic'
+  const ricochet = kinetic && cosine < detCos(rad(TUNING.protection.ricochetDeg))
 
   const worths: { what: 'tile' | 'layer'; layer?: number; worthMm: number }[] = []
   // A tile is worth the same whatever the angle.
-  if (setup.tile) worths.push({ what: 'tile', worthMm: kinetic ? ERA_TILE.keMm : ERA_TILE.ceMm })
+  if (shot.tile) worths.push({ what: 'tile', worthMm: kinetic ? ERA_TILE.keMm : ERA_TILE.ceMm })
   layers.forEach((layer, index) => {
     const material = MATERIALS[layer.material]
     worths.push({ what: 'layer', layer: index, worthMm: layer.mm * (kinetic ? material.ke : material.ce) * pathFactor })
@@ -105,5 +117,15 @@ export function testShot(layers: readonly ArmourLayer[], slopeDeg: number, setup
     spareMm: worthMm - penMm,
     marginMm: penMm * TUNING.protection.marginShare,
     verdict: ricochet ? 'holds' : verdictOf(worthMm, penMm),
+    leftMm: stopped ? 0 : left,
   }
+}
+
+export function testShot(layers: readonly ArmourLayer[], slopeDeg: number, setup: ShotSetup): ShotResult {
+  return shotThrough(layers, {
+    kind: setup.round.kind,
+    penMm: penetrationAt(setup.round, setup.rangeM),
+    cosine: shotCosine(slopeDeg, setup.angleDeg),
+    tile: setup.tile,
+  })
 }

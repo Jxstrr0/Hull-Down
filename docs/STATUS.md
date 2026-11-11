@@ -48,6 +48,17 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   in front). Blow-out panels only cover rounds kept in the bustle: the
   bustle holds 24 with a loader, or the autoloader's 18 and 6 more. Say if
   any of that reads wrong.
+- **What a hit does** (0.6.1.0): on the Armour tab, a test shot that gets
+  through now lists what it reaches. The numbers were picked without you
+  and all sit in one table (`src/data/hits.ts`): rounds that are hit
+  explode 75% of the time in plain racks or an autoloader, 60% in armoured
+  bins (which also take 25 mm to get into), 30% in wet stowage; behind
+  blow-out panels the blast goes outside and the tank lives. A holed fuel
+  tank burns 40% of the time, a hit engine 25%; fire suppression puts out
+  85% of fires. Fragments reach crew within 1.4 m of the hole (0.5 m with
+  a spall liner). A track in the way takes 20 mm off a kinetic round and
+  60 mm off a shaped charge, and breaks 60% of the time. Say if any of
+  these feel too harsh or too kind once you can play the armour trial.
 - **Watch a shoot in 3D** (0.5.6.0): Trials tab, any of the three gunnery
   cards, "Watch the run". Three things were decided without you: the long
   waits (finding, ranging, laying, loading) are cut to about a second and a
@@ -70,6 +81,17 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.6.1.0, PR 6b: a shot followed all the way.** The hit model itself.
+  A shot is now a line that strikes the tank at a real angle, goes through
+  the layers of whichever zone it meets, and then carries on inside to
+  whatever lies on its line: crew (out of action), rounds (may explode),
+  fuel and the engine (may burn), the gun, the sight, the gearbox. Each
+  thing takes something out of the round until it stops. Fragments off the
+  plate, fire suppression, blow-out panels, armoured bins, tracks in the
+  way and used-up reactive tiles are all in. On the Armour tab the test
+  shot now carries on "Behind the armour" when it gets through, listing
+  what it reaches and the chances. The armour trial that fires real shots
+  with luck is 6c.
 - **0.6.0.0, PR 6a: what is inside the armour.** The first piece of the hit
   model. Every design now has an inside worked out from its choices: a seat
   for each crewman, the gun's breech, the gunner's sight, the autoloader,
