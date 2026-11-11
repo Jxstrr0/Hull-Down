@@ -1473,7 +1473,7 @@ export const STRINGS = {
     },
     exportDesk: {
       heading: 'Export desk',
-      about: 'With a tank in army service, the bureau may look for customers abroad. Each asks something of the tank that the army did not. Sales, and versions built for a customer, come later.',
+      about: 'With a tank in army service, the bureau may look for customers abroad. Each asks something of the tank that the army did not, and orders once. The ministry must license every sale, and the bureau\'s fee goes into its budget. Versions built for a customer come later.',
       customers: {
         dahrat: { name: 'Emirate of Dahrat', line: 'Desert: heat, dust and long distances between fuel dumps.' },
         ilandu: { name: 'Republic of Ilandu', line: 'Jungle: soft ground, light bridges and a small budget.' },
@@ -1499,6 +1499,12 @@ export const STRINGS = {
       short: '{tank}: falls short on {n} of {of}.',
       has: '{need}: has {have}',
       lacks: '{need}: not fitted',
+      sell: 'Sell the {tank} (fee {fee})',
+      sold: 'Ordered: {n} of the {tank}. Fee paid: {fee}.',
+      licensed: 'Export licence signed',
+      noLine: '{tank}: production has not started, so there is nothing to sell.',
+      secret: 'The ministry will not license the {tank}. This may not leave the country: {names}.',
+      standing: 'The ministry will not sign a licence: its opinion of the bureau is {have}, and it wants {want}.',
     },
     research: {
       heading: 'Research',

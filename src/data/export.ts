@@ -44,4 +44,10 @@ export const CUSTOMERS: Record<CustomerId, Customer> = {
 export const EXPORT_DESK = {
   /** Tanks the army must have adopted before the desk opens. */
   opensAfterAdopted: 1,
+  /** The bureau's fee on an export order, as a share of what the customer pays for the tanks. */
+  feeShare: 0.03,
+  /** The ministry signs no export licence for a bureau it thinks less of than this. */
+  ministryStanding: 40,
+  /** What the ministry thinks of the hard currency a sale brings in, in standing. */
+  saleMinistry: 3,
 } as const

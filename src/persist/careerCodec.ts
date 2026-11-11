@@ -2,12 +2,13 @@
 // are pulled into range, designs are cleaned part by part, and a decision
 // that does not add up is dropped, so the army simply decides again.
 import { BODIES, CAREER, type Body } from '../data/career'
+import { CUSTOMER_IDS } from '../data/export'
 import { ZONES } from '../data/materials'
 import { BUREAU_IDS } from '../data/opponents'
 import { RESEARCH_IDS } from '../data/research'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { SCORE_AXES, TENDER_IDS, TENDER_RULES, TENDERS, type ScoreAxis } from '../data/tenders'
-import { CAREER_FORMAT, type BidLine, type Bidder, type Career, type Outcome, type Prototype } from '../sim/career/career'
+import { CAREER_FORMAT, type BidLine, type Bidder, type Career, type Outcome, type Prototype, type Sale } from '../sim/career/career'
 import { UPGRADE_ASK_KINDS, type Upgrade, type UpgradeAsk } from '../sim/career/upgrade'
 import { cleanName, cleanSpec } from './specCodec'
 
@@ -138,6 +139,21 @@ function cleanAdopted(raw: unknown): Career['adopted'] {
   return kept
 }
 
+/** Each customer orders once. An order with no tank named, or no tanks, is dropped. */
+function cleanSales(raw: unknown): Sale[] {
+  if (!Array.isArray(raw)) return []
+  const kept: Sale[] = []
+  for (const item of raw as unknown[]) {
+    if (!isObject(item)) continue
+    const customer = CUSTOMER_IDS.find((id) => id === item.customer)
+    const designation = cleanName(item.designation)
+    const tanks = whole(item.tanks, 0, 100_000, 0)
+    if (!customer || !designation || tanks === 0 || kept.some((sale) => sale.customer === customer)) continue
+    kept.push({ customer, designation, tanks, feeKr: whole(item.feeKr, 0, 1e12, 0) })
+  }
+  return kept
+}
+
 /** A career from anything read out of a save, or null when there is no career in it. */
 export function cleanCareer(raw: unknown): Career | null {
   if (!isObject(raw) || !finite(raw.seed)) return null
@@ -159,5 +175,6 @@ export function cleanCareer(raw: unknown): Career | null {
     researched: Array.isArray(raw.researched)
       ? [...new Set((raw.researched as unknown[]).flatMap((item) => RESEARCH_IDS.filter((id) => id === item)))]
       : [],
+    sales: cleanSales(raw.sales),
   }
 }
