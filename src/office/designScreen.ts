@@ -527,6 +527,8 @@ export function renderDesignScreen(limits: Limits): HTMLElement {
     const screen = renderCompareScreen({
       earlier,
       later,
+      limits,
+      seed: design.projectNo,
       back: () => {
         closeRange()
         panel.querySelector<HTMLElement>('[data-key="compare-go"]')?.focus({ preventScroll: true })

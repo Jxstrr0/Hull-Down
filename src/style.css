@@ -981,3 +981,6 @@ body {
 .cmp-group { margin: 12px 0 2px; font-family: var(--font-head); font-size: 0.95rem; letter-spacing: 0.06em; text-transform: uppercase; }
 .cmp-fold { margin-top: 12px; }
 .cmp-fold-title { padding: 14px 0; cursor: pointer; font-weight: 600; }
+.cmp-ghost { opacity: 0.45; stroke-dasharray: 5 4; }
+.cmp-nochange { font-weight: 400; color: var(--ink-dim); }
+.cmp-key { margin-top: 4px; }
