@@ -10,6 +10,8 @@ const BANNED: [RegExp, string][] = [
   [/\bperformance\.now\b/, 'performance.now'],
   [/\b(document|window|navigator|localStorage)\./, 'a browser global'],
   [/from ['"]three/, 'three.js'],
+  // Browsers disagree in the last digits of these; src/sim/det.ts has safe versions.
+  [/\bMath\.(sin|cos|tan|asin|acos|atan|atan2|exp|log|log2|log10|pow)\b/, 'a Math function that differs between devices'],
 ]
 
 describe('sim purity', () => {

@@ -44,6 +44,11 @@ export default tseslint.config(
         'error',
         { object: 'Math', property: 'random', message: 'Use the seeded RNG in src/sim.' },
         { object: 'Date', property: 'now', message: 'The sim runs on its own fixed time step.' },
+        ...['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'exp', 'log', 'log2', 'log10', 'pow'].map((property) => ({
+          object: 'Math',
+          property,
+          message: 'Use src/sim/det.ts so results match on every device.',
+        })),
       ],
       'no-restricted-globals': ['error', 'window', 'document', 'navigator', 'localStorage', 'performance'],
     },
