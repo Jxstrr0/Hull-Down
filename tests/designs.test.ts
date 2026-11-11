@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { TUNING, PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import {
-  DESIGNS_KEY, FIRST_PROJECT_NO, MAX_DESIGNS, addDesign, currentDesign, decodeStore, encodeStore,
-  loadStore, newStore, openDesign, saveStore, scrapDesign, type KeyValue,
+  DESIGNS_KEY, FIRST_PROJECT_NO, MAX_DESIGNS, MAX_REVISIONS, addDesign, currentDesign, decodeStore, encodeStore, keepRevision,
+  lastRevision, loadStore, newStore, openDesign, restoreRevision, sameBuild, saveStore, scrapDesign, type KeyValue,
 } from '../src/persist/designs'
 import { NAME_MAX, cleanName, cleanSpec } from '../src/persist/specCodec'
 import { buildStatSheet } from '../src/sim/vehicle'
@@ -230,5 +230,82 @@ describe('keeping designs on the device', () => {
   it('carries on in memory when the browser blocks storage', () => {
     expect(loadStore(blocked)).toEqual(newStore())
     expect(saveStore(blocked, newStore())).toBe(false)
+  })
+})
+
+describe('prototype revisions', () => {
+  it('keeps the design as it stood each time a prototype is built', () => {
+    const design = currentDesign(newStore())
+    expect(lastRevision(design)).toBeUndefined()
+    expect(keepRevision(design).no).toBe(1)
+    design.spec.powerpack.fuelL += 100
+    expect(keepRevision(design).no).toBe(2)
+    expect(design.revisions.map((each) => each.no)).toEqual([1, 2])
+    // A revision is a copy: the board can move on without changing it.
+    design.spec.powerpack.fuelL += 100
+    expect(design.revisions[1]!.spec.powerpack.fuelL).toBe(design.spec.powerpack.fuelL - 100)
+  })
+
+  it('does not build the same tank twice, and does not count a new name as a change', () => {
+    const design = currentDesign(newStore())
+    keepRevision(design)
+    expect(keepRevision(design).no).toBe(1)
+    design.spec.name = 'Bison'
+    expect(sameBuild(design.spec, design.revisions[0]!.spec)).toBe(true)
+    expect(keepRevision(design).no).toBe(1)
+    expect(design.revisions).toHaveLength(1)
+  })
+
+  it('lets the oldest go past the limit, and never uses a number twice', () => {
+    const design = currentDesign(newStore())
+    for (let n = 0; n < MAX_REVISIONS + 3; n++) {
+      // Back and forth, so the tank stays inside its limits.
+      design.spec.powerpack.fuelL += n % 2 === 0 ? -100 : 100
+      keepRevision(design)
+    }
+    expect(design.revisions).toHaveLength(MAX_REVISIONS)
+    expect(design.revisions[0]!.no).toBe(4)
+    expect(lastRevision(design)!.no).toBe(MAX_REVISIONS + 3)
+  })
+
+  it('puts a revision back on the board', () => {
+    const design = currentDesign(newStore())
+    const first = design.spec.powerpack.fuelL
+    keepRevision(design)
+    design.spec.powerpack.fuelL += 200
+    keepRevision(design)
+    expect(restoreRevision(design, 1)).toBe(true)
+    expect(design.spec.powerpack.fuelL).toBe(first)
+    expect(restoreRevision(design, 9)).toBe(false)
+    // The board is a copy too.
+    design.spec.powerpack.fuelL += 50
+    expect(design.revisions[0]!.spec.powerpack.fuelL).toBe(first)
+    // Going back to an old build and sending it again is a new prototype.
+    expect(keepRevision(design).no).toBe(3)
+  })
+
+  it('survives being saved, and reads an older save as having none', () => {
+    const store = newStore()
+    const design = currentDesign(store)
+    keepRevision(design)
+    design.spec.powerpack.fuelL += 100
+    keepRevision(design)
+    const back = decodeStore(encodeStore(store))!
+    expect(currentDesign(back).revisions).toEqual(design.revisions)
+
+    const old = JSON.parse(encodeStore(newStore())) as { designs: Record<string, unknown>[] }
+    for (const each of old.designs) delete each.revisions
+    expect(currentDesign(decodeStore(JSON.stringify(old))!).revisions).toEqual([])
+  })
+
+  it('throws away revision data that cannot be trusted', () => {
+    const raw = JSON.parse(encodeStore(newStore())) as { designs: { revisions: unknown }[] }
+    const good = cleanSpec(BASELINE_SPEC)
+    raw.designs[0]!.revisions = [{ no: 2, spec: good }, { no: -1, spec: good }, 'x', { no: 1, spec: good }, { no: 2, spec: good }, { no: 3 }]
+    const read = currentDesign(decodeStore(JSON.stringify(raw))!).revisions
+    // Numbers must rise, and a revision with no design in it is no revision.
+    expect(read.map((each) => each.no)).toEqual([2])
+    raw.designs[0]!.revisions = 'nonsense'
+    expect(currentDesign(decodeStore(JSON.stringify(raw))!).revisions).toEqual([])
   })
 })
