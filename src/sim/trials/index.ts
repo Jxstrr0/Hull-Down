@@ -14,6 +14,9 @@ import { runGunnery, type GunneryRun } from './gunnery'
 import { runObstacles, type ObstacleRun } from './obstacles'
 
 export { runAcceleration, stepTime, type AccelerationRun, type Trace } from './acceleration'
+export {
+  FINDING_KINDS, afterAction, timelineOf, weigh, type AfterAction, type Finding, type FindingKind, type Fix, type ShotLine,
+} from './afterAction'
 export { runArmourTrial, type ArmourRun, type SerialResult, type TrialShot } from './armour'
 export { runBerm, type BermRun } from './berm'
 export { runLoadingDrill, type DrillRound, type DrillRun } from './drill'

@@ -92,13 +92,16 @@ function verdictDefs(unit: number): SVGDefsElement {
   return defs
 }
 
-/** Hatching for what is inside, so the cutaway does not rely on colour: slanted lines for ammunition, level lines for fuel. */
-function cutDefs(unit: number, body: readonly string[]): SVGDefsElement {
+/**
+ * Hatching for what is inside, so the cutaway does not rely on colour: slanted lines for ammunition, level lines for fuel.
+ * `ids` starts every name it defines, so two cutaways on one page never share any.
+ */
+function cutDefs(unit: number, body: readonly string[], ids = 'cut'): SVGDefsElement {
   const defs = svg('defs', {})
   const n = (value: number): string => String(Math.round(value * unit * 1000) / 1000)
   const size = 4
   const tile = (kind: string, x0: number, y0: number, x1: number, y1: number): void => {
-    const pattern = svg('pattern', { id: `cut-${kind}`, width: n(size), height: n(size), patternUnits: 'userSpaceOnUse', class: `cut-tile cut-${kind}` })
+    const pattern = svg('pattern', { id: `${ids}-${kind}`, width: n(size), height: n(size), patternUnits: 'userSpaceOnUse', class: `cut-tile cut-${kind}` })
     pattern.append(
       svg('rect', { width: n(size), height: n(size), class: 'map-ground' }),
       svg('line', { x1: n(x0), y1: n(y0), x2: n(x1), y2: n(y1), 'stroke-width': n(1.2) }),
@@ -108,7 +111,7 @@ function cutDefs(unit: number, body: readonly string[]): SVGDefsElement {
   tile('ammo', 0, size, size, 0)
   tile('fuel', 0, size / 2, size, size / 2)
   if (body.length > 0) {
-    const clip = svg('clipPath', { id: 'cut-body' })
+    const clip = svg('clipPath', { id: `${ids}-body` })
     for (const d of body) clip.append(svg('path', { d }))
     defs.append(clip)
   }
@@ -129,6 +132,33 @@ function tapZone(
     act()
   })
   root.append(rect)
+}
+
+/**
+ * The cutaway on its own, with nothing to tap: the picture a report draws its
+ * shot paths on. Its box is in metres, so a point of the tank goes straight on
+ * it: back from the nose across the page, and up (side) or out to the right (top) up the page.
+ */
+export function cutawayPicture(
+  spec: VehicleSpec, geo: Geometry, view: 'side' | 'top', interior: Interior, ids: string,
+): { root: SVGSVGElement; box: { x: number; y: number; w: number; h: number } } {
+  const drawing = drawingOf(spec, geo, view, interior)
+  const { box } = drawing
+  const root = svg('svg', { class: 'bp-svg', viewBox: `${box.x} ${box.y} ${box.w} ${box.h}`, preserveAspectRatio: 'xMidYMid meet' })
+  root.append(cutDefs(box.w / 330, drawing.body, ids))
+  const inside = svg('g', { class: 'bp-inside' })
+  if (drawing.body.length > 0) inside.style.clipPath = `url(#${ids}-body)`
+  for (const shape of drawing.shapes) {
+    if (shape.item) {
+      const mark = svg('path', { d: shape.d, class: `bp-item bp-item-${shape.item}` })
+      if (shape.item === 'ammo' || shape.item === 'fuel') mark.style.fill = `url(#${ids}-${shape.item})`
+      inside.append(mark)
+    } else if (!shape.zone) {
+      root.append(svg('path', { d: shape.d, class: `bp-${shape.line}` }))
+    }
+  }
+  root.append(inside)
+  return { root, box }
 }
 
 /** The drawing and its caption, ready to put in the blueprint box. */
