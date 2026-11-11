@@ -20,6 +20,7 @@ npm install
 npm run dev     # local server
 npm run test    # tests
 npm run lint    # lint and type check
+npm run sim     # balance check: rival bureaus bid for every tender
 npm run build   # production build into dist/
 ```
 

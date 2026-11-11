@@ -98,6 +98,7 @@ docs/         plan, NAMES.md, STATUS.md
 - `npm run dev`: local server
 - `npm run test`: Vitest
 - `npm run lint`: ESLint and type check
+- `npm run sim`: balance check, rival bureaus bid for every tender
 - `npm run build`: production build, then the 3 MB first-load check
 
 Run test, lint and build before pushing. CI (`deploy.yml`) runs the same
