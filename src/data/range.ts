@@ -129,6 +129,11 @@ export const RANGE = {
     correction: 0.35,
     /** Shots further than this from the middle of the board are drawn on its edge, metres. */
     plotM: 3.5,
+    /**
+     * Share of a turret part's unreliability that shows up as a failure in any
+     * one shoot. The crew then falls back on the plainest way of doing its job.
+     */
+    faultShare: 0.35,
     /** The firing tests, in the order the range runs them. `exposureS` is how long each target stays up. */
     tests: {
       halted: {
@@ -180,6 +185,8 @@ export const MARKS_GEN1 = {
   hits: { halted: 4, onTheMove: 3, night: 3 },
   /** Seconds from a target showing to the first shot, halted and by day, on average, at most. */
   firstShotS: 21,
+  /** Rounds a minute kept up through the loading drill, at least. */
+  drillRpm: 3.7,
 } as const
 export type Marks = {
   sprintS: number
@@ -187,4 +194,5 @@ export type Marks = {
   enduranceStops: number
   hits: Record<GunneryTestId, number>
   firstShotS: number
+  drillRpm: number
 }

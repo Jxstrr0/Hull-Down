@@ -18,6 +18,11 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   scroll past the endurance run. Say if the marks feel fair (4 of 6 halted
   and a first shot in 21 s, 3 of 4 on the move, 3 of 5 at night) and if the
   cards say clearly why a shoot failed.
+- **Try the loading drill** (0.5.2.0): the last card on the range. Swap the
+  autoloader for a loader on the Gun tab and send it again. Say if the mark
+  feels fair: a loader with 125 mm rounds in the basic turret fails it
+  (3.5 a minute), and passes with the 120 mm or 100 mm gun or the improved
+  crew fittings.
 - **Say how the endurance run should treat luck.** As built: every part
   within its rating gives trouble about one run in five, mended at the
   roadside, and one stop is allowed. A part 10 % over its rating breaks in
@@ -33,6 +38,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.5.2.0, PR 5c: the loading drill and turret faults.** A seventh test:
+  the crew fires 20 rounds as fast as the gun can be fed, and the card shows
+  a bar for every round. A human loader tires (taller bars), a machine keeps
+  its pace, jams now and then (J) and is fed by hand once it is empty (H).
+  Mark: 3.7 rounds a minute kept up. Turret parts can now fail before a
+  shoot: the crew falls back on the plainest way of doing that job, the card
+  says so, and its Fix button goes to that part.
 - **0.5.1.0, PR 5b: the gunnery tests.** The proving ground now has six
   tests. The three new ones are shoots: halted (six targets from 800 to
   2400 m, sabot and shaped charge), on the move (four targets, 600 to
@@ -185,14 +197,17 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   trials run in a Web Worker so a slow phone stays smooth (0.4.5.0). All six
   are done.
 - PR 5 is split as well: 5a the gunnery model and its readouts (0.5.0.0),
-  5b the static, moving and night gunnery tests on the range, 5c crew
-  stations, comfort, fatigue and the loading drill, 5d barrel length and
-  recoil system, 5e the gunnery tests played back in 3D. PR 6 is then
-  0.6.0.0.
+  5b the static, moving and night gunnery tests on the range (0.5.1.0), 5c
+  the loading drill and turret parts that fail in a shoot (0.5.2.0), 5d crew
+  stations, comfort and fatigue, 5e barrel length and recoil system, 5f the
+  gunnery tests played back in 3D. PR 6 is then 0.6.0.0.
 - The firing marks are a Pact standard for now, like the driving marks.
   The baseline passes each shoot about nine times in ten; which time is
-  down to the project number. Turret parts (sights, rangefinder, stabiliser)
-  do not break during a shoot yet: that comes with the loading drill in 5c.
+  down to the project number. From 5c a turret part (sight, rangefinder,
+  stabiliser, computer, night sight, commander's sight) can fail before a
+  shoot: about one shoot in thirty for the baseline, more with the less
+  reliable parts. The same part fails on the same project number until it is
+  swapped for another.
 - Gunnery numbers are quoted for the proving ground's trained crew.
   Conscripts aim 30 % wider and take 35 % longer; that starts to matter in
   field reports (PR 8). The scatter of the Pact rounds was retuned in 5a so

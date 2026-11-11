@@ -7,7 +7,7 @@ import {
 import type { ZoneId } from '../../data/materials'
 import { GROUNDS, RUN_PART_IDS } from '../../data/range'
 import { TUNING } from '../../data/tuning'
-import { fireOf, quoteOf, type Fire, type GunneryQuote } from '../gunnery/fire'
+import { fireOf, quoteOf, turretFallbacks, type Fire, type GunneryQuote, type TurretPart } from '../gunnery/fire'
 import { driveOf, maxSlopeDeg, topSpeedOf, type Drive } from '../mobility/drive'
 import { survivalOf, type Wear } from '../reliability/wear'
 import { checkSpec, type Issue } from './checks'
@@ -53,6 +53,8 @@ export interface StatSheet {
   }
   /** How the tank shoots. The gunnery tests run on this. */
   fire: Fire
+  /** The turret parts that can fail during a shoot, and how the tank shoots without each. */
+  turret: TurretPart[]
   /** What the design office expects of the gun on the range, with the range's own crew. */
   gunnery: GunneryQuote
   /** How hard each stressed part is working: load divided by what it is rated for. */
@@ -84,6 +86,19 @@ export interface StatSheet {
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value
+}
+
+/** How hard the tank is to fight, 10..100, from the work its fire control, gearbox and fittings leave the crew. */
+function workloadOf(spec: VehicleSpec): number {
+  const c = TUNING.crew
+  const fc = spec.fireControl
+  const workload =
+    c.workloadBase[LOADING[spec.loading].crew] +
+    SIGHTS[fc.sight].workload + RANGEFINDERS[fc.rangefinder].workload + STABILISERS[fc.stabiliser].workload +
+    COMPUTERS[fc.computer].workload + NIGHT_SIGHTS[fc.night].workload +
+    (fc.commanderSight ? COMMANDER_SIGHT.workload : 0) +
+    TRANSMISSIONS[spec.powerpack.transmission].workload + COMFORT[spec.crew.comfort].workload
+  return clamp(workload, c.workloadMin, c.workloadMax)
 }
 
 export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
@@ -138,17 +153,12 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
   if (spec.powerpack.apu) reliability *= APU.reliability
   if (spec.protection.fireSuppression) reliability *= FIRE_SUPPRESSION.reliability
 
-  // Crew workload
-  const c = TUNING.crew
-  const workload =
-    c.workloadBase[rollup.crewCount as 3 | 4] +
-    SIGHTS[fc.sight].workload + RANGEFINDERS[fc.rangefinder].workload + STABILISERS[fc.stabiliser].workload +
-    COMPUTERS[fc.computer].workload + NIGHT_SIGHTS[fc.night].workload +
-    (fc.commanderSight ? COMMANDER_SIGHT.workload : 0) +
-    transmission.workload + COMFORT[spec.crew.comfort].workload
-
-  const crewWorkload = clamp(workload, c.workloadMin, c.workloadMax)
+  const crewWorkload = workloadOf(spec)
   const fire = fireOf(spec, crewWorkload)
+  // How it would shoot with each turret part out of action: the crew is busier, too.
+  const turretParts = turretFallbacks(spec).map((part) => ({
+    id: part.id, reliability: part.reliability, without: fireOf(part.spec, workloadOf(part.spec)),
+  }))
 
   const massCeilingT = Math.min(transmission.ratedT, suspensionRatedT, trackRatedT, limits.maxMassT)
 
@@ -178,6 +188,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
       gunDepressionDeg: turret.depressionDeg + spareRingDeg + loaderDeg,
     },
     fire,
+    turret: turretParts,
     gunnery: quoteOf(fire),
     stress,
     wear,
