@@ -7,6 +7,7 @@ import {
 import type { ZoneId } from '../../data/materials'
 import { GROUNDS, RUN_PART_IDS } from '../../data/range'
 import { TUNING } from '../../data/tuning'
+import { fireOf, quoteOf, type Fire, type GunneryQuote } from '../gunnery/fire'
 import { driveOf, maxSlopeDeg, topSpeedOf, type Drive } from '../mobility/drive'
 import { survivalOf, type Wear } from '../reliability/wear'
 import { checkSpec, type Issue } from './checks'
@@ -50,6 +51,10 @@ export interface StatSheet {
     rateOfFireRpm: number
     gunDepressionDeg: number
   }
+  /** How the tank shoots. The gunnery tests run on this. */
+  fire: Fire
+  /** What the design office expects of the gun on the range, with the range's own crew. */
+  gunnery: GunneryQuote
   /** How hard each stressed part is working: load divided by what it is rated for. */
   stress: {
     transmission: number
@@ -142,6 +147,9 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     (fc.commanderSight ? COMMANDER_SIGHT.workload : 0) +
     transmission.workload + COMFORT[spec.crew.comfort].workload
 
+  const crewWorkload = clamp(workload, c.workloadMin, c.workloadMax)
+  const fire = fireOf(spec, crewWorkload)
+
   const massCeilingT = Math.min(transmission.ratedT, suspensionRatedT, trackRatedT, limits.maxMassT)
 
   return {
@@ -169,10 +177,12 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
       rateOfFireRpm: loading.fixedRof ?? gun.loaderRof,
       gunDepressionDeg: turret.depressionDeg + spareRingDeg + loaderDeg,
     },
+    fire,
+    gunnery: quoteOf(fire),
     stress,
     wear,
     reliabilityIndex: reliability * 100,
-    crewWorkload: clamp(workload, c.workloadMin, c.workloadMax),
+    crewWorkload,
     growth: {
       massT: massCeilingT - massT,
       volumeM3: rollup.capacityM3 - rollup.usedM3,

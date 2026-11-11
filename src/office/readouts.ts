@@ -1,5 +1,6 @@
 // The full readouts: every number on the stat sheet, grouped for a phone.
 import { ZONES } from '../data/materials'
+import { GUNNERY } from '../data/gunnery'
 import { RANGE } from '../data/range'
 import { STRINGS, fill } from '../data/strings'
 import { AREAS, type Issue, type IssueCode, type Limits, type StatSheet } from '../sim/vehicle'
@@ -33,6 +34,52 @@ export function issueText(issue: Issue): string {
     value: issue.value === undefined ? '' : show(issue.value),
     limit: issue.limit === undefined ? '' : show(issue.limit),
   })
+}
+
+/** What the design office expects of the gun: times, rate of fire and hit chance by range. */
+export function renderGunnery(sheet: StatSheet): HTMLElement {
+  const r = D.rows
+  const u = D.units
+  const T = D.gunnery
+  const q = sheet.gunnery
+  const halts = sheet.fire.moving.halts
+  const percent = (chance: number, template: string = u.percent): string => fill(template, { n: fixed(chance * 100, 0) })
+  const quoteRange = { range: String(GUNNERY.quoteRangeM) }
+  const box = group(D.groups.gunnery, [
+    [r.firstShot, unit(u.seconds, q.firstShotS, 0)],
+    [r.firstShotMoving, unit(halts ? u.secondsHalted : u.seconds, q.firstShotMovingS, 0)],
+    [r.rateOfFire, unit(u.perMinute, sheet.firepower.rateOfFireRpm, 1)],
+    [fill(r.sustained, { n: String(Math.min(GUNNERY.loading.drillRounds, sheet.firepower.rounds)) }), unit(u.perMinute, q.sustainedRpm, 1)],
+    [fill(r.hitMoving, quoteRange), percent(q.movingChance, halts ? u.percentHalted : u.percent)],
+    [fill(r.hitNight, quoteRange), percent(q.nightChance)],
+  ])
+  box.dataset.key = 'gunnery'
+
+  const table = el('table', 'ds-table')
+  table.append(el('caption', 'ds-table-caption', T.tableCaption))
+  const head = el('tr', '')
+  const corner = el('th', 'ds-label', T.range)
+  corner.scope = 'col'
+  head.append(corner)
+  for (const round of q.byRound) {
+    const cell = el('th', 'ds-label', STRINGS.rounds[round.id])
+    cell.scope = 'col'
+    head.append(cell)
+  }
+  const top = el('thead', '')
+  top.append(head)
+  const body = el('tbody', '')
+  GUNNERY.rangesM.forEach((rangeM, index) => {
+    const row = el('tr', '')
+    const label = el('th', 'ds-label', fill(T.metres, { n: String(rangeM) }))
+    label.scope = 'row'
+    row.append(label)
+    for (const round of q.byRound) row.append(el('td', 'ds-value', percent(round.chances[index] ?? 0)))
+    body.append(row)
+  })
+  table.append(top, body)
+  box.append(table, el('p', 'ds-table-note', T.note))
+  return box
 }
 
 function weightGroup(sheet: StatSheet): HTMLElement {
@@ -92,9 +139,9 @@ export function renderReadouts(sheet: StatSheet, limits: Limits): HTMLElement {
     group(D.groups.firepower, [
       [r.gun, unit(u.mm, f.calibreMm, 0)],
       [r.rounds, String(f.rounds)],
-      [r.rateOfFire, unit(u.perMinute, f.rateOfFireRpm, 0)],
       [r.depression, unit(u.degrees, f.gunDepressionDeg, 1)],
     ]),
+    renderGunnery(sheet),
     group(D.groups.condition, [
       [r.reliability, unit(u.outOf100, sheet.reliabilityIndex, 0)],
       [r.workload, unit(u.outOf100, sheet.crewWorkload, 0)],
