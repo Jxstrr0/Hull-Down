@@ -14,6 +14,13 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.3.1.0, PR 3b: armour zones on the drawing, ammunition and the
+  protection map.** With the Armour tab open the blueprint shows each armour
+  zone as a face you can tap; the Front, Side and Top views show the zones
+  they see square on. Pick a round and a range under "Protection map" and
+  every zone is marked holds, marginal or fails, by mark and hatching as well
+  as colour. The round list covers kinetic rounds and shaped charges, so both
+  maps are there. The Gun tab lists the Pact ammunition for the chosen gun.
 - **0.3.0.0, PR 3a: armour layers.** A new Armour tab. Pick one of the 13
   zones, build its stack of up to four layers (material and thickness), and
   see what it stops against kinetic rounds and shaped charges. A section view
