@@ -131,7 +131,7 @@ describe('what the firing tests reward', () => {
     const stadia = build((s) => { s.fireControl.rangefinder = 'stadiametric' })
     expect(meanHits(stadia, 'halted')).toBeLessThan(meanHits(base, 'halted') - 0.5)
     expect(passRate(stadia, 'halted')).toBeLessThan(passRate(base, 'halted') - 0.15)
-    expect(stadia.gunnery.firstShotS).toBeGreaterThan(MARKS_GEN1.firstShotS)
+    expect(stadia.gunnery.firstShotTiredS).toBeGreaterThan(MARKS_GEN1.firstShotS)
     const blames = SEEDS.map((seed) => runGunnery(stadia.fire, 'halted', seed).blame)
     expect(blames.filter((blame) => blame === 'ranging').length).toBeGreaterThan(SEEDS.length / 2)
   })

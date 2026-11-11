@@ -3,7 +3,7 @@
 import { GUNNERY } from '../data/gunnery'
 import { GUNNERY_TEST_IDS, RANGE, type GunneryTestId } from '../data/range'
 import { STRINGS, fill } from '../data/strings'
-import type { Fire } from '../sim/gunnery/fire'
+import { RANGE_DAY, fatigueOf, firstShotS, sustainedRpm, type Fire, type Shoot } from '../sim/gunnery/fire'
 import type { DrillRun, GunneryResult, RangeReport, TargetResult } from '../sim/trials'
 import type { StatSheet, VehicleSpec } from '../sim/vehicle'
 import { el } from './dom'
@@ -117,14 +117,23 @@ function gunneryCard(id: GunneryTestId, report: RangeReport, sheet: StatSheet, s
     ],
     run.hitsPassed, kit.fixButton(run.fault ? faultFix(run.fault) : hitsFix(run, sheet, spec), `gunnery-${id}-hits`),
   ))
+  const day: Shoot = { ...RANGE_DAY, hours: report.crewHours }
+  const mark = report.marks.firstShotS
+  // A failed part takes the blame for a slow shot only when the whole tank would have made the time.
+  const faultSlow = run.fault !== null && firstShotS(sheet.fire, day) <= mark
+  // A crew that would have made the time fresh was beaten by the day, not by the fire control.
+  const freshS = firstShotS(faultSlow ? fire : sheet.fire, RANGE_DAY)
+  const wornOut = run.timePassed === false && !faultSlow && freshS <= mark
   if (run.timePassed !== null) {
+    const timeFix = run.fault && faultSlow ? faultFix(run.fault) : wornOut ? 'crew.comfort' : slowFix(sheet, spec)
     lines.append(kit.line(
       T.time,
       [
-        run.firstShotS === null ? T.timeNever : fill(T.timeValue, { n: fixed(run.firstShotS, 0) }),
-        fill(T.timeMark, { n: String(report.marks.firstShotS) }),
+        // To a tenth of a second, so a time just past the mark does not read as the mark.
+        run.firstShotS === null ? T.timeNever : fill(T.timeValue, { n: fixed(run.firstShotS, 1) }),
+        fill(T.timeMark, { n: String(mark) }),
       ],
-      run.timePassed, kit.fixButton(run.fault ? faultFix(run.fault) : slowFix(sheet, spec), `gunnery-${id}-time`),
+      run.timePassed, kit.fixButton(timeFix, `gunnery-${id}-time`),
     ))
   }
 
@@ -138,6 +147,12 @@ function gunneryCard(id: GunneryTestId, report: RangeReport, sheet: StatSheet, s
   const notes: string[] = []
   if (run.fault) notes.push(`${T.fault[run.fault]} ${T.faultNote}`)
   if (run.roundsFired > 0) notes.push(fill(T.rounds, { n: String(run.roundsFired) }))
+  notes.push(fill(T.tired, {
+    h: String(report.crewHours),
+    c: fixed(fatigueOf(fire, 'commander', day) * 100, 0),
+    g: fixed(fatigueOf(fire, 'gunner', day) * 100, 0),
+  }))
+  if (wornOut) notes.push(fill(T.freshTime, { n: fixed(freshS, 1) }))
   if (run.halted) notes.push(run.fault === 'stabiliser' ? T.haltsFault : T.halts)
   if (run.unseen > 0) notes.push(run.unseen === 1 ? T.unseenOne : fill(T.unseenMany, { n: String(run.unseen) }))
   // Only a target that was shot at and got away is worth explaining.
@@ -201,8 +216,11 @@ function drillChart(run: DrillRun): HTMLElement {
   return box
 }
 
-function drillCard(report: RangeReport, kit: CardKit): HTMLElement {
+function drillCard(report: RangeReport, sheet: StatSheet, kit: CardKit): HTMLElement {
   const run = report.drill
+  // A loader who would have kept the rate fresh was beaten by the day.
+  const freshRpm = sustainedRpm(sheet.fire, RANGE_DAY)
+  const wornOut = !run.auto && !run.passed && freshRpm >= report.marks.drillRpm
   const box = kit.card(D.title, fill(D.about, { n: String(run.rounds.length) }), run.passed)
   const lines = el('ul', 'rg-lines')
   lines.append(kit.line(
@@ -211,14 +229,19 @@ function drillCard(report: RangeReport, kit: CardKit): HTMLElement {
       fill(D.rateValue, { rpm: fixed(run.rpm, 1), n: String(run.rounds.length), time: clock(run.totalS) }),
       fill(D.rateMark, { n: fixed(report.marks.drillRpm, 1) }),
     ],
-    run.passed, kit.fixButton('loading', 'drill-rate'),
+    run.passed, kit.fixButton(wornOut ? 'crew.comfort' : 'loading', 'drill-rate'),
   ))
   box.append(lines)
   if (run.rounds.length > 0) box.append(drillChart(run))
   const notes: string[] = []
   const first = run.rounds[0]
   const last = run.rounds.at(-1)
-  if (!run.auto && first && last) notes.push(fill(D.tires, { first: fixed(first.seconds, 1), last: fixed(last.seconds, 1) }))
+  if (!run.auto && first && last) {
+    const day: Shoot = { ...RANGE_DAY, hours: report.crewHours }
+    notes.push(fill(D.tiredLoader, { n: fixed(fatigueOf(sheet.fire, 'loader', day) * 100, 0), h: String(report.crewHours) }))
+    notes.push(fill(D.tires, { first: fixed(first.seconds, 1), last: fixed(last.seconds, 1) }))
+    if (wornOut) notes.push(fill(D.freshRate, { n: fixed(freshRpm, 1) }))
+  }
   if (run.auto && run.jams === 0 && run.emptyAfter === null) notes.push(D.steady)
   if (run.jams > 0) {
     notes.push(fill(run.jams === 1 ? D.jamOne : D.jamMany, { n: String(run.jams), s: fixed(run.clearingS, 0) }))
@@ -230,5 +253,5 @@ function drillCard(report: RangeReport, kit: CardKit): HTMLElement {
 
 /** One card for each firing test, in the order the range runs them, then the loading drill. */
 export function gunneryCards(report: RangeReport, sheet: StatSheet, spec: VehicleSpec, kit: CardKit): HTMLElement[] {
-  return [...GUNNERY_TEST_IDS.map((id) => gunneryCard(id, report, sheet, spec, kit)), drillCard(report, kit)]
+  return [...GUNNERY_TEST_IDS.map((id) => gunneryCard(id, report, sheet, spec, kit)), drillCard(report, sheet, kit)]
 }

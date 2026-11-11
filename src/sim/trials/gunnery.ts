@@ -91,7 +91,7 @@ function causeOf(parts: Record<MissCause, [number, number]>, acrossM: number, up
 export function runGunnery(fire: Fire, test: GunneryTestId, seed: number): GunneryRun {
   const layout = RANGE.gunnery.tests[test]
   const testNo = Object.keys(RANGE.gunnery.tests).indexOf(test)
-  const shoot: Shoot = { ...RANGE_DAY, moving: layout.moving, night: layout.night }
+  const shoot: Shoot = { ...RANGE_DAY, moving: layout.moving, night: layout.night, hours: RANGE.crewHours }
   const halfW = GUNNERY.target.widthM / 2
   const halfH = GUNNERY.target.heightM / 2
   const first = firstShotS(fire, shoot)

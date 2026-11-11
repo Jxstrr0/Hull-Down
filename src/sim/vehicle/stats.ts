@@ -7,7 +7,7 @@ import {
 import type { ZoneId } from '../../data/materials'
 import { GROUNDS, RUN_PART_IDS } from '../../data/range'
 import { TUNING } from '../../data/tuning'
-import { busiestOf, stationsOf, type Station } from '../crew/stations'
+import { busiestOf, comfortOf, stationsOf, type Comfort, type Station } from '../crew/stations'
 import { fireOf, quoteOf, turretFallbacks, type Fire, type GunneryQuote, type TurretPart } from '../gunnery/fire'
 import { driveOf, maxSlopeDeg, topSpeedOf, type Drive } from '../mobility/drive'
 import { survivalOf, type Wear } from '../reliability/wear'
@@ -71,6 +71,8 @@ export interface StatSheet {
   reliabilityIndex: number
   /** The crew, commander first, and how hard each station is to work. */
   crew: Station[]
+  /** How easy the tank is to live in. An uncomfortable tank tires its crew sooner. */
+  comfort: Comfort
   /** 10..100. The workload of the busiest station. Higher is a harder tank to fight. */
   crewWorkload: number
   /** Room left for future upgrades. */
@@ -184,6 +186,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     wear,
     reliabilityIndex: reliability * 100,
     crew,
+    comfort: comfortOf(spec),
     crewWorkload: busiestOf(crew).workload,
     growth: {
       massT: massCeilingT - massT,

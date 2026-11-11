@@ -16,17 +16,23 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   easy to drag with a thumb, and if it stutters on your phone.
 - **Try the gunnery tests** (0.5.1.0): Trials, "Send it to the range", and
   scroll past the endurance run. Say if the marks feel fair (4 of 6 halted
-  and a first shot in 20 s, 3 of 4 on the move, 3 of 5 at night) and if the
+  and a first shot in 22 s, 3 of 4 on the move, 3 of 5 at night) and if the
   cards say clearly why a shoot failed.
 - **Try the loading drill** (0.5.2.0): the last card on the range. Swap the
   autoloader for a loader on the Gun tab and send it again. Say if the mark
-  feels fair: a loader with 125 mm rounds in the basic turret fails it
-  (3.5 a minute), and passes with the 120 mm or 100 mm gun or the improved
-  crew fittings.
+  feels fair (3.3 a minute): a loader with 125 mm rounds and basic crew
+  fittings fails it (3.2 a minute), and passes with standard fittings or
+  the 120 mm or 100 mm gun.
 - **Look at the crew stations** (0.5.3.0): Crew tab. Say if who does what
   reads right: the commander works the optical rangefinder, the gunner the
   stadia lines and the laser, and with an autoloader the commander also
   carries the radio and the lookout.
+- **Look at comfort and fatigue** (0.5.4.0): Crew tab, then the range.
+  Three things were decided without you and are easy to change. The shoots
+  and the loading drill are fired after 8 hours in the tank, so every crew
+  comes to them tired. Comfort comes from the crew fittings, the suspension
+  and where the engine sits; hatches and noise are not counted yet. A fully
+  tired crewman is 30 % slower and aims no worse.
 - **Say how the endurance run should treat luck.** As built: every part
   within its rating gives trouble about one run in five, mended at the
   roadside, and one stop is allowed. A part 10 % over its rating breaks in
@@ -42,6 +48,17 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.5.4.0, PR 5e: comfort and fatigue.** The tank now has a comfort
+  score out of 100, from the crew fittings, the suspension and where the
+  engine sits. Each crewman tires by the hour: faster at a busy station,
+  faster in an uncomfortable tank. A tired crewman is slower at every job.
+  The Crew tab shows comfort and how tired each station is after 8 hours,
+  and the Gunnery box shows the first shot fresh and after 8 hours. The
+  range now fires its three shoots and the loading drill at the end of the
+  day, 8 hours in, and each card says how tired the crew was. When a fresh
+  crew would have passed, the card says so and its Fix button goes to crew
+  comfort. Marks moved to suit: first shot 22 s, loading drill 3.3 rounds a
+  minute, and targets on the move now stay up 34 s.
 - **0.5.3.0, PR 5d: crew stations.** Each crewman now has a workload of
   his own, shown as a bar on the Crew, Fire control and Readouts tabs with
   what adds to it and what eases it. The commander's workload sets how fast
@@ -212,9 +229,9 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 - PR 5 is split as well: 5a the gunnery model and its readouts (0.5.0.0),
   5b the static, moving and night gunnery tests on the range (0.5.1.0), 5c
   the loading drill and turret parts that fail in a shoot (0.5.2.0), 5d crew
-  stations and their workload (0.5.3.0), 5e comfort and fatigue, 5f barrel
-  length and recoil system, 5g the gunnery tests played back in 3D. PR 6 is
-  then 0.6.0.0.
+  stations and their workload (0.5.3.0), 5e comfort and fatigue (0.5.4.0),
+  5f barrel length and recoil system, 5g the gunnery tests played back in
+  3D. PR 6 is then 0.6.0.0.
 - 5d retuned three numbers. The first-shot mark went from 21 s to 20 s,
   because the gunner is no longer slowed by the commander's extra jobs (the
   baseline now fires in 18 s; stadia lines and no computer still miss the
@@ -222,6 +239,12 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   one-plane stabiliser holds a little better, so the moving shoot ranks them
   none, one plane, two planes (about 1 in 4, 1 in 2 and 9 in 10 visits
   passed).
+- 5e moved the marks again, because the range now shoots with a crew 8
+  hours tired. The baseline fires its first shot in 18 s fresh and 21 s
+  tired, against a 22 s mark; stadia lines or no computer still miss it,
+  and stadia lines with improved crew fittings pass. The loading drill mark
+  went from 3.7 to 3.3 a minute. Targets on the move stay up 34 s, not 30,
+  so the one-plane stabiliser still gets its second round away.
 - The firing marks are a Pact standard for now, like the driving marks.
   The baseline passes each shoot about nine times in ten; which time is
   down to the project number. From 5c a turret part (sight, rangefinder,

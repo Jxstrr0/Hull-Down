@@ -119,6 +119,11 @@ export const RANGE = {
       { id: 'rough', km: 50, ground: 'firm', drive: 0.9, ride: 1, pace: 0.4 },
     ],
   },
+  /**
+   * The shoots and the loading drill come at the end of a day on the range:
+   * the crew has been in the tank this many hours and is that much slower.
+   */
+  crewHours: 8,
   gunnery: {
     /** Rounds the crew may fire at each target. */
     shotsPerTarget: 2,
@@ -148,7 +153,7 @@ export const RANGE = {
         ],
       },
       onTheMove: {
-        moving: true, night: false, exposureS: 30,
+        moving: true, night: false, exposureS: 34,
         targets: [
           { rangeM: 600, load: 'kinetic' },
           { rangeM: 900, load: 'kinetic' },
@@ -184,9 +189,9 @@ export const MARKS_GEN1 = {
   /** Targets hit in each firing test, at least. */
   hits: { halted: 4, onTheMove: 3, night: 3 },
   /** Seconds from a target showing to the first shot, halted and by day, on average, at most. */
-  firstShotS: 20,
+  firstShotS: 22,
   /** Rounds a minute kept up through the loading drill, at least. */
-  drillRpm: 3.7,
+  drillRpm: 3.3,
 } as const
 export type Marks = {
   sprintS: number
