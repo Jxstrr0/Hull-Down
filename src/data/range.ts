@@ -119,7 +119,54 @@ export const RANGE = {
       { id: 'rough', km: 50, ground: 'firm', drive: 0.9, ride: 1, pace: 0.4 },
     ],
   },
+  gunnery: {
+    /** Rounds the crew may fire at each target. */
+    shotsPerTarget: 2,
+    /**
+     * A gunner who watches a shot fall corrects for it: this share of a
+     * misread range, and of the wind, is still left for the next shot.
+     */
+    correction: 0.35,
+    /** Shots further than this from the middle of the board are drawn on its edge, metres. */
+    plotM: 3.5,
+    /** The firing tests, in the order the range runs them. `exposureS` is how long each target stays up. */
+    tests: {
+      halted: {
+        moving: false, night: false, exposureS: 45,
+        targets: [
+          { rangeM: 800, load: 'shaped' },
+          { rangeM: 1200, load: 'kinetic' },
+          { rangeM: 1500, load: 'shaped' },
+          { rangeM: 1800, load: 'kinetic' },
+          { rangeM: 2100, load: 'kinetic' },
+          { rangeM: 2400, load: 'kinetic' },
+        ],
+      },
+      onTheMove: {
+        moving: true, night: false, exposureS: 30,
+        targets: [
+          { rangeM: 600, load: 'kinetic' },
+          { rangeM: 900, load: 'kinetic' },
+          { rangeM: 1200, load: 'kinetic' },
+          { rangeM: 1500, load: 'kinetic' },
+        ],
+      },
+      night: {
+        moving: false, night: true, exposureS: 45,
+        targets: [
+          { rangeM: 400, load: 'kinetic' },
+          { rangeM: 600, load: 'kinetic' },
+          { rangeM: 800, load: 'kinetic' },
+          { rangeM: 1000, load: 'kinetic' },
+          { rangeM: 1200, load: 'kinetic' },
+        ],
+      },
+    },
+  },
 } as const
+
+export type GunneryTestId = keyof typeof RANGE.gunnery.tests
+export const GUNNERY_TEST_IDS = Object.keys(RANGE.gunnery.tests) as GunneryTestId[]
 
 /** What the Pact asks of a generation-one tank. A tender sets its own marks later. */
 export const MARKS_GEN1 = {
@@ -129,5 +176,15 @@ export const MARKS_GEN1 = {
   topKmh: 50,
   /** Stops for repairs on the endurance run, at most. */
   enduranceStops: 1,
+  /** Targets hit in each firing test, at least. */
+  hits: { halted: 4, onTheMove: 3, night: 3 },
+  /** Seconds from a target showing to the first shot, halted and by day, on average, at most. */
+  firstShotS: 21,
 } as const
-export type Marks = { sprintS: number; topKmh: number; enduranceStops: number }
+export type Marks = {
+  sprintS: number
+  topKmh: number
+  enduranceStops: number
+  hits: Record<GunneryTestId, number>
+  firstShotS: number
+}

@@ -14,6 +14,10 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   "Watch the run" on any of the three tests. It is a grey box on purpose. Say
   if the speed of the playback or the cameras feel wrong, if the bar is
   easy to drag with a thumb, and if it stutters on your phone.
+- **Try the gunnery tests** (0.5.1.0): Trials, "Send it to the range", and
+  scroll past the endurance run. Say if the marks feel fair (4 of 6 halted
+  and a first shot in 21 s, 3 of 4 on the move, 3 of 5 at night) and if the
+  cards say clearly why a shoot failed.
 - **Say how the endurance run should treat luck.** As built: every part
   within its rating gives trouble about one run in five, mended at the
   roadside, and one stop is allowed. A part 10 % over its rating breaks in
@@ -29,6 +33,16 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **0.5.1.0, PR 5b: the gunnery tests.** The proving ground now has six
+  tests. The three new ones are shoots: halted (six targets from 800 to
+  2400 m, sabot and shaped charge), on the move (four targets, 600 to
+  1500 m) and at night (five targets, 400 to 1200 m). The crew gets two
+  rounds a target and corrects after a miss. Each card shows the score and
+  its mark, a board with every shot on it (a dot for a hit, a cross for a
+  miss), each target in turn, and what most of the misses came from, with a
+  Fix button to the part. The halted shoot also marks the time to the first
+  shot. Every shot is rolled from the project number, so the same design
+  shoots the same score every time.
 - **0.5.0.0, PR 5a: the gunnery model.** The design office now works out how
   the tank shoots, and shows it in a Gunnery box at the foot of the Gun and
   Fire control tabs and on Readouts: time to first shot (halted and on the
@@ -175,6 +189,10 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
   stations, comfort, fatigue and the loading drill, 5d barrel length and
   recoil system, 5e the gunnery tests played back in 3D. PR 6 is then
   0.6.0.0.
+- The firing marks are a Pact standard for now, like the driving marks.
+  The baseline passes each shoot about nine times in ten; which time is
+  down to the project number. Turret parts (sights, rangefinder, stabiliser)
+  do not break during a shoot yet: that comes with the loading drill in 5c.
 - Gunnery numbers are quoted for the proving ground's trained crew.
   Conscripts aim 30 % wider and take 35 % longer; that starts to matter in
   field reports (PR 8). The scatter of the Pact rounds was retuned in 5a so

@@ -264,8 +264,8 @@ describe('obstacle course', () => {
 describe('proving ground report', () => {
   it('passes the baseline on every test', () => {
     const report = runProvingGround(build(), { seed: 1 })
-    expect(report.tests).toBe(3)
-    expect(report.passes).toBe(3)
+    expect(report.tests).toBe(6)
+    expect(report.passes).toBe(6)
     expect(report.acceleration.passed).toBe(true)
     expect(report.obstacles.passed).toBe(true)
     expect(report.endurance.passed).toBe(true)

@@ -2,7 +2,7 @@
 // then whatever says which draw it is) and the same name always gives the
 // same number, so any trial can be run again and come out the same. Whole
 // number maths only, so every device agrees.
-import { detLog } from './det'
+import { PI, detCos, detLog } from './det'
 
 /** Mixes whole numbers into one 32-bit whole number. */
 export function hash32(...parts: number[]): number {
@@ -36,4 +36,12 @@ export function unit(seed: number, ...key: number[]): number {
  */
 export function unitWait(seed: number, ...key: number[]): number {
   return -detLog(unit(seed, ...key))
+}
+
+/**
+ * A number from the bell curve: 0 on average, within 1 either way about two
+ * times in three. Uses two draws, named by the key with 0 and 1 added.
+ */
+export function bell(seed: number, ...key: number[]): number {
+  return Math.sqrt(-2 * detLog(unit(seed, ...key, 0))) * detCos(2 * PI * unit(seed, ...key, 1))
 }
