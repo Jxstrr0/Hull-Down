@@ -318,6 +318,19 @@ describe('tracks and wheels', () => {
     expect(clear.armour!.penMm - through.armour!.penMm).toBeCloseTo(HITS.trackMm.kinetic, 6)
   })
 
+  it('with skirts, take more out of a shot low on the side, most of all a shaped charge', () => {
+    const skirted = tank((spec) => { spec.runningGear.skirts = true })
+    for (const round of [THREATS.accord105Sabot, THREATS.accord105Shaped]) {
+      const bare = fire(base.target, { ...low, round })
+      const with_ = fire(skirted.target, { ...low, round })
+      expect(bare.armour!.penMm - with_.armour!.penMm).toBeCloseTo(HITS.skirtMm[round.kind], 6)
+      // Higher up the side the skirts are not in the way.
+      const high = { ...low, round, aim: { ...low.aim, y: f.roof - 0.1 } }
+      expect(fire(skirted.target, high).armour!.penMm).toBe(fire(base.target, high).armour!.penMm)
+    }
+    expect(HITS.skirtMm.shaped).toBeGreaterThan(HITS.skirtMm.kinetic)
+  })
+
   it('can be broken by a round that never gets into the hull', () => {
     let broken = 0
     for (let i = 0; i < 200; i++) {

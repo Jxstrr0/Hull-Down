@@ -36,4 +36,6 @@ export const HITS = {
   /** What tracks and wheels take out of a round on its way to the hull side, and the chance the track is broken. */
   trackMm: { kinetic: 20, shaped: 60 } satisfies Record<RoundKind, number>,
   trackBreak: 0.6,
+  /** What side skirts take out of a round that passes them on its way to the hull side: they set shaped charges off early. */
+  skirtMm: { kinetic: 10, shaped: 80 } satisfies Record<RoundKind, number>,
 } as const

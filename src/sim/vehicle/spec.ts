@@ -57,6 +57,8 @@ export interface VehicleSpec {
     /** Road wheels on each side. */
     roadWheels: number
     trackWidthMm: number
+    /** Thin plates hung over the tracks, outside the wheels. */
+    skirts: boolean
   }
   protection: {
     smokeLaunchers: boolean

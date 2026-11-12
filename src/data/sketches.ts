@@ -58,6 +58,7 @@ export const SKETCHES: Readonly<Record<string, string>> = {
   'powerpack.cooling:standard': 'sketches/cooling-standard.png',
   'powerpack.cooling:heavyDuty': 'sketches/cooling-heavyDuty.png',
   'powerpack.apu': 'sketches/apu.png',
+  'runningGear.skirts': 'sketches/skirts.png',
   'runningGear.suspension:torsionBar': 'sketches/suspension-torsionBar.png',
   'runningGear.suspension:hydropneumatic': 'sketches/suspension-hydropneumatic.png',
   'crew.comfort:basic': 'sketches/comfort-basic.png',

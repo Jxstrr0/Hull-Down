@@ -4,6 +4,7 @@ import { ZONES } from '../src/data/materials'
 import {
   COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, STOWAGE,
   SUSPENSIONS, TRANSMISSIONS, TURRETS,
+  SKIRTS,
 } from '../src/data/parts'
 import { STRINGS } from '../src/data/strings'
 import { PACT_LIMITS_GEN1, TUNING } from '../src/data/tuning'
@@ -103,6 +104,13 @@ describe('trade-offs', () => {
     expect(thick.mobility.groundPressureKgCm2).toBeGreaterThan(base.mobility.groundPressureKgCm2)
     expect(thick.unitCostKr).toBeGreaterThan(base.unitCostKr)
     expect(thick.growth.massT).toBeLessThan(base.growth.massT)
+  })
+
+  it('side skirts add their weight and cost to the running gear, and take no room inside', () => {
+    const skirted = build((s) => { s.runningGear.skirts = true })
+    expect(skirted.rollup.massT.runningGear - base.rollup.massT.runningGear).toBeCloseTo(SKIRTS.massT, 6)
+    expect(skirted.rollup.costKr.runningGear - base.rollup.costKr.runningGear).toBeCloseTo(SKIRTS.costKr, 6)
+    expect(skirted.rollup.volumeM3.runningGear).toBeCloseTo(base.rollup.volumeM3.runningGear, 6)
   })
 
   it('a steeper glacis is a longer, heavier plate that eats hull space', () => {
@@ -289,6 +297,7 @@ describe('the parts tables', () => {
       (s) => { s.fireControl.commanderSight = true },
       (s) => { s.powerpack.apu = true },
       (s) => { s.protection.spallLiner = true },
+      (s) => { s.runningGear.skirts = true },
       (s) => { s.hull.engineAt = 'front' },
       (s) => { s.crew.comfort = 'improved' },
     ]

@@ -306,6 +306,8 @@ export const RENDER = {
     /** Reactive tiles stand this far off the plate and are this thick. A full grid covers this share of the plate. */
     tile: { offM: 0.04, thickM: 0.07, cover: 0.9 },
     /** How many panels of the kit's tiles cover each place, along and across: few, so a fully tiled tank stays near its budget. */
+    /** Side skirts: how far out from the hull side they hang, how low they reach (a share of the track's height), and the gap between plates. */
+    skirts: { outM: 0.05, bottomShare: 0.3, gapM: 0.03 },
     tilePanels: { glacis: { panelsLong: 1, panelsWide: 2 }, hullSide: { panelsLong: 1, panelsWide: 1 }, turretFront: { panelsLong: 1, panelsWide: 1 }, turretSide: { panelsLong: 1, panelsWide: 1 } },
     /**
      * Each turret, seen from above, as rings one over the other. A ring is

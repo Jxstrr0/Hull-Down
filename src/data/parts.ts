@@ -379,6 +379,9 @@ export const COOLING = {
 export type CoolingId = keyof typeof COOLING
 
 /** Auxiliary power unit: runs the turret and radios with the main engine off. */
+/** Side skirts: hung outside, so they take no room inside. */
+export const SKIRTS: Part = { massT: 0.6, volumeM3: 0, costKr: 25_000, reliability: 1 }
+
 export const APU: Part = { massT: 0.15, volumeM3: 0.2, costKr: 30_000, reliability: 0.985 }
 
 // --- Running gear ---------------------------------------------------------
