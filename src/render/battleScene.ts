@@ -3,18 +3,20 @@
 // when the player first asks to watch a battle, never before.
 import {
   BoxGeometry, Color, ConeGeometry, DirectionalLight, Fog, Group, HemisphereLight, InstancedMesh, Mesh, PerspectiveCamera,
-  PlaneGeometry, Scene, SphereGeometry, WebGLRenderer, type Object3D,
+  PlaneGeometry, Scene, SphereGeometry, Vector3, WebGLRenderer, type Object3D,
 } from 'three'
 import { BATTLE } from '../data/battle'
 import { TIERS, type TierId } from '../data/graphics'
 import type { PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import type { BattleResult } from '../sim/battle/battle'
+import type { HitResult } from '../sim/hits/trace'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
 import { momentOf, type BattleMoment } from '../ui/battleReplay'
 import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot } from './battleDirector'
 import { createFrameMeter } from './frameMeter'
-import { Dust, Kit, Marks, Working, exhaustDeckX } from './rangeScene'
+import { Dust, Kit, Marks, Sparks, Working, exhaustDeckX } from './rangeScene'
+import { sparkCount, sparkFlights } from './sparks'
 import { DustTrail, blastRing } from './dust'
 import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, setRecoil, setWear, tonesOf } from './tankModel'
 import { recoilAt } from './recoil'
@@ -75,6 +77,10 @@ interface TankParts {
   turretXM: number
   muzzleM: number
   blastS: number | null
+  /** Half its length, and where the middle of each track is and how high, to find where a round struck. */
+  halfM: number
+  trackSideM: number
+  trackUpM: number
   working: Working
   pipes: number
   lastS: number | null
@@ -86,6 +92,7 @@ export interface BattleStage {
   tracers: Mesh[]
   dust: Dust
   marks: Marks
+  sparks: Sparks
 }
 
 /**
@@ -164,6 +171,7 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
       },
       fumes: new DustTrail(), working: new Working(), pipes: 0, lastS: null,
       turretXM: shape.turret.xM, muzzleM: shape.gun.rootXM - shape.turret.xM + shape.gun.lengthM, blastS: null,
+      halfM: shape.lengthM / 2, trackSideM: shape.track.centreZM, trackUpM: shape.track.topM / 2,
       ruts: new DustTrail(), rutM: -shape.track.lengthM / 2 + RENDER.marks.longM / 2, rutWideM: shape.track.widthM * RENDER.marks.widthShare,
     }
   })
@@ -179,7 +187,9 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
   root.add(dust.mesh)
   const marks = new Marks(kit, RENDER.marks.battle)
   root.add(marks.mesh)
-  return { root, tanks, tracers, dust, marks }
+  const sparks = new Sparks(kit, RENDER.sparks.battle)
+  root.add(sparks.mesh)
+  return { root, tanks, tracers, dust, marks, sparks }
 }
 
 /** How much the stage asks of a phone: triangles and separate pieces. */
@@ -205,6 +215,30 @@ export function gunWays(battle: BattleResult, moment: BattleMoment): number[] {
     const target = at === null ? undefined : moment.tanks[at]
     return target && tank.state !== 'out' ? wayTo(tank, target) : tank.headingDeg
   })
+}
+
+const UP = new Vector3(0, 1, 0)
+
+/**
+ * Where a round struck a tank, in the tank's own frame, and the way back off
+ * the plate. The hit model measures back from the nose with the turret square;
+ * here x runs forward from the middle and the turret has turned. A round that
+ * only met the tracks struck the side it came from.
+ */
+export function struckAt(parts: Pick<TankParts, 'turret' | 'turretXM' | 'halfM' | 'trackSideM' | 'trackUpM'>, hit: Pick<HitResult, 'entry' | 'zone' | 'direction'>): { at: Vector3; out: Vector3 } {
+  const d = hit.direction
+  const out = new Vector3(d.x, -d.y, -d.z).normalize()
+  if (!hit.entry) return { at: new Vector3(0, parts.trackUpM, (d.z > 0 ? -1 : 1) * parts.trackSideM), out }
+  const at = new Vector3(parts.halfM - hit.entry.x, hit.entry.y, hit.entry.z)
+  const onTurret = hit.zone !== null && (hit.zone === 'mantlet' || hit.zone.startsWith('turret'))
+  if (onTurret && parts.turret) {
+    const turn = parts.turret.rotation.y
+    at.x -= parts.turretXM
+    at.applyAxisAngle(UP, turn)
+    at.x += parts.turretXM
+    out.applyAxisAngle(UP, turn)
+  }
+  return { at, out }
 }
 
 /** Puts every piece where the battle has it at a moment. */
@@ -286,6 +320,7 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     parts.flash.visible = false
     parts.strike.visible = false
   })
+  stage.sparks.clear()
   for (const shot of battle.shots) {
     if (shot.atS > t) break
     if (t - shot.atS <= K.flashS) {
@@ -293,11 +328,20 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
       if (by) by.flash.visible = true
     }
     const hit = shot.hit
-    if (hit && (hit.zone !== null || hit.track) && t >= shot.landS && t - shot.landS <= K.strikeS) {
-      const at = stage.tanks[shot.at]
-      if (at) at.strike.visible = true
+    const at = stage.tanks[shot.at]
+    if (!hit || !at || (hit.zone === null && !hit.track) || t < shot.landS) continue
+    const struck = struckAt(at, hit)
+    if (t - shot.landS <= K.strikeS) {
+      at.strike.visible = true
+      at.strike.position.copy(struck.at)
+    }
+    const ageS = (t - shot.landS) / RENDER.battle.rate
+    if (ageS < RENDER.sparks.lifeS) {
+      at.group.updateMatrixWorld()
+      stage.sparks.throw(at.group.localToWorld(struck.at), struck.out.transformDirection(at.group.matrixWorld), sparkFlights(sparkCount(hit)), ageS)
     }
   }
+  stage.sparks.show()
   stage.tracers.forEach((tracer, i) => {
     const round = moment.rounds[i]
     tracer.visible = round !== undefined

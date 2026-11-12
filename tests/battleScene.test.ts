@@ -5,7 +5,7 @@ import { ACCORD_LIMITS, THREAT_TANKS } from '../src/data/opponents'
 import { RENDER } from '../src/data/render'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import { aimOf, cameraFor, cutAt, directorCuts } from '../src/render/battleDirector'
-import { buildBattleStage, gunWays, poseStage, stageCost } from '../src/render/battleScene'
+import { buildBattleStage, gunWays, poseStage, stageCost, struckAt } from '../src/render/battleScene'
 import { Kit } from '../src/render/rangeScene'
 import { runBattle } from '../src/sim/battle/battle'
 import { combatantOf } from '../src/sim/duel/duel'
@@ -197,6 +197,30 @@ describe('the stage at a moment', () => {
     const before = stage.dust.showing
     at(shot.atS + 0.01)
     expect(stage.dust.showing - before).toBeGreaterThanOrEqual(RENDER.dust.blast.puffs)
+    kit.dispose()
+  })
+
+  it('throws sparks off the tank a round strikes, at the place it struck, and they go out', () => {
+    const shot = battles.flatMap((each) => each.shots.map((s) => ({ battle: each, s })))
+      .find(({ s }) => s.hit?.entry && s.hit.zone !== null)
+    if (!shot) throw new Error('no hit')
+    const { battle, s } = shot
+    const kit = new Kit()
+    const stage = buildBattleStage(kit, battle, look(me), look(warden))
+    const at = (t: number): void => {
+      const moment = momentOf(battle, t)
+      poseStage(stage, battle, moment, gunWays(battle, moment))
+    }
+    at(s.landS + 0.05)
+    expect(stage.sparks.showing).toBeGreaterThan(0)
+    expect(stage.sparks.showing).toBeLessThanOrEqual(RENDER.sparks.battle)
+    // The flash is where the round struck, not the middle of the tank.
+    const parts = stage.tanks[s.at]!
+    expect(parts.strike.visible).toBe(true)
+    expect(parts.strike.position.distanceTo(struckAt(parts, s.hit!).at)).toBeLessThan(1e-9)
+    at(s.landS + RENDER.sparks.lifeS * RENDER.battle.rate + 0.01)
+    const later = battle.shots.some((o) => o.hit && o.landS <= s.landS + RENDER.sparks.lifeS * RENDER.battle.rate + 0.01 && o.landS > s.landS)
+    if (!later) expect(stage.sparks.showing).toBe(0)
     kit.dispose()
   })
 

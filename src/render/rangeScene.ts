@@ -3,7 +3,7 @@
 // when the player first asks to watch a run, never before.
 import {
   BoxGeometry, BufferGeometry, Color, DataTexture, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, Fog,
-  Group, HemisphereLight, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, Quaternion, RepeatWrapping,
+  Group, HemisphereLight, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, OctahedronGeometry, PerspectiveCamera, PlaneGeometry, Quaternion, RepeatWrapping,
   Scene, Shape, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer, type Material, type Texture,
 } from 'three'
 import { GUNNERY } from '../data/gunnery'
@@ -25,6 +25,7 @@ import { buildSolids, buildTank, rollTracks, setMud, setRecoil, setWear, tonesOf
 import { recoilAt } from './recoil'
 import { DustTrail, blastRing, dustAt, justFired, type DustKind, type PuffLook } from './dust'
 import { markAt } from './marks'
+import { sparkAt, type SparkFlight } from './sparks'
 import { courseMud, enduranceMud, enduranceWear, trialWear } from './mud'
 import { trackLinkPixels } from './trackLinks'
 import { tankShapeOf, type TankShape } from './tankShape'
@@ -320,6 +321,18 @@ export class Kit {
   }
 
   /** A shape that shines by itself, whatever the light: a round in the air, the flash at the muzzle. */
+  /** `count` copies of one shape that glow without light, each in its own colour. */
+  glowing(geometry: BufferGeometry, count: number): InstancedMesh {
+    this.geometries.push(geometry)
+    const key = 'glowing'
+    let material = this.materials.get(key)
+    if (!material) {
+      material = new MeshBasicMaterial({ color: new Color('#ffffff'), fog: false })
+      this.materials.set(key, material)
+    }
+    return new InstancedMesh(geometry, material, count)
+  }
+
   glow(geometry: BufferGeometry, colour: string): Mesh {
     this.geometries.push(geometry)
     const key = `glow/${colour}`
@@ -957,6 +970,66 @@ export class Dust {
   /** How many puffs are in the air. */
   get showing(): number {
     return this.puffs.filter((puff) => puff !== null).length
+  }
+}
+
+/** A pool of sparks that glow without light, drawn afresh each frame from the strikes still throwing them. */
+export class Sparks {
+  readonly mesh: InstancedMesh
+  private used = 0
+  private readonly matrix = new Matrix4()
+  private readonly colour = new Color()
+  private readonly hot = new Color(RENDER.sparks.hot)
+  private readonly cool = new Color(RENDER.sparks.cool)
+
+  constructor(kit: Kit, capacity: number) {
+    this.mesh = kit.glowing(new OctahedronGeometry(0.5, 0), capacity)
+    for (let i = 0; i < capacity; i++) {
+      this.mesh.setColorAt(i, this.hot)
+      this.mesh.setMatrixAt(i, this.matrix.makeScale(0, 0, 0))
+    }
+    this.mesh.frustumCulled = false
+  }
+
+  /** Start a new frame with no sparks. */
+  clear(): void {
+    this.used = 0
+  }
+
+  /**
+   * The sparks of one strike at `at`, `ageS` watched seconds after it, thrown
+   * back along `out` (a level-or-not unit line off the plate). Past the pool's
+   * size the rest wait.
+   */
+  throw(at: Vector3, out: Vector3, flights: readonly SparkFlight[], ageS: number): void {
+    const across = new Vector3(-out.z, 0, out.x)
+    if (across.lengthSq() < 1e-9) across.set(1, 0, 0)
+    across.normalize()
+    for (const flight of flights) {
+      if (this.used >= this.mesh.instanceMatrix.count) return
+      const now = sparkAt(flight, ageS)
+      if (!now) continue
+      this.matrix.makeScale(now.sizeM, now.sizeM, now.sizeM).setPosition(
+        at.x + out.x * now.outM + across.x * now.acrossM,
+        Math.max(now.sizeM / 2, at.y + out.y * now.outM + now.upM),
+        at.z + out.z * now.outM + across.z * now.acrossM,
+      )
+      this.mesh.setMatrixAt(this.used, this.matrix)
+      this.mesh.setColorAt(this.used, this.colour.copy(this.hot).lerp(this.cool, now.cooled))
+      this.used++
+    }
+  }
+
+  /** Show what this frame threw. */
+  show(): void {
+    this.mesh.count = this.used
+    this.mesh.instanceMatrix.needsUpdate = true
+    if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true
+  }
+
+  /** How many sparks are in the air. */
+  get showing(): number {
+    return this.used
   }
 }
 
