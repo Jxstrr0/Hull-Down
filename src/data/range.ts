@@ -2,6 +2,7 @@
 // and the marks a tank has to reach. Game-level abstractions, not
 // engineering data.
 import type { ThreatId } from './ammo'
+import type { FireMissionMarks } from './fireMission'
 import type { ZoneId } from './materials'
 
 export interface Ground {
@@ -310,4 +311,6 @@ export type Marks = {
   drillRpm: number
   armour: readonly ArmourSerial[]
   bermShowsM: number
+  /** The fire mission, for a self-propelled gun's tender. Not given for a tank's: a howitzer is then held to the range's own marks. */
+  fireMission?: FireMissionMarks
 }

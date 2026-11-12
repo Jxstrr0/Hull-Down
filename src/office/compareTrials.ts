@@ -115,9 +115,38 @@ function measures(): Measure[] {
   return list
 }
 
+/** The fire mission's measures, for two builds that both went through one. */
+function missionMeasures(): Measure[] {
+  const mission = (r: RangeReport): NonNullable<RangeReport['fireMission']> => {
+    if (!r.fireMission) throw new Error('No fire mission')
+    return r.fireMission
+  }
+  return [
+    {
+      key: 'missionFirst', label: T.missionFirst, better: 'less',
+      read: (r) => {
+        const s = mission(r).firstRoundS
+        return { value: s ?? Infinity, text: s === null ? T.never : fill(T.seconds, { n: fixed(s, 0) }), passed: mission(r).timePassed }
+      },
+    },
+    {
+      key: 'missionRate', label: T.missionRate, better: 'more',
+      read: (r) => ({ value: mission(r).rpm, text: fixed(mission(r).rpm, 1), passed: mission(r).ratePassed }),
+    },
+    {
+      key: 'missionClose', label: T.missionClose, better: 'less',
+      read: (r) => {
+        const m = mission(r).missM
+        return { value: m ?? Infinity, text: m === null ? T.never : fill(T.metres, { n: fixed(m, 0) }), passed: mission(r).closePassed }
+      },
+    },
+  ]
+}
+
 /** Sets the later build's visit to the range against the earlier one's. */
 export function compareTrials(before: RangeReport, after: RangeReport): TrialMove[] {
-  return measures().map((measure): TrialMove => {
+  const all = before.fireMission && after.fireMission ? [...measures(), ...missionMeasures()] : measures()
+  return all.map((measure): TrialMove => {
     const a = measure.read(before)
     const b = measure.read(after)
     const same = a.value === b.value || a.text === b.text
