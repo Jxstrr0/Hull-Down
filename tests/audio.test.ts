@@ -292,7 +292,7 @@ describe('the synth', () => {
     sound.cue('short')
     const alone = sources() - before
     await new Promise((done) => setTimeout(done, 0))
-    expect(asked).toEqual([...Object.values(AUDIO.recordings).map((each) => each.file), AUDIO.engineTape.file])
+    expect(asked).toEqual([...Object.values(AUDIO.recordings).map((each) => each.file), AUDIO.engineTape.file, AUDIO.trackTape.file])
     before = sources()
     sound.cue('short')
     expect(sources() - before).toBe(alone + 1)
@@ -323,10 +323,11 @@ describe('the engine recording', () => {
     sound.drone(VOICE, droneAt(VOICE, 10))
     const before = sources()
     await new Promise((done) => setTimeout(done, 0))
+    // The engine and the tracks each go in once.
     sound.drone(VOICE, droneAt(VOICE, 20))
-    expect(sources() - before).toBe(1)
+    expect(sources() - before).toBe(2)
     sound.drone(VOICE, droneAt(VOICE, 30))
-    expect(sources() - before).toBe(1)
+    expect(sources() - before).toBe(2)
     sound.still()
     expect(fake.calls.get('stop')).toBe(fake.calls.get('start'))
   })
@@ -339,6 +340,28 @@ describe('the engine recording', () => {
     expect(T.fromS).toBeGreaterThan(0.5)
     expect(T.fromS + T.loopS).toBeLessThan(2 * T.loopS - 0.5)
     expect(T.synthGain).toBeLessThan(1)
+  })
+})
+
+describe('the track recording', () => {
+  it('keeps step with the links as the tank speeds up, within its limits', () => {
+    const T = AUDIO.trackTape
+    const rates = [1, 5, 10, 20, 40, 70].map((kmh) => droneAt(VOICE, kmh).trackRate)
+    for (let i = 1; i < rates.length; i++) expect(rates[i]).toBeGreaterThanOrEqual(rates[i - 1]!)
+    for (const rate of rates) {
+      expect(rate).toBeGreaterThanOrEqual(T.slowest)
+      expect(rate).toBeLessThanOrEqual(T.fastest)
+    }
+    // At a steady 10 km/h its clicks come about once a link.
+    const at10 = droneAt(VOICE, 10)
+    expect(at10.trackRate * T.clickHz).toBeCloseTo(at10.beatHz, 6)
+  })
+
+  it('is in the build, and is played round inside the file, never across its ends', () => {
+    const T = AUDIO.trackTape
+    expect(existsSync(`public/${T.file}`)).toBe(true)
+    expect(T.fromS).toBeGreaterThan(0.5)
+    expect(T.fromS + T.loopS).toBeLessThan(2 * T.loopS - 0.5)
   })
 })
 
