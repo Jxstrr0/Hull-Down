@@ -22,6 +22,7 @@ import type { Camo } from './camo'
 import { createFrameMeter } from './frameMeter'
 import { rangeScenery } from './scenery'
 import { buildSolids, buildTank, tonesOf } from './tankModel'
+import { trackLinkPixels } from './trackLinks'
 import { tankShapeOf, type TankShape } from './tankShape'
 import { legGround, placeOnLeg, type LegGround } from './terrain'
 import { puffAt, timelapseOf, type LapseFrame } from './timelapse'
@@ -114,6 +115,25 @@ export class Kit {
   mesh(geometry: BufferGeometry, colour: string, opacity = 1): Mesh {
     this.geometries.push(geometry)
     return new Mesh(geometry, this.paint(colour, opacity))
+  }
+
+  /** A track: bare steel with its links painted on. The shape says where on the links each corner falls. */
+  tracked(geometry: BufferGeometry): Mesh {
+    this.geometries.push(geometry)
+    let material = this.materials.get('track')
+    if (!material) {
+      const k = RENDER.tank.trackLinks
+      const texture = new DataTexture(trackLinkPixels(), k.alongPx, k.acrossPx)
+      texture.wrapS = RepeatWrapping
+      texture.wrapT = RepeatWrapping
+      texture.colorSpace = SRGBColorSpace
+      texture.generateMipmaps = true
+      texture.needsUpdate = true
+      this.textures.push(texture)
+      material = new MeshLambertMaterial({ map: texture, color: new Color(k.steel), flatShading: true })
+      this.materials.set('track', material)
+    }
+    return new Mesh(geometry, material)
   }
 
   /** A shape painted with a pattern that repeats over it. The shape says where on the pattern each corner falls. */

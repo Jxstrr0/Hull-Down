@@ -87,6 +87,14 @@ function sweepCorners(part: Sweep): number[] {
 
 /** A loop of plate: the outline, the same outline set in by the plate's thickness, and the faces between. */
 function bandCorners(part: Band): number[] {
+  return bandSkin(part, 1).corners
+}
+
+/**
+ * A band's corners, and where each falls on a picture that repeats every
+ * `repeatM` round the loop and spans the band once across.
+ */
+export function bandSkin(part: Band, repeatM: number): { corners: number[]; places: number[] } {
   const outer = part.outline
   const n = outer.length
   // Which way round the outline runs, so "in" is the right side of each edge.
@@ -106,19 +114,32 @@ function bandCorners(part: Band): number[] {
   })
   const near = part.atZ - part.widthM / 2
   const far = part.atZ + part.widthM / 2
-  const out: number[] = []
-  const quad = (a: number[], b: number[], c: number[], d: number[]): void => {
-    out.push(...a, ...b, ...c, ...a, ...c, ...d)
+  // How far round the loop each corner of the outline is, in repeats of the picture.
+  const round: number[] = [0]
+  for (let i = 1; i <= n; i++) {
+    const a = outer[i - 1]!, b = outer[i % n]!
+    round.push(round[i - 1]! + Math.hypot(b.x - a.x, b.y - a.y) / repeatM)
+  }
+  const corners: number[] = []
+  const places: number[] = []
+  type C = [number, number, number, number, number]
+  const quad = (a: C, b: C, c: C, d: C): void => {
+    for (const k of [a, b, c, a, c, d]) {
+      corners.push(k[0], k[1], k[2])
+      places.push(k[3], k[4])
+    }
   }
   for (let i = 0; i < n; i++) {
     const j = (i + 1) % n
     const o0 = outer[i]!, o1 = outer[j]!, i0 = inner[i]!, i1 = inner[j]!
-    quad([o0.x, o0.y, near], [o1.x, o1.y, near], [o1.x, o1.y, far], [o0.x, o0.y, far])
-    quad([i1.x, i1.y, near], [i0.x, i0.y, near], [i0.x, i0.y, far], [i1.x, i1.y, far])
-    quad([o1.x, o1.y, near], [o0.x, o0.y, near], [i0.x, i0.y, near], [i1.x, i1.y, near])
-    quad([o0.x, o0.y, far], [o1.x, o1.y, far], [i1.x, i1.y, far], [i0.x, i0.y, far])
+    const u0 = round[i]!, u1 = round[i + 1]!
+    quad([o0.x, o0.y, near, u0, 0], [o1.x, o1.y, near, u1, 0], [o1.x, o1.y, far, u1, 1], [o0.x, o0.y, far, u0, 1])
+    quad([i1.x, i1.y, near, u1, 0], [i0.x, i0.y, near, u0, 0], [i0.x, i0.y, far, u0, 1], [i1.x, i1.y, far, u1, 1])
+    // The edges of the links: the picture's own edge, the gaps still showing.
+    quad([o1.x, o1.y, near, u1, 0], [o0.x, o0.y, near, u0, 0], [i0.x, i0.y, near, u0, 0], [i1.x, i1.y, near, u1, 0])
+    quad([o0.x, o0.y, far, u0, 1], [o1.x, o1.y, far, u1, 1], [i1.x, i1.y, far, u1, 1], [i0.x, i0.y, far, u0, 1])
   }
-  return out
+  return { corners, places }
 }
 
 function norm(x: number, y: number): { x: number; y: number } {
@@ -184,7 +205,15 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
   tank.add(top)
 
   const piles = new Map<string, { mount: Mount; tone: Tone; corners: number[] }>()
+  // The tracks are bare steel with their links painted on, one mesh for both.
+  const track = { corners: [] as number[], places: [] as number[] }
   for (const part of shape.parts) {
+    if (part.kind === 'band') {
+      const skin = bandSkin(part, RENDER.tank.trackLinks.linkM)
+      for (const value of skin.corners) track.corners.push(value)
+      for (const value of skin.places) track.places.push(value)
+      continue
+    }
     for (const [tone, corners] of Object.entries(toneCorners(part, part.tone)) as [Tone, number[]][]) {
       const key = `${part.mount}/${tone}`
       let pile = piles.get(key)
@@ -205,6 +234,13 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
       mesh = kit.patterned(geometry, tones.camo)
     } else mesh = kit.mesh(geometry, tones[pile.tone])
     ;(pile.mount === 'turret' ? top : tank).add(mesh)
+  }
+  if (track.corners.length > 0) {
+    const geometry = new BufferGeometry()
+    geometry.setAttribute('position', new Float32BufferAttribute(track.corners, 3))
+    geometry.setAttribute('uv', new Float32BufferAttribute(track.places, 2))
+    geometry.computeVertexNormals()
+    tank.add(kit.tracked(geometry))
   }
   return tank
 }

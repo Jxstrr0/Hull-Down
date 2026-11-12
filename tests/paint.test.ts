@@ -138,10 +138,10 @@ describe('a painted tank', () => {
           expect(node.geometry.getAttribute('uv').count).toBe(corners)
         }
       })
-      expect(meshes).toBeLessThanOrEqual(6)
+      expect(meshes).toBeLessThanOrEqual(7)
       expect(triangles).toBe(tankTriangles(shape))
-      // The hull and the turret each have one painted mesh when the scheme has patches.
-      expect(patterned).toBe(PAINT[id].patches.length > 0 ? 2 : 0)
+      // The hull and the turret each have one painted mesh when the scheme has patches, and the tracks have their links.
+      expect(patterned).toBe((PAINT[id].patches.length > 0 ? 2 : 0) + 1)
       kit.dispose()
     }
   })

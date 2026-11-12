@@ -169,10 +169,48 @@ describe('a built tank', () => {
         meshes++
         triangles += node.geometry.getAttribute('position').count / 3
       })
-      expect(meshes).toBeLessThanOrEqual(6)
+      expect(meshes).toBeLessThanOrEqual(7)
       expect(triangles).toBe(tankTriangles(shape))
       expect(tank.getObjectByName(TURRET)).toBeTruthy()
       kit.dispose()
     }
+  })
+
+  it('paints the links on the tracks: one bare steel mesh, the same for every paint', async () => {
+    const { buildStatSheet } = await import('../src/sim/vehicle')
+    const { trackLinkPixels } = await import('../src/render/trackLinks')
+    const { Mesh } = await import('three')
+    const { buildTank, tonesOf } = await import('../src/render/tankModel')
+    const { tankShapeOf } = await import('../src/render/tankShape')
+    const shape = tankShapeOf(BASELINE_SPEC, buildStatSheet(BASELINE_SPEC, PACT_LIMITS_GEN1).geometry)
+    const kit = new Kit()
+    const tracks = (tank: ReturnType<typeof buildTank>): InstanceType<typeof Mesh>[] => {
+      const found: InstanceType<typeof Mesh>[] = []
+      tank.traverse((node) => {
+        if (node instanceof Mesh && (node.material as { map?: { image?: { width?: number } } | null }).map?.image?.width === RENDER.tank.trackLinks.alongPx) found.push(node)
+      })
+      return found
+    }
+    const plain = tracks(buildTank(kit, shape))
+    const camo = tracks(buildTank(kit, shape, tonesOf('threeColour')))
+    expect(plain.length).toBe(1)
+    expect(camo.length).toBe(1)
+    expect(camo[0]!.material).toBe(plain[0]!.material)
+    const geometry = plain[0]!.geometry
+    const corners = geometry.getAttribute('position').count
+    expect(geometry.getAttribute('uv').count).toBe(corners)
+    expect(shape.parts.filter((part) => part.kind === 'band').length).toBe(2)
+    // Round a track the picture repeats once a link: about as many links as the loop is long.
+    const u = geometry.getAttribute('uv')
+    let most = 0
+    for (let i = 0; i < u.count; i++) most = Math.max(most, u.getX(i))
+    expect(most).toBeGreaterThan(20)
+    // The picture: the steel itself, the gap between links darker.
+    const pixels = trackLinkPixels()
+    const k = RENDER.tank.trackLinks
+    expect(pixels.length).toBe(k.alongPx * k.acrossPx * 4)
+    expect(pixels[0]).toBe(Math.round(k.gapShade * 255))
+    expect(Math.max(...pixels)).toBe(255)
+    kit.dispose()
   })
 })
