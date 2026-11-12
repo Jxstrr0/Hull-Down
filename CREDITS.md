@@ -144,6 +144,30 @@ makes the tiles the game uses.
 | `art/third-party/textures/Paper003_1K-JPG_Color.jpg` | Paper 003 | ambientCG | https://ambientcg.com/view?id=Paper003 | CC0 1.0 | None (the original colour map) |
 | `src/assets/blueprint-mottle.jpg` | Paper 003 | ambientCG | https://ambientcg.com/view?id=Paper003 | CC0 1.0 | Grey, 512 px, creases and mottle only (high-pass), made to tile, saved as JPEG |
 
+## Generated voice
+
+The range officer's twelve lines were generated for this game with
+ElevenLabs (Eleven v4, stock voice Rolando), one take each, after Kelbo's
+yes (1.8.3.0). They are used under ElevenLabs' terms for generated audio,
+not a Creative Commons licence. The files the game plays had their pauses
+shortened and were saved as 64 kbps mono MP3 with ffmpeg; the takes as
+generated are not kept in the repository.
+
+| File | Title | Author | Source | Licence | Changes |
+| --- | --- | --- | --- | --- | --- |
+| `public/audio/voice/ro-01-range-clear.mp3` | Range officer: "Range is clear. Carry on." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-02-target-up.mp3` | Range officer: "Target up." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-03-hit.mp3` | Range officer: "Hit." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-04-miss-short.mp3` | Range officer: "Miss. Short." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-05-miss-over.mp3` | Range officer: "Miss. Over." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-06-miss-left.mp3` | Range officer: "Miss. Left." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-07-miss-right.mp3` | Range officer: "Miss. Right." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-08-no-shot.mp3` | Range officer: "Target down. No shot fired." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-09-not-seen.mp3` | Range officer: "Target not seen." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-10-jam.mp3` | Range officer: "Stoppage. The loader has a jam." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-11-cease-fire.mp3` | Range officer: "Cease fire. Shoot complete." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+| `public/audio/voice/ro-12-breakdown.mp3` | Range officer: "Breakdown on the lane. Recovery is on its way." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
+
 ## Libraries (npm packages, shipped in the build)
 
 | Package | What it does | Authors | Source | Licence | Changes |

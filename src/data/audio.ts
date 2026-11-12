@@ -51,6 +51,10 @@ export interface CueLayer {
   delayS?: number
 }
 
+/** What the range officer can say. */
+export const VOICE_LINE_IDS = ['rangeClear', 'targetUp', 'hit', 'missShort', 'missOver', 'missLeft', 'missRight', 'noShot', 'notSeen', 'jam', 'ceaseFire', 'breakdown'] as const
+export type VoiceLineId = (typeof VOICE_LINE_IDS)[number]
+
 export const CUE_IDS = ['gun', 'hit', 'miss', 'short', 'ricochet', 'held', 'pierce', 'tap', 'pencil', 'stamp', 'warn'] as const
 export type CueId = (typeof CUE_IDS)[number]
 
@@ -165,6 +169,34 @@ export const AUDIO = {
     hit: { file: 'audio/hit.mp3', gain: 0.7, synthGain: 0.4 },
     short: { file: 'audio/short.mp3', gain: 0.9, synthGain: 0.5 },
   } satisfies Partial<Record<CueId, { file: string; gain: number; synthGain: number }>>,
+
+  /**
+   * The range officer: twelve short lines, read once by a generated voice
+   * (ElevenLabs, see CREDITS.md), fetched only when a trial is first watched.
+   * `speechS` is how long each file runs, pauses trimmed, so the timing can
+   * be checked without a browser.
+   */
+  voice: {
+    gain: 0.9,
+    /** A line that cannot start within this many seconds of its moment, as another is still being said, is let go. */
+    maxLateS: 0.6,
+    /** The range is called clear only when a run is watched from this close to its start, seconds. */
+    startWithinS: 0.5,
+    lines: {
+      rangeClear: { file: 'audio/voice/ro-01-range-clear.mp3', speechS: 1.61 },
+      targetUp: { file: 'audio/voice/ro-02-target-up.mp3', speechS: 0.85 },
+      hit: { file: 'audio/voice/ro-03-hit.mp3', speechS: 0.4 },
+      missShort: { file: 'audio/voice/ro-04-miss-short.mp3', speechS: 0.81 },
+      missOver: { file: 'audio/voice/ro-05-miss-over.mp3', speechS: 1.3 },
+      missLeft: { file: 'audio/voice/ro-06-miss-left.mp3', speechS: 1.03 },
+      missRight: { file: 'audio/voice/ro-07-miss-right.mp3', speechS: 1.2 },
+      noShot: { file: 'audio/voice/ro-08-no-shot.mp3', speechS: 1.91 },
+      notSeen: { file: 'audio/voice/ro-09-not-seen.mp3', speechS: 1.32 },
+      jam: { file: 'audio/voice/ro-10-jam.mp3', speechS: 2.11 },
+      ceaseFire: { file: 'audio/voice/ro-11-cease-fire.mp3', speechS: 1.72 },
+      breakdown: { file: 'audio/voice/ro-12-breakdown.mp3', speechS: 2.75 },
+    } satisfies Record<VoiceLineId, { file: string; speechS: number }>,
+  },
 
   /** The cue map: every short sound, layer by layer. */
   cues: {

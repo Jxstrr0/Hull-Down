@@ -303,6 +303,50 @@ describe('the synth', () => {
   })
 })
 
+describe('the range officer', () => {
+  it('fetches his lines only when asked, once, and speaks one at a time', async () => {
+    const fake = fakeContext()
+    const asked: string[] = []
+    const sound = createSound(true, () => fake.context, (file) => {
+      asked.push(file)
+      return Promise.resolve(new ArrayBuffer(8))
+    })
+    const sources = (): number => fake.calls.get('createBufferSource') ?? 0
+    sound.wake()
+    await new Promise((done) => setTimeout(done, 0))
+    expect(asked.some((file) => file.startsWith('audio/voice/'))).toBe(false)
+    // Nothing to say before the lines arrive.
+    let before = sources()
+    sound.say('hit')
+    expect(sources()).toBe(before)
+    sound.loadVoice()
+    sound.loadVoice()
+    await new Promise((done) => setTimeout(done, 0))
+    expect(asked.filter((file) => file.startsWith('audio/voice/'))).toEqual(Object.values(AUDIO.voice.lines).map((each) => each.file))
+    before = sources()
+    sound.say('hit')
+    sound.say('hit')
+    // The second waits for the first, as it is short.
+    expect(sources() - before).toBe(2)
+    // The clock has not moved: a third would wait for both, longer than a line may, and is let go.
+    expect(AUDIO.voice.lines.hit.speechS * 2).toBeGreaterThan(AUDIO.voice.maxLateS)
+    before = sources()
+    sound.say('targetUp')
+    expect(sources() - before).toBe(0)
+  })
+
+  it('stays quiet with the sound off', async () => {
+    const fake = fakeContext()
+    const sound = createSound(false, () => fake.context, () => Promise.resolve(new ArrayBuffer(8)))
+    sound.wake()
+    sound.loadVoice()
+    await new Promise((done) => setTimeout(done, 0))
+    const before = fake.calls.get('createBufferSource') ?? 0
+    sound.say('hit')
+    expect(fake.calls.get('createBufferSource') ?? 0).toBe(before)
+  })
+})
+
 describe('the engine recording', () => {
   it('plays faster the harder the engine works, and slower for a bigger engine', () => {
     const idle = droneAt(VOICE, 0).tapeRate

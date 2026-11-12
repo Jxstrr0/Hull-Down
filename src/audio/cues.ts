@@ -1,7 +1,7 @@
 // What a playback should sound like, worked out from what it shows. Plain
 // numbers, no browser sound here, so it can be tested. Nothing in this file
 // changes a result: the sim has already run.
-import { AUDIO, type CueId, type EngineKind } from '../data/audio'
+import { AUDIO, type CueId, type EngineKind, type VoiceLineId } from '../data/audio'
 import { GUNNERY } from '../data/gunnery'
 import { ENGINES, GUNS, TRANSMISSIONS, WHEELS } from '../data/parts'
 import type { ReelFrame } from '../render/shootReel'
@@ -113,6 +113,102 @@ export function createShootEar(): ShootEar {
         return shot ? [strikeOf(shot)] : []
       }
       return []
+    },
+  }
+}
+
+/** What the range officer calls when a round lands: a hit, or which way it missed. */
+export function callOf(shot: ShotRecord): VoiceLineId {
+  if (shot.hit) return 'hit'
+  const sideways = Math.abs(shot.acrossM) / GUNNERY.target.widthM > Math.abs(shot.upM) / GUNNERY.target.heightM
+  if (sideways) return shot.acrossM > 0 ? 'missRight' : 'missLeft'
+  return shot.upM < 0 ? 'missShort' : 'missOver'
+}
+
+/**
+ * The range officer at a firing test: a word as each target comes up, as
+ * each round lands, at a jam and when the shoot is over. Like the shoot ear,
+ * a moment is only spoken once, and only while the run is playing.
+ */
+export interface ShootOfficer {
+  hear(run: GunneryRun, frame: ReelFrame, playing: boolean): VoiceLineId[]
+}
+
+export function createShootOfficer(): ShootOfficer {
+  let last = ''
+  return {
+    hear(run, frame, playing) {
+      const now = frame.done ? 'done' : `${frame.targetIndex}:${frame.shotIndex}:${frame.phase}`
+      const fresh = now !== last
+      const first = last === ''
+      last = now
+      if (!fresh || !playing) return []
+      // Opened at the very end: nothing was heard, so nothing is over.
+      if (frame.done) return first ? [] : ['ceaseFire']
+      const target = run.targets[frame.targetIndex]
+      const shot = target?.shots[frame.shotIndex]
+      switch (frame.phase) {
+        case 'unseen': return ['notSeen']
+        case 'tooSlow': return ['noShot']
+        // A jam is the news when there is one, even as the target comes up: both would run over the shot.
+        case 'working': return shot?.jammed ? ['jam'] : frame.shotIndex === 0 ? ['targetUp'] : []
+        case 'strike': return shot ? [callOf(shot)] : []
+        case 'flight': return []
+      }
+    },
+  }
+}
+
+/**
+ * The range officer on a drive: the range is clear as the run starts, and a
+ * breakdown when the endurance run stops for one. Going back to the start
+ * lets it all be said again.
+ */
+export interface RunOfficer {
+  hear(timeS: number, playing: boolean, stoppedFor: object | null): VoiceLineId[]
+}
+
+export function createRunOfficer(): RunOfficer {
+  let lastS = Infinity
+  let started = false
+  let stop: object | null = null
+  return {
+    hear(timeS, playing, stoppedFor) {
+      if (timeS < lastS) {
+        started = false
+        stop = null
+      }
+      lastS = timeS
+      const out: VoiceLineId[] = []
+      if (!playing) return out
+      if (!started) {
+        started = true
+        if (timeS <= AUDIO.voice.startWithinS) out.push('rangeClear')
+      }
+      if (stoppedFor && stoppedFor !== stop) out.push('breakdown')
+      stop = stoppedFor
+      return out
+    },
+  }
+}
+
+/**
+ * One speaker: a line waits for the one before to finish, and is let go if
+ * it would start too long after its moment. Gives the second each line is
+ * to start at, or null for one let go.
+ */
+export interface VoiceQueue {
+  slot(nowS: number, lengthS: number): number | null
+}
+
+export function createVoiceQueue(maxLateS: number = AUDIO.voice.maxLateS): VoiceQueue {
+  let freeAt = -Infinity
+  return {
+    slot(nowS, lengthS) {
+      const at = Math.max(nowS, freeAt)
+      if (at - nowS > maxLateS) return null
+      freeAt = at + lengthS
+      return at
     },
   }
 }
