@@ -64,6 +64,8 @@ export interface Fire {
   night: { seeM: number; layFactor: number }
   /** Seconds, for a fresh trained crew with nothing else to do. */
   times: { findS: number; rangeS: number; layS: number; relayS: number }
+  /** How far the gun swings each way of the hull's front, degrees; null for a turret, which turns all the way round. */
+  swingDeg: number | null
   /**
    * How much slower each crewman is for the work the design gives him. 1 is
    * the reference. The commander finds targets, and with no loader feeds the
@@ -135,6 +137,7 @@ export function fireOf(spec: VehicleSpec): Fire {
       layS: (sight.layS + computer.setS) * TURRETS[spec.turret.shape].layPace,
       relayS: stabiliser.relayS,
     },
+    swingDeg: TURRETS[spec.turret.shape].swingDeg,
     pace: { commander: paceOf('commander'), gunner: paceOf('gunner'), ranging: paceOf(CREW.ranging[fc.rangefinder]) },
     tire: {
       commander: tiringAt(stations, 'commander'),
