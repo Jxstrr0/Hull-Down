@@ -51,9 +51,9 @@ describe('the 30 mm cannon', () => {
     }
   })
 
-  it('is refused on every tank tender, since 30 mm is not a tank calibre, and taken on the infantry fighting vehicle\'s', () => {
+  it('is refused on every tank tender, since 30 mm is not a tank calibre, and taken on the infantry fighting vehicle\'s and the scout car\'s', () => {
     for (const id of TENDER_IDS) {
-      if (id === 'ifv1996') expect(issues(cannon(), 'error', TENDERS[id].limits)).not.toContain('calibreNotStandard')
+      if (id === 'ifv1996' || id === 'scout2004') expect(issues(cannon(), 'error', TENDERS[id].limits)).not.toContain('calibreNotStandard')
       else expect(issues(cannon(), 'error', TENDERS[id].limits), id).toContain('calibreNotStandard')
     }
   })

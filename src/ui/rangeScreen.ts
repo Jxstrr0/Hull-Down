@@ -515,6 +515,15 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     const c = RANGE.course
     const cm = (metres: number): string => fixed(metres * 100, 0)
     const obstacleLine = (result: ObstacleResult): HTMLElement => {
+      // An obstacle the tender does not ask for is told as it went, with no verdict and no fix.
+      const told = (name: string, words: string[], passed: boolean, fix?: HTMLButtonElement): HTMLElement => {
+        if (!result.waived) return line(name, words, passed, fix)
+        const item = el('li', 'rg-line-item')
+        const head = el('div', 'rg-line-head')
+        head.append(el('span', 'rg-line-name', name))
+        item.append(head, el('p', 'rg-line-text', [...words, O.waived].join(' ')))
+        return item
+      }
       const slots = {
         have: fixed(result.have, result.id === 'mud' || result.id === 'slope' ? 1 : 2),
         need: fixed(result.need, result.id === 'mud' || result.id === 'slope' ? 1 : 2),
@@ -525,23 +534,23 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
       }
       const sagging = sheet.stress.suspension > 1
       if (result.id === 'trench') {
-        return line(fill(O.names.trench, { n: fixed(c.trench.widthM, 1) }), [fill(result.passed ? O.trenchPass : O.trenchFail, slots)],
+        return told(fill(O.names.trench, { n: fixed(c.trench.widthM, 1) }), [fill(result.passed ? O.trenchPass : O.trenchFail, slots)],
           result.passed, fixButton('hull.size', 'trench'))
       }
       if (result.id === 'step') {
         const words = [fill(result.passed ? O.stepPass : O.stepFail, slots)]
         if (!result.passed && sagging) words.push(O.stepSag)
-        return line(fill(O.names.step, { n: fixed(c.step.heightM, 1) }), words, result.passed,
+        return told(fill(O.names.step, { n: fixed(c.step.heightM, 1) }), words, result.passed,
           fixButton(sagging ? 'runningGear.suspension' : 'hull.size', 'step'))
       }
       if (result.id === 'mud') {
         const failed = result.cause === 'belly' ? O.mudBelly : result.cause === 'pull' ? O.mudPull : O.mudTracks
         const words = [fill(result.passed ? O.mudPass : failed, slots)]
         words.push(fill(O.mudPressure, { pressure: fixed(sheet.drive.pressureKgCm2, 2), bearing: fixed(GROUNDS.mud.bearingKgCm2, 1) }))
-        return line(fill(O.names.mud, { n: String(c.mud.lengthM) }), words, result.passed,
+        return told(fill(O.names.mud, { n: String(c.mud.lengthM) }), words, result.passed,
           fixButton(result.cause === 'pull' ? 'powerpack.engine' : footprint, 'mud'))
       }
-      return line(
+      return told(
         fill(O.names.slope, { n: String(c.slope.angleDeg) }),
         [fill(result.passed ? O.slopePass : result.cause === 'grip' ? O.slopeGrip : O.slopePull, slots)],
         result.passed, result.cause === 'grip' ? undefined : fixButton('powerpack.engine', 'slope'),
@@ -613,12 +622,12 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     long.append(el('p', 'ctl-note rg-note', E.note))
     root.append(
       summary, accel, course, long,
-      // A self-propelled gun is judged on its fire mission and an infantry fighting vehicle on its squad drop, not on the tank shoots, the drill or the berm.
-      ...(report.selfPropelled || report.carrier ? [] : gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch })),
+      // A self-propelled gun is judged on its fire mission, an infantry fighting vehicle on its squad drop and a scout car on spot and report, not on the tank shoots, the drill or the berm.
+      ...(report.selfPropelled || report.carrier || report.scouting ? [] : gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch })),
       ...missionCards(report, sheet.fire.mission.reachKm, { card, line, fixButton, watch }),
       ...squadCards(report, { card, line, fixButton, watch }),
       ...scoutCards(report, args.spec, { card, line, fixButton, watch }),
-      ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }).slice(0, report.selfPropelled || report.carrier ? 1 : 2),
+      ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }).slice(0, report.selfPropelled || report.carrier || report.scouting ? 1 : 2),
     )
     const after = afterAction(report.armour, args.spec)
     const debrief = afterActionCard(after, sheet, args.spec, { fixButton, fixZone })

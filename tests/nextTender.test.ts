@@ -39,6 +39,20 @@ const CARRIER = tank((spec) => {
   // The smallest ring the office offers: the cannon needs less.
   spec.turret.ringMm = TUNING.limits.ringMm.min
 })
+const SCOUT = tank((spec) => {
+  spec.hull.size = 'light'
+  spec.gun = 'autocannon30'
+  spec.loading = 'loader'
+  spec.turret.ringMm = TUNING.limits.ringMm.min
+  spec.powerpack.engine = 'diesel580'
+  spec.powerpack.transmission = 'manual38'
+  spec.powerpack.fuelL = 600
+  spec.runningGear.layout = 'wheels6'
+  for (const zone of Object.keys(spec.armour) as (keyof typeof spec.armour)[]) {
+    spec.armour[zone] = [{ material: 'rolledSteel', mm: 15 }]
+    spec.era[zone] = 0
+  }
+})
 type Career = Parameters<typeof nextTender>[0]
 /** On from the first tender, through the tank destroyer's of 1991 and the infantry fighting vehicle's of 1996, to the tender of 2001. */
 const to2001 = (career: Career) =>
@@ -50,7 +64,7 @@ describe('the tank destroyer tender of 1991', () => {
   const T = TENDERS.destroyer1991
 
   it('comes second, ten years after the first, with the same parts and a casemate allowed', () => {
-    expect(TENDER_IDS).toEqual(['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'spg2008', 'tank2016'])
+    expect(TENDER_IDS).toEqual(['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'scout2004', 'spg2008', 'tank2016'])
     expect(T.year).toBe(1991)
     expect(T.limits.generation ?? 1).toBe(1)
     expect(T.limits.casemate).toBe(true)
@@ -73,7 +87,7 @@ describe('the tank destroyer tender of 1991', () => {
   }, SLOW)
 
   it('has luck of its own, and leaves the other tenders\' luck as it was before it came in', () => {
-    expect(TENDER_IDS.map((id) => TENDERS[id].luck)).toEqual([0, 3, 5, 1, 4, 2])
+    expect(TENDER_IDS.map((id) => TENDERS[id].luck)).toEqual([0, 3, 5, 1, 6, 4, 2])
   })
 })
 
@@ -143,7 +157,10 @@ describe('going on to the next tender', () => {
   it('stops at the last tender', () => {
     const second = onward(decided)
     expect(tendersLeft(second)).toBe(true)
-    const spg = nextTender(enterTender(buildPrototype(second, THERMAL), 1))
+    const scout = nextTender(enterTender(buildPrototype(second, THERMAL), 1))
+    expect(tenderIdOf(scout)).toBe('scout2004')
+    expect(tendersLeft(scout)).toBe(true)
+    const spg = nextTender(enterTender(buildPrototype(scout, SCOUT), 1))
     expect(tenderIdOf(spg)).toBe('spg2008')
     expect(tendersLeft(spg)).toBe(true)
     const third = nextTender(enterTender(buildPrototype(spg, HOWITZER), 1))

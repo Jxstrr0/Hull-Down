@@ -31,9 +31,9 @@ function spg(change?: (spec: VehicleSpec) => void): VehicleSpec {
 }
 
 describe('the self-propelled gun tender of 2008', () => {
-  it('comes between the tank tenders of 2001 and 2016, with generation two parts and only the howitzer', () => {
+  it('comes between the scout car of 2004 and the tank of 2016, with generation two parts and only the howitzer', () => {
     const at = TENDER_IDS.indexOf('spg2008')
-    expect(TENDER_IDS[at - 1]).toBe('tank2001')
+    expect(TENDER_IDS[at - 1]).toBe('scout2004')
     expect(TENDER_IDS[at + 1]).toBe('tank2016')
     expect(T.year).toBeGreaterThan(TENDERS.tank2001.year)
     expect(T.year).toBeLessThan(TENDERS.tank2016.year)

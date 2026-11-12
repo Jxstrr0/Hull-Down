@@ -21,12 +21,12 @@ import { fieldReport, serviceUnitCostKr, type FieldReport } from './service'
 import { askMeasure, fixedPartsChanged, massCeilingT, type Upgrade, type UpgradeAsk } from './upgrade'
 
 /**
- * Four since the infantry fighting vehicle tender of 1996 came in before
- * 2001; three when the self-propelled gun tender of 2008 came in before 2016;
+ * Five since the scout car tender of 2004 came in before 2008; four since
+ * the infantry fighting vehicle tender of 1996 came in before 2001; three when the self-propelled gun tender of 2008 came in before 2016;
  * two when the tank destroyer tender of 1991 came in second
  * (src/persist/careerCodec.ts moves older careers on).
  */
-export const CAREER_FORMAT = 4
+export const CAREER_FORMAT = 5
 
 /** A prototype the bureau paid for. The first is number one; each after it is a revision. */
 export interface Prototype {

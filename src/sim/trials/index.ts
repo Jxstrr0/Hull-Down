@@ -91,6 +91,12 @@ export interface RangeReport {
    * leaves them out. The squad drop is marked in their place.
    */
   carrier: boolean
+  /**
+   * True on a scout car's tender: the tank shoots, the loading drill and the
+   * berm are run but not counted, and the report leaves them out. Spot and
+   * report is marked in their place.
+   */
+  scouting: boolean
   /** Hours the crew had been in the tank when the shoots and the drill came round. */
   crewHours: number
   /** Tests passed and tests run. */
@@ -124,7 +130,11 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   const sprintPassed = run.sprintS !== null && run.sprintS <= marks.sprintS
   const topPassed = run.topKmh >= marks.topKmh
   const acceleration = { ...run, sprintPassed, topPassed, passed: sprintPassed && topPassed }
-  const obstacles = runObstacles(sheet.drive)
+  // An obstacle the tender does not ask for is still tried, but counts neither way.
+  const course = runObstacles(sheet.drive)
+  const waived = marks.waived ?? []
+  const results = course.results.map((result) => (waived.includes(result.id) ? { ...result, waived: true } : result))
+  const obstacles = { ...course, results, passed: results.every((result) => result.passed || result.waived) }
   const long = runEndurance(sheet.drive, sheet.wear, { seed: setup.seed, climate: setup.climate })
   const endurance = { ...long, passed: long.finished && long.stops <= marks.enduranceStops }
   const gunnery = {} as Record<GunneryTestId, GunneryResult>
@@ -149,23 +159,24 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   const squadMarks = marks.squad ?? (sheet.rollup.troops > 0 ? SQUAD_TRIAL.marks : null)
   const drop = squadMarks ? runSquadDrop(sheet.drive, sheet.fire, sheet.rollup.troops, setup.seed) : null
   const squad = drop && squadMarks ? { ...drop, ...judgeSquadDrop(drop, squadMarks), marks: squadMarks } : null
-  const selfPropelled = marks.fireMission !== undefined
-  const carrier = marks.squad !== undefined
-  const passed = selfPropelled
-    ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed, fireMission?.passed ?? false]
-    : carrier
-    ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed]
-    : [
-      acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
-      armour.passed, berm.passed, ...(fireMission ? [fireMission.passed] : []),
-    ]
-  if (squad) passed.push(squad.passed)
   // A car on wheels is sent to spot and report wherever it goes; a tender for a scout car sets its own marks.
   const scoutMarks = marks.scout ?? (sheet.drive.wheeled ? SCOUT_TRIAL.marks : null)
   const patrol = scoutMarks
     ? runScoutPatrol(sheet.drive, sheet.fire, ridge.showsM, sheet.geometry.widthM, setup.seed)
     : null
   const scout = patrol && scoutMarks ? { ...patrol, ...judgeScoutPatrol(patrol, scoutMarks), marks: scoutMarks } : null
+  const selfPropelled = marks.fireMission !== undefined
+  const carrier = marks.squad !== undefined
+  const scouting = marks.scout !== undefined
+  const passed = selfPropelled
+    ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed, fireMission?.passed ?? false]
+    : carrier || scouting
+    ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed]
+    : [
+      acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
+      armour.passed, berm.passed, ...(fireMission ? [fireMission.passed] : []),
+    ]
+  if (squad) passed.push(squad.passed)
   if (scout) passed.push(scout.passed)
   return {
     marks,
@@ -181,6 +192,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     scout,
     selfPropelled,
     carrier,
+    scouting,
     crewHours: RANGE.crewHours,
     passes: passed.filter(Boolean).length,
     tests: passed.length,

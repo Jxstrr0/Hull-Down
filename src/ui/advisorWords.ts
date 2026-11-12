@@ -40,6 +40,12 @@ export function remarkText(remark: Remark): string {
     case 'squadDrop':
       if (remark.value === undefined) return R.squadDropNever
       return fill(R.squadDrop, numbers(remark, plain))
+    case 'scoutFound':
+    case 'scoutSeen':
+      return fill(remark.kind === 'scoutFound' ? R.scoutFound : R.scoutSeen, numbers(remark, (value) => fixed(value, Number.isInteger(value) ? 0 : 1)))
+    case 'scoutTime':
+      if (remark.value === undefined) return R.scoutTimeNever
+      return fill(R.scoutTime, numbers(remark, plain))
     case 'squadTroops':
     case 'slowShot':
     case 'missionFirst':
