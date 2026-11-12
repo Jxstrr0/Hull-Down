@@ -197,6 +197,8 @@ describe('the stage at a moment', () => {
     for (let t = 0.1; t <= 6; t += 0.1) at(t)
     expect(stage.dust.showing).toBeGreaterThan(0)
     expect(stage.dust.showing).toBeLessThanOrEqual(RENDER.dust.battle)
+    expect(stage.marks.showing).toBeGreaterThan(0)
+    expect(stage.marks.showing).toBeLessThanOrEqual(RENDER.marks.battle)
     kit.dispose()
   })
 })
