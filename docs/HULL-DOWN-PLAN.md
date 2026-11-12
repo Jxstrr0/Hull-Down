@@ -737,7 +737,13 @@ than tank duels.
    armour, not a tank's front. Offered only where a tender asks for 30 mm,
    and in the sandbox with no limits.
 2. The troop compartment (1.5.1.0): a box at the back for 4 to 8 soldiers.
-   It takes room and weight, and the engine has to go to the front.
+   It takes room and weight, and the engine has to go to the front. Done:
+   each soldier takes 0.35 m³, 0.12 t and 1,500 kr, and the door 0.1 m³,
+   0.5 t and 12,000 kr. A medium hull takes six, or eight with the smaller
+   diesel and 600 L of fuel; a light hull has no room for a squad. With
+   soldiers aboard, the racks and the fuel become strips along the walls.
+   A round through the compartment puts soldiers out of action, a new
+   result between "cannot move" and "crew out of action".
 3. The squad trial (1.5.2.0): carry the squad to a drop point, let it out,
    and cover it with bursts on light targets. It gets a card in the report.
 4. The 1996 tender in the career (1.5.3.0). Saves carried over.

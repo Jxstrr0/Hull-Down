@@ -504,6 +504,18 @@ export interface ComfortPart extends Part {
   workload: number
 }
 
+/** Soldiers carried in a compartment at the back, and the door they leave by. */
+export const TROOPS = {
+  /** A soldier with kit and a place on a bench: far less room than a crewman at his station. */
+  perSoldierT: 0.12,
+  perSoldierM3: 0.35,
+  perSoldierKr: 1_500,
+  /** The door in the rear plate, with its hinges and the compartment's lights and vents. */
+  door: { massT: 0.5, volumeM3: 0.1, costKr: 12_000, reliability: 1 } satisfies Part,
+  /** The fewest soldiers that make a squad worth carrying. */
+  minSquad: 4,
+} as const
+
 export const COMFORT = {
   basic: {
     massT: 0, volumeM3: 0, costKr: 0, reliability: 1,

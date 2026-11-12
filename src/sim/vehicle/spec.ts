@@ -69,6 +69,8 @@ export interface VehicleSpec {
   }
   crew: {
     comfort: ComfortId
+    /** Soldiers carried in a compartment at the back. Nought for a tank. */
+    troops: number
   }
   /** Outside layer first. Up to four layers a zone. */
   armour: Record<ZoneId, ArmourLayer[]>

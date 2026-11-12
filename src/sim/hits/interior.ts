@@ -11,12 +11,12 @@ import { frameOf, type Frame } from '../vehicle/frame'
 import type { Geometry } from '../vehicle/geometry'
 import type { VehicleSpec } from '../vehicle/spec'
 
-export const ITEM_KINDS = ['crew', 'ammo', 'fuel', 'engine', 'transmission', 'gun', 'autoloader', 'sight'] as const
+export const ITEM_KINDS = ['crew', 'ammo', 'fuel', 'engine', 'transmission', 'gun', 'autoloader', 'sight', 'troops'] as const
 export type ItemKind = (typeof ITEM_KINDS)[number]
 
 export const ITEM_IDS = [
   'driver', 'gunner', 'commander', 'loader', 'breech', 'sight', 'carousel', 'bustleLoader', 'bustleRack', 'readyRack',
-  'frontRack', 'crossRack', 'tailRack', 'frontTank', 'crossTank', 'tailTank', 'engine', 'transmission',
+  'frontRack', 'crossRack', 'tailRack', 'frontTank', 'crossTank', 'tailTank', 'engine', 'transmission', 'troops',
 ] as const
 export type ItemId = (typeof ITEM_IDS)[number]
 
@@ -46,6 +46,8 @@ export interface InteriorItem {
   vented: boolean
   /** Litres of fuel kept here. */
   litres: number
+  /** Soldiers who sit here. */
+  troops: number
 }
 
 export interface Interior {
@@ -83,7 +85,7 @@ export function interiorOf(spec: VehicleSpec, geo: Geometry): Interior {
   const R = f.radius
   const items: InteriorItem[] = []
   const add = (id: ItemId, kind: ItemKind, part: 'hull' | 'turret', box: Box, more: Partial<InteriorItem> = {}): void => {
-    items.push({ id, kind, part, box, rounds: 0, stowage: null, vented: false, litres: 0, ...more })
+    items.push({ id, kind, part, box, rounds: 0, stowage: null, vented: false, litres: 0, troops: 0, ...more })
   }
 
   // --- Crew ---------------------------------------------------------------
@@ -173,18 +175,22 @@ export function interiorOf(spec: VehicleSpec, geo: Geometry): Interior {
 
   // Where racks and tanks go in the hull. With the engine at the back they
   // sit either side of the driver, with more across the hull ahead of the
-  // engine. With the engine in front they share the room behind the turret.
+  // engine. With the engine in front they share the room behind the turret,
+  // or, with soldiers there, run as strips along the walls beside them.
   const frontFrom = f.upperRun + I.besideDriverBackM
   const frontTo = Math.max(frontFrom, xc - R * I.besideDriverStopShare)
   const behindTurret = xc + R * I.besideDriverStopShare
   // With the turret crew in the nose there is no room left beside the driver.
   const besideTo = crewed ? frontTo : frontFrom
+  const squad = rearEngine ? 0 : spec.crew.troops
+  const strip = squad > 0 ? Math.max(w / 2, inner - I.troopStripM) : w / 2
+  const backEnd = f.length - I.rearClearM
   const rackPlace: Box = rearEngine
     ? { x0: frontFrom, x1: besideTo, y0: floor, y1: ceiling, z0: I.besideDriverInnerM, z1: inner }
-    : { x0: behindTurret, x1: f.length - I.rearClearM, y0: floor, y1: ceiling, z0: w / 2, z1: inner }
+    : { x0: behindTurret, x1: backEnd, y0: floor, y1: ceiling, z0: strip, z1: inner }
   const tankPlace: Box = rearEngine
     ? { x0: frontFrom, x1: besideTo, y0: floor, y1: ceiling, z0: -inner, z1: -I.besideDriverInnerM }
-    : { x0: behindTurret, x1: f.length - I.rearClearM, y0: floor, y1: ceiling, z0: -inner, z1: -w / 2 }
+    : { x0: behindTurret, x1: backEnd, y0: floor, y1: ceiling, z0: -inner, z1: -strip }
   // Only with the engine at the back: the room between the turret crew and the engine.
   const acrossFrom = Math.min(behindTurret, f.bayStart - w)
   const acrossTank: Box = { x0: acrossFrom, x1: f.bayStart - w, y0: ceiling - I.crossTankDepthM, y1: ceiling, z0: -inner, z1: inner }
@@ -211,6 +217,15 @@ export function interiorOf(spec: VehicleSpec, geo: Geometry): Interior {
   const firstL = rearEngine ? Math.min(fuel, Math.floor(volumeOf(tankPlace) / perL)) : fuel
   if (firstL > 0) add(rearEngine ? 'frontTank' : 'tailTank', 'fuel', 'hull', grown(tankPlace, firstL * perL, rearEngine), { litres: firstL })
   if (fuel > firstL) add('crossTank', 'fuel', 'hull', grown(acrossTank, (fuel - firstL) * perL, false), { litres: fuel - firstL })
+
+  // --- Soldiers in the back -----------------------------------------------
+  // They sit in facing pairs between the strips, back from the door in the rear plate.
+  if (squad > 0) {
+    const length = Math.ceil(squad / 2) * I.troopPairM
+    add('troops', 'troops', 'hull', {
+      x0: Math.max(behindTurret, backEnd - length), x1: backEnd, y0: floor, y1: ceiling, z0: -strip + w, z1: strip - w,
+    }, { troops: squad })
+  }
 
   // --- Engine and gearbox -------------------------------------------------
   const bayHalf = f.bodyHalf * I.bayHalfShare
