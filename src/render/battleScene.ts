@@ -15,7 +15,7 @@ import { momentOf, type BattleMoment } from '../ui/battleReplay'
 import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot } from './battleDirector'
 import { createFrameMeter } from './frameMeter'
 import { Kit } from './rangeScene'
-import { THEIR_TONES, TURRET, buildTank, tonesOf } from './tankModel'
+import { THEIR_TONES, TURRET, buildTank, rollTracks, tonesOf } from './tankModel'
 import { tankShapeOf } from './tankShape'
 
 const K = RENDER.battle
@@ -53,6 +53,8 @@ interface TankParts {
   strike: Mesh
   screen: Mesh
   wreck: Mesh[]
+  /** Where the tank stood last time it was posed, to run its links round by how far it has come. */
+  last: { x: number; z: number } | null
 }
 
 export interface BattleStage {
@@ -124,7 +126,7 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
     }
     group.add(strike, screen)
     root.add(group)
-    return { group, turret, flash, strike, screen, wreck }
+    return { group, turret, flash, strike, screen, wreck, last: null }
   })
 
   const tracers: Mesh[] = []
@@ -168,6 +170,13 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     if (!parts) return
     parts.group.position.set(east(tank.x), 0, south(tank.y))
     parts.group.rotation.y = rad(90 - tank.headingDeg)
+    // How far it has come along its own nose since last time: backing up runs the links the other way.
+    const at = { x: parts.group.position.x, z: parts.group.position.z }
+    if (parts.last) {
+      const turn = parts.group.rotation.y
+      rollTracks(parts.group, (at.x - parts.last.x) * Math.cos(turn) - (at.z - parts.last.z) * Math.sin(turn))
+    }
+    parts.last = at
     if (parts.turret) parts.turret.rotation.y = -rad((guns[index] ?? tank.headingDeg) - tank.headingDeg)
     parts.screen.visible = tank.state === 'smoke'
     for (const puff of parts.wreck) puff.visible = tank.state === 'out'

@@ -145,6 +145,24 @@ describe('the stage at a moment', () => {
     expect(stage.tracers.filter((tracer) => tracer.visible).length).toBe(then.rounds.length)
     kit.dispose()
   })
+
+  it("runs each tank's links round as it drives, and not while it stands", async () => {
+    const { TRACKS } = await import('../src/render/tankModel')
+    const battle = battles[0]!
+    const kit = new Kit()
+    const stage = buildBattleStage(kit, battle, look(me), look(warden))
+    const offsets = (): number[] => stage.tanks.map((parts) => (parts.group.getObjectByName(TRACKS) as unknown as { material: { map: { offset: { x: number } } } }).material.map.offset.x)
+    const at = (t: number): void => {
+      const moment = momentOf(battle, t)
+      poseStage(stage, battle, moment, gunWays(battle, moment))
+    }
+    at(0)
+    at(0)
+    expect(offsets().every((x) => x === 0)).toBe(true)
+    for (let t = 0.1; t <= 3; t += 0.1) at(t)
+    expect(offsets().some((x) => x !== 0)).toBe(true)
+    kit.dispose()
+  })
 })
 
 describe('a built tank', () => {
@@ -195,7 +213,11 @@ describe('a built tank', () => {
     const camo = tracks(buildTank(kit, shape, tonesOf('threeColour')))
     expect(plain.length).toBe(1)
     expect(camo.length).toBe(1)
-    expect(camo[0]!.material).toBe(plain[0]!.material)
+    // Each tank has its own copy of the links, so each runs at its own pace, but the picture and the steel are the same.
+    const mapOf = (mesh: InstanceType<typeof Mesh>) => (mesh.material as unknown as { map: { source: unknown }; color: { getHexString(): string } })
+    expect(camo[0]!.material).not.toBe(plain[0]!.material)
+    expect(mapOf(camo[0]!).map.source).toBe(mapOf(plain[0]!).map.source)
+    expect(mapOf(camo[0]!).color.getHexString()).toBe(mapOf(plain[0]!).color.getHexString())
     const geometry = plain[0]!.geometry
     const corners = geometry.getAttribute('position').count
     expect(geometry.getAttribute('uv').count).toBe(corners)
@@ -211,6 +233,39 @@ describe('a built tank', () => {
     expect(pixels.length).toBe(k.alongPx * k.acrossPx * 4)
     expect(pixels[0]).toBe(Math.round(k.gapShade * 255))
     expect(Math.max(...pixels)).toBe(255)
+    kit.dispose()
+  })
+
+  it('runs the links round as the tank moves: under the tank they go backwards, and never faster than the eye can follow', async () => {
+    const { buildStatSheet } = await import('../src/sim/vehicle')
+    const { trackStep } = await import('../src/render/trackLinks')
+    const { buildTank, rollTracks, TRACKS } = await import('../src/render/tankModel')
+    const { tankShapeOf } = await import('../src/render/tankShape')
+    const k = RENDER.tank.trackLinks
+    expect(trackStep(0)).toBe(0)
+    expect(trackStep(k.linkM * 0.1)).toBeCloseTo(0.1, 9)
+    expect(trackStep(-k.linkM * 0.1)).toBeCloseTo(-0.1, 9)
+    expect(trackStep(50)).toBe(k.mostLinksPerFrame)
+    expect(trackStep(-50)).toBe(-k.mostLinksPerFrame)
+
+    const shape = tankShapeOf(BASELINE_SPEC, buildStatSheet(BASELINE_SPEC, PACT_LIMITS_GEN1).geometry)
+    // The ground run of each loop goes forward (its first edge runs nose-wards along the ground), so a picture moved on along the loop moves back under the tank.
+    for (const part of shape.parts) {
+      if (part.kind !== 'band') continue
+      const [a, b] = part.outline
+      expect(a!.y).toBe(0)
+      expect(b!.y).toBe(0)
+      expect(b!.x).toBeGreaterThan(a!.x)
+    }
+    const kit = new Kit()
+    const one = buildTank(kit, shape)
+    const two = buildTank(kit, shape)
+    const offset = (tank: typeof one): number => ((tank.getObjectByName(TRACKS) as unknown as { material: { map: { offset: { x: number } } } }).material.map.offset.x)
+    rollTracks(one, k.linkM * 0.25)
+    expect(offset(one)).toBeCloseTo(0.25, 9)
+    expect(offset(two)).toBe(0)
+    rollTracks(one, -k.linkM * 0.375)
+    expect(offset(one)).toBeCloseTo(-0.125, 9)
     kit.dispose()
   })
 })
