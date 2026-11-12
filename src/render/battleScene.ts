@@ -2,7 +2,7 @@
 // fought: nothing here decides a result. This file and three.js are loaded
 // when the player first asks to watch a battle, never before.
 import {
-  BoxGeometry, Color, ConeGeometry, DirectionalLight, Fog, Group, HemisphereLight, InstancedMesh, Mesh, PerspectiveCamera,
+  BoxGeometry, Color, ConeGeometry, DirectionalLight, Euler, Quaternion, Fog, Group, HemisphereLight, IcosahedronGeometry, InstancedMesh, Matrix4, Mesh, PerspectiveCamera,
   PlaneGeometry, Scene, SphereGeometry, Vector3, WebGLRenderer, type Object3D,
 } from 'three'
 import { BATTLE } from '../data/battle'
@@ -18,6 +18,7 @@ import { createFrameMeter } from './frameMeter'
 import { Dust, Kit, Marks, Sparks, Working, exhaustDeckX } from './rangeScene'
 import { sparkCount, sparkFlights } from './sparks'
 import { DustTrail, blastRing } from './dust'
+import { wreckPuffs } from './smoke'
 import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, setRecoil, setScorch, setWear, tonesOf, type ScorchMark } from './tankModel'
 import { recoilAt } from './recoil'
 import { battleMud, battleWear } from './mud'
@@ -57,7 +58,8 @@ interface TankParts {
   flash: Mesh
   strike: Mesh
   screen: Mesh
-  wreck: Mesh[]
+  /** How high its roof is, where the smoke rises from once it is out of the fight. */
+  roofM: number
   /** Where the tank stood last time it was posed, to run its links round by how far it has come. */
   last: { x: number; z: number } | null
   /** How far it has gone all told, either way, and the puffs that is owed. */
@@ -93,6 +95,8 @@ export interface BattleStage {
   dust: Dust
   marks: Marks
   sparks: Sparks
+  /** The smoke off every wreck: `puffs` copies for each tank, in its order. */
+  smoke: InstancedMesh
 }
 
 /**
@@ -151,18 +155,10 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
     const screen = kit.mesh(new SphereGeometry(K.screenM, 8, 6), c.post, 0.55)
     screen.position.set(0, K.screenM * 0.4, 0)
     screen.visible = false
-    const wreck: Mesh[] = []
-    for (let i = 0; i < K.wreckSmoke.puffs; i++) {
-      const puff = kit.mesh(new SphereGeometry(K.wreckSmoke.sizeM * (1 + i * 0.35), 6, 4), c.smoke, 0.7)
-      puff.position.set(-i * 1.2, shape.gun.yM + (i + 1) * K.wreckSmoke.riseM, i * 0.8)
-      puff.visible = false
-      wreck.push(puff)
-      group.add(puff)
-    }
     group.add(strike, screen)
     root.add(group)
     return {
-      group, turret, flash, strike, screen, wreck, last: null,
+      group, turret, flash, strike, screen, roofM: shape.turret.baseM + K.wreckSmoke.upM, last: null,
       travelledM: 0, trail: new DustTrail(), rearM: -shape.lengthM / 2 - RENDER.dust.behindM, sideM: shape.track.centreZM,
       deck: {
         x: exhaustDeckX(shape, (tank.side === 0 ? mine : theirs).spec.hull.engineAt),
@@ -189,7 +185,50 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
   root.add(marks.mesh)
   const sparks = new Sparks(kit, RENDER.sparks.battle)
   root.add(sparks.mesh)
-  return { root, tanks, tracers, dust, marks, sparks }
+  // A low round shape, smoothed so it reads as a cloud: few triangles, as there are many.
+  const ball = new IcosahedronGeometry(0.5, 0)
+  const position = ball.getAttribute('position')
+  const normal = ball.getAttribute('normal')
+  for (let i = 0; i < position.count; i++) {
+    const v = new Vector3(position.getX(i), position.getY(i), position.getZ(i)).normalize()
+    normal.setXYZ(i, v.x, v.y, v.z)
+  }
+  const smoke = kit.cloud(ball, K.wreckSmoke.opacity, tanks.length * K.wreckSmoke.puffs)
+  const shade = new Color()
+  battle.tanks.forEach((tank, index) => {
+    shade.set(tank.alive ? K.wreckSmoke.stopped : K.wreckSmoke.burnt)
+    for (let slot = 0; slot < K.wreckSmoke.puffs; slot++) smoke.setColorAt(index * K.wreckSmoke.puffs + slot, shade)
+  })
+  smoke.frustumCulled = false
+  root.add(smoke)
+  return { root, tanks, tracers, dust, marks, sparks, smoke }
+}
+
+const smokeMatrix = new Matrix4()
+const smokeAt = new Vector3()
+const smokeSize = new Vector3()
+const smokeTurn = new Quaternion()
+const smokeRoll = new Euler()
+
+/** Raise the smoke over every tank out of the fight, as it stands `t` battle seconds in; none over the rest. */
+function poseSmoke(stage: BattleStage, battle: BattleResult, moment: BattleMoment, t: number): void {
+  const k = K.wreckSmoke
+  for (let i = 0; i < stage.smoke.count; i++) stage.smoke.setMatrixAt(i, smokeMatrix.makeScale(0, 0, 0))
+  moment.tanks.forEach((tank, index) => {
+    const parts = stage.tanks[index]
+    const outS = battle.tanks[index]?.outS ?? null
+    if (!parts || tank.state !== 'out' || outS === null) return
+    const at = parts.group.position
+    for (const puff of wreckPuffs((t - outS) / RENDER.battle.rate)) {
+      const x = at.x + k.wind.x * puff.downM - k.wind.z * puff.swayM
+      const z = at.z + k.wind.z * puff.downM + k.wind.x * puff.swayM
+      smokeAt.set(x, parts.roofM + puff.sizeM * 0.4 + puff.riseM, z)
+      smokeTurn.setFromEuler(smokeRoll.set(puff.turnRad, puff.turnRad * 0.7, 0))
+      smokeMatrix.compose(smokeAt, smokeTurn, smokeSize.set(puff.sizeM, puff.sizeM * 0.85, puff.sizeM))
+      stage.smoke.setMatrixAt(index * k.puffs + puff.slot, smokeMatrix)
+    }
+  })
+  stage.smoke.instanceMatrix.needsUpdate = true
 }
 
 /** How much the stage asks of a phone: triangles and separate pieces. */
@@ -321,7 +360,6 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     }
     if (parts.turret) parts.turret.rotation.y = -rad((guns[index] ?? tank.headingDeg) - tank.headingDeg)
     parts.screen.visible = tank.state === 'smoke'
-    for (const puff of parts.wreck) puff.visible = tank.state === 'out'
     parts.flash.visible = false
     parts.strike.visible = false
   })
@@ -359,6 +397,7 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     tracer.position.set(east(x), 2, south(y))
     tracer.rotation.y = rad(90 - wayTo({ x: round.fromX, y: round.fromY }, { x: round.toX, y: round.toY }))
   })
+  poseSmoke(stage, battle, moment, t)
   stage.dust.show(t / RENDER.battle.rate)
   stage.marks.show(t / RENDER.battle.rate)
 }

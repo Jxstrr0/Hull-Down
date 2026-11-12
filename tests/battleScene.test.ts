@@ -1,3 +1,4 @@
+import { Matrix4 } from 'three'
 import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { BATTLE, BATTLE_GROUND_IDS } from '../src/data/battle'
@@ -133,10 +134,19 @@ describe('the stage at a moment', () => {
       const parts = stage.tanks[index]
       expect(parts?.group.position.x).toBeCloseTo(tank.x - BATTLE.field.widthM / 2, 3)
       expect(parts?.group.position.z).toBeCloseTo(-(tank.y - BATTLE.field.depthM / 2), 3)
-      expect(parts?.wreck.every((puff) => puff.visible === (tank.state === 'out'))).toBe(true)
       expect(parts?.turret).not.toBeNull()
     })
-    // At the moment a round is fired, its tank's muzzle flashes.
+    // Smoke stands over every tank out of the fight, and over no other.
+    const raised = (index: number): boolean => {
+      const m = new Matrix4()
+      for (let slot = 0; slot < RENDER.battle.wreckSmoke.puffs; slot++) {
+        stage.smoke.getMatrixAt(index * RENDER.battle.wreckSmoke.puffs + slot, m)
+        if (m.elements[0]! > 0) return true
+      }
+      return false
+    }
+    end.tanks.forEach((tank, index) => expect(raised(index)).toBe(tank.state === 'out'))
+        // At the moment a round is fired, its tank's muzzle flashes.
     const shot = battle.shots[0]
     if (!shot) throw new Error('no shot')
     const then = momentOf(battle, shot.atS + 0.05)
