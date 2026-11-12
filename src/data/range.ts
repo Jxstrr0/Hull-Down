@@ -13,15 +13,19 @@ export interface Ground {
   grip: number
   /** Ground pressure this ground carries before the tracks sink in, kg/cm². Null for ground that does not give. */
   bearingKgCm2: number | null
+  /** Rolling drag on wheels, as a share of what tracks feel here. Tyres roll easily on a road and sink in mud. */
+  wheelRolling: number
+  /** Grip on wheels, as a share of what tracks get here. */
+  wheelGrip: number
 }
 
 export const GROUNDS = {
   /** Road and the concrete test strip. */
-  hard: { rolling: 0.03, grip: 0.8, bearingKgCm2: null },
+  hard: { rolling: 0.03, grip: 0.8, bearingKgCm2: null, wheelRolling: 0.45, wheelGrip: 1 },
   /** Dry, beaten range ground. */
-  firm: { rolling: 0.05, grip: 0.7, bearingKgCm2: null },
+  firm: { rolling: 0.05, grip: 0.7, bearingKgCm2: null, wheelRolling: 1.2, wheelGrip: 0.9 },
   /** The mud pit. */
-  mud: { rolling: 0.1, grip: 0.5, bearingKgCm2: 0.9 },
+  mud: { rolling: 0.1, grip: 0.5, bearingKgCm2: 0.9, wheelRolling: 1.4, wheelGrip: 0.8 },
 } as const satisfies Record<string, Ground>
 export type GroundId = keyof typeof GROUNDS
 

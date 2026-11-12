@@ -2,7 +2,7 @@
 // These are estimates. The proving ground has the final word.
 import {
   COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, LOADING, NIGHT_SIGHTS,
-  RANGEFINDERS, RECOILS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU, ACTIVE,
+  RANGEFINDERS, RECOILS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU, ACTIVE, WHEELS,
 } from '../../data/parts'
 import type { ZoneId } from '../../data/materials'
 import { GROUNDS, RUN_PART_IDS } from '../../data/range'
@@ -20,6 +20,7 @@ import { geometryOf, type Geometry } from './geometry'
 import { protectionOf, type ZoneProtection } from './protection'
 import { rollupOf, type Rollup } from './rollup'
 import type { Limits, VehicleSpec } from './spec'
+import { wheelsOf } from './wheels'
 
 export interface StatSheet {
   name: string
@@ -38,7 +39,7 @@ export interface StatSheet {
     /** True when the gearing, not the engine, sets the top speed. */
     gearLimited: boolean
     rangeKm: number
-    /** Kilograms per square centimetre under the tracks. */
+    /** Kilograms per square centimetre under the tracks or tyres. */
     groundPressureKgCm2: number
     /** The steepest slope it climbs on firm ground, degrees. */
     maxSlopeDeg: number
@@ -120,7 +121,8 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
   // Mobility
   const drive = driveOf(spec, geometry, rollup)
   const top = topSpeedOf(drive, GROUNDS.hard)
-  const fuelPer100Km = engine.fuelPer100KmPerT * massT
+  const wheels = wheelsOf(spec)
+  const fuelPer100Km = engine.fuelPer100KmPerT * massT * (wheels > 0 ? WHEELS.fuelShare : 1)
 
   // Firepower
   const g = TUNING.gunnery
@@ -131,7 +133,8 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
 
   // Stress and reliability
   const suspensionRatedT = rollup.stations * suspension.ratedPerStationT
-  const trackRatedT = spec.runningGear.trackWidthMm * TUNING.tracks.ratedTPerMm
+  // On wheels the tyres stand in for the tracks.
+  const trackRatedT = wheels > 0 ? wheels * WHEELS.tyreRatedT : spec.runningGear.trackWidthMm * TUNING.tracks.ratedTPerMm
   const stress = {
     transmission: massT / transmission.ratedT,
     suspension: massT / suspensionRatedT,
@@ -143,7 +146,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     cooling: { reliability: cooling.reliability, have: 0, rated: null },
     transmission: { reliability: transmission.reliability, have: massT, rated: transmission.ratedT },
     suspension: { reliability: suspension.reliability, have: massT, rated: suspensionRatedT },
-    tracks: { reliability: TUNING.tracks.reliability, have: massT, rated: trackRatedT },
+    tracks: { reliability: wheels > 0 ? WHEELS.tyreReliability : TUNING.tracks.reliability, have: massT, rated: trackRatedT },
   }
   let reliability =
     gun.reliability * RECOILS[spec.recoil].reliability * loading.reliability *
@@ -176,7 +179,8 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     drive,
     mobility: {
       powerToWeightHpT: engine.powerHp / massT,
-      topSpeedKmh: top.gearLimited ? transmission.gearedKmh : top.speedMs * 3.6,
+      // Wheels are geared taller than tracks.
+      topSpeedKmh: top.gearLimited ? transmission.gearedKmh * (wheels > 0 ? WHEELS.gearFactor : 1) : top.speedMs * 3.6,
       gearLimited: top.gearLimited,
       rangeKm: (spec.powerpack.fuelL / fuelPer100Km) * 100,
       groundPressureKgCm2: drive.pressureKgCm2,

@@ -3,10 +3,10 @@
 // changes a result: the sim has already run.
 import { AUDIO, type CueId, type EngineKind } from '../data/audio'
 import { GUNNERY } from '../data/gunnery'
-import { ENGINES, GUNS, TRANSMISSIONS } from '../data/parts'
+import { ENGINES, GUNS, TRANSMISSIONS, WHEELS } from '../data/parts'
 import type { ReelFrame } from '../render/shootReel'
 import type { GunneryRun, ShotRecord } from '../sim/trials'
-import type { VehicleSpec } from '../sim/vehicle'
+import { wheelsOf, type VehicleSpec } from '../sim/vehicle'
 
 /** The parts of a tank that decide how it sounds. */
 export interface TankVoice {
@@ -21,7 +21,9 @@ export interface TankVoice {
 export function voiceOf(spec: VehicleSpec): TankVoice {
   const engine = ENGINES[spec.powerpack.engine]
   const box = TRANSMISSIONS[spec.powerpack.transmission]
-  return { engine: engine.kind, powerHp: engine.powerHp, gears: box.gears, gearedKmh: box.gearedKmh, calibreMm: GUNS[spec.gun].calibreMm }
+  // Wheels are geared taller, so each gear runs on to a higher speed.
+  const gearedKmh = box.gearedKmh * (wheelsOf(spec) > 0 ? WHEELS.gearFactor : 1)
+  return { engine: engine.kind, powerHp: engine.powerHp, gears: box.gears, gearedKmh, calibreMm: GUNS[spec.gun].calibreMm }
 }
 
 /** How hard the engine is turning at a speed, 0 at tick-over to 1 flat out, and the gear it is in. */

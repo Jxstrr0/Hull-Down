@@ -3,7 +3,7 @@
 // it can be tested. A control's id is the spec path the constraint checks use
 // for `Issue.part`, which is how a fault finds its "fix it" link.
 import {
-  ACTIVE, BARRELS, COMFORT, COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS,
+  ACTIVE, BARRELS, COMFORT, COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LAYOUTS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS,
   STABILISERS, STOWAGE, SUSPENSIONS, TRANSMISSIONS, TURRETS,
 } from '../data/parts'
 import { STRINGS } from '../data/strings'
@@ -140,6 +140,8 @@ export const CONTROLS: readonly Control[] = [
   number('powerpack.fuelL', 'powerpack', L.fuelL, L.fuelStepL, 'litres', (s) => s.powerpack.fuelL, (s, v) => { s.powerpack.fuelL = v }),
   toggle('powerpack.apu', 'powerpack', P.apu, (s) => s.powerpack.apu, (s, v) => { s.powerpack.apu = v }),
 
+  choice('runningGear.layout', 'runningGear', texts(LAYOUTS, P.layouts),
+    (s) => s.runningGear.layout, (s, v) => { s.runningGear.layout = v }),
   choice('runningGear.suspension', 'runningGear', texts(SUSPENSIONS, P.suspensions),
     (s) => s.runningGear.suspension, (s, v) => { s.runningGear.suspension = v }),
   number('runningGear.roadWheels', 'runningGear', L.roadWheels, 1, 'wheels',

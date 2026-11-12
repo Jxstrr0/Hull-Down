@@ -16,6 +16,7 @@ import type { Geometry } from '../vehicle/geometry'
 import { penetrationAt } from '../vehicle/protection'
 import { shotThrough, type ShotResult } from '../vehicle/shot'
 import type { VehicleSpec } from '../vehicle/spec'
+import { skirtsFitted } from '../vehicle/wheels'
 import { ITEM_IDS, type Interior, type InteriorItem, type ItemId, type ItemKind } from './interior'
 import { along, boxCrossing, crossing, dot, shellOf, tilePlaceAt, trackBox, vec, zoneAt, type Shell, type Vec } from './shell'
 
@@ -205,7 +206,7 @@ export function traceShot(target: Target, shot: Incoming, spent?: Set<string>): 
   // What the round goes through when it arrives.
   const margin = shot.luck ? TUNING.protection.marginShare * (2 * roll(PEN) - 1) : 0
   const arrives = penetrationAt(shot.round, shot.rangeM) * (1 + margin)
-  const skirts = track && spec.runningGear.skirts ? HITS.skirtMm[shot.round.kind] : 0
+  const skirts = track && skirtsFitted(spec) ? HITS.skirtMm[shot.round.kind] : 0
   const penMm = Math.max(0, arrives - (track ? HITS.trackMm[shot.round.kind] : 0) - skirts)
 
   const place = tilePlaceAt(shell, zone, entry)

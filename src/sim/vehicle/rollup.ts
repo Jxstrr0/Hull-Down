@@ -4,12 +4,13 @@ import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
 import {
   ACTIVE, APU, BARRELS, COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, HULLS, LOADING,
   NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, SKIRTS, SMOKE_LAUNCHERS, SPALL_LINER, STABILISERS, STOWAGE, SUSPENSIONS,
-  TRANSMISSIONS, TROOPS, TURRETS, type Part,
+  TRANSMISSIONS, TROOPS, TURRETS, WHEELS, type Part,
 } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { eraOf, type ZoneEra } from './era'
 import type { Geometry } from './geometry'
 import type { VehicleSpec } from './spec'
+import { skirtsFitted, wheelsOf } from './wheels'
 
 export const AREAS = [
   'structure', 'armour', 'firepower', 'fireControl', 'powerpack', 'fuel', 'runningGear', 'systems', 'crew',
@@ -37,7 +38,7 @@ export interface Rollup {
   readyRounds: number
   /** Rounds in racks or bins. */
   stowedRounds: number
-  /** Wheel stations, both sides. */
+  /** Wheel stations, both sides. On a wheeled vehicle, each wheel is one. */
   stations: number
 }
 
@@ -125,17 +126,25 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
   volumeM3.fuel += spec.powerpack.fuelL * TUNING.volume.fuelM3PerL
 
   // Running gear
-  const stations = spec.runningGear.roadWheels * 2
-  const trackM = 2 * hull.lengthM * TUNING.geometry.trackLoopFactor
-  const trackScale = spec.runningGear.trackWidthMm / TUNING.geometry.standardTrackMm
-  massT.runningGear +=
-    trackM * TUNING.mass.trackTPerM * trackScale +
-    stations * (TUNING.mass.roadWheelT + suspension.massPerStationT) +
-    TUNING.mass.runningGearFixedT
+  const wheels = wheelsOf(spec)
+  const stations = wheels > 0 ? wheels : spec.runningGear.roadWheels * 2
+  if (wheels > 0) {
+    // Every wheel driven, on its own arm and spring, with a shaft and a differential for each pair.
+    massT.runningGear += stations * (WHEELS.wheelT + suspension.massPerStationT)
+    costKr.runningGear += stations * (WHEELS.wheelKr + suspension.costPerStationKr)
+    add('runningGear', WHEELS.axle, wheels / 2)
+  } else {
+    const trackM = 2 * hull.lengthM * TUNING.geometry.trackLoopFactor
+    const trackScale = spec.runningGear.trackWidthMm / TUNING.geometry.standardTrackMm
+    massT.runningGear +=
+      trackM * TUNING.mass.trackTPerM * trackScale +
+      stations * (TUNING.mass.roadWheelT + suspension.massPerStationT) +
+      TUNING.mass.runningGearFixedT
+    costKr.runningGear +=
+      trackM * TUNING.cost.trackKrPerM * trackScale + stations * (TUNING.cost.roadWheelKr + suspension.costPerStationKr)
+  }
   volumeM3.runningGear += stations * suspension.volumePerStationM3
-  costKr.runningGear +=
-    trackM * TUNING.cost.trackKrPerM * trackScale + stations * (TUNING.cost.roadWheelKr + suspension.costPerStationKr)
-  if (spec.runningGear.skirts) add('runningGear', SKIRTS)
+  if (skirtsFitted(spec)) add('runningGear', SKIRTS)
 
   // Protection systems
   if (spec.protection.smokeLaunchers) add('systems', SMOKE_LAUNCHERS)

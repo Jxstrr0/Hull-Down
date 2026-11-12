@@ -4,7 +4,7 @@ import type { KineticIssue, ShapedIssue } from '../../data/ammo'
 import type { MaterialId, ZoneId } from '../../data/materials'
 import type { Generation } from '../../data/tech'
 import type {
-  ActiveId, BarrelId, ComfortId, ComputerId, CoolingId, EngineId, GunId, HullId, LoadingId, NightSightId,
+  ActiveId, BarrelId, LayoutId, ComfortId, ComputerId, CoolingId, EngineId, GunId, HullId, LoadingId, NightSightId,
   RangefinderId, RecoilId, SightId, StabiliserId, StowageId, SuspensionId, TransmissionId, TurretId,
 } from '../../data/parts'
 
@@ -53,6 +53,8 @@ export interface VehicleSpec {
     apu: boolean
   }
   runningGear: {
+    /** Tracks, or four, six or eight wheels. */
+    layout: LayoutId
     suspension: SuspensionId
     /** Road wheels on each side. */
     roadWheels: number
@@ -93,4 +95,6 @@ export interface Limits {
   locked?: readonly string[]
   /** True when the tender is for a tank destroyer, which may have a casemate in place of a turret. */
   casemate?: boolean
+  /** True when the tender is for a wheeled vehicle, which may have wheels in place of tracks. */
+  wheels?: boolean
 }

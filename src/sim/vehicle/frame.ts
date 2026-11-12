@@ -2,11 +2,12 @@
 // run back from the nose (x), up from the ground (y) and out to the tank's
 // right (z). The blueprint, the 3D range and the hit model all use these.
 import { LAYOUT } from '../../data/layout'
-import { HULLS, LOADING, TURRETS } from '../../data/parts'
+import { HULLS, LOADING, TURRETS, WHEELS } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { PI, detCos, detSin } from '../det'
 import type { Geometry } from './geometry'
 import type { VehicleSpec } from './spec'
+import { wheelsOf } from './wheels'
 
 export interface Frame {
   /** Hull length, nose to tail. */
@@ -20,12 +21,16 @@ export interface Frame {
   /** How far back from the nose the upper and lower glacis plates run. */
   upperRun: number
   lowerRun: number
-  /** Half the width of the hull between the tracks, and half the width over them. */
+  /** Half the width of the hull between the tracks, and half the width over them. On wheels, the tyres stand in for the tracks. */
   bodyHalf: number
   halfWidth: number
   trackWidth: number
-  /** Top of the track run. */
+  /** Top of the track run, or of the tyres. */
   trackTop: number
+  /** On wheels: each pair of wheels, back from the nose. Empty on tracks. */
+  wheelX: number[]
+  /** On wheels: the wheel radius. */
+  wheelR: number
   /** Turret centre, outer radius, ring radius and the height of its roof. */
   turretX: number
   radius: number
@@ -59,6 +64,8 @@ export function frameOf(spec: VehicleSpec, geo: Geometry): Frame {
   const turretX = length * LAYOUT.turretCentre[spec.hull.engineAt]
   const bay = LAYOUT.engineBay[spec.hull.engineAt]
   const hasBustle = TURRETS[spec.turret.shape].hasBustle
+  const wheels = wheelsOf(spec)
+  const axles: readonly number[] = wheels > 0 ? LAYOUT.wheelAxles[wheels as keyof typeof LAYOUT.wheelAxles] : []
   return {
     length,
     roof,
@@ -69,8 +76,10 @@ export function frameOf(spec: VehicleSpec, geo: Geometry): Frame {
     lowerRun: lowerH * tanDeg(g.lowerGlacisAngleDeg),
     bodyHalf: hull.bodyWidthM / 2,
     halfWidth: geo.widthM / 2,
-    trackWidth: spec.runningGear.trackWidthMm / 1000,
-    trackTop: roof * LAYOUT.trackTopShare,
+    trackWidth: wheels > 0 ? WHEELS.tyreWidthM : spec.runningGear.trackWidthMm / 1000,
+    trackTop: wheels > 0 ? 2 * WHEELS.radiusM : roof * LAYOUT.trackTopShare,
+    wheelX: axles.map((share) => length * share),
+    wheelR: WHEELS.radiusM,
     turretX,
     radius,
     ringRadius: spec.turret.ringMm / 2000,

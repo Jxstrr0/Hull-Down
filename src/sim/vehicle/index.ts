@@ -26,3 +26,4 @@ export {
 export { rollupOf, AREAS, type Area, type Rollup } from './rollup'
 export { shotCosine, shotThrough, testShot, type ShotResult, type ShotSetup, type ShotStep, type StackShot } from './shot'
 export type { ArmourLayer, Limits, VehicleSpec } from './spec'
+export { skirtsFitted, wheelsOf } from './wheels'

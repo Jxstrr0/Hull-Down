@@ -1,13 +1,14 @@
 // How a tank moves: the pull its powerpack gives against the drag of the
 // ground. The design office estimates and the proving ground tests both run
 // on this one model. Game-level abstractions, not engineering data.
-import { HULLS, SUSPENSIONS, TRANSMISSIONS, ENGINES } from '../../data/parts'
+import { HULLS, SUSPENSIONS, TRANSMISSIONS, ENGINES, WHEELS } from '../../data/parts'
 import { RANGE, type Ground } from '../../data/range'
 import { TUNING } from '../../data/tuning'
 import { PI, detAtan, detAtan2, detCos, detPow, detSin, powInt } from '../det'
 import type { Geometry } from '../vehicle/geometry'
 import type { Rollup } from '../vehicle/rollup'
 import type { VehicleSpec } from '../vehicle/spec'
+import { wheelsOf } from '../vehicle/wheels'
 
 /** Everything about a tank that decides how it moves. */
 export interface Drive {
@@ -25,7 +26,9 @@ export interface Drive {
   shiftS: number
   /** Multiplier on rolling drag from the width of the tracks. */
   dragFactor: number
-  /** Kilograms per square centimetre under the tracks. */
+  /** True on wheels: each ground then has its own drag and grip for tyres. */
+  wheeled: boolean
+  /** Kilograms per square centimetre under the tracks or tyres. */
   pressureKgCm2: number
   /** Ground to belly, metres, after any sag from an overloaded suspension. */
   clearanceM: number
@@ -59,8 +62,12 @@ export function driveOf(spec: VehicleSpec, geometry: Geometry, rollup: Rollup): 
   const suspension = SUSPENSIONS[spec.runningGear.suspension]
   const massKg = rollup.totalMassT * 1000
   const powerW = engine.powerHp * m.wattsPerHp * transmission.efficiency
-  const lowMs = kmhToMs(transmission.lowGearKmh)
-  const gearedMs = kmhToMs(transmission.gearedKmh)
+  const wheels = wheelsOf(spec)
+  const wheeled = wheels > 0
+  // Wheels are geared taller: faster on the road, a weaker pull in bottom gear.
+  const gearing = wheeled ? WHEELS.gearFactor : 1
+  const lowMs = kmhToMs(transmission.lowGearKmh * gearing)
+  const gearedMs = kmhToMs(transmission.gearedKmh * gearing)
 
   // Gears are spaced evenly by ratio between bottom and top.
   const shiftAtMs: number[] = []
@@ -69,7 +76,10 @@ export function driveOf(spec: VehicleSpec, geometry: Geometry, rollup: Rollup): 
 
   const overload = rollup.totalMassT / (rollup.stations * suspension.ratedPerStationT) - 1
   const sagM = overload > 0 ? overload * m.sagMPerOverload : 0
-  const contactCm2 = 2 * geometry.trackContactM * 100 * (spec.runningGear.trackWidthMm / 10)
+  const contactCm2 = wheeled
+    ? wheels * WHEELS.contactCm2
+    : 2 * geometry.trackContactM * 100 * (spec.runningGear.trackWidthMm / 10)
+  const trenchShare = wheeled ? WHEELS.trenchShare[wheels as keyof typeof WHEELS.trenchShare] : m.trenchShare
 
   return {
     massKg,
@@ -79,11 +89,12 @@ export function driveOf(spec: VehicleSpec, geometry: Geometry, rollup: Rollup): 
     gearedMs,
     shiftAtMs,
     shiftS: transmission.shiftS,
-    dragFactor: 1 + (spec.runningGear.trackWidthMm - TUNING.geometry.standardTrackMm) * m.dragPerExtraTrackMm,
+    dragFactor: wheeled ? 1 : 1 + (spec.runningGear.trackWidthMm - TUNING.geometry.standardTrackMm) * m.dragPerExtraTrackMm,
+    wheeled,
     pressureKgCm2: massKg / contactCm2,
     clearanceM: toCm(suspension.clearanceM - sagM),
-    trenchM: toCm(hull.lengthM * m.trenchShare),
-    stepM: toCm(hull.roofHeightM * m.stepShare - sagM),
+    trenchM: toCm(hull.lengthM * trenchShare),
+    stepM: toCm(hull.roofHeightM * (wheeled ? WHEELS.stepShare : m.stepShare) - sagM),
   }
 }
 
@@ -97,8 +108,13 @@ export interface Footing {
   bellied: boolean
 }
 
+/** The share of a ground's grip the tracks or tyres get. */
+function gripOf(drive: Drive, ground: Ground): number {
+  return ground.grip * (drive.wheeled ? ground.wheelGrip : 1)
+}
+
 export function footingOf(drive: Drive, ground: Ground): Footing {
-  const base = ground.rolling * drive.dragFactor
+  const base = ground.rolling * (drive.wheeled ? ground.wheelRolling : 1) * drive.dragFactor
   if (ground.bearingKgCm2 === null) return { drag: base, sinkM: 0, bellied: false }
   const s = RANGE.soft
   const load = drive.pressureKgCm2 / ground.bearingKgCm2
@@ -129,7 +145,7 @@ export function pullOf(drive: Drive, ground: Ground, speedMs: number, slopeRad =
     forceN = drive.powerW / speedMs
     limit = 'power'
   }
-  const gripN = drive.weightN * ground.grip * (slopeRad === 0 ? 1 : detCos(slopeRad))
+  const gripN = drive.weightN * gripOf(drive, ground) * (slopeRad === 0 ? 1 : detCos(slopeRad))
   if (gripN < forceN) {
     forceN = gripN
     limit = 'grip'
@@ -151,7 +167,7 @@ export function topSpeedOf(drive: Drive, ground: Ground): { speedMs: number; gea
 export function maxSlopeDeg(drive: Drive, ground: Ground): number {
   const c = footingOf(drive, ground).drag
   // Grip:  grip x cos >= sin + c x cos.
-  const gripRad = detAtan(ground.grip - c)
+  const gripRad = detAtan(gripOf(drive, ground) - c)
   // Pull:  k >= sin + c x cos, with k the pull as a share of weight.
   const k = drive.pullN / drive.weightN
   const reach = k / Math.sqrt(1 + c * c)
