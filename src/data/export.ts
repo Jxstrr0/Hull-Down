@@ -1,5 +1,6 @@
 // The export desk: the customers abroad and what each asks of a tank.
 // Game-level abstractions, not engineering data.
+import type { VehicleKind } from './tenders'
 
 export const CLIMATES = ['desert', 'jungle', 'mountain'] as const
 export type Climate = (typeof CLIMATES)[number]
@@ -23,6 +24,8 @@ export const NEED_KINDS = {
 
 export interface Customer {
   climate: Climate
+  /** The kind of vehicle it buys. It looks at nothing else. */
+  wants: VehicleKind
   /** What the tank must do or be. A fitted part asks for 1. */
   needs: Partial<Record<NeedId, number>>
   /** Tanks the customer would order. */
@@ -36,11 +39,11 @@ export type CustomerId = (typeof CUSTOMER_IDS)[number]
 
 export const CUSTOMERS: Record<CustomerId, Customer> = {
   // Desert: heat and long distances between fuel dumps.
-  dahrat: { climate: 'desert', needs: { heavyCooling: 1, rangeKm: 450, unitCostKr: 2_600_000 }, tanks: 120, mark: '-D' },
+  dahrat: { climate: 'desert', wants: 'tank', needs: { heavyCooling: 1, rangeKm: 450, unitCostKr: 2_600_000 }, tanks: 120, mark: '-D' },
   // Jungle: soft ground, light bridges and a small budget.
-  ilandu: { climate: 'jungle', needs: { maxMassT: 38, groundPressure: 0.82, unitCostKr: 2_000_000 }, tanks: 60, mark: '-J' },
+  ilandu: { climate: 'jungle', wants: 'tank', needs: { maxMassT: 38, groundPressure: 0.82, unitCostKr: 2_000_000 }, tanks: 60, mark: '-J' },
   // Mountain: steep roads, and firing down from the crest of one.
-  tolmar: { climate: 'mountain', needs: { powerToWeight: 20, depressionDeg: 7, unitCostKr: 2_800_000 }, tanks: 80, mark: '-M' },
+  tolmar: { climate: 'mountain', wants: 'tank', needs: { powerToWeight: 20, depressionDeg: 7, unitCostKr: 2_800_000 }, tanks: 80, mark: '-M' },
 }
 
 export const EXPORT_DESK = {

@@ -1,4 +1,4 @@
-import { TENDER_IDS } from '../src/data/tenders'
+import { TENDER_IDS, TENDERS, VEHICLE_KIND_IDS } from '../src/data/tenders'
 import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_IDS, NEED_KINDS } from '../src/data/export'
@@ -6,7 +6,7 @@ import { CLIMATES } from '../src/data/range'
 import { STRINGS } from '../src/data/strings'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import { newCareer, type Adopted } from '../src/sim/career/career'
-import { customerChecks, exportOpen, exportTrial, orderOf, saleBlock, saleFeeKr, secrets, sell, sellVariant, strained, suits, variantBlock, variantCostKr, variantDesignation } from '../src/sim/career/exportDesk'
+import { buys, customerChecks, exportOpen, exportTrial, orderOf, saleBlock, saleFeeKr, secrets, sell, sellVariant, strained, suits, variantBlock, variantCostKr, variantDesignation } from '../src/sim/career/exportDesk'
 import { cleanCareer } from '../src/persist/careerCodec'
 import { buildStatSheet, type VehicleSpec } from '../src/sim/vehicle'
 
@@ -90,6 +90,24 @@ describe('selling abroad', () => {
     expect(saleBlock(after, 0, 'dahrat')).toBe('sold')
     expect(() => sell(after, 0, 'dahrat')).toThrow()
     expect(career.sales).toEqual([])
+  })
+
+  it('sells each customer only the kind of vehicle it buys: the tank buyers take no carrier, gun or car, though it meets their needs', () => {
+    for (const id of CUSTOMER_IDS) expect(CUSTOMERS[id].wants).toBe('tank')
+    for (const tender of ['ifv1996', 'spg2008', 'scout2004', 'aa2012'] as const) {
+      const career = withTank(desert())
+      const other: Adopted = { ...career.adopted[0]!, tender }
+      const theirs = { ...career, adopted: [other] }
+      expect(buys('dahrat', other), tender).toBe(false)
+      expect(saleBlock(theirs, 0, 'dahrat'), tender).toBe('kind')
+      expect(variantBlock(theirs, 0, 'dahrat', desert()), tender).toBe('kind')
+      expect(() => sell(theirs, 0, 'dahrat')).toThrow()
+    }
+    // A tank destroyer is bought as a tank.
+    expect(buys('dahrat', { ...withTank(desert()).adopted[0]!, tender: 'destroyer1991' })).toBe(true)
+    // Every tender names its kind, and every kind has a word.
+    for (const id of TENDER_IDS) expect(VEHICLE_KIND_IDS).toContain(TENDERS[id].kind)
+    for (const kind of VEHICLE_KIND_IDS) expect(STRINGS.career.exportDesk.kinds[kind]).not.toBe('')
   })
 
   it('does not sell a tank that falls short, or one with no production line', () => {

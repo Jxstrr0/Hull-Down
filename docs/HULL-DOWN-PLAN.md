@@ -866,6 +866,25 @@ air defence trial rather than tank duels.
    gun opens fire, its line, each burst, and a cross when it comes down or a
    ! when it gets through. Six times faster, about a minute.
 
+The export desk selling the new vehicles, in small PRs. Kelbo's picks: new
+customers abroad, one for each new kind of vehicle, with needs that suit it,
+beside the three tank buyers; all four new kinds can be sold (the infantry
+fighting vehicle, the self-propelled gun, the scout car and the anti-aircraft
+gun vehicle); and every customer tries what it buys on the same endurance run
+on its own ground.
+1. Each customer buys one kind of vehicle (1.8.0.0). Done: every tender names
+   the kind of vehicle it asks for (a tank destroyer counts as a tank), and
+   every customer the kind it buys. The three customers so far buy tanks
+   only, so a carrier, gun or car is no longer offered to them; the desk says
+   what each buys, and lists only those.
+2. Four new customers (1.8.1.0): one each for the infantry fighting vehicle,
+   the self-propelled gun, the scout car and the anti-aircraft gun vehicle,
+   each with its own ground and needs that fit the vehicle (new needs where
+   the stat sheet has the figure, such as soldiers carried or the search
+   radar), working names checked against NAMES.md, and the desk's words for
+   vehicles, not only tanks. Each can be met by a vehicle that would win its
+   tender, or by a version of one.
+
 ---
 
 ## 15. Hosting and the studio site

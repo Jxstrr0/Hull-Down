@@ -4,7 +4,7 @@
 import { officeSound } from '../audio/gameSound'
 import { ADVISOR_MODES, type AdvisorMode } from '../data/advisor'
 import { BODIES } from '../data/career'
-import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_KINDS, type CustomerId, type NeedId } from '../data/export'
+import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_IDS, NEED_KINDS, type CustomerId, type NeedId } from '../data/export'
 import { RESEARCH } from '../data/research'
 import { BUILD_QUALITIES, BUILD_RATES, SERVICE, type Production } from '../data/service'
 import { STRINGS, fill } from '../data/strings'
@@ -12,7 +12,7 @@ import { SCORE_AXES, SCORING, TENDER_IDS, TENDER_RULES, type Tender } from '../d
 import { briefing, type Remark } from '../sim/career/advisor'
 import { guideState, type GuideState } from '../sim/career/guide'
 import { GUIDE } from '../data/guide'
-import { customerChecks, exportOpen, saleBlock, strained, saleFeeKr, secrets, sell, sellVariant, variantBlock, variantCostKr, variantDesignation, variantFixed } from '../sim/career/exportDesk'
+import { buys, customerChecks, exportOpen, saleBlock, strained, saleFeeKr, secrets, sell, sellVariant, variantBlock, variantCostKr, variantDesignation, variantFixed } from '../sim/career/exportDesk'
 import { intelFiles } from '../sim/career/intel'
 import {
   buildBlock, buildPrototype, enterTender, research, researchBlock, researchOpen, fitUpgrade, newCareer, nextTender, tendersLeft, prototypeCostKr, prototypeTrial, reportOf, serviceDesignation,
@@ -733,10 +733,12 @@ export function createBureau(options: BureauOptions): Bureau {
       const customer = CUSTOMERS[id]
       const words = X.customers[id]
       box.append(el('h4', 'bu-sub', fill(X.title, { name: words.name, climate: X.climates[customer.climate] })))
-      box.append(el('p', 'ctl-note', `${words.line} ${fill(X.order, { n: String(customer.tanks) })}`))
+      box.append(el('p', 'ctl-note', `${words.line} ${fill(X.wants, { kind: X.kinds[customer.wants] })} ${fill(X.order, { n: String(customer.tanks) })}`))
       const rows = el('dl', 'bu-rows')
-      const first = tanks[0]
-      if (first) for (const check of customerChecks(id, first.spec, first.sheet)) row(rows, X.needs[check.need], needText(check.need, check.want))
+      for (const need of NEED_IDS) {
+        const want = customer.needs[need]
+        if (want !== undefined) row(rows, X.needs[need], needText(need, want))
+      }
       box.append(rows)
       const order = career.sales.find((sale) => sale.customer === id)
       if (order) {
@@ -752,8 +754,14 @@ export function createBureau(options: BureauOptions): Bureau {
         }
         continue
       }
+      // It looks only at the kind of vehicle it buys.
+      const theirs = tanks.filter((tank) => buys(id, career.adopted[tank.index]!))
+      if (theirs.length === 0) {
+        box.append(el('p', 'ctl-note', fill(X.noneOfKind, { kind: X.kinds[customer.wants] })))
+        continue
+      }
       const list = el('ul', 'sv-lines')
-      for (const tank of tanks) {
+      for (const tank of theirs) {
         const checks = customerChecks(id, tank.spec, tank.sheet)
         const missed = checks.filter((check) => !check.met)
         if (missed.length === 0) {
@@ -792,12 +800,12 @@ export function createBureau(options: BureauOptions): Bureau {
       }
       box.append(list)
       // The design on the board, as a version of the newest tank it could be built as.
-      for (const tank of tanks) {
+      for (const tank of theirs) {
         const adopted = career.adopted[tank.index]!
         const block = variantBlock(career, tank.index, id, board)
         if (block === 'closed' || block === 'sold' || block === 'noLine' || block === 'same') continue
         const fixed = variantFixed(adopted, board)
-        if (fixed.length > 0 && tanks.some((other) => other !== tank && variantFixed(career.adopted[other.index]!, board).length === 0)) continue
+        if (fixed.length > 0 && theirs.some((other) => other !== tank && variantFixed(career.adopted[other.index]!, board).length === 0)) continue
         const sheet = buildStatSheet(board, upgradeLimits(career, adopted))
         const checks = customerChecks(id, board, sheet)
         const missed = checks.filter((check) => !check.met)
