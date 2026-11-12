@@ -80,5 +80,6 @@ describe('the first tender is one a newcomer can win', () => {
     const careers = 20
     for (let i = 0; i < careers; i++) if (entered(1000 + i * 7919).outcome!.won) won++
     expect(won).toBeGreaterThanOrEqual(careers * 0.9)
-  })
+    // Twenty whole careers take about 4.5 s, too close to the usual 5 s limit on a busy machine.
+  }, 30_000)
 })

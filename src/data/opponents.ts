@@ -63,6 +63,8 @@ export interface Philosophy {
   picks: Picks
   /** The newer parts the bureau fits from each generation on. */
   later: Partial<Record<Generation, LaterPicks>>
+  /** What the bureau fits on top of that when the tender is for a tank destroyer. None: it bids a tank as before. */
+  destroyer?: LaterPicks
   /** How much of the weight limit the bureau builds up to, 0..1. */
   massShare: number
   /**
@@ -126,6 +128,7 @@ export const BUREAUS = {
       2: { night: 'thermal', shaped: 'tandem', materials: { compositeInsert: 'layeredComposite' }, skirts: true },
       3: { active: 'hardKill', apu: true },
     },
+    // No destroyer picks: asked for a tank destroyer, it bids a well-armoured tank with a turret.
     massShare: 1,
     armour: {
       upperGlacis: 1.4, lowerGlacis: 1.3, hullSideFront: 1, hullSideRear: 0.9, hullRear: 0.8, hullRoof: 1, belly: 1,
@@ -161,6 +164,8 @@ export const BUREAUS = {
     // By 2000: nothing dear. A hand-loaded tank takes the long rod, and the new warhead costs little.
     // By 2016: soft kill, the cheap answer to a missile.
     later: { 2: { kinetic: 'longRod', shaped: 'tandem' }, 3: { active: 'softKill' } },
+    // For a tank destroyer: the casemate, cheaper and lighter still.
+    destroyer: { turret: 'casemate' },
     massShare: 0.75,
     armour: {
       upperGlacis: 1, lowerGlacis: 0.9, hullSideFront: 0.8, hullSideRear: 0.8, hullRear: 0.9, hullRoof: 1, belly: 1,
@@ -199,6 +204,8 @@ export const BUREAUS = {
       2: { computer: 'digital', night: 'thermal', shaped: 'gunMissile' },
       3: { turret: 'unmanned', loading: 'carousel', active: 'softKill', skirts: true },
     },
+    // For a tank destroyer: the casemate, so the big gun rides on a smaller mount.
+    destroyer: { turret: 'casemate' },
     massShare: 0.95,
     armour: {
       upperGlacis: 1, lowerGlacis: 1, hullSideFront: 0.9, hullSideRear: 0.9, hullRear: 1, hullRoof: 1, belly: 1,
