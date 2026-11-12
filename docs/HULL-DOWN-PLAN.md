@@ -860,7 +860,11 @@ air defence trial rather than tank duels.
    learn the radar from raiders found too late, then a better computer,
    more rounds when the belts run dry, and more wheels from the mud. The
    tender's top speed is the self-propelled gun's 50 km/h.
-5. Something to watch for the air defence trial (1.7.4.0).
+5. Something to watch for the air defence trial (1.7.4.0). Done: Watch the
+   raid under the Air defence card. Two maps from above, out to 15 km and
+   4.5 km, each raider in turn with how far out it can be found, where the
+   gun opens fire, its line, each burst, and a cross when it comes down or a
+   ! when it gets through. Six times faster, about a minute.
 
 ---
 

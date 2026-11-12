@@ -43,6 +43,8 @@ export interface AirRun {
   /** Bursts fired in all, and how many the vehicle carried. */
   bursts: number
   carried: number
+  /** Seconds from one burst to the next at a raider. */
+  everyS: number
   /** True when the belts ran dry before the last raider. */
   ranOut: boolean
   /** Seconds from coming within range to the first burst, on average over the raiders fired at. Null when none were. */
@@ -137,6 +139,7 @@ export function runAirDefence(fire: Fire, seed: number): AirRun {
     downed: raiders.filter((raider) => raider.downedS !== null).length,
     bursts: raiders.reduce((n, raider) => n + raider.bursts, 0),
     carried: fire.carried,
+    everyS: fire.feed.freshS,
     ranOut,
     reactionS: fired.length > 0 ? fired.reduce((s, raider) => s + raider.reactionS!, 0) / fired.length : null,
   }

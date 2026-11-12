@@ -66,4 +66,23 @@ export const AIR_TRIAL = {
   tankMount: 0.15,
   /** What the range asks of an anti-aircraft gun, until a tender sets its own. */
   marks: { downed: 4, reactionS: 6 } satisfies AirMarks,
+  /** The replay in the report. Only for the picture: the times it shows are the trial's own. */
+  replay: {
+    /** Seconds of the trial played in each second watched. */
+    speed: 6,
+    /** Each raider stays on the maps this long after it comes down or gets through, so the end shows. */
+    holdS: 5,
+    /** The replay runs on this long after the last raider, in the same seconds. */
+    tailS: 6,
+    /** A burst's tracer shows this long after it is fired. */
+    tracerS: 1.2,
+    /** How far out the two maps are drawn, metres: the radar's reach, and the gun's. */
+    farM: 15000,
+    nearM: 4500,
+    /** The bearing each raider comes in on, from the vehicle's nose, degrees, in the order they come. */
+    bearingsDeg: [-28, 16, -6, 30, -22, 8] as readonly number[],
+    /** The radar's sweep on the far map: this far either side of the nose, and back again in this many seconds. */
+    sweepDeg: 60,
+    sweepS: 4,
+  },
 } as const
