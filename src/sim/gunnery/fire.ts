@@ -62,7 +62,7 @@ export interface Fire {
   missLeft: number
   /** Shooting from a moving tank. The mils already allow for the ride. */
   moving: { halts: boolean; acrossMil: number; upMil: number; extraS: number }
-  night: { seeM: number; layFactor: number }
+  night: { seeM: number; layFactor: number; search: number }
   /** Seconds, for a fresh trained crew with nothing else to do. */
   times: { findS: number; rangeS: number; layS: number; relayS: number }
   /** How far the gun swings each way of the hull's front, degrees; null for a turret, which turns all the way round. */

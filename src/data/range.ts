@@ -3,6 +3,7 @@
 // engineering data.
 import type { ThreatId } from './ammo'
 import type { FireMissionMarks } from './fireMission'
+import type { ScoutMarks } from './scout'
 import { SQUAD_TRIAL, type SquadMarks } from './squad'
 import type { ZoneId } from './materials'
 
@@ -386,4 +387,9 @@ export type Marks = {
    * vehicle that carries soldiers is held to the range's own squad drop marks.
    */
   squad?: SquadMarks
+  /**
+   * Spot and report, for a scout car's tender. Not given for any other
+   * tender, where a car on wheels is held to the range's own marks.
+   */
+  scout?: ScoutMarks
 }

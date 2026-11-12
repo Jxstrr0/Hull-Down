@@ -24,6 +24,7 @@ import { fixed } from './format'
 import { placeOf } from './gunneryAdvice'
 import { gunneryCards } from './gunneryCards'
 import { missionCards } from './missionCard'
+import { scoutCards } from './scoutCard'
 import { squadCards } from './squadCard'
 import { runRange } from './rangeRunner'
 import { cardFacts, shareBlock } from './shareCard'
@@ -616,6 +617,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
       ...(report.selfPropelled || report.carrier ? [] : gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch })),
       ...missionCards(report, sheet.fire.mission.reachKm, { card, line, fixButton, watch }),
       ...squadCards(report, { card, line, fixButton, watch }),
+      ...scoutCards(report, args.spec, { card, line, fixButton, watch }),
       ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }).slice(0, report.selfPropelled || report.carrier ? 1 : 2),
     )
     const after = afterAction(report.armour, args.spec)
