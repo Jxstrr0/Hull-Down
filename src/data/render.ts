@@ -271,6 +271,15 @@ export const RENDER = {
      * rollers along the top run, how many and how big.
      */
     runningGear: { trackThickM: 0.09, endInM: 0.08, returnRollers: 3, returnRollerM: 0.1 },
+    /**
+     * The track's links, painted on: bare steel, whatever the paint. One link is this long, as on the blueprint.
+     * The picture is this many pixels along a link and across the track; each is a shade of the steel, 1 the steel itself:
+     * the gap between links, the pin at the front of each link, and the guide horns down the middle.
+     */
+    trackLinks: {
+      linkM: 0.16, steel: '#5d5e55', alongPx: 16, acrossPx: 8,
+      gapShare: 0.2, gapShade: 0.3, pinShade: 0.65, hornShare: 0.2, hornShade: 0.75,
+    },
     /** A bustle is a box behind the turret: its width as a share of the turret radius. */
     bustleWidthShare: 1.5,
     /**
