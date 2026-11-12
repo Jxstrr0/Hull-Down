@@ -17,6 +17,8 @@ const MAX_PROTOTYPES = 1 + TENDER_RULES.revisions + CAREER.extraRevisions
 const MAX_ADOPTED = 60
 /** The first career format with the tank destroyer tender of 1991 in second place. */
 const FIRST_WITH_DESTROYER = 2
+/** The first career format with the self-propelled gun tender of 2008 before the tank of 2016. */
+const FIRST_WITH_SPG = 3
 const BIDDERS: readonly Bidder[] = ['bureau', ...BUREAU_IDS]
 
 function isObject(raw: unknown): raw is Record<string, unknown> {
@@ -176,13 +178,16 @@ export function cleanCareer(raw: unknown): Career | null {
   const rep = isObject(raw.reputation) ? raw.reputation : {}
   for (const body of BODIES) reputation[body] = whole(rep[body], R.min, R.max, R.start)
   const prototypes = cleanPrototypes(raw.prototypes)
+  const format = whole(raw.format, 0, CAREER_FORMAT, CAREER_FORMAT)
+  let tenderNo = whole(raw.tenderNo, 0, TENDER_IDS.length - 1, 0)
   // Before format two there was no tank destroyer tender of 1991: every tender after the first is one place later now.
-  const saved = whole(raw.tenderNo, 0, TENDER_IDS.length - 1, 0)
-  const older = whole(raw.format, 0, CAREER_FORMAT, CAREER_FORMAT) < FIRST_WITH_DESTROYER
+  if (format < FIRST_WITH_DESTROYER && tenderNo > 0) tenderNo++
+  // Before format three there was no self-propelled gun tender of 2008: the tank of 2016 is one place later now.
+  if (format < FIRST_WITH_SPG && tenderNo >= TENDER_IDS.indexOf('spg2008')) tenderNo++
   return {
     format: CAREER_FORMAT,
     seed: raw.seed >>> 0,
-    tenderNo: older && saved > 0 ? Math.min(saved + 1, TENDER_IDS.length - 1) : saved,
+    tenderNo: Math.min(tenderNo, TENDER_IDS.length - 1),
     budgetKr: whole(raw.budgetKr, 0, 1e12, 0),
     reputation,
     prototypes,

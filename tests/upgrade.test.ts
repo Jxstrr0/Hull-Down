@@ -40,7 +40,7 @@ describe('what the army asks for', () => {
     const bad = { ...report.running, stops: report.running.tanks, towed: report.running.tanks }
     expect(askOf({ ...report, running: bad })).toEqual({ kind: 'reliability' })
     const quiet = { ...report.running, stops: 0, towed: 0 }
-    const noLessons = { ...report.exercise, lessons: [] }
+    const noLessons = { ...report.exercise!, lessons: [] }
     expect(askOf({ running: quiet, exercise: noLessons, complaints: [{ kind: 'comfort' }] as never })).toEqual({ kind: 'comfort' })
     expect(askOf({ running: quiet, exercise: noLessons, complaints: [] })).toBeNull()
   }, SLOW)

@@ -56,7 +56,7 @@ export function recordYear(report: FieldReport): RecordYear {
   return {
     year: report.year, built: report.built, fleet: report.fleet,
     tanks: running.tanks, stops: running.stops, towed: running.towed,
-    won: exercise.won, lost: exercise.lost, drawn: exercise.drawn,
+    won: exercise?.won ?? 0, lost: exercise?.lost ?? 0, drawn: exercise?.drawn ?? 0,
     army: standing.army, ministry: standing.ministry, royaltyKr: report.royaltyKr,
   }
 }

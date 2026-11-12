@@ -123,6 +123,7 @@ export function shootLine(report: FieldReport): string {
 
 export function exerciseLine(report: FieldReport): string {
   const { exercise } = report
+  if (!exercise) return R.noExercise
   return fill(R.exerciseLine, {
     ground: battleGroundText(exercise.ground).name, threat: STRINGS.opponents.threats[exercise.threat].name,
     n: String(exercise.won + exercise.lost + exercise.drawn),
@@ -132,7 +133,7 @@ export function exerciseLine(report: FieldReport): string {
 
 /** The umpires' lessons, each marked as for the tank or against it. */
 export function lessonLines(report: FieldReport): { good: boolean; text: string }[] {
-  return report.exercise.lessons.map((lesson) => ({ good: lesson.good, text: battleFindingText(lesson) }))
+  return (report.exercise?.lessons ?? []).map((lesson) => ({ good: lesson.good, text: battleFindingText(lesson) }))
 }
 
 /** What the report did to the bureau's standing: only the bodies it moved. */

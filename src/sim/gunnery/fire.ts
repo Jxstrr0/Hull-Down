@@ -7,10 +7,11 @@ import { CREWS, GUNNERY, type CrewId } from '../../data/gunnery'
 import {
   BARRELS, COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, STABILISERS, TURRETS,
 } from '../../data/parts'
+import { FIRE_MISSION } from '../../data/fireMission'
 import { RANGE } from '../../data/range'
 import { TUNING } from '../../data/tuning'
 import { fatigueAfter, slowOf, stationsOf, tiringAt, workloadAt } from '../crew/stations'
-import { detExp } from '../det'
+import { detExp, detPow } from '../det'
 import type { VehicleSpec } from '../vehicle/spec'
 import { gunRounds } from './mount'
 
@@ -66,6 +67,15 @@ export interface Fire {
   times: { findS: number; rangeS: number; layS: number; relayS: number }
   /** How far the gun swings each way of the hull's front, degrees; null for a turret, which turns all the way round. */
   swingDeg: number | null
+  /** Firing on map grids beyond the hill (src/data/fireMission.ts). */
+  mission: {
+    /** True for a howitzer, built for it. */
+    howitzer: boolean
+    /** Farthest the gun drops a shell with its barrel, kilometres. */
+    reachKm: number
+    /** Seconds to work out the fire data for a grid, for a fresh crew. */
+    plotS: number
+  }
   /**
    * How much slower each crewman is for the work the design gives him. 1 is
    * the reference. The commander finds targets, and with no loader feeds the
@@ -138,6 +148,11 @@ export function fireOf(spec: VehicleSpec): Fire {
       relayS: stabiliser.relayS,
     },
     swingDeg: TURRETS[spec.turret.shape].swingDeg,
+    mission: {
+      howitzer: gun.howitzer,
+      reachKm: gun.reachKm * detPow(BARRELS[spec.barrel].speedFactor, FIRE_MISSION.reachSpeedPower),
+      plotS: FIRE_MISSION.plotS[fc.computer],
+    },
     pace: { commander: paceOf('commander'), gunner: paceOf('gunner'), ranging: paceOf(CREW.ranging[fc.rangefinder]) },
     tire: {
       commander: tiringAt(stations, 'commander'),
@@ -318,6 +333,11 @@ export function jamS(fire: Fire, shoot: Shoot): number {
 /** True while the machine, not the crew, is feeding the gun. Only then can it jam. */
 export function machineFed(fire: Fire, fired: number): boolean {
   return fire.feed.readyRounds !== null && fired < fire.feed.readyRounds
+}
+
+/** Seconds to work out the fire data for a map grid and lay the gun on it, with the gun already pointing its way. */
+export function missionLayS(fire: Fire, shoot: Shoot): number {
+  return fire.mission.plotS * slow(fire, 'commander', shoot) + fire.times.layS * slow(fire, 'gunner', shoot)
 }
 
 /** Seconds to bring the gun back on to the target after a shot. */

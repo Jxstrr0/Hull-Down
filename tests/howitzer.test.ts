@@ -52,8 +52,11 @@ describe('the howitzer', () => {
     }
   })
 
-  it('is refused on every tender so far, since 155 mm is not a calibre the Pact supplies for tanks', () => {
-    for (const id of TENDER_IDS) expect(errors(howitzer(), TENDERS[id].limits), id).toContain('calibreNotStandard')
+  it('is refused on every tank tender, since 155 mm is not a calibre the Pact supplies for tanks', () => {
+    for (const id of TENDER_IDS) {
+      if (id === 'spg2008') expect(errors(howitzer(), TENDERS[id].limits)).not.toContain('calibreNotStandard')
+      else expect(errors(howitzer(), TENDERS[id].limits), id).toContain('calibreNotStandard')
+    }
   })
 
   it('can be built in the sandbox, in a turret on the heavy hull or in a casemate on any hull', () => {

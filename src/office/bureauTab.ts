@@ -174,7 +174,7 @@ export function createBureau(options: BureauOptions): Bureau {
     row(limits, T.cost, fill(T.costValue, { n: money(tender.limits.maxUnitCostKr) }))
     row(limits, T.grant, money(tender.grantKr))
     row(limits, T.revisions, fill(T.revisionsValue, { n: String(TENDER_RULES.revisions) }))
-    row(limits, T.threats, tender.threats.map((id) => STRINGS.opponents.threats[id].name).join(', '))
+    if (tender.threats.length) row(limits, T.threats, tender.threats.map((id) => STRINGS.opponents.threats[id].name).join(', '))
     box.append(limits)
     box.append(el('h4', 'bu-sub', T.weighs), el('p', 'ctl-note', fill(T.weighsAbout, { n: String(SCORING.failedTest) })))
     const weights = el('dl', 'bu-rows')
