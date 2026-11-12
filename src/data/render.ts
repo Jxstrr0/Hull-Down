@@ -276,9 +276,10 @@ export const RENDER = {
     /**
      * The most triangles one tank may be built from. A test builds every turret
      * with every tile and the most road wheels, and counts. Kelbo chose about
-     * 5,000 a tank, so the kit's detail shows.
+     * 5,000 a tank, so the kit's detail shows; a tank tiled all over may go a
+     * little past that.
      */
-    maxTriangles: 6000,
+    maxTriangles: 6500,
     /** Sides to the sprocket, the idler, the fume extractor and the cupola. */
     endWheelSides: 8,
     extractorSides: 8,
@@ -304,6 +305,8 @@ export const RENDER = {
     launcher: { longM: 0.34, highM: 0.16, wideM: 0.12, backShare: 0.45, upShare: 0.5 },
     /** Reactive tiles stand this far off the plate and are this thick. A full grid covers this share of the plate. */
     tile: { offM: 0.04, thickM: 0.07, cover: 0.9 },
+    /** How many panels of the kit's tiles cover each place, along and across: few, so a fully tiled tank stays near its budget. */
+    tilePanels: { glacis: { panelsLong: 1, panelsWide: 2 }, hullSide: { panelsLong: 1, panelsWide: 1 }, turretFront: { panelsLong: 1, panelsWide: 1 }, turretSide: { panelsLong: 1, panelsWide: 1 } },
     /**
      * Each turret, seen from above, as rings one over the other. A ring is
      * given as shares of the turret's radius: how far it reaches ahead of the

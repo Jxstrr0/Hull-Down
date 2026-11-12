@@ -559,6 +559,16 @@ describe('the parts the tank is built from', () => {
     expect(partTriangles(upper)).toBe(3 * 16 + 2 * 6)
   })
 
+  it('lays the kit tile panels where the design carries tiles, and nowhere else', () => {
+    const panels = (tiles: boolean) => built('castDome', tiles).parts.filter((part) => part.kind === 'piece' && part.piece === 'era-tiles')
+    expect(panels(false)).toHaveLength(0)
+    const all = panels(true)
+    const P = RENDER.tank.tilePanels
+    const count = (plate: { panelsLong: number; panelsWide: number }) => plate.panelsLong * plate.panelsWide
+    expect(all).toHaveLength(count(P.glacis) + 4 * count(P.hullSide) + 2 * count(P.turretFront) + 2 * count(P.turretSide))
+    for (const part of all) expect(part.tone).toBe('tile')
+  })
+
   it('cuts an outline off at a height', () => {
     const square = [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 2 }, { x: 0, y: 2 }]
     expect(below(square, 1)).toEqual([{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 0, y: 1 }])

@@ -9,6 +9,7 @@ import { RENDER } from '../data/render'
 import { layout } from '../office/drawing'
 import type { Geometry, VehicleSpec } from '../sim/vehicle'
 import { allTiles, tileCount } from '../sim/vehicle/era'
+import type { Axes, Vec } from './glb'
 import type { Point } from './path'
 
 /** Which of the tank's three colours a part is painted. */
@@ -72,6 +73,8 @@ export interface PiecePart extends PartBase {
   piece: KitPiece
   scale: { x: number; y: number; z: number }
   at: { x: number; y: number; z: number }
+  /** Where the piece's own axes point, if it is turned; unturned it lies as modelled. */
+  axes?: Axes
   /** The simple shapes drawn instead, in `tone`, if the kit has not come. */
   fallback: readonly Plain[]
 }
@@ -238,21 +241,20 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     fallback: [{ kind: 'box', size: { x: grille.x, y: t.grilleThickM, z: grille.z }, at: { x: grilleX, y: m.roof + t.grilleThickM / 2, z: 0 } }],
   })
 
-  // Reactive tiles on the hull: a panel on the glacis, and panels hung over the tracks.
+  // Reactive tiles on the hull: panels laid up the glacis, and panels hung over the tracks.
+  const panels = t.tilePanels
   const glacis = tileShare(spec, 'upperGlacis')
   if (glacis > 0) {
     const run = m.upperRun
     const rise = m.roof - noseY
     const long = Math.hypot(run, rise)
-    // The plate's own slope, and the way out from it.
-    const out = { x: rise / long, y: run / long }
-    const off = t.tile.offM + t.tile.thickM / 2
-    parts.push({
-      ...hull('tile'), kind: 'box',
-      size: { x: long * t.tile.cover, y: t.tile.thickM, z: m.hull.bodyWidthM * t.tile.cover * glacis },
-      at: { x: half - run / 2 + out.x * off, y: noseY + rise / 2 + out.y * off, z: 0 },
-      pitchDeg: -(Math.atan2(rise, run) * 180) / Math.PI,
-    })
+    parts.push(...tilePlate(hull('tile'), {
+      middle: { x: half - run / 2, y: noseY + rise / 2, z: 0 },
+      along: { x: -run / long, y: rise / long, z: 0 },
+      out: { x: rise / long, y: run / long, z: 0 },
+      longM: long * t.tile.cover, wideM: m.hull.bodyWidthM * t.tile.cover * glacis,
+      ...panels.glacis, pitchDeg: (Math.atan2(rise, run) * 180) / Math.PI,
+    }))
   }
   const sideHigh = (m.roof - m.trackTop * 0.45) * t.tile.cover
   const sideY = (m.roof + m.trackTop * 0.45) / 2
@@ -262,11 +264,12 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     if (share === 0) continue
     const long = half * t.tile.cover * share
     for (const side of [-1, 1]) {
-      parts.push({
-        ...hull('tile'), kind: 'box', size: { x: long, y: sideHigh, z: t.tile.thickM },
+      parts.push(...tilePlate(hull('tile'), {
         // Tiles go on from the nose backward, and from the middle backward.
-        at: { x: way > 0 ? half - long / 2 - half * (1 - t.tile.cover) / 2 : -long / 2, y: sideY, z: side * (m.halfWidth + t.tile.offM) },
-      })
+        middle: { x: way > 0 ? half - long / 2 - half * (1 - t.tile.cover) / 2 : -long / 2, y: sideY, z: side * m.halfWidth },
+        along: { x: 1, y: 0, z: 0 }, out: { x: 0, y: 0, z: side },
+        longM: long, wideM: sideHigh, ...panels.hullSide,
+      }))
     }
   }
 
@@ -291,8 +294,6 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
       }
     }),
   }]
-  const lowest = rings[0]
-  const sideZ = (lowest?.half ?? 1) * R
   if (turret.bustleM > 0) {
     const long = turret.bustleM + R * 0.1
     const bustle: Plain = {
@@ -358,35 +359,89 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     const l = t.launcher
     for (const side of [-1, 1]) {
       // Modelled for the left side; the right one is mirrored so its tubes face out.
-      const at = { x: -R * l.backShare, y: turret.baseM + h * l.upShare, z: side * (fit.launcherOut * R + l.wideM / 2) }
+      const at = { x: -R * l.backShare, y: turret.baseM + h * l.upShare, z: side * (fit.sideOut * R + l.wideM / 2) }
       parts.push({
         ...top('dark'), kind: 'piece', piece: 'smoke-launchers', scale: { x: 1, y: 1, z: -side }, at,
         fallback: [{ kind: 'box', size: { x: l.longM, y: l.highM, z: l.wideM }, at }],
       })
     }
   }
-  // Reactive tiles on the turret: a block each side of the gun, and a strip along each side.
+  // Reactive tiles on the turret: a panel on each cheek either side of the gun, and one along each side.
   const tileY = turret.baseM + h * 0.42
+  const cheek = fit.tileFront
+  const yaw = (cheek.yawDeg * Math.PI) / 180
   const fronts: [ZoneId, number][] = [['turretFrontLeft', -1], ['turretFrontRight', 1]]
   for (const [zone, side] of fronts) {
     const share = tileShare(spec, zone)
     if (share === 0) continue
-    parts.push({
-      ...top('tile'), kind: 'box', size: { x: t.tile.thickM, y: h * 0.6, z: sideZ * 0.6 * share },
-      at: { x: (lowest?.ahead ?? 1) * R * 0.94 + t.tile.offM, y: tileY, z: side * sideZ * 0.48 },
-    })
+    parts.push(...tilePlate(top('tile'), {
+      middle: { x: cheek.x * R, y: tileY, z: side * cheek.z * R },
+      along: { x: -side * Math.sin(yaw), y: 0, z: Math.cos(yaw) },
+      out: { x: Math.cos(yaw), y: 0, z: side * Math.sin(yaw) },
+      longM: cheek.long * R * share, wideM: h * 0.6, ...panels.turretFront,
+    }))
   }
   const flank = tileShare(spec, 'turretSides')
   if (flank > 0) {
     for (const side of [-1, 1]) {
-      parts.push({
-        ...top('tile'), kind: 'box', size: { x: R * 1.2 * flank, y: h * 0.5, z: t.tile.thickM },
-        at: { x: R * 0.1, y: tileY, z: side * (sideZ + t.tile.offM) },
-      })
+      parts.push(...tilePlate(top('tile'), {
+        middle: { x: R * 0.25, y: tileY, z: side * fit.sideOut * R },
+        along: { x: 1, y: 0, z: 0 }, out: { x: 0, y: 0, z: side },
+        longM: R * flank, wideM: h * 0.5, ...panels.turretSide,
+      }))
     }
   }
 
   return { lengthM: m.length, footprintM: m.length * t.footprintShare, hullOutline, hullWidthM: m.hull.bodyWidthM, track, wheels: { xM: wheelX, radiusM: radius }, turret, gun, parts }
+}
+
+/** A plate to be tiled: its middle, the way along it and the way out of it, how far it reaches each way, and how many panels go each way. */
+interface Plate {
+  middle: Vec
+  along: Vec
+  out: Vec
+  longM: number
+  wideM: number
+  panelsLong: number
+  panelsWide: number
+  /** For the stand-in blocks: how far the plate tips its nose up about the axis across the tank. */
+  pitchDeg?: number
+}
+
+/**
+ * Panels of the kit's tiles laid over a plate, standing a little off it. If the
+ * kit has not come, each panel is a block. The panel's across is its along
+ * crossed with its out, so the piece is never mirrored.
+ */
+function tilePlate(base: PartBase, plate: Plate): TankPart[] {
+  const ref = KIT.reference.eraTilesM
+  const tile = RENDER.tank.tile
+  const { along: u, out: n } = plate
+  const w: Vec = { x: u.y * n.z - u.z * n.y, y: u.z * n.x - u.x * n.z, z: u.x * n.y - u.y * n.x }
+  const cellLong = plate.longM / plate.panelsLong
+  const cellWide = plate.wideM / plate.panelsWide
+  const scale = { x: cellLong / ref.x, y: 1, z: cellWide / ref.z }
+  const parts: TankPart[] = []
+  for (let i = 0; i < plate.panelsLong; i++) {
+    for (let j = 0; j < plate.panelsWide; j++) {
+      const a = ((i + 0.5) / plate.panelsLong - 0.5) * plate.longM
+      const b = ((j + 0.5) / plate.panelsWide - 0.5) * plate.wideM
+      const off = tile.offM
+      const cell = (k: 'x' | 'y' | 'z'): number => plate.middle[k] + u[k] * a + w[k] * b + n[k] * off
+      // Where the piece's own origin goes, so the middle of its face lands on the cell and its back on the plate.
+      const at = {
+        x: cell('x') - u.x * scale.x * ref.middle.x - n.x * ref.backY - w.x * scale.z * ref.middle.z,
+        y: cell('y') - u.y * scale.x * ref.middle.x - n.y * ref.backY - w.y * scale.z * ref.middle.z,
+        z: cell('z') - u.z * scale.x * ref.middle.x - n.z * ref.backY - w.z * scale.z * ref.middle.z,
+      }
+      const reach = (k: 'x' | 'y' | 'z'): number => Math.abs(u[k]) * cellLong + Math.abs(w[k]) * cellWide + Math.abs(n[k]) * tile.thickM
+      const block: Plain = plate.pitchDeg === undefined
+        ? { kind: 'box', size: { x: reach('x'), y: reach('y'), z: reach('z') }, at: { x: cell('x') + n.x * tile.thickM / 2, y: cell('y') + n.y * tile.thickM / 2, z: cell('z') + n.z * tile.thickM / 2 } }
+        : { kind: 'box', size: { x: cellLong, y: tile.thickM, z: cellWide }, at: { x: cell('x') + n.x * tile.thickM / 2, y: cell('y') + n.y * tile.thickM / 2, z: cell('z') + n.z * tile.thickM / 2 }, pitchDeg: -plate.pitchDeg }
+      parts.push({ ...base, kind: 'piece', piece: 'era-tiles', scale, at, axes: { x: u, y: n, z: w }, fallback: [block] })
+    }
+  }
+  return parts
 }
 
 /** The part of an outline at or below a height, as a closed outline. */
