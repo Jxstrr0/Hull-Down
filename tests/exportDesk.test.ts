@@ -93,7 +93,7 @@ describe('selling abroad', () => {
   })
 
   it('sells each customer only the kind of vehicle it buys: the tank buyers take no carrier, gun or car, though it meets their needs', () => {
-    for (const id of CUSTOMER_IDS) expect(CUSTOMERS[id].wants).toBe('tank')
+    for (const id of ['dahrat', 'ilandu', 'tolmar'] as const) expect(CUSTOMERS[id].wants).toBe('tank')
     for (const tender of ['ifv1996', 'spg2008', 'scout2004', 'aa2012'] as const) {
       const career = withTank(desert())
       const other: Adopted = { ...career.adopted[0]!, tender }

@@ -29,10 +29,12 @@ export function buys(customer: CustomerId, tank: Adopted): boolean {
 export function needFigure(need: NeedId, spec: VehicleSpec, sheet: StatSheet): number {
   switch (need) {
     case 'heavyCooling': return spec.powerpack.cooling === 'heavyDuty' ? 1 : 0
+    case 'troops': return spec.crew.troops
     case 'rangeKm': return sheet.mobility.rangeKm
     case 'maxMassT': return sheet.massT
     case 'groundPressure': return sheet.mobility.groundPressureKgCm2
     case 'powerToWeight': return sheet.mobility.powerToWeightHpT
+    case 'topSpeedKmh': return sheet.mobility.topSpeedKmh
     case 'depressionDeg': return sheet.firepower.gunDepressionDeg
     case 'unitCostKr': return sheet.unitCostKr
   }

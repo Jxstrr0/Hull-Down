@@ -684,7 +684,7 @@ export function createBureau(options: BureauOptions): Bureau {
     const X = C.exportDesk
     if (NEED_KINDS[need] === 'fitted') return value >= 1 ? X.fitted : X.notFitted
     if (need === 'unitCostKr') return money(value)
-    const places = need === 'groundPressure' ? 2 : need === 'rangeKm' ? 0 : 1
+    const places = need === 'groundPressure' ? 2 : need === 'rangeKm' || need === 'troops' || need === 'topSpeedKmh' ? 0 : 1
     return fill(X.figure, { n: fixed(value, places), unit: X.units[need as keyof typeof X.units] })
   }
 
@@ -733,7 +733,7 @@ export function createBureau(options: BureauOptions): Bureau {
       const customer = CUSTOMERS[id]
       const words = X.customers[id]
       box.append(el('h4', 'bu-sub', fill(X.title, { name: words.name, climate: X.climates[customer.climate] })))
-      box.append(el('p', 'ctl-note', `${words.line} ${fill(X.wants, { kind: X.kinds[customer.wants] })} ${fill(X.order, { n: String(customer.tanks) })}`))
+      box.append(el('p', 'ctl-note', `${words.line} ${fill(X.wants, { kind: X.kinds[customer.wants] })} ${fill(X.order, { n: String(customer.tanks), kind: X.kinds[customer.wants] })}`))
       const rows = el('dl', 'bu-rows')
       for (const need of NEED_IDS) {
         const want = customer.needs[need]
@@ -747,7 +747,7 @@ export function createBureau(options: BureauOptions): Bureau {
         if (order.trial) {
           const t = order.trial
           const ground = X.grounds[customer.climate]
-          let line = fill(X.trial, { ground, tanks: String(t.tanks), stops: String(t.stops), towed: String(t.towed) })
+          let line = fill(X.trial, { ground, tanks: String(t.tanks), kind: X.kinds[customer.wants], stops: String(t.stops), towed: String(t.towed) })
           if (t.worst) line += ` ${fill(X.trialWorst, { part: STRINGS.range.endurance.parts[t.worst].toLowerCase() })}`
           box.append(el('p', 'ctl-note', line))
           box.append(el('p', t.verdict === 'good' ? 'sv-said' : 'ctl-issue', fill(X.verdicts[t.verdict], { n: String(order.tanks), of: String(customer.tanks) })))

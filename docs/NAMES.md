@@ -19,6 +19,10 @@ aircraft or weapon name.
 | Emirate of Dahrat | Export customer: desert. | Working name (0.12.0.0), Kelbo to confirm |
 | Republic of Ilandu | Export customer: jungle. | Working name (0.12.0.0), Kelbo to confirm |
 | Kingdom of Tolmar | Export customer: mountain. | Working name (0.12.0.0), Kelbo to confirm |
+| Republic of Ekunde | Export customer for infantry fighting vehicles: jungle. Mark -E. | Working name (1.8.1.0), Kelbo to confirm |
+| Principality of Orvenn | Export customer for self-propelled guns: mountain. Mark -O. | Working name (1.8.1.0), Kelbo to confirm |
+| Federation of Zamuri | Export customer for scout cars: desert. Mark -Z. | Working name (1.8.1.0), Kelbo to confirm |
+| Sultanate of Qasirah | Export customer for anti-aircraft gun vehicles: desert. Mark -Q. | Working name (1.8.1.0), Kelbo to confirm |
 
 ## Money
 

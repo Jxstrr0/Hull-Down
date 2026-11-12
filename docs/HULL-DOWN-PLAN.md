@@ -883,7 +883,12 @@ on its own ground.
    the stat sheet has the figure, such as soldiers carried or the search
    radar), working names checked against NAMES.md, and the desk's words for
    vehicles, not only tanks. Each can be met by a vehicle that would win its
-   tender, or by a version of one.
+   tender, or by a version of one. Done: Ekunde (jungle) wants eight soldiers
+   in the back, light on the ground and cheap; Orvenn (mountain) a gun of 32 t
+   at most with 24 hp/t; Zamuri (desert) a scout car with heavy-duty cooling
+   and 1,200 km of range; Qasirah (desert) an anti-aircraft gun vehicle with
+   heavy-duty cooling that does 70 km/h. No customer asks for a part the
+   bureau researched, as the ministry never licenses one for export.
 
 ---
 
