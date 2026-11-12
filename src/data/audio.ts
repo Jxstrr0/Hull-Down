@@ -116,6 +116,8 @@ export const AUDIO = {
   gun: {
     /** The calibre the gun cue below is written for, mm. A bigger gun is lower and longer. */
     refCalibreMm: 115,
+    /** A smaller gun than this sounds as this one does, so a cannon is a sharp crack, not a squeak. */
+    floorCalibreMm: 85,
     /** How strongly calibre lowers the note and stretches the sound. */
     pitchPull: 1.6,
     stretchPull: 1.4,

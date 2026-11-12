@@ -494,7 +494,8 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
   const sky = top + DRAWING.tapSkyM
   const ground = -DRAWING.tapGroundM
   const rear = L + DRAWING.marginM
-  pen.zone(m.muzzleX - DRAWING.marginM, roof, xc - R, sky, 'gun')
+  // A short barrel's zone reaches on ahead of it, so it can still be tapped.
+  pen.zone(Math.min(m.muzzleX - DRAWING.marginM, xc - R - DRAWING.gunZoneM), roof, xc - R, sky, 'gun')
   pen.zone(xc - R, roof, rear, sky, 'turret.shape')
   const third = L / 3
   const engineFirst = spec.hull.engineAt === 'front'
@@ -606,7 +607,8 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
 
   // Tap zones: four columns, full height.
   const edge = W + DRAWING.marginM
-  pen.zone(m.muzzleX - DRAWING.marginM, -edge, 0, edge, 'gun')
+  // A short barrel may not reach past the nose: its zone then stands out ahead of it, so it can still be tapped.
+  pen.zone(Math.min(m.muzzleX - DRAWING.marginM, -DRAWING.gunZoneM), -edge, 0, edge, 'gun')
   pen.zone(0, -edge, xc - R, edge, 'hull.size')
   pen.zone(xc - R, -edge, xc + R, edge, 'turret.ringMm')
   pen.zone(xc + R, -edge, L + DRAWING.marginM, edge, frontEngine ? 'hull.engineAt' : 'powerpack.engine')

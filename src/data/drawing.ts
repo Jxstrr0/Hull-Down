@@ -24,6 +24,8 @@ export const DRAWING = {
   rearUndercutM: 0.15,
   /** Blank space kept around the drawing, in metres. */
   marginM: 0.3,
+  /** A gun's tap zone is at least this long, so a short cannon barrel can still be tapped on a phone, metres. */
+  gunZoneM: 1.3,
   /** Extra tap room above the turret and below the ground. */
   tapSkyM: 0.85,
   tapGroundM: 0.5,

@@ -120,7 +120,8 @@ export function fireOf(spec: VehicleSpec): Fire {
   // A long barrel whips as the tank moves, and is still swinging just after a halt.
   const whip = BARRELS[spec.barrel].whip
   const L = G.loading
-  const auto = loading.fixedRof !== null
+  // A belt-fed cannon feeds itself whatever loading is fitted, from a belt that holds every round carried.
+  const auto = loading.fixedRof !== null || gun.beltFed
   const stations = stationsOf(spec)
   const paceOf = (station: StationId): number =>
     1 + (workloadAt(stations, station) - G.pace.referenceWorkload) * G.pace.perPoint
@@ -162,13 +163,13 @@ export function fireOf(spec: VehicleSpec): Fire {
     },
     feed: {
       auto,
-      freshS: 60 / (loading.fixedRof ?? gun.loaderRof),
+      freshS: 60 / (gun.beltFed ? gun.loaderRof : loading.fixedRof ?? gun.loaderRof),
       tirePerRound: auto ? 0 : L.tirePerRound * (gun.roundMassT / L.referenceRoundT) * L.comfort[spec.crew.comfort],
       tireMax: L.tireMax,
       movingFactor: auto ? 1 : L.movingFactor,
-      readyRounds: auto ? loading.readyRounds : null,
+      readyRounds: gun.beltFed ? spec.ammo.rounds : auto ? loading.readyRounds : null,
       handFeedS: L.handFeedS,
-      jamPerRound: auto ? (1 - loading.reliability) * L.jamShare : 0,
+      jamPerRound: auto ? (1 - (gun.beltFed ? gun.reliability : loading.reliability)) * L.jamShare : 0,
       clearS: L.clearS,
     },
   }
