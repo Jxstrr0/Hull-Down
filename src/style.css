@@ -517,6 +517,9 @@ body {
 .bp-item-drive { fill: var(--paper); }
 .bp-item-gun { fill: var(--ink-dim); stroke: none; }
 .cut-ammo line { stroke: var(--pencil); }
+.cut-section line { stroke: var(--ink); }
+/* The cut armour: a band in drawing units, so it keeps its true thickness at any size. */
+.bp-svg path.bp-section { fill: none; vector-effect: none; stroke-linejoin: miter; }
 .cut-fuel line { stroke: var(--amber); }
 .bp-swatch-crew { border-radius: 50%; background: var(--ink); }
 .bp-swatch-ammo { background: repeating-linear-gradient(135deg, var(--pencil) 0 1px, transparent 1px 4px); }

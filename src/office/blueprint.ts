@@ -2,6 +2,7 @@
 // While the armour is being worked on it becomes the protection map: each
 // zone that a view shows square on is hatched by how it stands up to a round,
 // and its reactive tiles are drawn where they are fitted.
+import { DRAWING } from '../data/drawing'
 import type { TileGrid } from '../data/era'
 import type { ZoneId } from '../data/materials'
 import { STRINGS, fill } from '../data/strings'
@@ -110,6 +111,14 @@ function cutDefs(unit: number, body: readonly string[], ids = 'cut'): SVGDefsEle
   }
   tile('ammo', 0, size, size, 0)
   tile('fuel', 0, size / 2, size, size / 2)
+  // The cut armour's hatching is finer than the stowage marks, as on a drawing-office section.
+  const fine = size * 0.6
+  const section = svg('pattern', { id: `${ids}-section`, width: n(fine), height: n(fine), patternUnits: 'userSpaceOnUse', class: 'cut-tile cut-section' })
+  section.append(
+    svg('rect', { width: n(fine), height: n(fine), class: 'map-ground' }),
+    svg('line', { x1: '0', y1: '0', x2: n(fine), y2: n(fine), 'stroke-width': n(0.7) }),
+  )
+  defs.append(section)
   if (body.length > 0) {
     const clip = svg('clipPath', { id: `${ids}-body` })
     for (const d of body) clip.append(svg('path', { d }))
@@ -148,6 +157,7 @@ export function cutawayPicture(
   root.append(cutDefs(box.w / 330, drawing.body, ids))
   const inside = svg('g', { class: 'bp-inside' })
   if (drawing.body.length > 0) inside.style.clipPath = `url(#${ids}-body)`
+  inside.append(...sectionBand(drawing.body, `${ids}-section`))
   for (const shape of drawing.shapes) {
     if (shape.item) {
       const mark = svg('path', { d: shape.d, class: `bp-item bp-item-${shape.item}` })
@@ -159,6 +169,19 @@ export function cutawayPicture(
   }
   root.append(inside)
   return { root, box }
+}
+
+/**
+ * The armour where the cutaway slices through it, hatched at 45 degrees in the
+ * drawing-office way. The band runs along the armour's outline; the group it sits
+ * in is clipped to the inside, so only the inner half shows, as the wall.
+ */
+function sectionBand(body: readonly string[], pattern: string): SVGPathElement[] {
+  return body.map((d) => {
+    const band = svg('path', { d, class: 'bp-section', 'stroke-width': String(DRAWING.sectionWallM) })
+    band.style.stroke = `url(#${pattern})`
+    return band
+  })
 }
 
 /** The drawing and its caption, ready to put in the blueprint box. */
@@ -183,6 +206,7 @@ export function renderBlueprint(
   if (interior) {
     root.append(cutDefs(box.w / 330, drawing.body))
     if (drawing.body.length > 0) inside.style.clipPath = 'url(#cut-body)'
+    inside.append(...sectionBand(drawing.body, 'cut-section'))
   }
 
   for (const shape of drawing.shapes) {

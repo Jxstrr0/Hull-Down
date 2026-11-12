@@ -156,6 +156,14 @@ describe('blueprint drawing', () => {
     expect(firstX(front ?? '')).toBeLessThan(firstX(rear ?? ''))
   })
 
+  it('details the front and top views in the finer weight too', () => {
+    for (const view of ['front', 'top'] as const) {
+      expect(draw(view).shapes.some((shape) => shape.line === 'fine'), view).toBe(true)
+    }
+    // Smoke dischargers show end on at the front, and go when they are taken off.
+    expect(draw('front', (s) => { s.protection.smokeLaunchers = false }).shapes.length).toBeLessThan(draw('front').shapes.length)
+  })
+
   it('measures the tank for the caption', () => {
     const base = draw('side')
     expect(base.hullLengthM).toBe(HULLS.medium.lengthM)
