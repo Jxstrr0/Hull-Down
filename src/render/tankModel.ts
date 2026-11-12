@@ -19,6 +19,8 @@ type Sweep = Extract<Solid, { kind: 'sweep' }>
 export const TURRET = 'turret'
 /** The name of the tank's tracks, both in one, found again to run their links round. */
 export const TRACKS = 'tracks'
+/** The name of the meshes holding the tank's wheels, which turn as the links run round. */
+export const WHEELS = 'wheels'
 
 /** The three colours a tank is painted in, and the pattern over its plate if it wears one. */
 export type Tones = Record<Tone, string> & { camo?: Camo }
@@ -98,7 +100,14 @@ export function rollTracks(tank: Group, movedM: number): void {
   if (!(tracks instanceof Mesh)) return
   const map = (tracks.material as { map?: Texture | null }).map
   if (!map) return
-  map.offset.x = (map.offset.x + trackStep(movedM)) % 1
+  const step = trackStep(movedM)
+  map.offset.x = (map.offset.x + step) % 1
+  // The wheels turn with the track, so they run on with it, link for link.
+  for (const child of tank.children) {
+    if (child.name !== WHEELS || !(child instanceof Mesh)) continue
+    const rolled = (child.material as { userData: { rollM?: { value: number } } }).userData.rollM
+    if (rolled) rolled.value += step * RENDER.tank.trackLinks.linkM
+  }
 }
 
 /** A loop of plate: the outline, the same outline set in by the plate's thickness, and the faces between. */
@@ -223,7 +232,21 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
   const piles = new Map<string, { mount: Mount; tone: Tone; corners: number[] }>()
   // The tracks are bare steel with their links painted on, one mesh for both.
   const track = { corners: [] as number[], places: [] as number[] }
+  // The wheels, apart so they can turn: each corner knows its wheel's hub and how big the wheel is.
+  const wheels = new Map<Tone, { corners: number[]; hubs: number[] }>()
   for (const part of shape.parts) {
+    if (part.kind === 'piece' && part.wheelM !== undefined) {
+      for (const [tone, corners] of Object.entries(toneCorners(part, part.tone)) as [Tone, number[]][]) {
+        let pile = wheels.get(tone)
+        if (!pile) {
+          pile = { corners: [], hubs: [] }
+          wheels.set(tone, pile)
+        }
+        for (const value of corners) pile.corners.push(value)
+        for (let i = 0; i < corners.length; i += 3) pile.hubs.push(part.at.x, part.at.y, 1 / part.wheelM)
+      }
+      continue
+    }
     if (part.kind === 'band') {
       const skin = bandSkin(part, RENDER.tank.trackLinks.linkM)
       for (const value of skin.corners) track.corners.push(value)
@@ -250,6 +273,15 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
       mesh = kit.patterned(geometry, tones.camo)
     } else mesh = kit.mesh(geometry, tones[pile.tone])
     ;(pile.mount === 'turret' ? top : tank).add(mesh)
+  }
+  for (const [tone, pile] of wheels) {
+    const geometry = new BufferGeometry()
+    geometry.setAttribute('position', new Float32BufferAttribute(pile.corners, 3))
+    geometry.setAttribute('hub', new Float32BufferAttribute(pile.hubs, 3))
+    geometry.computeVertexNormals()
+    const mesh = kit.wheels(geometry, tones[tone])
+    mesh.name = WHEELS
+    tank.add(mesh)
   }
   if (track.corners.length > 0) {
     const geometry = new BufferGeometry()
