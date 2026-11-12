@@ -27,7 +27,7 @@ import {
 } from './controls'
 import { DEFAULT_THREAT, THREATS, type Round } from '../data/ammo'
 import { ZONES, type ZoneId } from '../data/materials'
-import { GUNS } from '../data/parts'
+import { GUNS, TURRETS } from '../data/parts'
 import { TECH_FIELDS, type TechField } from '../data/tech'
 import { generationOf, partKey } from '../sim/vehicle/tech'
 import { TUNING } from '../data/tuning'
@@ -98,6 +98,11 @@ export interface Office {
   openTab: (tab: 'trials' | 'bureau' | 'saves') => void
   /** Throw the career away and start a new one, then show the bureau. Designs are kept. */
   restartCareer: () => void
+}
+
+/** True for a turret option that is a casemate: the gun swings only a little each way. */
+function isCasemate(option: string): boolean {
+  return option in TURRETS && TURRETS[option as keyof typeof TURRETS].swingDeg !== null
 }
 
 export function renderDesignScreen(first: Tender): Office {
@@ -656,6 +661,8 @@ export function renderDesignScreen(first: Tender): Office {
       const text = control.text[option]
       if (!text) continue
       const on = option === current
+      // A casemate is offered only where the tender is for a tank destroyer.
+      if (!on && control.id === 'turret.shape' && isCasemate(option) && !limits.casemate) continue
       // A part newer than the tender allows is shown, and cannot be picked.
       const comes = isTechField(control.id) ? generationOf(control.id, option) : 1
       const late = comes > (limits.generation ?? 1)

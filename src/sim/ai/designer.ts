@@ -385,7 +385,7 @@ function learn(draft: Draft, lesson: Lesson, generation: Generation): boolean {
       // A turret that lets the gun dip further shows less of the tank over a crest.
       const now = TURRETS[spec.turret.shape].depressionDeg
       const deeper = (Object.keys(TURRETS) as TurretId[])
-        .filter((id) => TURRETS[id].depressionDeg > now && TURRETS[id].crewed && available('turret.shape', id, generation))
+        .filter((id) => TURRETS[id].depressionDeg > now && TURRETS[id].crewed && TURRETS[id].swingDeg === null && available('turret.shape', id, generation))
         .sort((a, b) => TURRETS[a].depressionDeg - TURRETS[b].depressionDeg)[0]
       if (deeper) spec.turret.shape = deeper
       return deeper !== undefined

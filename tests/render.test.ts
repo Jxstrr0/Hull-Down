@@ -528,14 +528,23 @@ describe('the parts the tank is built from', () => {
     return tankShapeOf(spec, sheet.geometry)
   }
 
-  it('gives every turret its own kit piece, and its own stand-in shape of eight corners to a ring', () => {
+  it('gives every turret its own kit piece, or a casemate a plain shape, of eight corners to a ring', () => {
     const seen = new Set<string>()
     const pieces = new Set<string>()
     for (const turret of shapes) {
-      const shell = built(turret, false).parts.find((part) => part.kind === 'piece' && part.piece === KIT.turrets[turret])
-      expect(shell?.mount).toBe('turret')
-      if (shell?.kind === 'piece') pieces.add(shell.piece)
-      const loft = shell?.kind === 'piece' ? shell.fallback.find((part) => part.kind === 'loft') : undefined
+      const piece = KIT.turrets[turret]
+      const parts = built(turret, false).parts
+      let loft
+      if (piece === null) {
+        // No kit piece: the stand-in shape is built as it is, on the turret mount.
+        expect(TURRETS[turret].swingDeg).not.toBeNull()
+        loft = parts.find((part) => part.kind === 'loft' && part.mount === 'turret')
+      } else {
+        const shell = parts.find((part) => part.kind === 'piece' && part.piece === piece)
+        expect(shell?.mount).toBe('turret')
+        if (shell?.kind === 'piece') pieces.add(shell.piece)
+        loft = shell?.kind === 'piece' ? shell.fallback.find((part) => part.kind === 'loft') : undefined
+      }
       expect(loft?.kind).toBe('loft')
       if (loft?.kind !== 'loft') continue
       expect(loft.rings.length).toBeGreaterThanOrEqual(2)
@@ -545,7 +554,7 @@ describe('the parts the tank is built from', () => {
       seen.add(JSON.stringify(RENDER.tank.turrets[turret]))
     }
     expect(seen.size).toBe(shapes.length)
-    expect(pieces.size).toBe(shapes.length)
+    expect(pieces.size).toBe(shapes.filter((turret) => KIT.turrets[turret] !== null).length)
   })
 
   it('builds an upper hull out over the tracks, and a lower hull under it', () => {

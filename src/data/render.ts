@@ -471,6 +471,11 @@ export const RENDER = {
         { up: 0.65, ahead: 0.85, behind: 1, half: 0.55, cut: 0.15 },
         { up: 1, ahead: 0.5, behind: 0.8, half: 0.5, cut: 0.12 },
       ],
+      // A box on the hull, square at the back, its front plate laid well back.
+      casemate: [
+        { up: 0, ahead: 1, behind: 1, half: 0.95, cut: 0.2 },
+        { up: 1, ahead: 0.35, behind: 1, half: 0.88, cut: 0.12 },
+      ],
     },
   },
 } as const

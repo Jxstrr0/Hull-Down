@@ -89,4 +89,6 @@ export interface Limits {
   generation?: Generation
   /** Parts the bureau has yet to research, as `partKey` names them (src/sim/vehicle/tech.ts). None when not given. */
   locked?: readonly string[]
+  /** True when the tender is for a tank destroyer, which may have a casemate in place of a turret. */
+  casemate?: boolean
 }

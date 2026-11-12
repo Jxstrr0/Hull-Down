@@ -340,11 +340,17 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   }
   // A turret with no mantlet in the kit (the unmanned one, its gun in a cradle) keeps the plain one in its stand-in.
   if (!fit.mantlet) shell.push(mantlet)
-  parts.push({
-    ...top('body'), kind: 'piece', piece: KIT.turrets[spec.turret.shape],
-    scale: { x: k, y: h / ref.turretHeightM[spec.turret.shape], z: k }, at: { x: 0, y: turret.baseM, z: 0 },
-    fallback: shell,
-  })
+  const turretPiece = KIT.turrets[spec.turret.shape]
+  if (turretPiece) {
+    parts.push({
+      ...top('body'), kind: 'piece', piece: turretPiece,
+      scale: { x: k, y: h / ref.turretHeightM[spec.turret.shape], z: k }, at: { x: 0, y: turret.baseM, z: 0 },
+      fallback: shell,
+    })
+  } else {
+    // A shape the kit has no piece for is drawn plain.
+    for (const each of shell) parts.push({ ...top('body'), ...each })
+  }
   if (fit.mantlet) {
     const st = fit.mantletStretch
     parts.push({
