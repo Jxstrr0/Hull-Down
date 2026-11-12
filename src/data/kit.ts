@@ -42,7 +42,7 @@ export const KIT = {
     weldedWedge: 'turret-welded-wedge',
     bustle: 'turret-bustle',
     unmanned: 'turret-unmanned',
-  } satisfies Record<TurretId, string>,
+  } satisfies Record<TurretId, `turret-${string}`>,
   /** The sizes the pieces are built at, in metres, to scale from. */
   reference: {
     turretRadiusM: 1.1,
@@ -54,6 +54,23 @@ export const KIT = {
     idlerRadiusM: 0.3,
     returnRollerRadiusM: 0.11,
   },
+  /**
+   * How each turret piece is fitted out, as it was modelled (art/tank-kit.py,
+   * TURRET_FIT). The gun's root sits `gunAhead` turret radii forward of the
+   * ring's middle and `gunUp` turret heights above the roof it stands on: the
+   * unmanned turret carries its gun in a cradle above it. The mantlet sits
+   * `mantletBackM` behind the gun's root, stretched by `mantletStretch`. Smoke
+   * launchers stand `launcherOut` turret radii out to each side.
+   */
+  fit: {
+    castDome: { gunUp: 0.5, gunAhead: 1.0, mantlet: 'mantlet-cast', mantletBackM: 0.05, mantletStretch: { x: 1, y: 1, z: 1 }, launcherOut: 1.0 },
+    lowProfile: { gunUp: 0.52, gunAhead: 1.0, mantlet: 'mantlet-cast', mantletBackM: 0.05, mantletStretch: { x: 1, y: 1, z: 1 }, launcherOut: 1.05 },
+    weldedWedge: { gunUp: 0.545, gunAhead: 0.72, mantlet: 'mantlet-block', mantletBackM: 0.3, mantletStretch: { x: 1.6, y: 1, z: 0.5 }, launcherOut: 0.97 },
+    bustle: { gunUp: 0.53, gunAhead: 0.95, mantlet: 'mantlet-block', mantletBackM: 0, mantletStretch: { x: 1, y: 1, z: 1 }, launcherOut: 0.94 },
+    unmanned: { gunUp: 1.57, gunAhead: 0.5, mantlet: null, mantletBackM: 0, mantletStretch: { x: 1, y: 1, z: 1 }, launcherOut: 0.62 },
+  } satisfies Record<TurretId, { gunUp: number; gunAhead: number; mantlet: 'mantlet-cast' | 'mantlet-block' | null; mantletBackM: number; mantletStretch: { x: number; y: number; z: number }; launcherOut: number }>,
+  /** The cupola and the sight head stand on the roof at these shares of the turret's height; the sight is this far across, as a share of the radius, from the cupola's side. */
+  roof: { cupolaUp: 0.97, sightUp: 0.9, sightBackShare: 0.02, sightAcrossShare: 0.42 },
 } as const
 
 export type KitPiece = keyof typeof KIT.pieces

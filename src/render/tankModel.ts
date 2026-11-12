@@ -128,7 +128,7 @@ function norm(x: number, y: number): { x: number; y: number } {
 function toneCorners(part: Solid, tone: Tone): Partial<Record<Tone, number[]>> {
   if (part.kind === 'piece') {
     const piece = kitPiece(part.piece)
-    if (!piece) return { [tone]: partCorners(part.fallback) }
+    if (!piece) return { [tone]: part.fallback.flatMap((plain) => partCorners(plain)) }
     return { body: placeCorners(piece.body, part.scale, part.at), dark: placeCorners(piece.dark, part.scale, part.at) }
   }
   return { [tone]: partCorners(part) }

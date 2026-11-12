@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { RANGE } from '../src/data/range'
+import { KIT } from '../src/data/kit'
 import { RENDER } from '../src/data/render'
 import { STRINGS } from '../src/data/strings'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
@@ -522,10 +523,14 @@ describe('the parts the tank is built from', () => {
     return tankShapeOf(spec, sheet.geometry)
   }
 
-  it('gives every turret its own shape, eight corners to a ring', () => {
+  it('gives every turret its own kit piece, and its own stand-in shape of eight corners to a ring', () => {
     const seen = new Set<string>()
+    const pieces = new Set<string>()
     for (const turret of shapes) {
-      const loft = built(turret, false).parts.find((part) => part.kind === 'loft')
+      const shell = built(turret, false).parts.find((part) => part.kind === 'piece' && part.piece === KIT.turrets[turret])
+      expect(shell?.mount).toBe('turret')
+      if (shell?.kind === 'piece') pieces.add(shell.piece)
+      const loft = shell?.kind === 'piece' ? shell.fallback.find((part) => part.kind === 'loft') : undefined
       expect(loft?.kind).toBe('loft')
       if (loft?.kind !== 'loft') continue
       expect(loft.rings.length).toBeGreaterThanOrEqual(2)
@@ -535,6 +540,7 @@ describe('the parts the tank is built from', () => {
       seen.add(JSON.stringify(RENDER.tank.turrets[turret]))
     }
     expect(seen.size).toBe(shapes.length)
+    expect(pieces.size).toBe(shapes.length)
   })
 
   it('has a track loop, a sprocket and an idler each side, and a wheel for every road wheel', () => {
@@ -560,7 +566,7 @@ describe('the parts the tank is built from', () => {
   })
 
   it('leaves the hatch off a turret with nobody in it, and the launchers off a tank without them', () => {
-    const cupola = (turret: TurretId) => built(turret, false).parts.filter((part) => part.kind === 'drum' && part.axis === 'y').length
+    const cupola = (turret: TurretId) => built(turret, false).parts.filter((part) => part.kind === 'piece' && part.piece === 'cupola').length
     expect(cupola('castDome')).toBe(1)
     expect(cupola('unmanned')).toBe(0)
     const { spec, sheet } = sheetOf((s) => { s.protection.smokeLaunchers = false })
