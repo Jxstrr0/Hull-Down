@@ -44,6 +44,8 @@ export interface VehicleSpec {
     computer: ComputerId
     night: NightSightId
     commanderSight: boolean
+    /** A search radar to find aircraft, for an anti-aircraft gun. */
+    searchRadar: boolean
   }
   powerpack: {
     engine: EngineId

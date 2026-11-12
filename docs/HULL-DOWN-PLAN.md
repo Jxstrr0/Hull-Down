@@ -824,6 +824,25 @@ it on a new spot-and-report trial rather than tank duels.
    found or marked as they see the car. Drives are a time-lapse; watches play
    eight times faster.
 
+Then the anti-aircraft gun vehicle, Kelbo's pick, in small PRs. Kelbo's
+picks: its tender is in 2012, between the self-propelled gun of 2008 and the
+tank of 2016, with generation two parts; a twin 35 mm cannon with its own
+search radar; tracks or wheels, both allowed; and the army judges it on a new
+air defence trial rather than tank duels.
+1. The twin 35 mm cannon and the search radar (1.7.0.0). Done: two cannon
+   side by side on one mount, fed from belts, a burst of eight every second
+   and a half; 1.8 t and 260,000 kr, on a 1,700 mm ring. The radar is a
+   switch on the fire control tab, shown once the twin cannon is fitted:
+   0.9 t, 420,000 kr, and 6 kW from the electrics. Both are drawn on the
+   blueprint and on the range, each with its own sketch. Offered only where
+   a tender asks for 35 mm, and in the sandbox with no limits.
+2. The air defence trial (1.7.1.0): fast jets, pop-up helicopters and slow
+   small drones cross the range. Marked on how many come down before they
+   reach a line, and on reaction time. It gets a card in the report.
+3. The 2012 tender in the career (1.7.2.0). Saves carried over.
+4. Rival bureaus bid anti-aircraft vehicles (1.7.3.0).
+5. Something to watch for the air defence trial (1.7.4.0).
+
 ---
 
 ## 15. Hosting and the studio site

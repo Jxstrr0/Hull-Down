@@ -327,6 +327,7 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
     computer: pick('computer'),
     night: pick('night'),
     commanderSight: pick('commanderSight'),
+    searchRadar: false,
   }
   spec.powerpack.engine = pick('engine')
   spec.powerpack.fuelL = philosophy.fuelL

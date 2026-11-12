@@ -60,6 +60,12 @@ export const PACT_ROUNDS = {
     apds30: { kind: 'kinetic', speedMs: 1150, spreadM: 0.5, penMm: 70, lossPerKmMm: 20 },
     he30: { kind: 'shaped', speedMs: 1000, spreadM: 0.6, penMm: 25, lossPerKmMm: 0 },
   },
+  // Bursts of eight from the twin anti-aircraft cannon: faster and a little harder-hitting than the 30 mm, but
+  // the mount is built to track aircraft, and it spreads its shells wider on the ground.
+  twin35: {
+    apds35: { kind: 'kinetic', speedMs: 1385, spreadM: 0.7, penMm: 85, lossPerKmMm: 20 },
+    he35: { kind: 'shaped', speedMs: 1175, spreadM: 0.8, penMm: 30, lossPerKmMm: 0 },
+  },
 } as const satisfies Record<GunId, Record<string, Round>>
 
 type RoundsOf<G extends GunId> = keyof (typeof PACT_ROUNDS)[G]

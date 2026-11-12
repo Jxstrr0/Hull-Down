@@ -104,7 +104,7 @@ describe('turret parts that fail', () => {
   it('lists only the parts with something plainer to fall back on', () => {
     expect(build().turret.map((part) => part.id)).toEqual(['rangefinder', 'stabiliser', 'computer', 'night'])
     const plain = build((s) => {
-      s.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'none', commanderSight: false }
+      s.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'none', commanderSight: false, searchRadar: false }
     })
     expect(plain.turret).toEqual([])
     const full = build((s) => { s.fireControl.sight = 'improvedDaySight'; s.fireControl.commanderSight = true })
@@ -162,7 +162,7 @@ describe('turret parts that fail', () => {
 
   it('never fails a part the tank does not have', () => {
     const plain = build((s) => {
-      s.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'none', commanderSight: false }
+      s.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'none', commanderSight: false, searchRadar: false }
     })
     for (const seed of SEEDS.slice(0, 60)) {
       const report = runProvingGround(plain, { seed })
@@ -186,7 +186,7 @@ describe('turret parts that fail', () => {
       return sum + GUNNERY_TEST_IDS.filter((id) => report.gunnery[id].fault !== null).length
     }, 0)
     const fancy = build((s) => {
-      s.fireControl = { sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'electronic', night: 'imageIntensifier', commanderSight: true }
+      s.fireControl = { sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'electronic', night: 'imageIntensifier', commanderSight: true, searchRadar: false }
     })
     expect(count(fancy)).toBeGreaterThan(count(build()))
     expect(RANGE.gunnery.faultShare).toBeGreaterThan(0)

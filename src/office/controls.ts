@@ -130,6 +130,8 @@ export const CONTROLS: readonly Control[] = [
     (s) => s.fireControl.night, (s, v) => { s.fireControl.night = v }),
   toggle('fireControl.commanderSight', 'fireControl', P.commanderSight,
     (s) => s.fireControl.commanderSight, (s, v) => { s.fireControl.commanderSight = v }),
+  toggle('fireControl.searchRadar', 'fireControl', P.searchRadar,
+    (s) => s.fireControl.searchRadar, (s, v) => { s.fireControl.searchRadar = v }),
 
   choice('powerpack.engine', 'powerpack', texts(ENGINES, P.engines),
     (s) => s.powerpack.engine, (s, v) => { s.powerpack.engine = v }),

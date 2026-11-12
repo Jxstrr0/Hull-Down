@@ -351,7 +351,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
       ammo: { rounds: 55, stowage: 'plainRacks', kinetic: 'supplied', shaped: 'supplied' },
       fireControl: {
         sight: 'improvedDaySight', rangefinder: 'coincidence', stabiliser: 'twoPlane', computer: 'mechanical',
-        night: 'activeInfrared', commanderSight: true,
+        night: 'activeInfrared', commanderSight: true, searchRadar: false,
       },
       powerpack: { engine: 'diesel780', transmission: 'hydro50', cooling: 'standard', fuelL: 1400, apu: false },
       runningGear: { layout: 'tracks', suspension: 'torsionBar', roadWheels: 7, trackWidthMm: 640, skirts: false },
@@ -390,7 +390,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
       ammo: { rounds: 42, stowage: 'armouredBins', kinetic: 'supplied', shaped: 'supplied' },
       fireControl: {
         sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'electronic',
-        night: 'imageIntensifier', commanderSight: true,
+        night: 'imageIntensifier', commanderSight: true, searchRadar: false,
       },
       powerpack: { engine: 'diesel780', transmission: 'hydro50', cooling: 'standard', fuelL: 1000, apu: true },
       runningGear: { layout: 'tracks', suspension: 'hydropneumatic', roadWheels: 7, trackWidthMm: 700, skirts: false },
@@ -441,7 +441,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
       ammo: { rounds: 40, stowage: 'armouredBins', kinetic: 'supplied', shaped: 'supplied' },
       fireControl: {
         sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'digital',
-        night: 'thermal', commanderSight: true,
+        night: 'thermal', commanderSight: true, searchRadar: false,
       },
       powerpack: { engine: 'diesel780', transmission: 'hydro50', cooling: 'standard', fuelL: 950, apu: true },
       runningGear: { layout: 'tracks', suspension: 'hydropneumatic', roadWheels: 7, trackWidthMm: 700, skirts: false },

@@ -503,10 +503,12 @@ export function renderDesignScreen(first: Tender): Office {
 
   /**
    * Does this part get a row? The tracks-or-wheels row only where wheels are
-   * allowed (or already fitted); the track parts only on tracks.
+   * allowed (or already fitted); the track parts only on tracks; the search
+   * radar only with an anti-aircraft gun (or once fitted, so it can come off).
    */
   function shown(control: Control): boolean {
     const wheeled = wheelsOf(spec) > 0
+    if (control.id === 'fireControl.searchRadar') return spec.fireControl.searchRadar || GUNS[spec.gun].antiAir
     if (control.id === 'runningGear.layout') return wheeled || limits.wheels === true
     if (TRACK_ONLY.includes(control.id)) return !wheeled
     return true

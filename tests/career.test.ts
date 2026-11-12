@@ -167,7 +167,7 @@ describe('the decision', () => {
     const standard = decided(BASELINE_SPEC, 1)
     expect(standard.outcome!.standing.pact).toBe(CAREER.reputation.pact.standard)
     const odd = decided(tank((spec) => {
-      spec.fireControl = { sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'electronic', night: 'imageIntensifier', commanderSight: true }
+      spec.fireControl = { sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'electronic', night: 'imageIntensifier', commanderSight: true, searchRadar: false }
     }), 1)
     expect(odd.outcome!.standing.pact).toBeLessThan(standard.outcome!.standing.pact)
   })

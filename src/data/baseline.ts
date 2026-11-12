@@ -18,6 +18,7 @@ export const BASELINE_SPEC: VehicleSpec = {
     computer: 'mechanical',
     night: 'activeInfrared',
     commanderSight: false,
+    searchRadar: false,
   },
   powerpack: { engine: 'diesel780', transmission: 'manual44', cooling: 'standard', fuelL: 1000, apu: false },
   runningGear: { layout: 'tracks', suspension: 'torsionBar', roadWheels: 6, trackWidthMm: 580, skirts: false },

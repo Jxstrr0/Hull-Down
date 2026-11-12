@@ -426,6 +426,7 @@ export const STRINGS = {
     'fireControl.computer': { label: 'Ballistic computer', note: '' },
     'fireControl.night': { label: 'Night sight', note: '' },
     'fireControl.commanderSight': { label: 'Commander\'s sight', note: '' },
+    'fireControl.searchRadar': { label: 'Search radar', note: '' },
     'powerpack.engine': { label: 'Engine', note: '' },
     'powerpack.transmission': { label: 'Transmission', note: 'Each gearbox is rated for a weight. Go over it and it will break at trial.' },
     'powerpack.cooling': { label: 'Cooling', note: '' },
@@ -468,6 +469,7 @@ export const STRINGS = {
       rifled120: { name: '120 mm rifled', note: 'A foreign pattern. Powerful, but not a Pact calibre.' },
       howitzer155: { name: '155 mm howitzer', note: 'Lobs a heavy shell 20 km and more. Needs a big turret, and only a self-propelled gun tender asks for it.' },
       autocannon30: { name: '30 mm cannon', note: 'Light and quick, fed from a belt: no loader needed. Each round carried is a burst of five. Bites light armour; only an infantry vehicle tender asks for it.' },
+      twin35: { name: 'Twin 35 mm cannon', note: 'Two cannon side by side on one mount, fed from belts, to bring down aircraft. Each round carried is a burst of eight. Only an air defence tender asks for it.' },
     },
     barrels: {
       short: { name: 'Short barrel', note: 'Light, cheap and steady on the move. Slower rounds with less punch.' },
@@ -526,6 +528,7 @@ export const STRINGS = {
       thermal: { name: 'Thermal sight', note: 'Sees warmth, not light. Night is nearly as good as day, at a price.' },
     },
     commanderSight: { name: 'Independent commander\'s sight', note: 'The commander finds the next target while the gunner shoots.' },
+    searchRadar: { name: 'Search radar', note: 'A dish on a mast that finds aircraft far beyond the eye, day or night. Heavy and dear, and it draws 6 kW. For an anti-aircraft gun.' },
     engines: {
       diesel580: { name: '580 hp diesel', note: 'Old, simple and thrifty.' },
       diesel780: { name: '780 hp diesel', note: 'The Pact standard engine.' },
@@ -740,6 +743,7 @@ export const STRINGS = {
     missileNeedsSmoothbore: 'A gun-launched missile cannot be fired from a rifled gun: the spin would wreck it. Fit a smoothbore.',
     turretNeedsAutoloader: 'There is nobody in an unmanned turret to load the gun. Fit an autoloader.',
     autoloaderWasted: 'The cannon feeds itself from a belt. The autoloader only adds weight and cost.',
+    searchRadarWasted: 'A search radar finds aircraft for an anti-aircraft gun. With this gun it only adds weight and cost.',
     troopsOutOfRange: 'A troop load of {value} is outside the allowed range.',
     squadTooSmall: '{value} soldiers is not a squad. Carry at least {limit}, or none.',
     troopsNeedFrontEngine: 'The soldiers leave by a door in the rear plate. The engine has to go in front.',
@@ -817,6 +821,8 @@ export const STRINGS = {
     shell155: '155 mm high-explosive shell',
     apds30: '30 mm hard-cored burst',
     he30: '30 mm high-explosive burst',
+    apds35: '35 mm hard-cored burst',
+    he35: '35 mm high-explosive burst',
   },
   ammo: {
     title: 'Pact ammunition for this gun',
@@ -2221,6 +2227,7 @@ export const STRINGS = {
       powerToWeight: { term: 'Power to weight', find: ['hp/t', 'power to weight'], text: 'Engine power divided by the weight of the tank, in horsepower per tonne. More means the tank picks up speed faster and climbs better. Adding armour lowers it.' },
       prototype: { term: 'Prototype', find: ['prototype'], text: 'A design that has been built and sent to the proving ground. Its trial results are kept, so it can be compared with a later prototype and entered for the tender.' },
       rangefinder: { term: 'Rangefinder', find: ['rangefinder', 'stadia'], text: 'What measures how far away the target is. Stadia lines are marks in the sight that the gunner compares with the size of the target: quick and rough. An optical rangefinder is better. A laser gives the range at once and almost exactly.' },
+      radar: { term: 'Radar', find: ['radar'], text: 'Sends out radio waves and listens for them coming back. A search radar turns all the time and finds aircraft far beyond what the crew could see, by day or night. It is heavy, dear and hungry for power.' },
       reactive: { term: 'Reactive tiles', find: ['reactive', 'tiles'], text: 'Boxes of explosive bolted to the outside of the armour. When a shaped charge hits one, the tile goes off and breaks up the jet. They are light for what they stop, do little against a kinetic round, and each tile works once. A tandem warhead is made to beat them.' },
       recoil: { term: 'Recoil and the gun mount', find: ['recoil', 'stroke mount', 'standard mount'], text: 'When the gun fires it kicks back. The mount soaks that up. A long stroke lets the gun travel further back, which is kinder to a light tank but needs more room inside the turret.' },
       reliability: { term: 'Reliability', find: ['reliab'], text: 'How likely the tank is to finish a job without breaking down. Every part has its own figure, and they multiply together: a tank full of clever parts breaks more often. Parts worked near their limit, such as an overloaded transmission, break sooner.' },
