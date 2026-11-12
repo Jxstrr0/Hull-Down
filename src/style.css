@@ -89,12 +89,33 @@ body {
 }
 
 .office-top {
+  position: relative;
+  isolation: isolate;
   padding: 8px 16px 10px;
   border-bottom: 2px solid var(--ink);
   background-image:
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: 20px 20px;
+}
+/* The drawing board's paper: a CC0 paper scan (ambientCG Paper001) laid over
+   the grid as faint grain. In the blueprint look, a creased sheet (Paper003)
+   mottles the blue like a cyanotype print. The lines stay crisp on top. */
+.office-top::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('./assets/paper-grain.jpg') 0 0 / 256px 256px repeat;
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+  pointer-events: none;
+}
+:root[data-theme='blueprint'] .office-top::before {
+  background-image: url('./assets/blueprint-mottle.jpg');
+  background-size: 384px 384px;
+  mix-blend-mode: soft-light;
+  opacity: 0.22;
 }
 
 .office-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

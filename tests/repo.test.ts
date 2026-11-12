@@ -11,7 +11,7 @@ describe('credits', () => {
   const credits = readRepoFile('CREDITS.md')
 
   it('lists every shipped or third-party asset file', () => {
-    const files = [...listFilesDeep('public'), ...listFilesDeep('art/third-party')].filter(
+    const files = [...listFilesDeep('public'), ...listFilesDeep('art/third-party'), ...listFilesDeep('src/assets')].filter(
       (f) => !f.endsWith('.gitkeep'),
     )
     expect(files.filter((f) => !credits.includes(f))).toEqual([])

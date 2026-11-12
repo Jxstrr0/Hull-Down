@@ -48,6 +48,19 @@ from them with ffmpeg.
 | `art/third-party/sounds/thud2.wav` | Metal Impact Sounds (thud2) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | None (the original) |
 | `public/audio/short.mp3` | Metal Impact Sounds (thud2) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | Cut to 0.45 s, made 6 dB louder, faded out, saved as MP3 |
 
+## Textures
+
+From ambientCG (https://ambientcg.com), whose assets are all CC0 1.0. The
+originals are kept unchanged in `art/third-party/textures/`; `art/paper-texture.py`
+makes the tiles the game uses.
+
+| File | Title | Author | Source | Licence | Changes |
+| --- | --- | --- | --- | --- | --- |
+| `art/third-party/textures/Paper001_1K-JPG_Color.jpg` | Paper 001 | ambientCG | https://ambientcg.com/view?id=Paper001 | CC0 1.0 | None (the original colour map) |
+| `src/assets/paper-grain.jpg` | Paper 001 | ambientCG | https://ambientcg.com/view?id=Paper001 | CC0 1.0 | Grey, cropped square, 512 px, fine detail only (high-pass), made to tile, saved as JPEG |
+| `art/third-party/textures/Paper003_1K-JPG_Color.jpg` | Paper 003 | ambientCG | https://ambientcg.com/view?id=Paper003 | CC0 1.0 | None (the original colour map) |
+| `src/assets/blueprint-mottle.jpg` | Paper 003 | ambientCG | https://ambientcg.com/view?id=Paper003 | CC0 1.0 | Grey, 512 px, creases and mottle only (high-pass), made to tile, saved as JPEG |
+
 ## Libraries (npm packages, shipped in the build)
 
 | Package | What it does | Authors | Source | Licence | Changes |
