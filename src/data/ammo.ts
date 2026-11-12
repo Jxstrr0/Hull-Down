@@ -54,6 +54,12 @@ export const PACT_ROUNDS = {
     shot155: { kind: 'kinetic', speedMs: 760, spreadM: 1.0, penMm: 190, lossPerKmMm: 60 },
     shell155: { kind: 'shaped', speedMs: 820, spreadM: 1.2, penMm: 160, lossPerKmMm: 0 },
   },
+  // Bursts of five, for light armour and soft targets: a hard-cored shot, and a high-explosive shell that
+  // bursts on whatever it strikes. Five shells spread out, but a burst hits more often than one round.
+  autocannon30: {
+    apds30: { kind: 'kinetic', speedMs: 1150, spreadM: 0.5, penMm: 70, lossPerKmMm: 20 },
+    he30: { kind: 'shaped', speedMs: 1000, spreadM: 0.6, penMm: 25, lossPerKmMm: 0 },
+  },
 } as const satisfies Record<GunId, Record<string, Round>>
 
 type RoundsOf<G extends GunId> = keyof (typeof PACT_ROUNDS)[G]

@@ -727,6 +727,23 @@ army judges it on a new fire mission trial rather than tank duels.
    on a map. Done: a replay in the fire mission card, an area map and a
    close-up of the grid, played eight times faster than the trial ran.
 
+Then the infantry fighting vehicle, Kelbo's pick, in small PRs. Kelbo's
+picks: its tender is in 1996, between 1991 and 2001, with generation one
+parts; the troops ride in a compartment at the back; and the army judges it
+on a new trial, carrying a squad and covering it with the cannon, rather
+than tank duels.
+1. The 30 mm cannon (1.5.0.0): light, small and fed from a belt, so it
+   needs no loader. Each round carried is a burst of five. It bites light
+   armour, not a tank's front. Offered only where a tender asks for 30 mm,
+   and in the sandbox with no limits.
+2. The troop compartment (1.5.1.0): a box at the back for 4 to 8 soldiers.
+   It takes room and weight, and the engine has to go to the front.
+3. The squad trial (1.5.2.0): carry the squad to a drop point, let it out,
+   and cover it with bursts on light targets. It gets a card in the report.
+4. The 1996 tender in the career (1.5.3.0). Saves carried over.
+5. Rival bureaus bid infantry fighting vehicles (1.5.4.0).
+6. Something to watch for the squad trial (1.5.5.0).
+
 ---
 
 ## 15. Hosting and the studio site

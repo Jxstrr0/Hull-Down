@@ -100,9 +100,9 @@ export interface Office {
   restartCareer: () => void
 }
 
-/** True for a gun option that is a howitzer, for a self-propelled gun. */
-function isHowitzer(option: string): boolean {
-  return option in GUNS && GUNS[option as keyof typeof GUNS].howitzer
+/** True for a gun option offered only where a tender asks for its calibre: a howitzer, or a belt-fed cannon. */
+function isAskedFor(option: string): boolean {
+  return option in GUNS && (GUNS[option as keyof typeof GUNS].howitzer || GUNS[option as keyof typeof GUNS].beltFed)
 }
 
 /** True for a turret option that is a casemate: the gun swings only a little each way. */
@@ -668,8 +668,8 @@ export function renderDesignScreen(first: Tender): Office {
       const on = option === current
       // A casemate is offered only where the tender is for a tank destroyer.
       if (!on && control.id === 'turret.shape' && isCasemate(option) && !limits.casemate) continue
-      // So is a howitzer only where the tender asks for its calibre.
-      if (!on && control.id === 'gun' && isHowitzer(option) && !limits.allowedCalibresMm.includes(GUNS[option as keyof typeof GUNS].calibreMm)) continue
+      // So is a howitzer or a cannon only where the tender asks for its calibre.
+      if (!on && control.id === 'gun' && isAskedFor(option) && !limits.allowedCalibresMm.includes(GUNS[option as keyof typeof GUNS].calibreMm)) continue
       // A part newer than the tender allows is shown, and cannot be picked.
       const comes = isTechField(control.id) ? generationOf(control.id, option) : 1
       const late = comes > (limits.generation ?? 1)

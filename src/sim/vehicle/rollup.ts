@@ -87,7 +87,8 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
   }
 
   // Firepower: gun, loading, ammunition
-  const readyRounds = Math.min(spec.ammo.rounds, loading.readyRounds)
+  // A belt-fed cannon carries every round on its belt, none in the racks.
+  const readyRounds = gun.beltFed ? spec.ammo.rounds : Math.min(spec.ammo.rounds, loading.readyRounds)
   const stowedRounds = spec.ammo.rounds - readyRounds
   // The gun is quoted with the standard barrel and mount; the fitted ones move its weight, room and cost.
   const barrel = BARRELS[spec.barrel]

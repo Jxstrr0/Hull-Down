@@ -46,6 +46,7 @@ export const ISSUE_CODES = [
   'turretNeedsRearEngine',
   'turretNeedsComputer',
   'casemateNotAllowed',
+  'autoloaderWasted',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -110,7 +111,8 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
 
   // A turret with nobody in it: a machine loads, the crew sit together in the nose, and they fight by screens
   if (!turret.crewed) {
-    if (loading.crew > 3) error('turretNeedsAutoloader', 'loading')
+    // A belt-fed cannon loads itself, so the hand loader rides in the hull.
+    if (loading.crew > 3 && !gun.beltFed) error('turretNeedsAutoloader', 'loading')
     if (spec.hull.engineAt === 'front') error('turretNeedsRearEngine', 'hull.engineAt')
     if (spec.fireControl.computer !== 'digital') error('turretNeedsComputer', 'fireControl.computer')
   }
@@ -120,6 +122,9 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   if (electrics.drawKw > electrics.supplyKw) {
     error('overPowerBudget', !spec.powerpack.apu ? 'powerpack.apu' : spec.protection.active !== 'none' ? 'protection.active' : 'turret.shape', electrics.drawKw, electrics.supplyKw)
   }
+
+  // A belt-fed cannon feeds itself: an autoloader only adds weight and cost.
+  if (gun.beltFed && loading.fixedRof !== null) warn('autoloaderWasted', 'loading')
 
   // Things that need a bustle turret
   if (loading.needsBustle && !turret.hasBustle) error('loaderNeedsBustle', 'loading')

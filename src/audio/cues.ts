@@ -72,7 +72,7 @@ export function droneAt(voice: TankVoice, speedKmh: number): Drone {
 /** How a gun of this calibre changes the gun cue: a bigger one is lower and rings longer. */
 export function gunShape(calibreMm: number): { pitch: number; stretch: number } {
   const G = AUDIO.gun
-  const ratio = calibreMm / G.refCalibreMm
+  const ratio = Math.max(calibreMm, G.floorCalibreMm) / G.refCalibreMm
   return { pitch: ratio ** -G.pitchPull, stretch: ratio ** G.stretchPull }
 }
 

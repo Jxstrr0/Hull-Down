@@ -463,6 +463,7 @@ export const STRINGS = {
       smooth125: { name: '125 mm smoothbore', note: 'The heavy hitter of the Pact. Needs a wide turret ring.' },
       rifled120: { name: '120 mm rifled', note: 'A foreign pattern. Powerful, but not a Pact calibre.' },
       howitzer155: { name: '155 mm howitzer', note: 'Lobs a heavy shell 20 km and more. Needs a big turret, and only a self-propelled gun tender asks for it.' },
+      autocannon30: { name: '30 mm cannon', note: 'Light and quick, fed from a belt: no loader needed. Each round carried is a burst of five. Bites light armour; only an infantry vehicle tender asks for it.' },
     },
     barrels: {
       short: { name: 'Short barrel', note: 'Light, cheap and steady on the move. Slower rounds with less punch.' },
@@ -728,6 +729,7 @@ export const STRINGS = {
     rodTooLongForCarousel: 'The long rod is too long for a carousel autoloader. Fit a bustle autoloader or a loader, or carry the Pact round.',
     missileNeedsSmoothbore: 'A gun-launched missile cannot be fired from a rifled gun: the spin would wreck it. Fit a smoothbore.',
     turretNeedsAutoloader: 'There is nobody in an unmanned turret to load the gun. Fit an autoloader.',
+    autoloaderWasted: 'The cannon feeds itself from a belt. The autoloader only adds weight and cost.',
     turretNeedsRearEngine: 'With an unmanned turret the crew sit together in the nose. The engine has to go at the back.',
     turretNeedsComputer: 'The crew fight an unmanned turret by screens. It needs the digital computer.',
     casemateNotAllowed: 'The army wants a turret on a tank. A casemate is for a tank destroyer.',
@@ -797,6 +799,8 @@ export const STRINGS = {
     shaped120: '120 mm shaped charge',
     shot155: '155 mm armour-piercing shot',
     shell155: '155 mm high-explosive shell',
+    apds30: '30 mm hard-cored burst',
+    he30: '30 mm high-explosive burst',
   },
   ammo: {
     title: 'Pact ammunition for this gun',

@@ -188,7 +188,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     firepower: {
       calibreMm: gun.calibreMm,
       rounds: spec.ammo.rounds,
-      rateOfFireRpm: loading.fixedRof ?? gun.loaderRof,
+      rateOfFireRpm: gun.beltFed ? gun.loaderRof : loading.fixedRof ?? gun.loaderRof,
       gunDepressionDeg: turret.depressionDeg + spareRingDeg + loaderDeg,
     },
     fire,
