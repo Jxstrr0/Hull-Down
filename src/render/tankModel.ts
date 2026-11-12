@@ -4,6 +4,7 @@
 import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Group, Mesh, Shape, type Material, type Texture } from 'three'
 import { PAINT, type PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
+import { kickM } from './recoil'
 import { camoOf, camoPlaces, type Camo } from './camo'
 import { placeCorners } from './glb'
 import { trackStep } from './trackLinks'
@@ -96,6 +97,17 @@ export function setMud(tank: Group, share: number): void {
   if (mud) mud.share.value = share
 }
 
+/**
+ * Kick the gun back `share` of the way (nought run out, one right back) and
+ * rock the tank with it. Returns how far to rock the hull, radians nose up.
+ */
+export function setRecoil(tank: Group, share: number): number {
+  const mud = (tank.userData as { mud?: TankMud }).mud
+  if (!mud) return 0
+  mud.recoilM.value = share * mud.kickM
+  return share * RENDER.tank.recoil.rockRad
+}
+
 /** How worn the tank's paint is, nought (new) to one. */
 export function setWear(tank: Group, share: number): void {
   const mud = (tank.userData as { mud?: TankMud }).mud
@@ -106,6 +118,9 @@ interface TankMud {
   share: { value: number }
   lineM: { value: number }
   wear: { value: number }
+  /** How far back the barrel is now, and how far it goes at the kick, metres. */
+  recoilM: { value: number }
+  kickM: number
 }
 
 /**
@@ -249,13 +264,17 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
 
   // Mud on the hull, the wheels and the tracks, up to a little over the track tops; the turret is too high
   // for it. Wear on the hull and the turret: the wheels turn and the tracks are bare steel already.
-  const mud: TankMud = { share: { value: 0 }, lineM: { value: shape.track.topM + RENDER.tank.mud.lineM }, wear: { value: 0 } }
+  const mud: TankMud = {
+    share: { value: 0 }, lineM: { value: shape.track.topM + RENDER.tank.mud.lineM }, wear: { value: 0 },
+    recoilM: { value: 0 }, kickM: kickM(shape.gun.lengthM),
+  }
   tank.userData.mud = mud
   const dirty = (mesh: Mesh, take = { mud: true, wear: false }): Mesh => {
-    mesh.material = kit.muddy(mesh.material as Material, mud, take)
+    // The barrel's corners are marked, so it slides back alone.
+    mesh.material = kit.muddy(mesh.material as Material, mud, { ...take, recoil: mesh.geometry.hasAttribute('recoil') })
     return mesh
   }
-  const piles = new Map<string, { mount: Mount; tone: Tone; corners: number[] }>()
+  const piles = new Map<string, { mount: Mount; tone: Tone; corners: number[]; recoils: number[] }>()
   // The tracks are bare steel with their links painted on, one mesh for both.
   const track = { corners: [] as number[], places: [] as number[] }
   // The wheels, apart so they can turn: each corner knows its wheel's hub and how big the wheel is.
@@ -283,15 +302,17 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
       const key = `${part.mount}/${tone}`
       let pile = piles.get(key)
       if (!pile) {
-        pile = { mount: part.mount, tone, corners: [] }
+        pile = { mount: part.mount, tone, corners: [], recoils: [] }
         piles.set(key, pile)
       }
       for (const value of corners) pile.corners.push(value)
+      for (let i = 0; i < corners.length; i += 3) pile.recoils.push(part.recoils ? 1 : 0)
     }
   }
   for (const pile of piles.values()) {
     const geometry = new BufferGeometry()
     geometry.setAttribute('position', new Float32BufferAttribute(pile.corners, 3))
+    if (pile.recoils.includes(1)) geometry.setAttribute('recoil', new Float32BufferAttribute(pile.recoils, 1))
     geometry.computeVertexNormals()
     let mesh
     if (pile.tone === 'body' && tones.camo) {

@@ -338,6 +338,12 @@ export const RENDER = {
       colour: '#77746b', most: 0.4, scale: 4, sideShare: 0.4, edgeShare: 0.04,
       trial: 0.16, perKm: 0.0008, battle: 0.3,
     },
+    /**
+     * Gun recoil: the barrel slides back `kickShare` of its length (no more than
+     * `mostM`) in `backS` watched seconds, and runs out again over `returnS`.
+     * The tank rocks back `rockRad` at the kick and settles with it.
+     */
+    recoil: { kickShare: 0.12, mostM: 0.6, backS: 0.05, returnS: 0.45, rockRad: 0.02 },
     /** A bustle is a box behind the turret: its width as a share of the turret radius. */
     bustleWidthShare: 1.5,
     /**

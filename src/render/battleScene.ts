@@ -16,7 +16,8 @@ import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot }
 import { createFrameMeter } from './frameMeter'
 import { Dust, Kit, Working, exhaustDeckX } from './rangeScene'
 import { DustTrail } from './dust'
-import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, setWear, tonesOf } from './tankModel'
+import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, setRecoil, setWear, tonesOf } from './tankModel'
+import { recoilAt } from './recoil'
 import { battleMud, battleWear } from './mud'
 import { tankShapeOf } from './tankShape'
 
@@ -196,11 +197,19 @@ export function gunWays(battle: BattleResult, moment: BattleMoment): number[] {
 /** Puts every piece where the battle has it at a moment. */
 export function poseStage(stage: BattleStage, battle: BattleResult, moment: BattleMoment, guns: readonly number[]): void {
   const t = moment.atS
+  // When each tank last fired, for its gun's kick.
+  const fired: (number | null)[] = stage.tanks.map(() => null)
+  for (const shot of battle.shots) {
+    if (shot.atS > t) break
+    fired[shot.by] = shot.atS
+  }
   moment.tanks.forEach((tank, index) => {
     const parts = stage.tanks[index]
     if (!parts) return
     parts.group.position.set(east(tank.x), 0, south(tank.y))
     parts.group.rotation.y = rad(90 - tank.headingDeg)
+    const firedAt = fired[index] ?? null
+    parts.group.rotation.z = setRecoil(parts.group, recoilAt(firedAt === null ? null : (t - firedAt) / RENDER.battle.rate))
     // How far it has come along its own nose since last time: backing up runs the links the other way.
     const at = { x: parts.group.position.x, z: parts.group.position.z }
     const turn = parts.group.rotation.y
