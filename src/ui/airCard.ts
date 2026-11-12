@@ -5,6 +5,7 @@ import { AIR_TRIAL } from '../data/airDefence'
 import { STRINGS, fill } from '../data/strings'
 import type { RangeReport } from '../sim/trials'
 import type { VehicleSpec } from '../sim/vehicle'
+import { airReplay } from './airReplay'
 import { el } from './dom'
 import { fixed } from './format'
 import type { CardKit } from './gunneryCards'
@@ -66,5 +67,6 @@ export function airCards(report: RangeReport, spec: VehicleSpec, kit: CardKit): 
   if (fc.computer !== 'digital' && !run.downedPassed) notes.push(K.computerNote)
   if (run.ranOut) notes.push(K.roundsNote)
   box.append(...notes.map((text) => el('p', 'ctl-note rg-note', text)))
+  box.append(...airReplay(run))
   return [box]
 }
