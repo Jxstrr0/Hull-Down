@@ -283,6 +283,20 @@ export const RENDER = {
       gapShare: 0.2, gapShade: 0.3, pinShade: 0.65, hornShare: 0.2, hornShade: 0.75,
       mostLinksPerFrame: 0.4,
     },
+    /**
+     * Mud on the running gear and the lower hull: `colour` laid over the paint, at most `most` of the way,
+     * fully up to `lineM` above the track tops and fading out over `fadeM` above that. The turret stays clean.
+     * Endurance: each kilometre adds `perKm` for its lane, so a long run off the road shows. Obstacle course:
+     * `course` from the start, rising to `pit` once through the mud pit. A battle: how far each ground's
+     * tanks have come across the fields to it. Under the mud, the darkest part of a painted picture (a gap
+     * between links) shows as mud `underShade` as bright, so the links still read.
+     */
+    mud: {
+      colour: '#5a4a35', most: 0.8, lineM: 0.15, fadeM: 0.4, underShade: 0.45,
+      perKm: { concrete: 0.0005, earth: 0.004, rut: 0.006 },
+      course: 0.15, pit: 0.75,
+      battle: { defend: 0.25, meeting: 0.45, advance: 0.55, night: 0.4 },
+    },
     /** A bustle is a box behind the turret: its width as a share of the turret radius. */
     bustleWidthShare: 1.5,
     /**

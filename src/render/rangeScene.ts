@@ -21,7 +21,8 @@ import { reelOf, type ReelFrame } from './shootReel'
 import type { Camo } from './camo'
 import { createFrameMeter } from './frameMeter'
 import { rangeScenery } from './scenery'
-import { buildSolids, buildTank, rollTracks, tonesOf } from './tankModel'
+import { buildSolids, buildTank, rollTracks, setMud, tonesOf } from './tankModel'
+import { courseMud, enduranceMud } from './mud'
 import { trackLinkPixels } from './trackLinks'
 import { tankShapeOf, type TankShape } from './tankShape'
 import { legGround, placeOnLeg, type LegGround } from './terrain'
@@ -146,6 +147,43 @@ export class Kit {
   }
 
   private wheelCount = 0
+  private mudCount = 0
+
+  /**
+   * A copy of `material` that takes mud: `mud.share` of the way to the mud colour up to `lineM` from the
+   * tank's floor, fading out over `fadeM` above. The tank's parts share one `mud`, so one number dirties them all.
+   */
+  muddy(material: Material, mud: { share: { value: number }; lineM: { value: number } }): Material {
+    const copy = material.clone()
+    const before = material.onBeforeCompile.bind(material)
+    const key = material.customProgramCacheKey()
+    copy.userData = { ...material.userData }
+    const k = RENDER.tank.mud
+    copy.onBeforeCompile = (shader, renderer) => {
+      before(shader, renderer)
+      shader.uniforms.mudShare = mud.share
+      shader.uniforms.mudLineM = mud.lineM
+      shader.uniforms.mudFadeM = { value: k.fadeM }
+      shader.uniforms.mudColour = { value: new Color(k.colour) }
+      shader.vertexShader = `varying float vMudY;\n${shader.vertexShader}`.replace(
+        '#include <project_vertex>',
+        'vMudY = transformed.y;\n#include <project_vertex>',
+      )
+      shader.fragmentShader = `varying float vMudY;\nuniform float mudShare;\nuniform float mudLineM;\nuniform float mudFadeM;\nuniform vec3 mudColour;\n${shader.fragmentShader}`.replace(
+        '#include <color_fragment>',
+        // A painted picture (the links, the camouflage) still shows faintly through: its dark parts take darker mud.
+        `#include <color_fragment>
+        vec3 dirt = mudColour;
+        #ifdef USE_MAP
+          dirt *= mix(${k.underShade.toFixed(3)}, 1.0, sampledDiffuseColor.g);
+        #endif
+        diffuseColor.rgb = mix(diffuseColor.rgb, dirt, mudShare * clamp(1.0 - (vMudY - mudLineM) / mudFadeM, 0.0, 1.0));`,
+      )
+    }
+    copy.customProgramCacheKey = () => `${key}+mud`
+    this.materials.set(`mud/${this.mudCount++}`, copy)
+    return copy
+  }
 
   /**
    * A tank's wheels in one flat colour, each turned about its own hub as the tank rolls on. Every corner of
@@ -320,6 +358,8 @@ function buildLeg(kit: Kit, ground: LegGround): Group {
 interface Moment {
   pose: Pose
   sinkM: number
+  /** How muddy the tank is by now, nought to one. */
+  mudShare: number
   where: Where
   frame: Omit<ViewFrame, 'timeS'>
   done: boolean
@@ -336,6 +376,7 @@ interface Show {
 /** A recorded drive down the strip or over the obstacle course. */
 function driveShow(kit: Kit, scene: Scene, test: 'acceleration' | 'obstacles', record: RunRecord, shape: TankShape, density: number): Show {
   const path = test === 'acceleration' ? stripPath() : coursePath()
+  const pit = test === 'obstacles' ? mudPatch() : null
   if (test === 'acceleration') buildStrip(kit, scene, density)
   else buildCourse(kit, scene, path, density)
   return {
@@ -343,9 +384,12 @@ function driveShow(kit: Kit, scene: Scene, test: 'acceleration' | 'obstacles', r
     rate: RENDER.playRate[test],
     at(timeS) {
       const frame = frameAt(record, timeS)
+      const pose = poseAt(path, frame.s, shape.footprintM)
       return {
-        pose: poseAt(path, frame.s, shape.footprintM),
+        pose,
         sinkM: frame.sinkM,
+        // The strip is concrete; the course is earth, and the pit leaves its mark.
+        mudShare: pit ? courseMud(pose.x, pit) : 0,
         where: test === 'acceleration' ? { test, s: frame.s } : { test, s: frame.s, path },
         frame: { speedKmh: frame.vMs * 3.6, distanceM: frame.s },
         done: frame.done,
@@ -393,6 +437,7 @@ function enduranceShow(kit: Kit, scene: Scene, run: EnduranceRun, shape: TankSha
       return {
         pose,
         sinkM: 0,
+        mudShare: enduranceMud(frame.km),
         where: { test: 'endurance', leg: ground.id },
         frame: { speedKmh: frame.speedKmh, distanceM: frame.km * 1000, lapse: frame },
         done: frame.done,
@@ -506,6 +551,7 @@ function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: T
       return {
         pose: { x: frame.tankM, y: 0, pitchRad: 0 },
         sinkM: 0,
+        mudShare: 0,
         where: {
           test: 'shoot',
           board: { x: frame.boardM, y: centreY, z: 0 },
@@ -587,6 +633,7 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     const now = show.at(timeS)
     if (lastDistanceM !== null) rollTracks(tank, now.frame.distanceM - lastDistanceM)
     lastDistanceM = now.frame.distanceM
+    setMud(tank, now.mudShare)
     tank.position.set(now.pose.x, now.pose.y - now.sinkM, 0)
     tank.rotation.z = now.pose.pitchRad
     const shot = shotAt(view, now.where, now.pose)
