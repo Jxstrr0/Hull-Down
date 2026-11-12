@@ -184,6 +184,22 @@ describe('the stage at a moment', () => {
     kit.dispose()
   })
 
+  it('throws up a ring of dust under the muzzle when a tank fires', () => {
+    const battle = battles.find((each) => each.shots.length > 0)!
+    const shot = battle.shots[0]!
+    const kit = new Kit()
+    const stage = buildBattleStage(kit, battle, look(me), look(warden))
+    const at = (t: number): void => {
+      const moment = momentOf(battle, t)
+      poseStage(stage, battle, moment, gunWays(battle, moment))
+    }
+    at(shot.atS - 0.01)
+    const before = stage.dust.showing
+    at(shot.atS + 0.01)
+    expect(stage.dust.showing - before).toBeGreaterThanOrEqual(RENDER.dust.blast.puffs)
+    kit.dispose()
+  })
+
   it('leaves dust behind the tanks that move, and none on the first look', () => {
     const battle = battles[0]!
     const kit = new Kit()

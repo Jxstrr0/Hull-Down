@@ -224,6 +224,14 @@ export const RENDER = {
      * thick and dark every `hardEveryS` while the tank speeds up by more than
      * `hardAccelMs2` or climbs steeper than `climbRad`. It drifts `driftM` back.
      */
+    /**
+     * Muzzle blast: when the gun fires, `puffs` of dust thrown up off the ground
+     * under the muzzle, in a ring `ringM` across, each blown `driftM` outward.
+     */
+    blast: {
+      puffs: 8, ringM: 0.7, driftM: 2.6,
+      look: { colour: '#a8936f', size: 1.35, rise: 0.45 },
+    },
     exhaust: {
       everyS: 0.18, hardEveryS: 0.09, hardAccelMs2: 0.8, climbRad: 0.06,
       deckShare: 0.32, upM: 0.1, pipeShare: 0.5, driftM: 1.4,

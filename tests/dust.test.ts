@@ -106,3 +106,26 @@ describe('exhaust smoke', () => {
     expect(Math.abs(exhaustDeckX(shape, 'rear'))).toBeLessThan(shape.lengthM / 2)
   })
 })
+
+describe('muzzle blast dust', () => {
+  it('rings the spot under the muzzle and blows every puff outward', async () => {
+    const { blastRing } = await import('../src/render/dust')
+    const ring = blastRing()
+    expect(ring.length).toBe(K.blast.puffs)
+    for (const puff of ring) {
+      expect(Math.hypot(puff.x, puff.z)).toBeCloseTo(K.blast.ringM / 2, 9)
+      expect(Math.hypot(puff.driftX, puff.driftZ)).toBeCloseTo(K.blast.driftM, 9)
+      // Blown the way it already sits from the middle.
+      expect(puff.x * puff.driftX + puff.z * puff.driftZ).toBeGreaterThan(0)
+    }
+  })
+
+  it('goes off once a shot: when the time since firing starts again', async () => {
+    const { justFired } = await import('../src/render/dust')
+    expect(justFired(null, null)).toBe(false)
+    expect(justFired(0.01, null)).toBe(true)
+    expect(justFired(0.05, 0.01)).toBe(false)
+    expect(justFired(0.02, 0.4)).toBe(true)
+    expect(justFired(null, 0.4)).toBe(false)
+  })
+})

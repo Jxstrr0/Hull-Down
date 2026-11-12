@@ -45,3 +45,22 @@ export class DustTrail {
     return Math.min(puffs, K.mostPerFrame)
   }
 }
+
+/** Where each puff of a muzzle blast starts, and which way it is blown: evenly round a ring, outward. */
+export function blastRing(): { x: number; z: number; driftX: number; driftZ: number }[] {
+  const b = K.blast
+  return Array.from({ length: b.puffs }, (_, i) => {
+    const turn = (i / b.puffs) * 2 * Math.PI
+    const x = Math.cos(turn)
+    const z = Math.sin(turn)
+    return { x: (x * b.ringM) / 2, z: (z * b.ringM) / 2, driftX: x * b.driftM, driftZ: z * b.driftM }
+  })
+}
+
+/**
+ * Whether the gun has just fired, given how long since it last fired now and
+ * at the last picture: it fired if that time went back, or there was none.
+ */
+export function justFired(sinceS: number | null, before: number | null): boolean {
+  return sinceS !== null && (before === null || sinceS < before)
+}
