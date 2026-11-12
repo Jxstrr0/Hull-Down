@@ -76,7 +76,16 @@ export interface PiecePart extends PartBase {
   fallback: readonly Plain[]
 }
 
-export type TankPart = BoxPart | DrumPart | SlabPart | LoftPart | BandPart | PiecePart
+/**
+ * Outlines seen from the front, one behind another along the tank, skinned
+ * between and closed at both ends: the upper hull. Every outline has as many corners.
+ */
+export interface SweepPart extends PartBase {
+  kind: 'sweep'
+  stations: { x: number; corners: { y: number; z: number }[] }[]
+}
+
+export type TankPart = BoxPart | DrumPart | SlabPart | LoftPart | BandPart | SweepPart | PiecePart
 
 type Bare<T> = T extends unknown ? Omit<T, 'mount' | 'tone'> : never
 /** A simple shape: anything but a kit piece. */
@@ -147,8 +156,40 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   const hull = (tone: Tone): PartBase => ({ mount: 'hull', tone })
   const top = (tone: Tone): PartBase => ({ mount: 'turret', tone })
 
-  // --- The hull and what is fixed to it.
-  parts.push({ ...hull('body'), kind: 'slab', outline: hullOutline, widthM: m.hull.bodyWidthM, atZ: 0 })
+  // --- The hull and what is fixed to it: a lower hull between the tracks, and over it an
+  // upper hull reaching out over the tracks, bevelled underneath and leaning in to the roof.
+  const sp = t.sponson
+  const deck = m.trackTop + t.fenderLiftM
+  const glacisX = half - m.upperRun
+  // Where the upper hull's nose is: the nose itself if it stands above the deck, else where the glacis meets the deck.
+  const [upperNoseX, upperNoseTop] = noseY >= deck
+    ? [half, Math.max(noseY, deck + sp.frontM)]
+    : [half - (m.upperRun * (deck - noseY)) / Math.max(1e-6, m.roof - noseY), deck + sp.frontM]
+  const tall = m.roof - deck
+  const section = (top: number): { y: number; z: number }[] => {
+    const h = top - deck
+    const share = h / Math.max(1e-6, tall)
+    const u = m.halfWidth
+    const under = sp.underInM * share
+    const up = h * sp.underUpShare
+    const lean = sp.leanM * share
+    const chamfer = h * sp.chamferShare
+    const roofIn = sp.roofInM * share
+    const half8 = [
+      { y: deck, z: u - under }, { y: deck + up, z: u }, { y: top - chamfer, z: u - lean }, { y: top, z: u - roofIn },
+    ]
+    return [...half8, ...half8.slice().reverse().map((c) => ({ y: c.y, z: -c.z }))]
+  }
+  parts.push({ ...hull('body'), kind: 'slab', outline: below(hullOutline, deck), widthM: m.hull.bodyWidthM, atZ: 0 })
+  parts.push({
+    ...hull('body'), kind: 'sweep',
+    stations: [
+      { x: -half, corners: section(m.roof - tall * sp.tailDropShare) },
+      { x: -half + sp.tailRunM, corners: section(m.roof) },
+      { x: glacisX, corners: section(m.roof) },
+      { x: upperNoseX, corners: section(upperNoseTop) },
+    ],
+  })
 
   // The track loop, with its corners cut as on the drawing. It is open in the middle, so the wheels show.
   const c = DRAWING.trackCornerM
@@ -159,7 +200,6 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     { x: x0 - c * 0.5, y: m.trackTop }, { x: x1 + c * 0.5, y: m.trackTop }, { x: x1, y: m.trackTop - c * 0.4 }, { x: x1, y: c },
   ]
   const endR = (m.trackTop - c) * 0.5
-  const fenderWide = m.halfWidth - m.bodyHalf
   const ref = KIT.reference
   const gear = t.runningGear
   // The drive sprocket sits at the engine's end, the idler at the other, as on the drawing.
@@ -188,18 +228,14 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
       const x = backX + (span * (i + 1)) / (gear.returnRollers + 1)
       parts.push(piece('return-roller', rollerR, ref.returnRollerRadiusM, x, rollerY, t.endWheelSides))
     }
-    if (fenderWide > 0.05) {
-      parts.push({
-        ...hull('body'), kind: 'box', size: { x: m.length, y: t.fenderThickM, z: fenderWide },
-        at: { x: 0, y: m.trackTop + t.fenderLiftM + t.fenderThickM / 2, z: side * (m.bodyHalf + fenderWide / 2) },
-      })
-    }
   }
   // The grille over the engine.
+  const grille = { x: m.bayEnd - m.bayStart, z: m.hull.bodyWidthM * t.grilleWidthShare }
+  const grilleX = fromNose((m.bayStart + m.bayEnd) / 2)
   parts.push({
-    ...hull('dark'), kind: 'box',
-    size: { x: m.bayEnd - m.bayStart, y: t.grilleThickM, z: m.hull.bodyWidthM * t.grilleWidthShare },
-    at: { x: fromNose((m.bayStart + m.bayEnd) / 2), y: m.roof + t.grilleThickM / 2, z: 0 },
+    ...hull('dark'), kind: 'piece', piece: 'engine-deck',
+    scale: { x: grille.x / ref.engineDeckM.x, y: 1, z: grille.z / ref.engineDeckM.z }, at: { x: grilleX, y: m.roof + ref.engineDeckM.y / 2, z: 0 },
+    fallback: [{ kind: 'box', size: { x: grille.x, y: t.grilleThickM, z: grille.z }, at: { x: grilleX, y: m.roof + t.grilleThickM / 2, z: 0 } }],
   })
 
   // Reactive tiles on the hull: a panel on the glacis, and panels hung over the tracks.
@@ -353,6 +389,21 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   return { lengthM: m.length, footprintM: m.length * t.footprintShare, hullOutline, hullWidthM: m.hull.bodyWidthM, track, wheels: { xM: wheelX, radiusM: radius }, turret, gun, parts }
 }
 
+/** The part of an outline at or below a height, as a closed outline. */
+export function below(outline: readonly Point[], y: number): Point[] {
+  const out: Point[] = []
+  for (let i = 0; i < outline.length; i++) {
+    const a = outline[i]!
+    const b = outline[(i + 1) % outline.length]!
+    if (a.y <= y) out.push(a)
+    if ((a.y <= y) !== (b.y <= y)) {
+      const k = (y - a.y) / (b.y - a.y)
+      out.push({ x: a.x + (b.x - a.x) * k, y })
+    }
+  }
+  return out
+}
+
 /** Triangles one part is drawn with. */
 export function partTriangles(part: Solid): number {
   switch (part.kind) {
@@ -362,6 +413,11 @@ export function partTriangles(part: Solid): number {
     case 'slab': return part.outline.length * 2 + (part.outline.length - 2) * 2
     // The edge outside and in, and a face each side.
     case 'band': return part.outline.length * 8
+    // The skin between outlines, and both ends.
+    case 'sweep': {
+      const corners = part.stations[0]?.corners.length ?? 0
+      return (part.stations.length - 1) * corners * 2 + 2 * (corners - 2)
+    }
     case 'piece': return KIT.pieces[part.piece]
     case 'loft': {
       const corners = part.rings[0]?.corners.length ?? 0

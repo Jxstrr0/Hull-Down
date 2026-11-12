@@ -283,9 +283,16 @@ export const RENDER = {
     endWheelSides: 8,
     extractorSides: 8,
     cupolaSides: 8,
-    /** The guard over each track: how thick, and how far above the track it sits. */
-    fenderThickM: 0.04,
+    /** The upper hull's underside, the deck over the tracks, sits this far above them. */
     fenderLiftM: 0.02,
+    /**
+     * The upper hull, reaching out over the tracks as on the kit's renders.
+     * Seen from the front: a bevel under each sponson (`underInM` in, `underUpShare`
+     * of the hull's height up), sides leaning in by `leanM` up to a chamfer
+     * `chamferShare` of the height below the roof, the roof set in `roofInM`.
+     * Seen from the side: the tail drops `tailDropShare` of the height over its last `tailRunM`.
+     */
+    sponson: { underInM: 0.2, underUpShare: 0.2, leanM: 0.16, chamferShare: 0.17, roofInM: 0.32, tailDropShare: 0.4, tailRunM: 0.5, frontM: 0.02 },
     /** The grille over the engine: how thick, and its width as a share of the hull's. */
     grilleThickM: 0.03,
     grilleWidthShare: 0.7,
