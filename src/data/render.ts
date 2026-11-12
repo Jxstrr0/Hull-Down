@@ -348,6 +348,12 @@ export const RENDER = {
      */
     runningGear: { trackThickM: 0.09, endInM: 0.08, returnRollers: 3, returnRollerM: 0.1 },
     /**
+     * A wheel on a wheeled hull: the tyre's sides, then the rim, as a share of
+     * the wheel's radius, standing out past the tyre by `rimOutM`, and the hub
+     * cap. The rim and cap have few sides, so they are seen to turn.
+     */
+    tyre: { sides: 16, rimShare: 0.62, rimOutM: 0.015, rimSides: 8, capShare: 0.2, capSides: 6 },
+    /**
      * The track's links, painted on: bare steel, whatever the paint. One link is this long, as on the blueprint.
      * The picture is this many pixels along a link and across the track; each is a shade of the steel, 1 the steel itself:
      * the gap between links, the pin at the front of each link, and the guide horns down the middle.

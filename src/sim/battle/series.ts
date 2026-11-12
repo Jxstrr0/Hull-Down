@@ -9,11 +9,12 @@ import { ZONES, type ZoneId } from '../../data/materials'
 import type { Combatant, SideNo } from '../duel/duel'
 import { slowestPart, wildestPart, type DuelFixPart } from '../duel/series'
 import { hash32 } from '../rng'
+import { footprintControl } from '../vehicle/wheels'
 import { runBattle, type BattleEnd, type BattleResult } from './battle'
 
 /** The design-office control a finding points back to. */
 export type BattleFixPart =
-  | DuelFixPart | 'powerpack.transmission' | 'powerpack.cooling' | 'runningGear.suspension' | 'runningGear.trackWidthMm'
+  | DuelFixPart | 'powerpack.transmission' | 'powerpack.cooling' | 'runningGear.suspension' | 'runningGear.trackWidthMm' | 'runningGear.layout'
 export type BattleFix = { zone: ZoneId } | { part: BattleFixPart }
 
 export const BATTLE_FINDING_KINDS = [
@@ -90,7 +91,7 @@ function weakestPart(tank: Combatant): BattleFixPart {
     ['powerpack.transmission', s.transmission],
     ['runningGear.suspension', s.suspension],
     ['powerpack.cooling', s.cooling],
-    ['runningGear.trackWidthMm', s.tracks],
+    [footprintControl(tank.sheet.drive.wheeled), s.tracks],
   ]
   let worst = parts[0]!
   for (const part of parts) if (part[1] > worst[1]) worst = part

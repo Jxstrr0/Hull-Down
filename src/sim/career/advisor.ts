@@ -13,6 +13,7 @@ import type { Issue } from '../vehicle/checks'
 import { testShot } from '../vehicle/shot'
 import type { VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
+import { footprintControl } from '../vehicle/wheels'
 
 export const REMARK_KINDS = [
   'fault', 'plate', 'shoot', 'slowShot', 'drill', 'missionReach', 'missionFirst', 'missionRate', 'missionClose', 'squadTroops', 'squadDrop', 'squadCover', 'sprint', 'top', 'obstacle', 'berm', 'warning', 'reliability', 'cost',
@@ -194,7 +195,7 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
   }
   if (run.topKmh < marks.topKmh) out.push({ kind: 'top', part: 'powerpack.engine', value: Math.round(run.topKmh), limit: marks.topKmh })
   for (const result of runObstacles(sheet.drive).results) {
-    if (!result.passed) out.push({ kind: 'obstacle', part: OBSTACLE_PART[result.id], obstacle: result.id })
+    if (!result.passed) out.push({ kind: 'obstacle', part: result.id === 'mud' ? footprintControl(sheet.drive.wheeled) : OBSTACLE_PART[result.id], obstacle: result.id })
   }
   const ridge = runBerm(sheet.interior.frame, sheet.firepower.gunDepressionDeg)
   if (tank && ridge.showsM > marks.bermShowsM) {
@@ -208,7 +209,7 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
   if (sheet.reliabilityIndex < ADVISOR.reliabilityIndex) {
     const ids = Object.keys(STRESS_PART) as (keyof StatSheet['stress'])[]
     const worst = ids.reduce((a, b) => (sheet.stress[b] > sheet.stress[a] ? b : a))
-    out.push({ kind: 'reliability', part: STRESS_PART[worst], value: Math.round(sheet.reliabilityIndex), limit: ADVISOR.reliabilityIndex })
+    out.push({ kind: 'reliability', part: worst === 'tracks' ? footprintControl(sheet.drive.wheeled) : STRESS_PART[worst], value: Math.round(sheet.reliabilityIndex), limit: ADVISOR.reliabilityIndex })
   }
   const dear = tender.limits.maxUnitCostKr * ADVISOR.costShare
   if (sheet.unitCostKr > dear && sheet.unitCostKr <= tender.limits.maxUnitCostKr) {

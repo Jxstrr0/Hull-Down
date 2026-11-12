@@ -20,7 +20,7 @@ function svg(tag: string, attrs: Record<string, string>): SVGElement {
 }
 
 /** What one serial came to, in a few short sentences. */
-export function serialWords(serial: SerialResult): string[] {
+export function serialWords(serial: SerialResult, wheeled = false): string[] {
   const shots = serial.shots.length
   const words: string[] = []
   if (serial.held) words.push(fill(A.held, { n: String(shots) }))
@@ -42,7 +42,7 @@ export function serialWords(serial: SerialResult): string[] {
     if (bare > 0) words.push(fill(A.bare, { n: String(bare) }))
   }
   if (serial.defeated > 0) words.push(fill(A.defeated, { n: String(serial.defeated) }))
-  if (serial.shots.some((shot) => shot.hit.trackBroken)) words.push(A.track)
+  if (serial.shots.some((shot) => shot.hit.trackBroken)) words.push(wheeled ? A.wheel : A.track)
   return words
 }
 
@@ -51,7 +51,7 @@ export interface ArmourKit extends CardKit {
   fixZone(zone: ZoneId, key: string): HTMLButtonElement
 }
 
-function armourCard(report: RangeReport, kit: ArmourKit): HTMLElement {
+function armourCard(report: RangeReport, wheeled: boolean, kit: ArmourKit): HTMLElement {
   const run = report.armour
   const box = kit.card(A.title, fill(A.about, { n: String(run.serials[0]?.shots.length ?? 0) }), run.passed)
   const row = (serial: SerialResult, n: number): HTMLElement => {
@@ -60,7 +60,7 @@ function armourCard(report: RangeReport, kit: ArmourKit): HTMLElement {
       range: String(serial.rangeM),
       angle: serial.angleDeg === 0 ? A.square : fill(A.off, { n: String(serial.angleDeg) }),
     })
-    const item = kit.line(STRINGS.zones[serial.zone].name, [setup, ...serialWords(serial)], serial.held, kit.fixZone(serial.zone, `armour-${n}`))
+    const item = kit.line(STRINGS.zones[serial.zone].name, [setup, ...serialWords(serial, wheeled)], serial.held, kit.fixZone(serial.zone, `armour-${n}`))
     if (!serial.gate) {
       // A plate fired on for the record is not passed or failed: it holds or it is weak.
       const mark = item.querySelector('.rg-verdict')
@@ -195,5 +195,5 @@ function bermCard(report: RangeReport, sheet: StatSheet, spec: VehicleSpec, kit:
 
 /** The armour trial, then the berm. */
 export function armourCards(report: RangeReport, sheet: StatSheet, spec: VehicleSpec, kit: ArmourKit): HTMLElement[] {
-  return [armourCard(report, kit), bermCard(report, sheet, spec, kit)]
+  return [armourCard(report, sheet.drive.wheeled, kit), bermCard(report, sheet, spec, kit)]
 }

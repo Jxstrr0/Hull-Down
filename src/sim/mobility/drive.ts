@@ -92,7 +92,8 @@ export function driveOf(spec: VehicleSpec, geometry: Geometry, rollup: Rollup): 
     dragFactor: wheeled ? 1 : 1 + (spec.runningGear.trackWidthMm - TUNING.geometry.standardTrackMm) * m.dragPerExtraTrackMm,
     wheeled,
     pressureKgCm2: massKg / contactCm2,
-    clearanceM: toCm(suspension.clearanceM - sagM),
+    // A sagging suspension can set the belly down, but not below the ground.
+    clearanceM: toCm(Math.max(0, suspension.clearanceM - sagM)),
     trenchM: toCm(hull.lengthM * trenchShare),
     stepM: toCm(hull.roofHeightM * (wheeled ? WHEELS.stepShare : m.stepShare) - sagM),
   }

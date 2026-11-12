@@ -7,7 +7,7 @@ import { REPORT } from '../data/report'
 import { STRINGS, fill } from '../data/strings'
 import { cutawayPicture } from '../office/blueprint'
 import type { AfterAction, Finding, ShotLine } from '../sim/trials'
-import { OUTCOMES, type HitResult, type StatSheet, type VehicleSpec, type Vec } from '../sim/vehicle'
+import { OUTCOMES, wheelsOf, type HitResult, type StatSheet, type VehicleSpec, type Vec } from '../sim/vehicle'
 import { el } from './dom'
 import { fixed } from './format'
 
@@ -62,8 +62,8 @@ export function findingText(finding: Finding, spec: VehicleSpec): string {
 }
 
 /** What one round came to, in a sentence. */
-export function resultText(hit: HitResult): string {
-  return fill(R.results[hit.outcome], { list: crewList(hit) })
+export function resultText(hit: HitResult, wheeled = false): string {
+  return fill(wheeled && hit.outcome === 'track' ? R.results.wheel : R.results[hit.outcome], { list: crewList(hit) })
 }
 
 export interface ShotRow {
@@ -82,7 +82,7 @@ export function shotRows(line: ShotLine, spec: VehicleSpec): ShotRow[] {
   const row = (name: string, value: string, grave = false, off = false): void => void rows.push({ name, value, grave, off })
   const mm = (value: number): string => fixed(value, 0)
   const armour = hit.armour
-  if (hit.track) row(R.track, hit.trackBroken ? R.trackBroken : R.trackHit, hit.trackBroken)
+  if (hit.track) row(wheelsOf(spec) > 0 ? R.wheel : R.track, hit.trackBroken ? R.trackBroken : R.trackHit, hit.trackBroken)
   if (!armour || !hit.zone) return rows
 
   row(R.struck, fill(R.struckValue, { deg: fixed((Math.acos(Math.min(1, Math.max(0, armour.cosine))) * 180) / Math.PI, 0) }))
@@ -167,7 +167,7 @@ function picture(line: ShotLine, sheet: StatSheet, spec: VehicleSpec): HTMLEleme
   root.style.aspectRatio = `${fixed(x1 - x0, 3)} / ${fixed(y1 - y0, 3)}`
   root.classList.add('aa-svg')
   root.setAttribute('role', 'img')
-  root.setAttribute('aria-label', fill(R.pictureLabel, { view: R.views[view], n: String(line.index + 1), result: resultText(hit) }))
+  root.setAttribute('aria-label', fill(R.pictureLabel, { view: R.views[view], n: String(line.index + 1), result: resultText(hit, wheelsOf(spec) > 0) }))
 
   /** About one screen pixel, in metres. */
   const px = (x1 - x0) / 330
@@ -326,7 +326,7 @@ export function afterActionCard(report: AfterAction, sheet: StatSheet, spec: Veh
       el('p', 'rg-line-text', `${setup}. ${fill(R.serialRound, { n: String(line.roundNo + 1), of: String(serial.shots.length) })}`),
       picture(line, sheet, spec),
       el('p', 'ctl-note aa-key', R.pictureKey),
-      el('p', 'aa-result', resultText(hit)),
+      el('p', 'aa-result', resultText(hit, wheelsOf(spec) > 0)),
       stepList(shotRows(line, spec)),
     )
     if (hit.through && hit.zone) shotBox.append(kit.fixZone(hit.zone, 'aa-shot'))

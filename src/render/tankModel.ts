@@ -157,12 +157,11 @@ interface TankMud {
  * on along it sends the links under the tank backwards, as they go.
  */
 export function rollTracks(tank: Group, movedM: number): void {
-  const tracks = tank.getObjectByName(TRACKS)
-  if (!(tracks instanceof Mesh)) return
-  const map = (tracks.material as { map?: Texture | null }).map
-  if (!map) return
   const step = trackStep(movedM)
-  map.offset.x = (map.offset.x + step) % 1
+  // A wheeled hull has no track: its wheels still turn, at the same steady pace.
+  const tracks = tank.getObjectByName(TRACKS)
+  const map = tracks instanceof Mesh ? (tracks.material as { map?: Texture | null }).map : null
+  if (map) map.offset.x = (map.offset.x + step) % 1
   // The wheels turn with the track, so they run on with it, link for link.
   for (const child of tank.children) {
     if (child.name !== WHEELS || !(child instanceof Mesh)) continue
@@ -310,7 +309,7 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
   // The wheels, apart so they can turn: each corner knows its wheel's hub and how big the wheel is.
   const wheels = new Map<Tone, { corners: number[]; hubs: number[] }>()
   for (const part of shape.parts) {
-    if (part.kind === 'piece' && part.wheelM !== undefined) {
+    if ((part.kind === 'piece' || part.kind === 'drum') && part.wheelM !== undefined) {
       for (const [tone, corners] of Object.entries(toneCorners(part, part.tone)) as [Tone, number[]][]) {
         let pile = wheels.get(tone)
         if (!pile) {
