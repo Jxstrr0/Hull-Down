@@ -15,7 +15,7 @@ import { momentOf, type BattleMoment } from '../ui/battleReplay'
 import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot } from './battleDirector'
 import { createFrameMeter } from './frameMeter'
 import { Dust, Kit, Marks, Working, exhaustDeckX } from './rangeScene'
-import { DustTrail } from './dust'
+import { DustTrail, blastRing } from './dust'
 import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, setRecoil, setWear, tonesOf } from './tankModel'
 import { recoilAt } from './recoil'
 import { battleMud, battleWear } from './mud'
@@ -71,6 +71,10 @@ interface TankParts {
   ruts: DustTrail
   rutM: number
   rutWideM: number
+  /** Where the turret turns, and how far out from there the muzzle is; and when it last threw a blast. */
+  turretXM: number
+  muzzleM: number
+  blastS: number | null
   working: Working
   pipes: number
   lastS: number | null
@@ -159,6 +163,7 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
         pipeM: shape.track.centreZM * RENDER.dust.exhaust.pipeShare,
       },
       fumes: new DustTrail(), working: new Working(), pipes: 0, lastS: null,
+      turretXM: shape.turret.xM, muzzleM: shape.gun.rootXM - shape.turret.xM + shape.gun.lengthM, blastS: null,
       ruts: new DustTrail(), rutM: -shape.track.lengthM / 2 + RENDER.marks.longM / 2, rutWideM: shape.track.widthM * RENDER.marks.widthShare,
     }
   })
@@ -253,6 +258,17 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
       for (const side of [-1, 1]) {
         const spot = place(parts.rutM, side * parts.sideM)
         stage.marks.lay(spot.x, 0, spot.z, turn, 0, parts.rutWideM, RENDER.marks.colours.earth, watchedS)
+      }
+    }
+    // Dust blown off the ground under the muzzle each time it fires; winding back forgets the last.
+    if (firedAt === null || (parts.blastS !== null && firedAt < parts.blastS)) parts.blastS = firedAt
+    else if (firedAt !== parts.blastS && t - firedAt < RENDER.dust.lifeS * RENDER.battle.rate) {
+      parts.blastS = firedAt
+      const way = rad(90 - (guns[index] ?? tank.headingDeg))
+      const ring = place(parts.turretXM, 0)
+      const muzzle = { x: ring.x + parts.muzzleM * Math.cos(way), z: ring.z - parts.muzzleM * Math.sin(way) }
+      for (const puff of blastRing()) {
+        stage.dust.kick(muzzle.x + puff.x, 0, muzzle.z + puff.z, RENDER.dust.blast.look, firedAt / RENDER.battle.rate, { x: puff.driftX, z: puff.driftZ })
       }
     }
     // Exhaust off the engine deck, blown back, thick and dark while it pulls away.

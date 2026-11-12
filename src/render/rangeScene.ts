@@ -23,7 +23,7 @@ import { createFrameMeter } from './frameMeter'
 import { rangeScenery } from './scenery'
 import { buildSolids, buildTank, rollTracks, setMud, setRecoil, setWear, tonesOf } from './tankModel'
 import { recoilAt } from './recoil'
-import { DustTrail, dustAt, type DustKind, type PuffLook } from './dust'
+import { DustTrail, blastRing, dustAt, justFired, type DustKind, type PuffLook } from './dust'
 import { markAt } from './marks'
 import { courseMud, enduranceMud, enduranceWear, trialWear } from './mud'
 import { trackLinkPixels } from './trackLinks'
@@ -734,6 +734,7 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   const marks = new Marks(kit, RENDER.marks.trials)
   scene.add(marks.mesh)
   const ruts = new DustTrail()
+  let firedBefore: number | null = null
   const trail = new DustTrail()
   const fumes = new DustTrail()
   const working = new Working()
@@ -768,6 +769,14 @@ export function openRangeView(args: RangeViewArgs): RangeView {
         dust.kick(now.pose.x + deckX, now.pose.y - now.sinkM + shape.turret.baseM + ex.upM, pipe, look, watchedS, { x: -ex.driftM, z: 0 })
       }
     }
+    // Dust blown off the ground under the muzzle when the gun fires.
+    if (justFired(now.firedS, firedBefore)) {
+      const muzzleX = now.pose.x + shape.gun.rootXM + shape.gun.lengthM
+      for (const puff of blastRing()) {
+        dust.kick(muzzleX + puff.x, now.pose.y - now.sinkM, puff.z, RENDER.dust.blast.look, watchedS, { x: puff.driftX, z: puff.driftZ })
+      }
+    }
+    firedBefore = now.firedS
     dust.show(watchedS)
     // Ruts under the back of both tracks, tipped as the ground is.
     const laid = now.dust ? ruts.due(now.frame.distanceM, RENDER.marks.everyM) : 0
