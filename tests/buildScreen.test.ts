@@ -36,7 +36,7 @@ describe('the part rows', () => {
 
   it('opens one row at a time, and a jump to a part opens its row', () => {
     const source = readRepoFile('src/office/designScreen.ts')
-    expect(source).toContain('openControl = open ? undefined : key')
+    expect(source).toContain('toggle: () => { openControl = openControl === key ? undefined : key }')
     expect(source).toContain('openControl = target.id')
   })
 
@@ -48,5 +48,33 @@ describe('the part rows', () => {
   it('keeps every row a full tap target', () => {
     const css = readRepoFile('src/style.css')
     expect(css).toMatch(/\.ctl-head \{[^}]*min-height: 48px/)
+  })
+})
+
+describe('the design list and the bar along the bottom', () => {
+  const source = readRepoFile('src/office/designScreen.ts')
+
+  it('lists every part tab as a system, then Readouts and Faults', () => {
+    expect(source).toContain("const SYSTEMS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults'] as const")
+  })
+
+  it('has four pages along the bottom, each with a name', () => {
+    expect(source).toContain("const PAGES = ['design', 'trials', 'bureau', 'saves'] as const")
+    for (const page of ['design', 'trials', 'bureau', 'saves'] as const) expect(STRINGS.office.tabs[page]).not.toBe('')
+    expect(STRINGS.office.navLabel).not.toBe('')
+  })
+
+  it('keeps the saved designs on the Saves page', () => {
+    expect(source).toContain("else if (page === 'saves') parts.push(drawDesigns(), saves.draw())")
+  })
+
+  it('has words for the shut rows of Faults and Readouts', () => {
+    expect(STRINGS.office.row.faultCount).toContain('{n}')
+    expect(STRINGS.office.row.readouts).toContain('{speed}')
+    expect(STRINGS.office.row.noFaults).not.toBe('')
+  })
+
+  it('no longer draws a sideways strip of tabs', () => {
+    expect(source).not.toContain("el('div', 'tabs')")
   })
 })

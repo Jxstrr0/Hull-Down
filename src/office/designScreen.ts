@@ -21,8 +21,8 @@ import { renderGuide } from '../ui/guide'
 import { GUIDE } from '../data/guide'
 import { fixed, money, signed, signedMoney } from '../ui/format'
 import {
-  CONTROLS, PART_TABS, fixTarget, preview, type ChoiceControl, type Control, type ControlId, type NumberControl,
-  type PartTab, type Preview, type ToggleControl,
+  CONTROLS, fixTarget, preview, type ChoiceControl, type Control, type ControlId, type NumberControl,
+  type Preview, type ToggleControl,
 } from './controls'
 import { DEFAULT_THREAT, THREATS, type Round } from '../data/ammo'
 import { ZONES, type ZoneId } from '../data/materials'
@@ -61,15 +61,27 @@ const O = STRINGS.office
 const D = STRINGS.dataSheet
 const X = STRINGS.office.designs
 
-const TABS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults', 'trials', 'bureau', 'designs', 'saves'] as const
-type Tab = (typeof TABS)[number]
+/**
+ * What the office shows. `design` is the list of systems with none open; each system
+ * (Hull to Faults) is that list with its row open. Trials, Bureau and Saves are pages
+ * of their own, reached from the bar along the bottom. The saved designs live on Saves.
+ */
+type Tab = 'design' | (typeof SYSTEMS)[number] | 'trials' | 'bureau' | 'designs' | 'saves'
+/** The rows of the design list, in order. */
+const SYSTEMS = ['hull', 'turret', 'armour', 'gun', 'fireControl', 'powerpack', 'runningGear', 'crew', 'readouts', 'faults'] as const
+type System = (typeof SYSTEMS)[number]
+/** The bar along the bottom. */
+const PAGES = ['design', 'trials', 'bureau', 'saves'] as const
+type Page = (typeof PAGES)[number]
+
+function pageOf(tab: Tab): Page {
+  if (tab === 'trials' || tab === 'bureau' || tab === 'saves') return tab
+  return tab === 'designs' ? 'saves' : 'design'
+}
 
 /** The weight bar is drawn a little longer than the limit, so going over shows. */
 const BAR_SCALE = 1.15
 
-function isPartTab(tab: Tab): tab is PartTab {
-  return (PART_TABS as readonly string[]).includes(tab)
-}
 
 function deltaText(change: Preview): string {
   const mass = fill(O.deltaTonnes, { n: signed(change.massDeltaT, 2) })
@@ -127,7 +139,9 @@ export function renderDesignScreen(first: Tender): Office {
   let sheet: StatSheet = buildStatSheet(spec, limits)
   /** False once the browser has refused to keep a design. */
   let kept = true
-  let tab: Tab = 'hull'
+  let tab: Tab = 'design'
+  /** Where the design list was left, so the bar's Design button goes back to it. */
+  let designTab: Tab = 'design'
   /** A control to scroll to and mark after the next panel draw. */
   let flagged: ControlId | undefined
   /** The one row that is open on its tab (a part, or a readout under them), if any. Opening another closes it. */
@@ -231,28 +245,29 @@ export function renderDesignScreen(first: Tender): Office {
   top.append(head, blueprint, bar, chips)
 
   // --- Tabs and the panel under them -------------------------------------
-  const tabList = el('div', 'tabs')
-  tabList.setAttribute('role', 'tablist')
-  tabList.setAttribute('aria-label', O.tabsLabel)
   const panel = el('div', 'panel')
-  panel.setAttribute('role', 'tabpanel')
+  panel.setAttribute('role', 'region')
   panel.tabIndex = -1
-  const tabButtons = new Map<Tab, HTMLButtonElement>()
-  for (const id of TABS) {
-    const button = el('button', 'tab')
+  const nav = el('nav', 'office-nav')
+  nav.setAttribute('aria-label', O.navLabel)
+  const navButtons = new Map<Page, HTMLButtonElement>()
+  for (const id of PAGES) {
+    const button = el('button', 'nav-btn')
     button.type = 'button'
-    button.setAttribute('role', 'tab')
+    button.dataset.key = `page:${id}`
     button.addEventListener('click', () => {
-      tab = id
-      // The armour's drawing is the protection map: turn it to the zone being worked on.
-      if (id === 'armour') view = ZONE_VIEW[armourState.zone] ?? view
+      // Design goes back to the system that was open; tapping it again shuts the list.
+      tab = id !== 'design' ? id : pageOf(tab) === 'design' ? 'design' : designTab
+      if (tab === 'armour') view = ZONE_VIEW[armourState.zone] ?? view
+      openControl = undefined
       panel.scrollTop = 0
       drawBlueprint()
       drawTabs()
       drawPanel()
+      showTab()
     })
-    tabButtons.set(id, button)
-    tabList.append(button)
+    navButtons.set(id, button)
+    nav.append(button)
   }
 
   /** The career: the tender, the prototype shop and the army's decision. */
@@ -309,7 +324,7 @@ export function renderDesignScreen(first: Tender): Office {
 
   /** The proving ground takes over the whole screen while it is open. */
   const range = el('div', 'range-holder')
-  root.append(top, tabList, panel, range)
+  root.append(top, panel, nav, range)
 
   // --- Folding drawing ----------------------------------------------------
   // On a phone held upright the drawing folds away once the parts are scrolled
@@ -339,10 +354,10 @@ export function renderDesignScreen(first: Tender): Office {
     return sheet.issues.filter((issue) => issue.part === id)
   }
 
-  /** Slide the row of tabs so the open one can be seen. */
+  /** Bring the open system's row into view, unless a part in it has just been marked. */
   function showTab(): void {
-    const button = tabButtons.get(tab)
-    if (button) tabList.scrollLeft = button.offsetLeft - (tabList.clientWidth - button.offsetWidth) / 2
+    if (panel.querySelector('.ctl-flag')) return
+    panel.querySelector<HTMLElement>(`[data-key="open:sys:${tab}"]`)?.scrollIntoView({ block: 'start' })
   }
 
   /** Open a control's tab and mark the control. */
@@ -464,32 +479,55 @@ export function renderDesignScreen(first: Tender): Office {
     chipSpace.classList.toggle('chip-bad', sheet.growth.volumeM3 < 0)
   }
 
+  /** Has this system something to fix? */
+  function systemFaulty(id: System): boolean {
+    if (id === 'faults') return sheet.issues.some((issue) => issue.severity === 'error')
+    if (id === 'armour') return sheet.issues.some((issue) => armourZoneOf(issue.part) !== undefined)
+    if (id === 'readouts') return false
+    return CONTROLS.some((control) => control.tab === id && issuesFor(control.id).length > 0)
+  }
+
+  /** What a part holds now, in a few words, for its row. */
+  function controlNow(control: Control): string {
+    if (control.kind === 'choice') return control.text[control.get(spec)]?.name ?? ''
+    if (control.kind === 'number') return fill(O.numberUnits[control.unit], { n: String(control.get(spec)) })
+    return control.get(spec) ? O.fitted : O.notFitted
+  }
+
+  /** What a system's row says when shut. */
+  function systemNow(id: System): string {
+    const u = D.units
+    if (id === 'readouts') {
+      return fill(O.row.readouts, {
+        speed: fill(u.kmh, { n: fixed(sheet.mobility.topSpeedKmh, 0) }),
+        range: fill(u.km, { n: fixed(sheet.mobility.rangeKm, 0) }),
+      })
+    }
+    if (id === 'faults') return sheet.issues.length > 0 ? fill(O.row.faultCount, { n: String(sheet.issues.length) }) : O.row.noFaults
+    if (id === 'armour') return ''
+    return CONTROLS.filter((control) => control.tab === id).slice(0, 2).map(controlNow).join(' · ')
+  }
+
+  /** The bar along the bottom: which page is open, and whether Saves wants a backup. */
   function drawTabs(): void {
-    for (const [id, button] of tabButtons) {
+    const page = pageOf(tab)
+    if (page === 'design') designTab = tab
+    for (const [id, button] of navButtons) {
       const name = O.tabs[id]
       let text: string = name
       let label: string = name
-      if (id === 'saves') {
-        if (saves.due()) {
-          text = fill(STRINGS.saves.tabDue, { name })
-          label = fill(STRINGS.saves.tabDueLabel, { name })
-        }
-      } else if (id === 'faults') {
-        if (sheet.issues.length > 0) text = label = fill(O.faultsCount, { name, count: String(sheet.issues.length) })
-      } else if (id === 'armour' || isPartTab(id)) {
-        const faulty = id === 'armour'
-          ? sheet.issues.some((issue) => armourZoneOf(issue.part) !== undefined)
-          : CONTROLS.some((control) => control.tab === id && issuesFor(control.id).length > 0)
-        if (faulty) {
-          text = `${name} !`
-          label = fill(O.tabHasFaults, { name })
-        }
+      if (id === 'saves' && saves.due()) {
+        text = fill(STRINGS.saves.tabDue, { name })
+        label = fill(STRINGS.saves.tabDueLabel, { name })
+      } else if (id === 'design' && systemFaulty('faults')) {
+        text = `${name} !`
+        label = fill(O.tabHasFaults, { name })
       }
       button.textContent = text
       button.setAttribute('aria-label', label)
-      button.setAttribute('aria-selected', id === tab ? 'true' : 'false')
-      button.classList.toggle('tab-on', id === tab)
-      button.classList.toggle('tab-faulty', id === 'faults' && sheet.issues.some((issue) => issue.severity === 'error'))
+      if (id === page) button.setAttribute('aria-current', 'page')
+      else button.removeAttribute('aria-current')
+      button.classList.toggle('nav-on', id === page)
     }
   }
 
@@ -534,9 +572,16 @@ export function renderDesignScreen(first: Tender): Office {
    * so `body` is undefined while it is shut.
    */
   /** A row that opens when tapped: its name, then `now` (what it holds), marked when `faulty`. */
-  function foldRow(key: string, label: string, now: string | HTMLElement, faulty: boolean): { box: HTMLElement; open: boolean } {
-    const open = openControl === key
-    const box = el('section', open ? 'ctl ctl-row ctl-open' : 'ctl ctl-row')
+  function foldRow(
+    key: string, label: string, now: string | HTMLElement, faulty: boolean,
+    level: { open: boolean; toggle: () => void; className: string } = {
+      open: openControl === key,
+      toggle: () => { openControl = openControl === key ? undefined : key },
+      className: 'ctl ctl-row',
+    },
+  ): { box: HTMLElement; open: boolean } {
+    const open = level.open
+    const box = el('section', open ? `${level.className} ctl-open` : level.className)
     if (faulty) box.classList.add('ctl-faulty')
     const heading = el('h3', 'ctl-heading')
     const head = el('button', 'ctl-head')
@@ -552,7 +597,7 @@ export function renderDesignScreen(first: Tender): Office {
     head.addEventListener('click', () => {
       // Keep the tapped row where the finger left it, though the row above may have shut.
       const before = head.getBoundingClientRect().top
-      openControl = open ? undefined : key
+      level.toggle()
       drawPanel()
       const again = panel.querySelector<HTMLElement>(`[data-key="open:${key}"]`)
       if (again) panel.scrollTop += again.getBoundingClientRect().top - before
@@ -1264,25 +1309,36 @@ export function renderDesignScreen(first: Tender): Office {
     return box
   }
 
-  function drawPanel(): void {
-    const scroll = panel.scrollTop
-    const active = document.activeElement
-    const focusKey = active instanceof HTMLElement && panel.contains(active) ? active.dataset.key : undefined
+  /** One system of the design list: a row that opens to its parts, or its readout. */
+  function drawSystem(id: System): HTMLElement {
+    const { box, open } = foldRow(`sys:${id}`, O.tabs[id], systemNow(id), systemFaulty(id), {
+      open: tab === id,
+      toggle: () => {
+        tab = tab === id ? 'design' : id
+        openControl = undefined
+        // The armour's drawing is the protection map: unfold it and turn it to the zone being worked on.
+        if (tab === 'armour') {
+          view = ZONE_VIEW[armourState.zone] ?? view
+          setFolded(false)
+        }
+        drawBlueprint()
+        drawTabs()
+      },
+      className: 'sys-row',
+    })
+    if (!open) return box
+    const body = el('div', 'sys-body')
+    body.append(...systemParts(id))
+    box.append(body)
+    return box
+  }
 
-    const parts: HTMLElement[] = []
-    const guide = drawGuide()
-    if (guide) parts.push(guide)
-    if (tab === 'readouts') parts.push(renderReadouts(sheet, limits))
-    else if (tab === 'faults') parts.push(drawFaults())
-    else if (tab === 'designs') parts.push(drawDesigns())
-    else if (tab === 'trials') parts.push(drawTrials())
-    else if (tab === 'bureau') {
-      parts.push(daily.draw(), drawSandbox())
-      parts.push(daily.on() ? el('p', 'ctl-note', STRINGS.daily.waits) : sandbox.on ? el('p', 'ctl-note', O.sandbox.waits) : bureau.draw())
-    }
-    else if (tab === 'saves') parts.push(saves.draw())
-    else if (tab === 'armour') {
-      parts.push(renderArmourTab({
+  /** What an open system holds. */
+  function systemParts(id: System): HTMLElement[] {
+    if (id === 'readouts') return [renderReadouts(sheet, limits)]
+    if (id === 'faults') return [drawFaults()]
+    if (id === 'armour') {
+      return [renderArmourTab({
         generation: limits.generation ?? 1,
         locked: limits.locked ?? [],
         spec, sheet, state: armourState, commit, goTo, pickZone,
@@ -1297,25 +1353,43 @@ export function renderDesignScreen(first: Tender): Office {
           drawTabs()
           return sheet
         },
-      }))
+      })]
     }
-    else {
-      for (const control of CONTROLS) {
-        if (control.tab !== tab) continue
-        if (control.kind === 'choice') parts.push(drawChoice(control))
-        else if (control.kind === 'number') parts.push(drawNumber(control))
-        else parts.push(drawToggle(control))
-      }
-      // The readouts under the parts fold too, so the tab stays one screen of rows.
-      if (tab === 'gun') parts.push(foldSection('read:ammo', drawAmmo()))
-      if (tab === 'gun' || tab === 'fireControl') parts.push(foldSection('read:gunnery', renderGunnery(sheet)))
-      if (tab === 'crew' || tab === 'fireControl') parts.push(foldSection('read:stations', renderStations(sheet)))
+    const parts: HTMLElement[] = []
+    for (const control of CONTROLS) {
+      if (control.tab !== id) continue
+      if (control.kind === 'choice') parts.push(drawChoice(control))
+      else if (control.kind === 'number') parts.push(drawNumber(control))
+      else parts.push(drawToggle(control))
     }
+    // The readouts under the parts fold too.
+    if (id === 'gun') parts.push(foldSection('read:ammo', drawAmmo()))
+    if (id === 'gun' || id === 'fireControl') parts.push(foldSection('read:gunnery', renderGunnery(sheet)))
+    if (id === 'crew' || id === 'fireControl') parts.push(foldSection('read:stations', renderStations(sheet)))
+    return parts
+  }
+
+  function drawPanel(): void {
+    const scroll = panel.scrollTop
+    const active = document.activeElement
+    const focusKey = active instanceof HTMLElement && panel.contains(active) ? active.dataset.key : undefined
+
+    const parts: HTMLElement[] = []
+    const guide = drawGuide()
+    if (guide) parts.push(guide)
+    const page = pageOf(tab)
+    if (page === 'trials') parts.push(drawTrials())
+    else if (page === 'bureau') {
+      parts.push(daily.draw(), drawSandbox())
+      parts.push(daily.on() ? el('p', 'ctl-note', STRINGS.daily.waits) : sandbox.on ? el('p', 'ctl-note', O.sandbox.waits) : bureau.draw())
+    }
+    else if (page === 'saves') parts.push(drawDesigns(), saves.draw())
+    else for (const id of SYSTEMS) parts.push(drawSystem(id))
     // The words on this page that want explaining, for someone new to tanks.
     const words = renderGlossary(pageTextOf(parts), glossaryState)
     if (words) parts.push(words)
     panel.replaceChildren(...parts)
-    panel.setAttribute('aria-label', O.tabs[tab])
+    panel.setAttribute('aria-label', O.tabs[page])
     panel.scrollTop = scroll
 
     if (flagged) {
