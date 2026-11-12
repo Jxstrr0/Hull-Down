@@ -6,6 +6,7 @@ export const SKETCHES: Readonly<Record<string, string>> = {
   'gun:smooth115': 'sketches/gun-smooth115.png',
   'gun:smooth125': 'sketches/gun-smooth125.png',
   'gun:rifled120': 'sketches/gun-rifled120.png',
+  'gun:howitzer155': 'sketches/gun-howitzer155.png',
   'powerpack.engine:diesel580': 'sketches/engine-diesel580.png',
   'powerpack.engine:diesel780': 'sketches/engine-diesel780.png',
   'powerpack.engine:multiFuel700': 'sketches/engine-multiFuel700.png',

@@ -707,6 +707,23 @@ Kelbo's pick: the tank destroyer first, as a career tender, in small PRs.
 4. The hull turns toward each new target in battle, not just the gun
    (1.3.3.0, Kelbo's pick).
 
+Then the self-propelled gun, Kelbo's pick, in small PRs. Kelbo's picks: its
+tender is in 2008, between 2001 and 2016, with generation two parts, and the
+army judges it on a new fire mission trial rather than tank duels.
+1. The howitzer (1.4.0.0): a 155 mm gun that lobs a heavy shell 22 km. It
+   needs a big turret ring, so a turret only fits the heavy hull; a casemate
+   takes it on any hull. Not a Pact tank calibre, so it is offered only where
+   a tender asks for 155 mm, and in the sandbox with no limits.
+2. The fire mission trial (1.4.1.0): shells onto a map grid 10 to 20 km off,
+   judged on time to the first round, rounds in a minute, and how close they
+   land. It gets a page in the report.
+3. The 2008 tender in the career (1.4.2.0). The fire mission takes the place
+   of the tank duels and the armour-piercing shoots; the driving, endurance
+   and armour tests stay. Saves carried over.
+4. Rival bureaus bid self-propelled guns (1.4.3.0).
+5. Something to watch for the fire mission (1.4.4.0), such as shells landing
+   on a map.
+
 ---
 
 ## 15. Hosting and the studio site
