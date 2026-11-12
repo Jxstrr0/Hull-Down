@@ -187,7 +187,7 @@ describe('a built tank', () => {
         meshes++
         triangles += node.geometry.getAttribute('position').count / 3
       })
-      expect(meshes).toBeLessThanOrEqual(7)
+      expect(meshes).toBeLessThanOrEqual(9)
       expect(triangles).toBe(tankTriangles(shape))
       expect(tank.getObjectByName(TURRET)).toBeTruthy()
       kit.dispose()
@@ -266,6 +266,37 @@ describe('a built tank', () => {
     expect(offset(two)).toBe(0)
     rollTracks(one, -k.linkM * 0.375)
     expect(offset(one)).toBeCloseTo(-0.125, 9)
+    kit.dispose()
+  })
+
+  it("turns the wheels with the track: each corner knows its hub, and the tank's own wheels roll on as far as the links", async () => {
+    const { buildStatSheet } = await import('../src/sim/vehicle')
+    const { Mesh } = await import('three')
+    const { buildTank, rollTracks, WHEELS } = await import('../src/render/tankModel')
+    const { tankShapeOf } = await import('../src/render/tankShape')
+    const k = RENDER.tank.trackLinks
+    const shape = tankShapeOf(BASELINE_SPEC, buildStatSheet(BASELINE_SPEC, PACT_LIMITS_GEN1).geometry)
+    const wheelParts = shape.parts.filter((part) => part.kind === 'piece' && part.wheelM !== undefined)
+    // Road wheels, sprocket, idler and return rollers, on each side.
+    expect(wheelParts.length).toBe(2 * (BASELINE_SPEC.runningGear.roadWheels + 2 + RENDER.tank.runningGear.returnRollers))
+    const kit = new Kit()
+    const one = buildTank(kit, shape)
+    const two = buildTank(kit, shape)
+    const wheelsOf = (tank: typeof one) => tank.children.filter((child): child is InstanceType<typeof Mesh> => child.name === WHEELS && child instanceof Mesh)
+    const rollOf = (mesh: InstanceType<typeof Mesh>): number => (mesh.material as unknown as { userData: { rollM: { value: number } } }).userData.rollM.value
+    expect(wheelsOf(one).length).toBeGreaterThan(0)
+    expect(wheelsOf(one).length).toBeLessThanOrEqual(2)
+    for (const mesh of wheelsOf(one)) {
+      const hub = mesh.geometry.getAttribute('hub')
+      expect(hub.count).toBe(mesh.geometry.getAttribute('position').count)
+      // Every hub is a real wheel's, and its radius one of theirs.
+      for (let i = 0; i < hub.count; i += 37) {
+        expect(wheelParts.some((part) => part.kind === 'piece' && Math.abs(part.at.x - hub.getX(i)) < 1e-5 && Math.abs(part.at.y - hub.getY(i)) < 1e-5 && Math.abs(1 / part.wheelM! - hub.getZ(i)) < 1e-4)).toBe(true)
+      }
+    }
+    rollTracks(one, k.linkM * 0.25)
+    for (const mesh of wheelsOf(one)) expect(rollOf(mesh)).toBeCloseTo(k.linkM * 0.25, 9)
+    for (const mesh of wheelsOf(two)) expect(rollOf(mesh)).toBe(0)
     kit.dispose()
   })
 })

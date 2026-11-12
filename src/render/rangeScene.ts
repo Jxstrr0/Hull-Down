@@ -145,6 +145,38 @@ export class Kit {
     return new Mesh(geometry, material)
   }
 
+  private wheelCount = 0
+
+  /**
+   * A tank's wheels in one flat colour, each turned about its own hub as the tank rolls on. Every corner of
+   * the shape carries its wheel's hub (x, y) and one over its radius; the material's `rollM` says how far
+   * the tank has rolled, and each wheel turns that far round its rim. Each tank has its own material.
+   */
+  wheels(geometry: BufferGeometry, colour: string): Mesh {
+    this.geometries.push(geometry)
+    const rollM = { value: 0 }
+    const material = new MeshLambertMaterial({ color: new Color(colour), flatShading: true })
+    material.userData.rollM = rollM
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.rollM = rollM
+      shader.vertexShader = `attribute vec3 hub;\nuniform float rollM;\n${shader.vertexShader}`.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        {
+          float turn = -rollM * hub.z;
+          vec2 arm = transformed.xy - hub.xy;
+          transformed.xy = hub.xy + vec2(cos(turn) * arm.x - sin(turn) * arm.y, sin(turn) * arm.x + cos(turn) * arm.y);
+        }`,
+      )
+    }
+    material.customProgramCacheKey = () => 'wheels'
+    this.materials.set(`wheels/${this.wheelCount++}`, material)
+    const mesh = new Mesh(geometry, material)
+    // Turned wheels stay inside their own rims, but the bounds are worked out from them standing still.
+    mesh.frustumCulled = false
+    return mesh
+  }
+
   /** A shape painted with a pattern that repeats over it. The shape says where on the pattern each corner falls. */
   patterned(geometry: BufferGeometry, camo: Camo): Mesh {
     this.geometries.push(geometry)

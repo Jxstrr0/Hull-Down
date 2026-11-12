@@ -75,6 +75,8 @@ export interface PiecePart extends PartBase {
   at: { x: number; y: number; z: number }
   /** Where the piece's own axes point, if it is turned; unturned it lies as modelled. */
   axes?: Axes
+  /** A wheel turns on an axle across the tank through `at`; this is how far it is from there to its rim. */
+  wheelM?: number
   /** The simple shapes drawn instead, in `tone`, if the kit has not come. */
   fallback: readonly Plain[]
 }
@@ -220,7 +222,7 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     const piece = (name: KitPiece, r: number, refR: number, x: number, y: number, sides: number): TankPart => {
       const k = r / refR
       return {
-        ...hull('body'), kind: 'piece', piece: name, scale: { x: k, y: k, z: -side * k }, at: { x, y, z },
+        ...hull('body'), kind: 'piece', piece: name, scale: { x: k, y: k, z: -side * k }, at: { x, y, z }, wheelM: r,
         fallback: [{ kind: 'drum', axis: 'z', radiusM: r, lengthM: t.wheelThickM, sides, at: { x, y, z: side * (track.centreZM + track.widthM / 2 + t.wheelProudM) } }],
       }
     }
