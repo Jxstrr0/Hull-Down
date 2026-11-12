@@ -475,6 +475,8 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.2.4.1, repo housekeeping.** Nothing in the game changes. From the studio security cycle: the build no longer keeps its GitHub login after checking out the code, `.env` files can never be committed, and Dependabot will open one grouped pull request a month for small package updates (major versions and three.js are left to do by hand).
+
 - **1.2.4.0, paper you can feel.** The drawing board now has faint paper grain in the Paper look, and a soft cyanotype mottle in the Blueprint look, from two CC0 paper scans (ambientCG Paper 001 and 003, credited in CREDITS.md). The lines stay crisp. About 85 KB more on first load.
 - **1.2.3.0, the drawing on its sheet.** Each view now carries dimension lines with arrowheads and the figures on them (hull length, length with the gun, height, width), corner marks round the sheet, and a title strip under it (Side elevation · Sheet 1 of 3 · Metres) in place of the old caption line. The figures are text laid over the drawing, so they stay readable on a phone.
 - **1.2.2.0, sharper front, top and cutaway (blueprint detail, 2 of 2).** The front view gains track guards, the tracks end on with link plates and guide horns, headlights, the driver's vision block, tow hooks, the turret's casting line, sight window, coaxial gun port, mantlet bolts, muzzle ring, periscopes and smoke dischargers end on. The top view gains grille slats, two cooling fans, guard seams, stowage bins, headlights, tow hooks, turret periscopes, a vent and the basket. The cutaway hatches the armour where it is cut, the drawing-office way.
