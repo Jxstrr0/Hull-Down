@@ -372,6 +372,17 @@ export const RENDER = {
       trial: 0.16, perKm: 0.0008, battle: 0.3,
     },
     /**
+     * Where rounds struck a tank in battle: soot `soot` over a patch
+     * `bounceM` across (`throughM` where it went in), `sootShare` of the way
+     * to black at the middle, and at its heart a bright gouge of bare steel
+     * where it bounced off, or a dark hole where it went through. The last
+     * `most` on the hull and on the turret each are kept.
+     */
+    scorch: {
+      most: 8, bounceM: 0.42, throughM: 0.52, sootShare: 0.92, coreShare: 0.3,
+      soot: '#1b1916', gouge: '#c9c5b9', hole: '#060606',
+    },
+    /**
      * Gun recoil: the barrel slides back `kickShare` of its length (no more than
      * `mostM`) in `backS` watched seconds, and runs out again over `returnS`.
      * The tank rocks back `rockRad` at the kick and settles with it.

@@ -5,7 +5,7 @@ import { ACCORD_LIMITS, THREAT_TANKS } from '../src/data/opponents'
 import { RENDER } from '../src/data/render'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import { aimOf, cameraFor, cutAt, directorCuts } from '../src/render/battleDirector'
-import { buildBattleStage, gunWays, poseStage, stageCost, struckAt } from '../src/render/battleScene'
+import { buildBattleStage, gunWays, poseStage, scorchOf, stageCost, struckAt } from '../src/render/battleScene'
 import { Kit } from '../src/render/rangeScene'
 import { runBattle } from '../src/sim/battle/battle'
 import { combatantOf } from '../src/sim/duel/duel'
@@ -221,6 +221,35 @@ describe('the stage at a moment', () => {
     at(s.landS + RENDER.sparks.lifeS * RENDER.battle.rate + 0.01)
     const later = battle.shots.some((o) => o.hit && o.landS <= s.landS + RENDER.sparks.lifeS * RENDER.battle.rate + 0.01 && o.landS > s.landS)
     if (!later) expect(stage.sparks.showing).toBe(0)
+    kit.dispose()
+  })
+
+  it('leaves a mark on the tank where each round struck, from the moment it lands', () => {
+    const shot = battles.flatMap((each) => each.shots.map((s) => ({ battle: each, s })))
+      .find(({ s }) => s.hit?.entry && s.hit.zone !== null)
+    if (!shot) throw new Error('no hit')
+    const { battle, s } = shot
+    const kit = new Kit()
+    const stage = buildBattleStage(kit, battle, look(me), look(warden))
+    const at = (t: number): void => {
+      const moment = momentOf(battle, t)
+      poseStage(stage, battle, moment, gunWays(battle, moment))
+    }
+    type Spots = { scorchHull: { value: { x: number; y: number; w: number }[] }; scorchTurret: { value: { x: number; y: number; w: number }[] } }
+    const spots = (): { x: number; y: number; w: number }[] => {
+      const mud = (stage.tanks[s.at]!.group.userData as { mud: Spots }).mud
+      return [...mud.scorchHull.value, ...mud.scorchTurret.value].filter((spot) => spot.w !== 0)
+    }
+    const mark = scorchOf(stage.tanks[s.at]!, { entry: s.hit!.entry!, zone: s.hit!.zone, through: s.hit!.through })
+    const has = (): boolean => spots().some((spot) => Math.abs(spot.x - mark.x) < 1e-5 && Math.abs(spot.y - mark.y) < 1e-5)
+    at(s.landS - 0.001)
+    expect(has()).toBe(false)
+    at(s.landS + 0.001)
+    expect(has()).toBe(true)
+    expect(spots().length).toBeLessThanOrEqual(2 * RENDER.tank.scorch.most)
+    // Going back to the start takes them all off again.
+    at(0)
+    expect(spots().length).toBe(0)
     kit.dispose()
   })
 
