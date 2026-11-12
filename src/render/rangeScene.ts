@@ -172,6 +172,18 @@ export class Kit {
     this.geometries.push(geometry)
     return new InstancedMesh(geometry, this.paint('#ffffff', opacity), count)
   }
+
+  /** Many copies of a soft shape, shaded smooth rather than faceted, so a few triangles read as a cloud. */
+  cloud(geometry: BufferGeometry, opacity: number, count: number): InstancedMesh {
+    this.geometries.push(geometry)
+    const key = `cloud/${opacity}`
+    let material = this.materials.get(key)
+    if (!material) {
+      material = new MeshLambertMaterial({ color: new Color('#ffffff'), transparent: true, opacity, depthWrite: false })
+      this.materials.set(key, material)
+    }
+    return new InstancedMesh(geometry, material, count)
+  }
   private mudCount = 0
 
   /**
