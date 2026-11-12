@@ -398,16 +398,17 @@ export const MARKS_SCOUT = {
 /**
  * What the army asks of an anti-aircraft gun vehicle in 2012. No tank
  * shoots, no loading drill and no berm: the air defence trial takes their
- * place. It must keep up with the tanks it guards, so the drive is asked for
- * as of a tank, but it keeps to the roads and tracks behind them: it is not
- * asked to cross the trench, mount the step or climb the slope, which lets
- * it go on wheels. Its armour need only keep out a carrier's cannon at long
+ * place. It must get off the mark as quickly as the tanks it guards, but it
+ * keeps to the roads and tracks behind them: it is asked only the
+ * self-propelled gun's top speed, and not to cross the trench, mount the
+ * step or climb the slope, which lets it go on wheels. Its armour need only keep out a carrier's cannon at long
  * range, front and sides; a drone's bomblet, the cannon close in and a tank
  * round are fired for the record.
  */
 export const MARKS_AA = {
   sprintS: MARKS_GEN2.sprintS,
-  topKmh: MARKS_GEN2.topKmh,
+  // It follows the tanks on the roads, so it is asked the self-propelled gun's top speed, not a tank's.
+  topKmh: MARKS_SPG.topKmh,
   enduranceStops: 1,
   hits: MARKS_GEN2.hits,
   firstShotS: MARKS_GEN2.firstShotS,

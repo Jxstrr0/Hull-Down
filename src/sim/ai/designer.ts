@@ -4,7 +4,7 @@
 // weight it has left on armour. Same parts list, same limits, same checks.
 import { BASELINE_SPEC } from '../../data/baseline'
 import { MATERIALS, ZONES, type MaterialId, type ZoneId } from '../../data/materials'
-import { BUREAUS, BUREAU_IDS, DESIGNER, IFV_ARMOUR, SCOUT_ARMOUR, SPG_ARMOUR, type BureauId, type LaterPicks, type Philosophy, type Picks } from '../../data/opponents'
+import { AA_ARMOUR, BUREAUS, BUREAU_IDS, DESIGNER, IFV_ARMOUR, SCOUT_ARMOUR, SPG_ARMOUR, type BureauId, type LaterPicks, type Philosophy, type Picks } from '../../data/opponents'
 import {
   COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS,
   TRANSMISSIONS, TURRETS, type EngineId, type GunId, type TransmissionId, type TurretId,
@@ -94,7 +94,8 @@ export function wantsScout(limits: Limits): boolean {
 function massShareOf(philosophy: Philosophy, limits: Limits): number {
   if (wantsHowitzer(limits)) return philosophy.spg.massShare
   if (wantsScout(limits)) return philosophy.scout.massShare
-  if (wantsCannon(limits) || wantsAirDefence(limits)) return philosophy.ifv.massShare
+  if (wantsAirDefence(limits)) return philosophy.aa.massShare
+  if (wantsCannon(limits)) return philosophy.ifv.massShare
   return philosophy.massShare
 }
 
@@ -357,14 +358,15 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
     if (scout.engine) spec.powerpack.engine = scout.engine
     for (const zone of ZONES) spec.era[zone] = 0
   } else if (wantsAirDefence(limits)) {
-    // An anti-aircraft gun vehicle. For now each bureau builds it as its carrier, with no squad, the engine at the back,
-    // the search radar and no tiles.
-    const ifv = philosophy.ifv
-    fitPicks(spec, ifv)
-    spec.hull.size = ifv.hull
-    spec.ammo.rounds = ifv.rounds
-    spec.fireControl.searchRadar = true
-    if (ifv.engine) spec.powerpack.engine = ifv.engine
+    // An anti-aircraft gun vehicle: on the bureau's own choice of tracks or wheels, the radar if it trusts one, and no tiles.
+    const aa = philosophy.aa
+    fitPicks(spec, aa)
+    spec.hull.size = aa.hull
+    spec.runningGear.layout = aa.layout
+    spec.ammo.rounds = aa.rounds
+    spec.fireControl.searchRadar = aa.searchRadar
+    if (aa.engine) spec.powerpack.engine = aa.engine
+    if (aa.rangefinder) spec.fireControl.rangefinder = aa.rangefinder
     for (const zone of ZONES) spec.era[zone] = 0
   } else if (wantsCannon(limits)) {
     // A carrier for a squad: the engine goes in front to leave the back for the soldiers, and no tiles.
@@ -382,7 +384,7 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 
   const pattern = { ...philosophy.armour }
-  const lean = wantsHowitzer(limits) || wantsAirDefence(limits) ? SPG_ARMOUR : wantsScout(limits) ? SCOUT_ARMOUR : wantsCannon(limits) ? IFV_ARMOUR : {}
+  const lean = wantsHowitzer(limits) ? SPG_ARMOUR : wantsAirDefence(limits) ? AA_ARMOUR : wantsScout(limits) ? SCOUT_ARMOUR : wantsCannon(limits) ? IFV_ARMOUR : {}
   for (const [zone, share] of Object.entries(lean) as [ZoneId, number][]) pattern[zone] *= share
   if (settle(spec, pattern, philosophy, limits)) return { spec, pattern }
   // Nothing the bureau wanted could be built: it enters the licence-built tank as it stands.
@@ -400,7 +402,7 @@ export function designRival(bureau: BureauId, limits: Limits, seed: number): Veh
  * What a trial can teach a bureau. A word names a test its tank failed; a
  * zone names a plate that let a round through.
  */
-export const LESSONS = ['night', 'onTheMove', 'halted', 'drill', 'power', 'trench', 'berm', 'fireData', 'search', 'mud'] as const
+export const LESSONS = ['night', 'onTheMove', 'halted', 'drill', 'power', 'trench', 'berm', 'fireData', 'search', 'mud', 'radar', 'belts'] as const
 export type Lesson = (typeof LESSONS)[number] | { zone: ZoneId }
 
 /** The part after this one in its table, which lists them plainest first. Null at the end. */
@@ -422,6 +424,21 @@ function learn(draft: Draft, lesson: Lesson, generation: Generation): boolean {
     return true
   }
   switch (lesson) {
+    case 'radar': {
+      // Raiders found too late by eye: the search radar, or once it is fitted a better computer.
+      if (!fc.searchRadar) {
+        fc.searchRadar = true
+        return true
+      }
+      return learn(draft, 'fireData', generation)
+    }
+    case 'belts': {
+      // The belts ran dry before the last raider: more rounds, as many as the office allows.
+      const most = TUNING.limits.rounds.max
+      if (spec.ammo.rounds >= most) return false
+      spec.ammo.rounds = Math.min(most, spec.ammo.rounds + DESIGNER.lessonRounds)
+      return true
+    }
     case 'search': {
       // Hidden vehicles missed: the commander's own sight first, then a better night sight, whose heat picture finds them by day.
       if (!fc.commanderSight) {

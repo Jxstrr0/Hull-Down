@@ -29,8 +29,12 @@ export function lessonsOf(range: RangeReport): Lesson[] {
     if (range.scout && !range.scout.seenPassed) lessons.push('berm')
     if (range.scout && !range.scout.timePassed) lessons.push('power')
   } else if (range.airDefence) {
-    // Only the air defence trial counts of the shooting: raiders missed or fired at late want a better computer.
-    if (range.air && !range.air.passed) lessons.push('fireData')
+    // Only the air defence trial counts of the shooting. Raiders found too late by eye want the radar; with it, raiders missed
+    // or fired at late want a better computer, and belts that ran dry want more rounds.
+    const air = range.air
+    if (air && !air.passed && !air.radar) lessons.push('radar')
+    else if (air && !air.passed) lessons.push('fireData')
+    if (air && air.ranOut) lessons.push('belts')
   } else {
     if (!range.gunnery.night.passed) lessons.push('night')
     if (!range.gunnery.onTheMove.passed) lessons.push('onTheMove')
@@ -38,9 +42,10 @@ export function lessonsOf(range: RangeReport): Lesson[] {
     if (!range.drill.passed) lessons.push('drill')
   }
   const failed = (id: ObstacleId): boolean => range.obstacles.results.some((result) => result.id === id && !result.passed && !result.waived)
-  // A scout car bogged in the mud wants more wheels before more power.
-  if (range.scouting && failed('mud')) lessons.push('mud')
-  if (!range.acceleration.passed || failed('slope') || (!range.scouting && failed('mud'))) lessons.push('power')
+  // A scout car or an anti-aircraft gun vehicle bogged in the mud wants more wheels before more power.
+  const wheelsFirst = range.scouting || range.airDefence
+  if (wheelsFirst && failed('mud')) lessons.push('mud')
+  if (!range.acceleration.passed || failed('slope') || (!wheelsFirst && failed('mud'))) lessons.push('power')
   if (failed('trench')) lessons.push('trench')
   if (!range.selfPropelled && !range.carrier && !range.scouting && !range.airDefence && !range.berm.passed) lessons.push('berm')
   for (const zone of range.armour.failed) lessons.push({ zone })
