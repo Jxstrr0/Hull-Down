@@ -164,6 +164,27 @@ describe('blueprint drawing', () => {
     expect(draw('front', (s) => { s.protection.smokeLaunchers = false }).shapes.length).toBeLessThan(draw('front').shapes.length)
   })
 
+  it('dimensions every view, inside its box, with the true figures', () => {
+    for (const variant of VARIANTS) {
+      for (const view of VIEWS) {
+        const d = draw(view, variant)
+        expect(d.dimensions.length, view).toBeGreaterThanOrEqual(2)
+        for (const dim of d.dimensions) {
+          expect(dim.m).toBeGreaterThan(0)
+          expect(dim.x).toBeGreaterThanOrEqual(d.box.x)
+          expect(dim.x).toBeLessThanOrEqual(d.box.x + d.box.w)
+          expect(dim.y).toBeGreaterThanOrEqual(d.box.y)
+          expect(dim.y).toBeLessThanOrEqual(d.box.y + d.box.h)
+        }
+      }
+    }
+    const side = draw('side')
+    expect(side.dimensions.map((dim) => dim.m)).toEqual(expect.arrayContaining([side.hullLengthM, side.overallLengthM, side.heightM]))
+    const front = draw('front')
+    expect(front.dimensions.find((dim) => !dim.vertical)?.m).toBeCloseTo(front.widthM, 6)
+    expect(front.dimensions.find((dim) => dim.vertical)?.m).toBe(front.heightM)
+  })
+
   it('measures the tank for the caption', () => {
     const base = draw('side')
     expect(base.hullLengthM).toBe(HULLS.medium.lengthM)

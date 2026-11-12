@@ -37,6 +37,13 @@ export const STRINGS = {
     drawingLabel: '{view} view of the design. Tap a part of the drawing to edit it.',
     mapLegend: 'Key to the protection map',
     zoneLabel: 'Edit: {name}',
+    /** The title strip under the drawing, and the figures on its dimension lines. */
+    sheet: {
+      views: { side: 'Side elevation', top: 'Plan', front: 'Front elevation' },
+      number: 'Sheet {n} of {of}',
+      units: 'Metres',
+      figure: '{n}',
+    },
     captions: {
       side: 'Long {l} m ({g} m with gun) · High {h} m',
       top: 'Long {l} m · Wide {w} m',
