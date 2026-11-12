@@ -24,7 +24,7 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 - **The ☰ menu (1.1.0.0).** I read "housing setting" as "the menu holds the settings", so Sound and the Paper/Blueprint switch moved off the top bar into the menu; say if you meant something else. Graphics stays on the Trials tab and the menu links to it. Restart is still on the Bureau tab too.
 
-- **Hull Down 1.0 (1.0.0.0).** Bumped to 1.0 as you asked, at the end of stage 18. Still yours: the cover, from the prompt Claude wrote. Not done: a short card clip recorded from the live game; Claude can record one with a test browser if you want it, say where it should go.
+- **Hull Down 1.0 (1.0.0.0).** Bumped to 1.0 as you asked, at the end of stage 18. The cover and the card clip are now ready in `docs/media/` (1.8.5.0) for when you un-hide the studio listing: `hull-down.jpg` (640×480) and `hull-down@2x.jpg` (1280×960), and `hull-down-card.mp4` (17 s, 640×480, no sound). Putting them on the listing is yours.
 - **Launch (0.18.0.0).** Kelbo's answers: 1.0.0.0 at the end of stage 18 without asking again; the cover is made by Kelbo from a prompt Claude wrote; the studio site listing already exists, so no PR there.
 - **Challenge screen (0.17.5.0).** I chose: it sits at the top of the Bureau tab, above the sandbox; trials on the Trials tab use the day's pass marks while it is on; the shared text carries no name. Say if you want it somewhere else, or a streak count added.
 - **Challenge of the day (0.17.4.0).** I chose: the day changes at midnight on the player's own clock, so two players in different time zones share a challenge by date, not by the hour; every part of that tender's generation is open, as in the sandbox; a rival is now and then thrown out when the day's cost ceiling is tight (about one day in twenty), which I left in as it reads as part of the story. Say if you want any of these changed.
@@ -373,9 +373,6 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   names (1.8.2.0) and kept the Accord tanks'. Still open: whether three
   rivals is right, and whether the Palisade should be in from the start or
   held back as a later surprise.
-- **The cover image** for the hidden studio listing: free from the game's
-  own blueprint, or one Higgsfield picture (the account showed 0 credits
-  and no price could be quoted without submitting).
 - **Try the armour toy** (plan stage PR 3 is done at 0.3.3.0): Armour tab,
   protection map, reactive tiles and the test shot. Say what feels wrong,
   slow or confusing; fixes can go in at any point.
@@ -466,15 +463,13 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   roadside, and one stop is allowed. A part 10 % over its rating breaks in
   about three runs in four. The same project always gets the same luck, so
   sending it again changes nothing; only a design change does.
-- Choose how the hidden studio-site listing gets its cover image (see Notes).
-- Say if the project numbers ("Project 101", counting up, never reused) suit
-  you, or if you want a different scheme. See `docs/NAMES.md`.
 
 Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 11 November 2026).
 
 ## Log
 
+- **1.8.5.0, The cover and the card clip.** Your picks: cover D of the second ElevenLabs run (GPT Image 2.6 at 2K, two images, 874 credits), with "TRIAL" lettered into its empty stamp in the game's own Archivo Narrow; and a short clip of the live game for the listing card. Both are in `docs/media/`, ready for when the studio listing is un-hidden: the cover at 640×480 and 1280×960, and 17 s of the moving shoot in 3D (the Type 1 in three-colour camouflage, firing at four boards), 640×480, recorded with a test browser from this build. Neither ships with the game. The cover has its line in CREDITS.md.
 - **1.8.4.0, Credits in the ☰ menu.** Your pick: the credits list now sits at the foot of the ☰ menu, folded shut, in place of the Credits link that sent you to the Saves tab; the Saves tab no longer has it. You also chose to keep every GitHub Release, old ones included, so that question is closed. Its opening line now says some of it was made by a tool for the game (the range officer's voice), and each line names its licence or terms.
 - **1.8.3.0, The range officer speaks.** Your pick: the twelve range officer lines, generated with ElevenLabs in the voice Rolando (239 credits), now play in the 3D playbacks with the sound on: target up, hit or miss and which way, not seen, no shot, a jam, cease fire, range clear and a breakdown. I cut the pauses inside each line so each call fits the 1.4 s the picture holds on a strike, and a new test plays 42 shoots frame by frame to check each call starts within a quarter of a second of its round landing, one line at a time. The files (164 KB) are asked for only when a 3D view first opens, and the offline cache keeps them like the other sounds; each has its line in CREDITS.md and the in-game credits.
 - **1.8.2.0, New names for the rivals and the chief engineer.** Your picks: the rival bureaus are now Pelnik Heavy Machine Works, Dravec Tractor Works and Sokolin Ordnance Institute (were Heavy Machine Plant No. 2, Tractor Works No. 7 and Ordnance Institute No. 4); the chief engineer is Pavel Sedlar (was Radek Stanek); the Accord tanks keep Warden, Palisade and Palisade B. You also kept the seven export buyers' names, the project numbers and the "Model 81" designations. Only the names change; saves keep working, as they store the bureau, not its name.

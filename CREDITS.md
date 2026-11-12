@@ -168,6 +168,14 @@ generated are not kept in the repository.
 | `public/audio/voice/ro-11-cease-fire.mp3` | Range officer: "Cease fire. Shoot complete." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
 | `public/audio/voice/ro-12-breakdown.mp3` | Range officer: "Breakdown on the lane. Recovery is on its way." | ElevenLabs, voice Rolando | https://elevenlabs.io | ElevenLabs terms | Pauses shortened, saved as 64 kbps mono MP3 |
 
+## Listing media (not shipped with the game)
+
+| File | Title | Author | Source | Licence | Changes |
+| --- | --- | --- | --- | --- | --- |
+| `docs/media/hull-down.jpg` | Hull Down cover | Generated with ElevenLabs (GPT Image 2.6), from a prompt by Claude, picked by Kelbo | https://elevenlabs.io | ElevenLabs terms | "TRIAL" lettered into the stamp in Archivo Narrow, scaled to 640×480, saved as JPEG |
+| `docs/media/hull-down@2x.jpg` | Hull Down cover | Generated with ElevenLabs (GPT Image 2.6), from a prompt by Claude, picked by Kelbo | https://elevenlabs.io | ElevenLabs terms | As above, scaled to 1280×960 |
+| `docs/media/hull-down-card.mp4` | Hull Down card clip | Longlight Interactive (recorded from the game) | https://hulldown.longlight.games/ | Same as the game | 17 s of the moving shoot, cropped to 4:3, 640×480, no sound |
+
 ## Libraries (npm packages, shipped in the build)
 
 | Package | What it does | Authors | Source | Licence | Changes |
