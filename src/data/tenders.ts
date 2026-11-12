@@ -6,7 +6,7 @@
 // check that each rival bureau leads a tender of its own.
 import type { Limits } from '../sim/vehicle/spec'
 import type { ThreatTankId } from './opponents'
-import { MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, MARKS_SPG, type Marks } from './range'
+import { MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, MARKS_IFV, MARKS_SPG, type Marks } from './range'
 import { PACT_LIMITS_GEN1, PACT_LIMITS_GEN3 } from './tuning'
 
 export const SCORE_AXES = ['protection', 'firepower', 'mobility', 'reliability', 'cost'] as const
@@ -19,7 +19,7 @@ export interface Tender {
   limits: Limits & { maxUnitCostKr: number }
   /** What the proving ground asks of a prototype. */
   marks: Marks
-  /** The Accord tanks the army expects it to meet. Every bid duels each of them. None for a self-propelled gun, which fights from beyond the hill. */
+  /** The Accord tanks the army expects it to meet. Every bid duels each of them. None for a self-propelled gun, which fights from beyond the hill, or for an infantry fighting vehicle, which is judged on its squad. */
   threats: readonly ThreatTankId[]
   /** How the army weighs a bid. The five add up to 100. */
   weights: Record<ScoreAxis, number>
@@ -35,7 +35,7 @@ export interface Tender {
   luck: number
 }
 
-export const TENDER_IDS = ['improvedType1', 'destroyer1991', 'tank2001', 'spg2008', 'tank2016'] as const
+export const TENDER_IDS = ['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'spg2008', 'tank2016'] as const
 export type TenderId = (typeof TENDER_IDS)[number]
 
 export const TENDERS: Record<TenderId, Tender> = {
@@ -74,6 +74,25 @@ export const TENDERS: Record<TenderId, Tender> = {
     grantKr: 18_000_000,
     rivalRevisions: 2,
     luck: 3,
+  },
+  /**
+   * Five years on: the army wants an infantry fighting vehicle, a tracked
+   * carrier for a squad of six with a 30 mm cannon to cover them when they
+   * get out. It is judged on the squad drop in place of the tank shoots and
+   * duels. The same generation one parts. Firepower and mobility count
+   * most, level with each other: it has to keep up with the tanks and put
+   * down what shoots at its soldiers. It is bought in numbers, so cost
+   * counts too, and it need only keep out another carrier's cannon.
+   */
+  ifv1996: {
+    year: 1996,
+    limits: { ...PACT_LIMITS_GEN1, maxMassT: 34, maxUnitCostKr: 2_600_000, allowedCalibresMm: [30] },
+    marks: MARKS_IFV,
+    threats: [],
+    weights: { protection: 15, firepower: 25, mobility: 25, reliability: 15, cost: 20 },
+    grantKr: 16_000_000,
+    rivalRevisions: 2,
+    luck: 5,
   },
   /**
    * Twenty years on: a tank for the new century. Generation two technology
@@ -158,6 +177,15 @@ export const SCORING = {
       bestRpm: 8,
       /** The rest is how close the shells land. */
       bestMissM: 25,
+    },
+    /**
+     * For an infantry fighting vehicle, all from the squad drop: the share of
+     * the targets put out of action, and how soon the last went down. The
+     * time scores nothing at the end of the cover and full marks at its best.
+     */
+    squad: {
+      knockedShare: 0.6,
+      bestCoverS: 20,
     },
   },
   mobility: {

@@ -3,7 +3,7 @@
 // engineering data.
 import type { ThreatId } from './ammo'
 import type { FireMissionMarks } from './fireMission'
-import type { SquadMarks } from './squad'
+import { SQUAD_TRIAL, type SquadMarks } from './squad'
 import type { ZoneId } from './materials'
 
 export interface Ground {
@@ -330,6 +330,35 @@ export const MARKS_SPG = {
   fireMission: { firstRoundS: 110, rpm: 4, missM: 70 },
 } as const
 
+/**
+ * What the army asks of an infantry fighting vehicle in 1996. No tank shoots,
+ * no loading drill and no berm: the squad drop takes their place. It has to
+ * keep up with the tanks, so the drive is asked for as of a tank. The front
+ * must keep out another carrier's cannon close in and the sides, where the
+ * soldiers sit, at the ranges a carrier fights at; the tank rounds and the
+ * infantry's rocket are fired for the record.
+ */
+export const MARKS_IFV = {
+  sprintS: MARKS_GEN1.sprintS,
+  topKmh: 55,
+  enduranceStops: 1,
+  hits: MARKS_GEN1.hits,
+  firstShotS: MARKS_GEN1.firstShotS,
+  drillRpm: MARKS_GEN1.drillRpm,
+  armour: [
+    { zone: 'upperGlacis', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: true },
+    { zone: 'turretFrontLeft', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: true },
+    { zone: 'hullSideFront', threat: 'autocannon', rangeM: 1000, angleDeg: 0, gate: true },
+    { zone: 'hullSideRear', threat: 'autocannon', rangeM: 1000, angleDeg: 0, gate: true },
+    { zone: 'turretSides', threat: 'autocannon', rangeM: 1000, angleDeg: 0, gate: true },
+    { zone: 'hullRear', threat: 'autocannon', rangeM: 1000, angleDeg: 0, gate: false },
+    { zone: 'hullSideRear', threat: 'infantryRocket', rangeM: 200, angleDeg: 0, gate: false },
+    { zone: 'upperGlacis', threat: 'accord105Sabot', rangeM: 2000, angleDeg: 0, gate: false },
+  ] as readonly ArmourSerial[],
+  bermShowsM: MARKS_GEN1.bermShowsM,
+  squad: SQUAD_TRIAL.marks,
+} as const
+
 export type Marks = {
   sprintS: number
   topKmh: number
@@ -347,9 +376,10 @@ export type Marks = {
    */
   fireMission?: FireMissionMarks
   /**
-   * The squad drop, for an infantry fighting vehicle's tender. Not given for a
-   * tank's tender, where a vehicle that carries soldiers is held to the
-   * range's own squad drop marks.
+   * The squad drop, for an infantry fighting vehicle's tender: the tank
+   * shoots, the loading drill and the berm then do not count, and the squad
+   * drop is marked in their place. Not given for a tank's tender, where a
+   * vehicle that carries soldiers is held to the range's own squad drop marks.
    */
   squad?: SquadMarks
 }

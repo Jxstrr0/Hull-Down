@@ -3,10 +3,11 @@
 // tender says. The same tanks and seed always give the same decision.
 import { THREAT_TANKS, ACCORD_LIMITS, type ThreatTankId } from '../../data/opponents'
 import { GUNNERY_TEST_IDS } from '../../data/range'
+import { SQUAD_TRIAL } from '../../data/squad'
 import { SCORE_AXES, SCORING, type ScoreAxis, type Tender } from '../../data/tenders'
 import { combatantOf } from '../duel/duel'
 import { runCard, type DuelSeries } from '../duel/series'
-import { runProvingGround, type FireMissionResult, type RangeReport } from '../trials'
+import { runProvingGround, type FireMissionResult, type RangeReport, type SquadResult } from '../trials'
 import type { VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 
@@ -52,6 +53,16 @@ function missionFirepower(run: FireMissionResult): number {
   return reached * (M.timeShare * time + M.rateShare * rate + (1 - M.timeShare - M.rateShare) * close)
 }
 
+/** An infantry fighting vehicle's firepower, 0..1, all from its squad drop. */
+function squadFirepower(run: SquadResult): number {
+  const M = SCORING.firepower.squad
+  const knocked = run.knocked / run.targets.length
+  // How soon the last target went down counts only once they all have.
+  const last = run.knocked === run.targets.length ? Math.max(...run.targets.map((target) => target.downS ?? SQUAD_TRIAL.coverS)) : null
+  const time = last === null ? 0 : between(last, SQUAD_TRIAL.coverS, M.bestCoverS)
+  return M.knockedShare * knocked + (1 - M.knockedShare) * time
+}
+
 /** Puts a bid through the tender's proving ground and duels. */
 export function trialBid(spec: VehicleSpec, tender: Tender, seed: number): Trialled {
   const sheet = buildStatSheet(spec, tender.limits)
@@ -83,7 +94,7 @@ export function scoreBid(bid: Trialled, tender: Tender): BidScore {
   const serials = range.armour.serials
   const held = serials.filter((serial) => serial.through === 0).length
   const trial = serials.length ? held / serials.length : 1
-  // With no duels, as for a self-propelled gun, the armour trial is all there is to go by.
+  // With no duels, as for a self-propelled gun or an infantry fighting vehicle, the armour trial is all there is to go by.
   const protection = bid.duels.length === 0
     ? trial
     : S.protection.trialShare * trial + (1 - S.protection.trialShare) * (taken ? 1 - holed / taken : 1)
@@ -96,6 +107,7 @@ export function scoreBid(bid: Trialled, tender: Tender): BidScore {
   }
   const mission = range.fireMission
   const firepower = range.selfPropelled && mission ? missionFirepower(mission) :
+    range.carrier && range.squad ? squadFirepower(range.squad) :
     S.firepower.shootShare * (targets ? hits / targets : 0) +
     S.firepower.drillShare * between(range.drill.rpm, 0, S.firepower.drillBestRpm) +
     (1 - S.firepower.shootShare - S.firepower.drillShare) * (fired ? through / fired : 0)

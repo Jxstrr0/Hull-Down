@@ -752,7 +752,13 @@ than tank duels.
    soldiers, the last one out within 600 s, and all four targets down. The
    crew is fresh. It runs for any design that carries soldiers; the 1996
    tender will set its own marks.
-4. The 1996 tender in the career (1.5.3.0). Saves carried over.
+4. The 1996 tender in the career (1.5.3.0). Saves carried over. Done: it
+   comes between 1991 and 2001, with generation one parts and only the
+   30 mm cannon; 34 t and Kr 2.6M at most. It is judged on the drive, the
+   endurance run, the armour (a carrier's cannon on the front and sides)
+   and the squad drop, with no duels; firepower comes from the squad drop.
+   Weights: firepower and mobility 25, cost 20, protection and reliability
+   15. Careers saved from 2001 on move on one place.
 5. Rival bureaus bid infantry fighting vehicles (1.5.4.0).
 6. Something to watch for the squad trial (1.5.5.0).
 

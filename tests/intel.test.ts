@@ -4,6 +4,7 @@ import { BASELINE_SPEC } from '../src/data/baseline'
 import { INTEL, INTEL_FACTS, INTEL_GRADES } from '../src/data/intel'
 import { THREAT_TANK_IDS } from '../src/data/opponents'
 import { STRINGS } from '../src/data/strings'
+import { TENDER_IDS } from '../src/data/tenders'
 import { buildPrototype, newCareer, type Career } from '../src/sim/career/career'
 import { intelFile, intelFiles, intelGrade, trueFigures } from '../src/sim/career/intel'
 
@@ -65,7 +66,9 @@ describe('intelligence files', () => {
     expect(intelGrade(next, 'palisade')).toBe('assessed')
     expect(intelGrade(next, 'palisadeB')).toBeNull()
     expect(intelFiles(next).map((file) => file.threat)).toEqual(['warden', 'palisade'])
-    const later = { ...start, tenderNo: 2 }
+    // The infantry fighting vehicle meets no tank, so its tender has no files.
+    expect(intelFiles({ ...start, tenderNo: TENDER_IDS.indexOf('ifv1996') })).toEqual([])
+    const later = { ...start, tenderNo: TENDER_IDS.indexOf('tank2001') }
     expect(intelGrade(later, 'palisadeB')).toBe('rumour')
     expect(intelFiles(later).map((file) => file.threat)).toEqual(['palisade', 'palisadeB'])
   })
