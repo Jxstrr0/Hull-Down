@@ -333,7 +333,10 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     box.scrollIntoView({ block: 'nearest' })
 
     try {
+      // The tank kit comes alongside the scene; if it cannot, tanks are drawn plainer.
+      const kitComing = import('../render/kitPieces').then((kit) => kit.loadTankKit())
       const { openRangeView } = await import('../render/rangeScene')
+      await kitComing
       if (closed) return
       view = openRangeView({
         host: stage,

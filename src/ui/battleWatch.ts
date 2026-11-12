@@ -147,7 +147,10 @@ export function createBattleWatch(battle: BattleResult, battleNo: number, mine: 
     /** The moment of the battle the last picture showed, for hearing what happened since. */
     let heardS = 0
     try {
+      // The tank kit comes alongside the scene; if it cannot, tanks are drawn plainer.
+      const kitComing = import('../render/kitPieces').then((kit) => kit.loadTankKit())
       const { openBattleView } = await import('../render/battleScene')
+      await kitComing
       if (closed) return
       view = openBattleView({
         host: stage,

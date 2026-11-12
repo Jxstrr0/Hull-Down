@@ -17,7 +17,9 @@ function reach(item: SceneryItem): { nearest: number; side: number } {
       ? [item.solid.atZ - item.solid.widthM / 2, item.solid.atZ + item.solid.widthM / 2]
       : item.solid.kind === 'box'
         ? [item.solid.at.z - item.solid.size.z / 2, item.solid.at.z + item.solid.size.z / 2]
-        : [item.solid.at.z - item.solid.radiusM, item.solid.at.z + item.solid.radiusM]
+        : item.solid.kind === 'drum'
+          ? [item.solid.at.z - item.solid.radiusM, item.solid.at.z + item.solid.radiusM]
+          : []
   return { nearest: Math.min(...zs.map(Math.abs)), side: Math.sign(zs[0]!) }
 }
 
