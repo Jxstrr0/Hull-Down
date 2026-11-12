@@ -8,6 +8,7 @@ import type { VehicleSpec } from '../sim/vehicle'
 import { el } from './dom'
 import { fixed } from './format'
 import type { CardKit } from './gunneryCards'
+import { scoutReplay } from './scoutReplay'
 
 const K = STRINGS.range.scout
 const minutes = (s: number): string => fixed(s / 60, 0)
@@ -65,5 +66,6 @@ export function scoutCards(report: RangeReport, spec: VehicleSpec, kit: CardKit)
   if (!run.foundPassed) notes.push(K.findNote)
   if (!run.seenPassed) notes.push(K.seenNote)
   box.append(...notes.map((text) => el('p', 'ctl-note rg-note', text)))
+  box.append(...scoutReplay(run))
   return [box]
 }
