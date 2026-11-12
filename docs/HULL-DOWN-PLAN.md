@@ -784,7 +784,11 @@ it on a new spot-and-report trial rather than tank duels.
    shorter trench (0.08 of the hull length on four wheels, 0.28 on eight)
    and mount a lower step. Each tyre carries 3.8 t, and tyres seldom fail.
 2. Wheels at the trials (1.6.1.0): the 3D range draws wheels, and the
-   reports talk of tyres, not tracks.
+   reports talk of tyres, not tracks. Done: each wheel is a tyre, a rim and
+   a hub cap that turn as it drives; the obstacle, endurance and armour
+   reports say tyres and wheels; the mud and tyre fix buttons and the chief
+   engineer point at Tracks or wheels, not track width. A badly overloaded
+   suspension can no longer sag the belly below the ground.
 3. The spot-and-report trial (1.6.2.0): drive a mixed road and
    cross-country route to three lookout points, find vehicles hidden in the
    landscape with the sights, and report back. Marked on time, how many it

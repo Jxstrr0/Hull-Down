@@ -10,7 +10,7 @@ import {
   afterAction, type AccelerationRun, type EnduranceEvent, type EnduranceRun, type GunneryRun, type ObstacleResult, type RangeReport,
 } from '../sim/trials'
 import type { ZoneId } from '../data/materials'
-import type { Limits, StatSheet, VehicleSpec } from '../sim/vehicle'
+import { footprintControl, type Limits, type StatSheet, type VehicleSpec } from '../sim/vehicle'
 import { VIEWS, type ViewId } from '../render/director'
 import type { RangeView, RunSource } from '../render/rangeScene'
 import type { ReelFrame } from '../render/shootReel'
@@ -183,6 +183,13 @@ function runChart(run: EnduranceRun): HTMLElement {
 
 export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
   const { sheet } = args
+  // A vehicle on wheels has tyres where a tank has tracks, and more wheels where a tank has wider tracks.
+  const wheeled = sheet.drive.wheeled
+  const W = R.onWheels
+  const tyres = <T extends Record<RunPartId, string> | Partial<Record<RunPartId, string>>>(words: T, tyre: string): T =>
+    wheeled ? { ...words, tracks: tyre } : words
+  const partName = tyres(R.endurance.parts, W.part)
+  const footprint = footprintControl(wheeled)
   const root = el('section', 'range')
   root.setAttribute('aria-label', R.label)
   root.tabIndex = -1
@@ -194,9 +201,9 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
 
   /** A breakdown in a few words, for the caption on the 3D view. The report has the long form. */
   const haltText = (event: EnduranceEvent): string => {
-    const halt: Partial<Record<RunPartId, string>> = V.halt
+    const halt = tyres<Partial<Record<RunPartId, string>>>(V.halt, W.halt)
     return fill((event.load > 1 && halt[event.part]) || V.halt.fault, {
-      part: R.endurance.parts[event.part], km: String(event.km), time: hours(event.haltH),
+      part: partName[event.part], km: String(event.km), time: hours(event.haltH),
     })
   }
 
@@ -503,7 +510,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     accel.append(...watch({ test: 'acceleration', record: a.trace }), speedChart(a, report.marks.topKmh), accelLines, ...accelNotes.map((text) => el('p', 'ctl-note rg-note', text)))
 
     // --- Obstacle course ----------------------------------------------------
-    const O = R.obstacles
+    const O = wheeled ? { ...R.obstacles, ...W.obstacles } : R.obstacles
     const c = RANGE.course
     const cm = (metres: number): string => fixed(metres * 100, 0)
     const obstacleLine = (result: ObstacleResult): HTMLElement => {
@@ -531,7 +538,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
         const words = [fill(result.passed ? O.mudPass : failed, slots)]
         words.push(fill(O.mudPressure, { pressure: fixed(sheet.drive.pressureKgCm2, 2), bearing: fixed(GROUNDS.mud.bearingKgCm2, 1) }))
         return line(fill(O.names.mud, { n: String(c.mud.lengthM) }), words, result.passed,
-          fixButton(result.cause === 'pull' ? 'powerpack.engine' : 'runningGear.trackWidthMm', 'mud'))
+          fixButton(result.cause === 'pull' ? 'powerpack.engine' : footprint, 'mud'))
       }
       return line(
         fill(O.names.slope, { n: String(c.slope.angleDeg) }),
@@ -551,13 +558,13 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     const eventText = (event: EnduranceEvent): string => {
       const load = e.loads[event.part]
       const slots = {
-        part: E.parts[event.part],
+        part: partName[event.part],
         km: String(event.km),
         leg: E.legs[event.leg],
         time: hours(event.haltH),
         ...(load.rated === null ? {} : loadPair(load.have, load.rated, tonnes(event.part) ? 1 : 0)),
       }
-      const broke: Partial<Record<RunPartId, string>> = E.broke
+      const broke = tyres<Partial<Record<RunPartId, string>>>(E.broke, W.broke)
       return fill((event.load > 1 && broke[event.part]) || E.fault, slots)
     }
     const long = card(E.title, fill(E.about, { km: String(e.lengthKm) }), e.passed)
@@ -586,17 +593,17 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     for (const id of over) {
       const load = e.loads[id]
       const item = el('li', 'rg-line-item rg-line-failed')
-      const names: Partial<Record<RunPartId, string>> = E.overName
+      const names = tyres<Partial<Record<RunPartId, string>>>(E.overName, W.overName)
       const top = el('div', 'rg-line-head')
       top.append(
-        el('span', 'rg-line-name', names[id] ?? E.parts[id]),
+        el('span', 'rg-line-name', names[id] ?? partName[id]),
         el('span', 'rg-verdict rg-fail', fill(E.overMark, { pct: String(Math.max(101, Math.round(load.load * 100))) })),
       )
-      const words: Partial<Record<RunPartId, string>> = E.over
+      const words = tyres<Partial<Record<RunPartId, string>>>(E.over, W.over)
       item.append(top, el('p', 'rg-line-text', fill(words[id] ?? '', {
         leg: E.legs[load.leg], ...loadPair(load.have, load.rated ?? 0, tonnes(id) ? 1 : 0),
       })))
-      const part = ENDURANCE_FIX[id]
+      const part = id === 'tracks' ? footprint : ENDURANCE_FIX[id]
       if (part) item.append(fixButton(part, `endurance-${id}`))
       longLines.append(item)
     }

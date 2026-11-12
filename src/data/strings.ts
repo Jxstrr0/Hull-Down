@@ -881,6 +881,21 @@ export const STRINGS = {
       slopePull: 'Stalled {reached} m up. Bottom gear pulls {have} t and the slope needs {need} t.',
       slopeGrip: 'The tracks slipped {reached} m up. They grip {have} t and the slope needs {need} t.',
     },
+    // The same report for a vehicle on wheels: tyres where a tank has tracks.
+    onWheels: {
+      obstacles: {
+        mudPass: 'Through in {time} s. The tyres sank {sink} cm, with {clearance} cm under the belly.',
+        mudTracks: 'Bogged {reached} m in. The tyres sank {sink} cm and spun: the mud drags at {need} t and the tyres grip {have} t.',
+        mudPull: 'Bogged {reached} m in. The tyres sank {sink} cm: the mud drags at {need} t and bottom gear pulls {have} t.',
+        mudBelly: 'Bogged {reached} m in. The tyres sank {sink} cm and the belly, {clearance} cm off the ground, sat down on the mud.',
+        slopeGrip: 'The tyres slipped {reached} m up. They grip {have} t and the slope needs {need} t.',
+      },
+      part: 'Tyres',
+      broke: 'A tyre burst at km {km}, on {leg}. {time} to change the wheel.',
+      overName: 'Tyres over their rating',
+      over: 'On {leg} the tyres carry more than they are rated for: {have} t against {rated} t.',
+      halt: 'Tyre burst at km {km}. {time} to change.',
+    },
     endurance: {
       title: 'Endurance run',
       about: '{km} km over road, range tracks, hills and rough ground, to see what breaks.',
@@ -997,6 +1012,7 @@ export const STRINGS = {
       tiles: '{n} met a reactive tile.',
       bare: '{n} found bare plate between the tiles, or a tile already used up.',
       track: 'A track was broken on the way.',
+      wheel: 'A wheel was broken on the way.',
       defeated: 'Active protection dealt with {n} before they struck.',
       worst: {
         noHarm: 'Nothing vital was hit.',
@@ -1074,6 +1090,7 @@ export const STRINGS = {
       struck: 'Struck',
       struckValue: '{deg}° from square',
       track: 'Track',
+      wheel: 'Wheel',
       trackHit: 'In the way',
       trackBroken: 'Broken',
       tileSpent: 'Bare plate here, or a tile already used up',
@@ -1099,6 +1116,7 @@ export const STRINGS = {
       results: {
         missed: 'Missed the tank.',
         track: 'Hit the track and did no more.',
+        wheel: 'Hit a wheel and did no more.',
         skidded: 'Skidded off. No harm done.',
         stopped: 'Stopped by the armour. No harm done.',
         noHarm: 'Went through and hit nothing vital.',

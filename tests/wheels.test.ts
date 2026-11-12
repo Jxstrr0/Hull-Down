@@ -2,14 +2,18 @@ import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { LAYOUTS, WHEELS, type LayoutId } from '../src/data/parts'
 import { GROUNDS } from '../src/data/range'
+import { RENDER } from '../src/data/render'
 import { STRINGS } from '../src/data/strings'
+import { TENDERS } from '../src/data/tenders'
 import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import { CONTROLS } from '../src/office/controls'
 import { drawingOf } from '../src/office/drawing'
 import { cleanSpec } from '../src/persist/specCodec'
+import { review } from '../src/sim/career/advisor'
+import { runObstacles } from '../src/sim/trials/obstacles'
 import { footingOf } from '../src/sim/mobility/drive'
 import { sandboxLimits } from '../src/sim/vehicle/sandbox'
-import { buildStatSheet, frameOf, geometryOf, rollupOf, wheelsOf, type Limits, type VehicleSpec } from '../src/sim/vehicle'
+import { buildStatSheet, footprintControl, frameOf, geometryOf, rollupOf, wheelsOf, type Limits, type VehicleSpec } from '../src/sim/vehicle'
 
 /** A light scout car with thin plate, on whatever running gear is asked for. */
 function car(layout: LayoutId, change?: (spec: VehicleSpec) => void): VehicleSpec {
@@ -144,5 +148,63 @@ describe('tracks or wheels', () => {
       expect(side.zones.some((zone) => zone.go === 'runningGear.roadWheels')).toBe(false)
     }
     expect(frameOf(car('tracks'), geometryOf(car('tracks'))).wheelX).toHaveLength(0)
+  })
+})
+
+describe('wheels at the trials', () => {
+  it('builds a wheeled hull in 3D with spinning wheels and no track', async () => {
+    const { Mesh } = await import('three')
+    const { Kit } = await import('../src/render/rangeScene')
+    const { buildTank, rollTracks, TRACKS, WHEELS: WHEEL_MESH } = await import('../src/render/tankModel')
+    const { tankShapeOf } = await import('../src/render/tankShape')
+    const s = car('wheels8')
+    const geo = geometryOf(s)
+    const shape = tankShapeOf(s, geo)
+    expect(shape.parts.some((part) => part.kind === 'band')).toBe(false)
+    const wheels = shape.parts.filter((part) => part.kind === 'drum' && part.wheelM !== undefined)
+    // A tyre, a rim and a hub cap on each of eight wheels.
+    expect(wheels).toHaveLength(8 * 3)
+    for (const part of wheels) expect(part.kind === 'drum' && part.wheelM).toBeCloseTo(frameOf(s, geo).wheelR, 9)
+    // Each wheel stands on the ground.
+    for (const part of wheels) expect(part.kind === 'drum' && part.at.y).toBeCloseTo(frameOf(s, geo).wheelR, 9)
+
+    const kit = new Kit()
+    const tank = buildTank(kit, shape)
+    expect(tank.getObjectByName(TRACKS)).toBeUndefined()
+    const meshes = tank.children.filter((child): child is InstanceType<typeof Mesh> => child.name === WHEEL_MESH && child instanceof Mesh)
+    expect(meshes.length).toBeGreaterThan(0)
+    const rollOf = (mesh: InstanceType<typeof Mesh>): number => (mesh.material as unknown as { userData: { rollM: { value: number } } }).userData.rollM.value
+    rollTracks(tank, RENDER.tank.trackLinks.linkM * 0.25)
+    for (const mesh of meshes) expect(rollOf(mesh)).toBeCloseTo(RENDER.tank.trackLinks.linkM * 0.25, 9)
+    kit.dispose()
+  })
+
+  it('says tyres where a tank has tracks', () => {
+    const W = STRINGS.range.onWheels
+    for (const [id, text] of Object.entries(W.obstacles)) {
+      expect(Object.keys(STRINGS.range.obstacles)).toContain(id)
+      expect(text).toMatch(/tyre/i)
+      expect(text).not.toMatch(/track/i)
+    }
+    for (const text of [W.part, W.broke, W.overName, W.over, W.halt]) expect(text).not.toMatch(/track/i)
+    expect(STRINGS.range.armour.wheel).toMatch(/wheel/i)
+    expect(STRINGS.range.afterAction.results.wheel).toMatch(/wheel/i)
+  })
+
+  it('sends the mud and tyre fixes to the number of wheels, not the track width', () => {
+    expect(footprintControl(true)).toBe('runningGear.layout')
+    expect(footprintControl(false)).toBe('runningGear.trackWidthMm')
+    // A heavy car on four wheels sticks in the mud and overloads its tyres.
+    const heavy = car('wheels4', (s) => {
+      s.armour.upperGlacis = [{ material: 'rolledSteel', mm: 160 }]
+      s.armour.hullSideFront = [{ material: 'rolledSteel', mm: 60 }]
+      s.armour.hullSideRear = [{ material: 'rolledSteel', mm: 60 }]
+    })
+    const sheet = sheetOf(heavy)
+    expect(runObstacles(sheet.drive).results.find((r) => r.id === 'mud')?.passed).toBe(false)
+    const tender = { ...TENDERS.tank2001, limits: { ...TENDERS.tank2001.limits, wheels: true } }
+    const parts = review(heavy, tender).map((remark) => remark.part)
+    expect(parts).toContain('runningGear.layout')
+    expect(parts).not.toContain('runningGear.trackWidthMm')
   })
 })

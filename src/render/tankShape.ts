@@ -7,7 +7,7 @@ import type { ZoneId } from '../data/materials'
 import { TURRETS } from '../data/parts'
 import { RENDER } from '../data/render'
 import { layout } from '../office/drawing'
-import type { Geometry, VehicleSpec } from '../sim/vehicle'
+import { skirtsFitted, type Geometry, type VehicleSpec } from '../sim/vehicle'
 import { allTiles, tileCount } from '../sim/vehicle/era'
 import type { Axes, Vec } from './glb'
 import type { Point } from './path'
@@ -40,6 +40,8 @@ export interface DrumPart extends PartBase {
   lengthM: number
   sides: number
   at: { x: number; y: number; z: number }
+  /** A wheel on a wheeled hull turns on its axle; this is how far it is from there to the tyre's tread. */
+  wheelM?: number
 }
 
 /** An outline seen from the side, given width across the tank and centred at `atZ`. */
@@ -129,12 +131,15 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   const fromNose = (x: number): number => half - x
   const noseY = m.belly + m.lowerH
 
+  // On wheels, a wheel under each axle; on tracks, the road wheels spaced along the track.
+  const onWheels = m.wheelX.length > 0
   const count = spec.runningGear.roadWheels
   const pitch = (m.length - DRAWING.trackInsetFrontM - DRAWING.trackInsetRearM - 2 * DRAWING.trackCornerM) / count
-  const radius = Math.min(DRAWING.roadWheelMaxRadiusM, (pitch * DRAWING.wheelFill) / 2)
+  const radius = onWheels ? m.wheelR : Math.min(DRAWING.roadWheelMaxRadiusM, (pitch * DRAWING.wheelFill) / 2)
   const firstWheel = DRAWING.trackInsetFrontM + DRAWING.trackCornerM + pitch / 2
   const wheelX: number[] = []
-  for (let i = 0; i < count; i++) wheelX.push(fromNose(firstWheel + i * pitch))
+  if (onWheels) for (const x of m.wheelX) wheelX.push(fromNose(x))
+  else for (let i = 0; i < count; i++) wheelX.push(fromNose(firstWheel + i * pitch))
 
   const hullOutline: Point[] = [
     { x: -half, y: m.belly },
@@ -143,10 +148,13 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     { x: fromNose(m.upperRun), y: m.roof },
     { x: -half, y: m.roof },
   ]
+  // On wheels the tyres stand in for the tracks: where the dust and the ruts come from.
   const track = {
     widthM: m.trackWidth,
     topM: m.trackTop,
-    lengthM: m.length - DRAWING.trackInsetFrontM - DRAWING.trackInsetRearM,
+    lengthM: onWheels
+      ? (wheelX[0] ?? 0) - (wheelX[wheelX.length - 1] ?? 0) + 2 * radius
+      : m.length - DRAWING.trackInsetFrontM - DRAWING.trackInsetRearM,
     centreZM: m.halfWidth - m.trackWidth / 2,
   }
   const turret = { xM: fromNose(m.turretX), baseM: m.roof, heightM: geometry.turretHeightM, radiusM: m.radius, bustleM: m.bustle }
@@ -217,8 +225,22 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   const rollerR = gear.returnRollerM
   const rollerY = m.trackTop - DRAWING.trackThicknessM - rollerR
   const span = frontX - backX
+  const tyre = t.tyre
   for (const side of [-1, 1]) {
     const z = side * track.centreZM
+    if (onWheels) {
+      // Each wheel: a rubber tyre, the painted rim standing a little proud of it, and a hub cap. They turn together.
+      for (const x of wheelX) {
+        const wheel = (tone: Tone, r: number, out: number, sides: number): TankPart => ({
+          ...hull(tone), kind: 'drum', axis: 'z', radiusM: r, lengthM: track.widthM + 2 * out, sides,
+          at: { x, y: radius, z }, wheelM: radius,
+        })
+        parts.push(wheel('dark', radius, 0, tyre.sides))
+        parts.push(wheel('body', radius * tyre.rimShare, tyre.rimOutM, tyre.rimSides))
+        parts.push(wheel('dark', radius * tyre.capShare, tyre.rimOutM * 2, tyre.capSides))
+      }
+      continue
+    }
     parts.push({ ...hull('dark'), kind: 'band', outline: loop, thickM: gear.trackThickM, widthM: track.widthM, atZ: z })
     // Each piece is modelled with its hub cap on the left; the right side's are mirrored.
     const piece = (name: KitPiece, r: number, refR: number, x: number, y: number, sides: number): TankPart => {
@@ -248,7 +270,7 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   // Side skirts, hung from the deck outside the wheels, in a row of the kit's plates.
   const sk = t.skirts
   const skirtZ = m.halfWidth + sk.outM
-  if (spec.runningGear.skirts) {
+  if (skirtsFitted(spec)) {
     const plate = ref.skirtPanelM
     const drop = deck - m.trackTop * sk.bottomShare
     const plates = Math.max(1, Math.ceil(track.lengthM / plate.long))
@@ -293,7 +315,7 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     for (const side of [-1, 1]) {
       parts.push(...tilePlate(hull('tile'), {
         // Tiles go on from the nose backward, and from the middle backward.
-        middle: { x: way > 0 ? half - long / 2 - half * (1 - t.tile.cover) / 2 : -long / 2, y: sideY, z: side * (spec.runningGear.skirts ? skirtZ + ref.skirtPanelM.thick / 2 : m.halfWidth) },
+        middle: { x: way > 0 ? half - long / 2 - half * (1 - t.tile.cover) / 2 : -long / 2, y: sideY, z: side * (skirtsFitted(spec) ? skirtZ + ref.skirtPanelM.thick / 2 : m.halfWidth) },
         along: { x: 1, y: 0, z: 0 }, out: { x: 0, y: 0, z: side },
         longM: long, wideM: sideHigh, ...panels.hullSide,
       }))

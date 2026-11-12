@@ -38,7 +38,7 @@ export function cardFacts(range: RangeReport, report: AfterAction, sheet: StatSh
       angle: serial.angleDeg === 0 ? T.square : fill(T.off, { n: String(serial.angleDeg) }),
     })
     caption = fill(S.caption, {
-      n: String(shown.index + 1), zone: STRINGS.zones[shown.shot.hit.zone ?? serial.zone].name, setup, result: resultText(shown.shot.hit),
+      n: String(shown.index + 1), zone: STRINGS.zones[shown.shot.hit.zone ?? serial.zone].name, setup, result: resultText(shown.shot.hit, sheet.drive.wheeled),
     })
   }
   return {

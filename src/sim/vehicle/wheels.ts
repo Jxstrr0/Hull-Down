@@ -11,3 +11,8 @@ export function wheelsOf(spec: VehicleSpec): number {
 export function skirtsFitted(spec: VehicleSpec): boolean {
   return spec.runningGear.skirts && wheelsOf(spec) === 0
 }
+
+/** The control that spreads the weight on the ground and carries it: track width, or on wheels the number of wheels. */
+export function footprintControl(wheeled: boolean): 'runningGear.layout' | 'runningGear.trackWidthMm' {
+  return wheeled ? 'runningGear.layout' : 'runningGear.trackWidthMm'
+}
