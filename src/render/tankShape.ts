@@ -20,6 +20,8 @@ export type Mount = 'hull' | 'turret'
 interface PartBase {
   mount: Mount
   tone: Tone
+  /** The gun's barrel: it slides back along the tank when it fires. */
+  recoils?: true
 }
 
 /** A box, centred at a place. `pitchDeg` tips its nose up about the axis across the tank. */
@@ -354,7 +356,7 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   const extractorX = fromNose(m.extractorX) - fromNose(m.gunRootX) + rootX
   const across = gun.radiusM / ref.gunRadiusM
   parts.push({
-    ...top('dark'), kind: 'piece', piece: 'gun',
+    ...top('dark'), kind: 'piece', piece: 'gun', recoils: true,
     scale: { x: gun.lengthM / ref.gunLengthM, y: across, z: across }, at: { x: rootX, y: gun.yM, z: 0 },
     fallback: [
       { kind: 'drum', axis: 'x', radiusM: gun.radiusM, lengthM: gun.lengthM, sides: t.gunSides, at: { x: rootX + gun.lengthM / 2, y: gun.yM, z: 0 } },

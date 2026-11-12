@@ -164,6 +164,26 @@ describe('the stage at a moment', () => {
     kit.dispose()
   })
 
+  it("kicks a tank's gun back just after it fires, and runs it out again", () => {
+    const battle = battles.find((each) => each.shots.length > 0)!
+    const shot = battle.shots[0]!
+    const kit = new Kit()
+    const stage = buildBattleStage(kit, battle, look(me), look(warden))
+    const recoil = (): number => (stage.tanks[shot.by]!.group.userData as { mud: { recoilM: { value: number } } }).mud.recoilM.value
+    const at = (t: number): void => {
+      const moment = momentOf(battle, t)
+      poseStage(stage, battle, moment, gunWays(battle, moment))
+    }
+    at(Math.max(0, shot.atS - 0.5))
+    expect(recoil()).toBe(0)
+    at(shot.atS + RENDER.tank.recoil.backS * RENDER.battle.rate)
+    expect(recoil()).toBeGreaterThan(0)
+    at(shot.atS + (RENDER.tank.recoil.backS + RENDER.tank.recoil.returnS) * RENDER.battle.rate + 0.01)
+    // Unless it has fired again by then, it is run out.
+    if (!battle.shots.some((other) => other.by === shot.by && other.atS > shot.atS && other.atS < shot.atS + 2)) expect(recoil()).toBe(0)
+    kit.dispose()
+  })
+
   it('leaves dust behind the tanks that move, and none on the first look', () => {
     const battle = battles[0]!
     const kit = new Kit()

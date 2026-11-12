@@ -21,7 +21,8 @@ import { reelOf, type ReelFrame } from './shootReel'
 import type { Camo } from './camo'
 import { createFrameMeter } from './frameMeter'
 import { rangeScenery } from './scenery'
-import { buildSolids, buildTank, rollTracks, setMud, setWear, tonesOf } from './tankModel'
+import { buildSolids, buildTank, rollTracks, setMud, setRecoil, setWear, tonesOf } from './tankModel'
+import { recoilAt } from './recoil'
 import { DustTrail, dustAt, type DustKind, type PuffLook } from './dust'
 import { courseMud, enduranceMud, enduranceWear, trialWear } from './mud'
 import { trackLinkPixels } from './trackLinks'
@@ -161,7 +162,7 @@ export class Kit {
    * tank's floor, fading out over `fadeM` above. The tank's parts share one `mud`, so one number dirties them all.
    * With `take.wear`, its paint also rubs through to bare steel in patches as `mud.wear` goes up, the faces looking up first.
    */
-  muddy(material: Material, mud: { share: { value: number }; lineM: { value: number }; wear: { value: number } }, take = { mud: true, wear: true }): Material {
+  muddy(material: Material, mud: { share: { value: number }; lineM: { value: number }; wear: { value: number }; recoilM: { value: number } }, take: { mud: boolean; wear: boolean; recoil?: boolean } = { mud: true, wear: true }): Material {
     const copy = material.clone()
     const before = material.onBeforeCompile.bind(material)
     const key = material.customProgramCacheKey()
@@ -172,6 +173,14 @@ export class Kit {
       before(shader, renderer)
       shader.uniforms.wearShare = mud.wear
       shader.uniforms.wearColour = { value: new Color(w.colour) }
+      if (take.recoil) {
+        // The barrel's corners slide back along the turret by however far the gun has kicked.
+        shader.uniforms.recoilM = mud.recoilM
+        shader.vertexShader = `attribute float recoil;\nuniform float recoilM;\n${shader.vertexShader}`.replace(
+          '#include <begin_vertex>',
+          '#include <begin_vertex>\ntransformed.x -= recoil * recoilM;',
+        )
+      }
       if (take.mud) {
         shader.uniforms.mudShare = mud.share
         shader.uniforms.mudLineM = mud.lineM
@@ -226,7 +235,7 @@ export class Kit {
         )
       }
     }
-    copy.customProgramCacheKey = () => `${key}${take.mud ? '+mud' : ''}${take.wear ? '+wear' : ''}`
+    copy.customProgramCacheKey = () => `${key}${take.mud ? '+mud' : ''}${take.wear ? '+wear' : ''}${take.recoil ? '+recoil' : ''}`
     this.materials.set(`mud/${this.mudCount++}`, copy)
     return copy
   }
@@ -422,6 +431,8 @@ interface Moment {
   mudShare: number
   /** How worn its paint is by now, nought to one. */
   wearShare: number
+  /** Seconds of the run since the gun last fired, or null. */
+  firedS: number | null
   /** What the tracks throw up behind it, if anything. */
   dust: DustKind | null
   where: Where
@@ -455,6 +466,7 @@ function driveShow(kit: Kit, scene: Scene, test: 'acceleration' | 'obstacles', r
         // The strip is concrete; the course is earth, and the pit leaves its mark.
         mudShare: pit ? courseMud(pose.x, pit) : 0,
         wearShare: trialWear(),
+        firedS: null,
         // Concrete dust on the strip, earth on the course, and mud flung up in the pit.
         dust: test === 'acceleration' ? 'concrete' : pit && pose.x >= pit.fromX && pose.x <= pit.toX ? 'mud' : 'earth',
         where: test === 'acceleration' ? { test, s: frame.s } : { test, s: frame.s, path },
@@ -506,6 +518,7 @@ function enduranceShow(kit: Kit, scene: Scene, run: EnduranceRun, shape: TankSha
         sinkM: 0,
         mudShare: enduranceMud(frame.km),
         wearShare: enduranceWear(frame.km),
+        firedS: null,
         // A lap is hours long: puffs would be gone before they were seen.
         dust: null,
         where: { test: 'endurance', leg: ground.id },
@@ -623,6 +636,7 @@ function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: T
         sinkM: 0,
         mudShare: 0,
         wearShare: trialWear(),
+        firedS: frame.sinceFiredS,
         dust: 'earth',
         where: {
           test: 'shoot',
@@ -737,7 +751,9 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     }
     dust.show(watchedS)
     tank.position.set(now.pose.x, now.pose.y - now.sinkM, 0)
-    tank.rotation.z = now.pose.pitchRad
+    // The gun kicks back when it fires, and the tank rocks with it.
+    const rock = setRecoil(tank, recoilAt(now.firedS === null ? null : now.firedS / show.rate))
+    tank.rotation.z = now.pose.pitchRad + rock
     const shot = shotAt(view, now.where, now.pose)
     camera.position.set(shot.from.x, shot.from.y, shot.from.z)
     camera.lookAt(shot.to.x, shot.to.y, shot.to.z)
