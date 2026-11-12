@@ -54,4 +54,22 @@ export const SCOUT_TRIAL = {
   showWidthShare: 0.6,
   /** What the range asks of a car on wheels, until a tender sets its own. */
   marks: { timeS: 3000, found: 5, seen: 0 } satisfies ScoutMarks,
+  /** The replay in the report. Only for the picture: the times it shows are the trial's own. */
+  replay: {
+    /** Seconds of the watches played in each second watched. */
+    speed: 8,
+    /** Each drive is played as this many seconds of a watch, however long it took: a time-lapse. */
+    legS: 40,
+    /** The car stays on the crest this long after each watch, so the last find shows, in the same seconds. */
+    holdS: 8,
+    /** The replay runs on this long after the car is home, in the same seconds. */
+    tailS: 16,
+    /** The view from a lookout is drawn this far out from the car, metres. */
+    viewM: 3400,
+    /** The bearing of each hidden vehicle from the car's nose at each lookout, degrees. */
+    bearingsDeg: [[-24, 12], [18, -10], [-8, 26]] as readonly (readonly number[])[],
+    /** The commander's search sweeps this far either side of straight ahead, degrees, and back again in this many seconds. */
+    sweepDeg: 34,
+    sweepS: 20,
+  },
 } as const

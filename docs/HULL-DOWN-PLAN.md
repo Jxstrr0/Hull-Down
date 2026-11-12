@@ -817,7 +817,12 @@ it on a new spot-and-report trial rather than tank duels.
    commander's sight and a thermal sight. From spot and report they learn
    the commander's sight, then a better night sight, for vehicles missed;
    and more wheels, then more power, for the mud.
-6. Something to watch for the spot-and-report trial (1.6.5.0).
+6. Something to watch for the spot-and-report trial (1.6.5.0). Done: Watch
+   the patrol under the Spot and report card. The route from above with the
+   car going round, and the view from each lookout with range rings, the
+   commander's search sweeping, and the hidden vehicles boxed in as they are
+   found or marked as they see the car. Drives are a time-lapse; watches play
+   eight times faster.
 
 ---
 
