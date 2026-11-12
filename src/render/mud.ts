@@ -1,5 +1,5 @@
-// How muddy a tank is at a given point in a run: a share from nought (clean)
-// to one (as muddy as it gets). The colour is laid on in the shader.
+// How muddy and how worn a tank is at a given point in a run: shares from
+// nought (clean, new) to one. The colours are laid on in the shader.
 import type { BattleGroundId } from '../data/battle'
 import { RANGE } from '../data/range'
 import { RENDER } from '../data/render'
@@ -31,4 +31,25 @@ export function courseMud(x: number, pit: { fromX: number; toX: number }): numbe
 /** Every tank in a battle on this ground. */
 export function battleMud(ground: BattleGroundId): number {
   return held((K.battle satisfies Record<BattleGroundId, number>)[ground])
+}
+
+const W = RENDER.tank.wear
+
+function worn(share: number): number {
+  return Math.max(0, Math.min(W.most, share))
+}
+
+/** A trial tank: a prototype that has been driven about a bit. */
+export function trialWear(): number {
+  return worn(W.trial)
+}
+
+/** After `km` of the endurance run, rubbed a little more every kilometre. */
+export function enduranceWear(km: number): number {
+  return worn(W.trial + Math.max(0, km) * W.perKm)
+}
+
+/** A tank in a battle: a service tank that has seen some use. */
+export function battleWear(): number {
+  return worn(W.battle)
 }

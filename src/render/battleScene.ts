@@ -16,8 +16,8 @@ import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot }
 import { createFrameMeter } from './frameMeter'
 import { Dust, Kit, Working, exhaustDeckX } from './rangeScene'
 import { DustTrail } from './dust'
-import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, tonesOf } from './tankModel'
-import { battleMud } from './mud'
+import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, setWear, tonesOf } from './tankModel'
+import { battleMud, battleWear } from './mud'
 import { tankShapeOf } from './tankShape'
 
 const K = RENDER.battle
@@ -122,6 +122,7 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
     const group = tank.side === 0 ? buildTank(kit, shape, mine.paint ? tonesOf(mine.paint) : undefined) : buildTank(kit, shape, THEIR_TONES)
     // They have all come across the fields to get here.
     setMud(group, battleMud(battle.ground))
+    setWear(group, battleWear())
     const turret = group.getObjectByName(TURRET) ?? null
     const flash = kit.glow(new SphereGeometry(K.flashM, 6, 4), c.flash)
     flash.position.set(shape.gun.rootXM - shape.turret.xM + shape.gun.lengthM, shape.gun.yM, 0)
