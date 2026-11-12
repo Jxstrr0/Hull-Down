@@ -454,12 +454,14 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
   const bayHalf = bodyHalf * 0.8
   const frontEngine = spec.hull.engineAt === 'front'
   const bayLow = frontEngine ? 0.1 : -bayHalf
-  pen.rect(m.bayStart, bayLow, m.bayEnd - DRAWING.rearUndercutM, bayHalf, 'thin')
+  const bayEnd = m.bayEnd - DRAWING.rearUndercutM
+  pen.rect(m.bayStart, bayLow, bayEnd, bayHalf, 'thin')
   const louvres = 5
   for (let i = 1; i < louvres; i++) {
-    const x = m.bayStart + ((m.bayEnd - DRAWING.rearUndercutM - m.bayStart) * i) / louvres
+    const x = m.bayStart + ((bayEnd - m.bayStart) * i) / louvres
     pen.line(x, bayLow, x, bayHalf, 'thin')
   }
+  topDetail(pen, spec, m, bayLow, bayHalf, bayEnd)
   const driverX = Math.min(m.upperRun + 0.45, xc - R - 0.35)
   pen.circle(driverX, frontEngine ? -bodyHalf * 0.5 : 0, DRAWING.hatchRadiusM, 'thin')
 
@@ -525,6 +527,57 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
   pen.armourTap(m.muzzleX - DRAWING.marginM, -edge, xc - R, edge, 'hullRoof')
   pen.armourTap(xc - R, -edge, xc + R, edge, 'turretRoof')
   pen.armourTap(xc + R, -edge, L + DRAWING.marginM, edge, 'hullRoof')
+}
+
+/** The finer parts of the top view: grille slats, fans, track guards and their bins, lights and the turret's fittings. */
+function topDetail(pen: Pen, spec: VehicleSpec, m: Layout, bayLow: number, bayHigh: number, bayEnd: number): void {
+  const { length: L, turretX: xc, radius: R, halfWidth: W } = m
+  const d = DRAWING.detail
+  const tp = DRAWING.top
+  const t = m.trackWidth
+  // Grille slats across the engine deck, between the louvre frames.
+  let deck = ''
+  for (let y = bayLow + d.louvreM; y < bayHigh - 0.02; y += d.louvreM) deck += stroke(pen, m.bayStart, y, bayEnd, y)
+  // Track guards: the plate seams along each guard.
+  for (const side of [-1, 1]) {
+    for (let x = tp.guardSeamM; x < L - 0.1; x += tp.guardSeamM) deck += stroke(pen, x, side * W, x, side * (W - t))
+  }
+  pen.path(deck, 'fine')
+  // Cooling fans in the engine deck.
+  const fanX = (m.bayStart + bayEnd) / 2
+  const fanY = (bayLow + bayHigh) / 2
+  const fanR = Math.min((bayHigh - bayLow) * 0.22, (bayEnd - m.bayStart) * 0.18)
+  pen.path(ring(pen, fanX - fanR * 1.25, fanY, fanR) + ring(pen, fanX + fanR * 1.25, fanY, fanR), 'thin')
+  // Stowage bins on the guards, ahead of and behind the turret.
+  for (const side of [-1, 1]) {
+    const y0 = side * (W - t * 0.12)
+    const y1 = side * (W - t * 0.88)
+    pen.rect(xc + R + 0.15, Math.min(y0, y1), xc + R + 0.15 + tp.binM, Math.max(y0, y1), 'thin')
+    pen.rect(m.upperRun + 0.1, Math.min(y0, y1), m.upperRun + 0.1 + tp.binM * 0.7, Math.max(y0, y1), 'thin')
+  }
+  // Headlights and tow hooks at the nose.
+  for (const side of [-1, 1]) {
+    const y = side * (W - t * 0.5)
+    pen.rect(0.04, y - 0.07, 0.16, y + 0.07, 'thin')
+    pen.poly([[0, side * W * 0.45 - 0.06], [-0.09, side * W * 0.45 - 0.04], [-0.09, side * W * 0.45 + 0.04], [0, side * W * 0.45 + 0.06]], 'thin')
+  }
+  // Turret roof: periscopes ahead of the hatches, a vent, and the basket at the back.
+  let roof = ''
+  for (const y of [-0.18, 0.18]) {
+    const x = xc - R * 0.35
+    roof += `M${pen.p(x - 0.05, y - 0.08)} L${pen.p(x + 0.05, y - 0.08)} L${pen.p(x + 0.05, y + 0.08)} L${pen.p(x - 0.05, y + 0.08)} Z`
+  }
+  pen.path(roof, 'thin')
+  pen.circle(xc + R * 0.05, -R * 0.55, tp.ventR, 'thin')
+  if (spec.turret.shape !== 'bustle' && spec.turret.shape !== 'unmanned') {
+    const b0 = xc + R * 0.9
+    const b1 = b0 + d.basketM
+    const half = R * 0.62
+    pen.rect(b0, -half, b1, half, 'thin')
+    let mesh = ''
+    for (let x = b0 + 0.08; x < b1 - 0.02; x += 0.08) mesh += stroke(pen, x, -half, x, half)
+    pen.path(mesh, 'fine')
+  }
 }
 
 function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
@@ -595,6 +648,7 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
     const s = DRAWING.sightHeadM
     pen.rect(hatchX - s.width / 2, top + cupola, hatchX + s.width / 2, top + cupola + s.height, 'solid')
   }
+  frontDetail(pen, spec, m, h, mantletHalf, fender, bodyHalf, hatchX, cupola)
   pen.line(0, -0.1, 0, top + DRAWING.cupolaHeightM + 0.35, 'centre')
 
   // Tap zones: turret above; a track column each side and the hull between.
@@ -610,6 +664,80 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
   pen.armourTap(-edge, roof, 0, sky, 'turretFrontRight')
   pen.armourTap(0, roof, edge, sky, 'turretFrontLeft')
   pen.armourTap(-edge, ground, edge, roof, 'upperGlacis')
+}
+
+/** The finer parts of the front view: plates, lights, tracks seen end on, and the turret's fittings. */
+function frontDetail(
+  pen: Pen, spec: VehicleSpec, m: Layout, h: number, mantletHalf: number, fender: number, bodyHalf: number,
+  hatchX: number, cupola: number,
+): void {
+  const { roof, belly, top, radius: R, halfWidth: W } = m
+  const d = DRAWING.detail
+  const f = DRAWING.front
+  const t = m.trackWidth
+
+  // Track guards: a plate over each track, with its edge.
+  pen.rect(-W, fender - 0.02, -W + t, fender + f.guardM, 'thin')
+  pen.rect(W - t, fender - 0.02, W, fender + f.guardM, 'thin')
+  // Tracks end on: the link plates as bands, and the guide horns down the middle.
+  let tracks = ''
+  for (const side of [-1, 1]) {
+    const outer = side * W
+    const innerEdge = side * (W - t)
+    for (let y = d.linkM * 0.5; y < m.trackTop - 0.02; y += d.linkM * 0.5) tracks += stroke(pen, innerEdge, y, outer, y)
+    const mid = side * (W - t / 2)
+    tracks += stroke(pen, mid - f.hornM, 0, mid - f.hornM, m.trackTop) + stroke(pen, mid + f.hornM, 0, mid + f.hornM, m.trackTop)
+  }
+  pen.path(tracks, 'fine')
+
+  // Hull plates: the glacis break under the roof, the splash board, and the belly's chamfer.
+  const glacisTop = roof - f.roofLipM
+  let plates = stroke(pen, -W + 0.03, glacisTop, W - 0.03, glacisTop)
+  plates += stroke(pen, -bodyHalf * 0.55, fender + (roof - fender) * 0.55, 0, fender + (roof - fender) * 0.7)
+  plates += stroke(pen, 0, fender + (roof - fender) * 0.7, bodyHalf * 0.55, fender + (roof - fender) * 0.55)
+  plates += stroke(pen, -bodyHalf + 0.05, belly + 0.05, bodyHalf - 0.05, belly + 0.05)
+  pen.path(plates, 'fine')
+  // Headlights at the glacis corners, the driver's vision block, and tow hooks on the lower plate.
+  let lights = ''
+  for (const side of [-1, 1]) lights += ring(pen, side * (W - t * 0.55), fender + f.lightR + 0.05, f.lightR)
+  pen.path(lights, 'thin')
+  const driverX = spec.hull.engineAt === 'front' ? 0 : -bodyHalf * 0.45
+  pen.rect(driverX - f.visionM / 2, glacisTop - 0.09, driverX + f.visionM / 2, glacisTop - 0.03, 'thin')
+  for (const side of [-1, 1]) {
+    const x = side * bodyHalf * 0.7
+    pen.poly([[x - 0.07, belly + 0.2], [x + 0.07, belly + 0.2], [x + 0.05, belly + 0.08], [x - 0.05, belly + 0.08]], 'thin')
+  }
+
+  // Turret: casting line, periscopes, a sight window, the coaxial gun, mantlet bolts and the muzzle ring.
+  let turret = stroke(pen, -R * 0.92, roof + h * d.castLineShare, R * 0.92, roof + h * d.castLineShare)
+  const sightX = R * 0.48
+  turret += `M${pen.p(sightX - 0.1, m.gunY + h * 0.12)} L${pen.p(sightX + 0.1, m.gunY + h * 0.12)} L${pen.p(sightX + 0.1, m.gunY + h * 0.3)} L${pen.p(sightX - 0.1, m.gunY + h * 0.3)} Z`
+  for (const [x, y] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
+    turret += ring(pen, x * (mantletHalf - 0.04), m.gunY + y * (h * 0.25 - 0.04), 0.012)
+  }
+  pen.path(turret, 'fine')
+  pen.circle(-mantletHalf * 0.62, m.gunY - h * 0.08, f.coaxR, 'thin')
+  pen.circle(0, m.gunY, m.barrelHalf * d.muzzleRingShare, 'thin')
+  let scopes = ''
+  for (const at of [-0.12, 0.15]) {
+    const x = R * at
+    scopes += `M${pen.p(x - 0.06, top)} L${pen.p(x - 0.05, top + 0.07)} L${pen.p(x + 0.05, top + 0.07)} L${pen.p(x + 0.06, top)}`
+  }
+  if (cupola > 0) {
+    for (let i = 1; i < 4; i++) {
+      const x = hatchX - DRAWING.hatchRadiusM + (i * DRAWING.hatchRadiusM) / 2
+      scopes += stroke(pen, x, top + cupola * 0.35, x, top + cupola * 0.8)
+    }
+  }
+  pen.path(scopes, 'fine')
+  // Smoke dischargers seen end on, three to a cheek.
+  if (spec.protection.smokeLaunchers) {
+    let tubes = ''
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 3; i++) tubes += ring(pen, side * (R * 0.78 - i * 0.1), roof + h * 0.42, 0.035)
+    }
+    pen.path(tubes, 'thin')
+  }
 }
 
 /**

@@ -53,6 +53,27 @@ export const DRAWING = {
     muzzleRingShare: 1.25,
     sleeveBandM: 0.55,
   },
+  /** The top view's own details. */
+  top: {
+    /** Spacing of the seams along a track guard. */
+    guardSeamM: 0.9,
+    binM: 0.6,
+    ventR: 0.08,
+  },
+  /** How wide the band of section hatching along the armour is drawn on the cutaway (half of it shows, inside). */
+  sectionWallM: 0.2,
+  /** The front view's own details. */
+  front: {
+    /** Track guard thickness, seen end on. */
+    guardM: 0.05,
+    /** Half the gap between the guide horns. */
+    hornM: 0.025,
+    /** How far below the roof the glacis meets it. */
+    roofLipM: 0.06,
+    lightR: 0.07,
+    visionM: 0.22,
+    coaxR: 0.03,
+  },
 } as const
 
 /** The armour section view, in millimetres of drawing. */
