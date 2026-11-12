@@ -122,6 +122,19 @@ function laterPicks(philosophy: Philosophy, generation: Generation): LaterPicks 
   return picks
 }
 
+/** Fits each part the picks name in place of the bureau's first choice. Materials are laid by `plated`. */
+function fitPicks(spec: VehicleSpec, picks: LaterPicks): void {
+  if (picks.loading) spec.loading = picks.loading
+  if (picks.computer) spec.fireControl.computer = picks.computer
+  if (picks.night) spec.fireControl.night = picks.night
+  if (picks.kinetic) spec.ammo.kinetic = picks.kinetic
+  if (picks.shaped) spec.ammo.shaped = picks.shaped
+  if (picks.turret) spec.turret.shape = picks.turret
+  if (picks.active) spec.protection.active = picks.active
+  if (picks.apu) spec.powerpack.apu = true
+  if (picks.skirts) spec.runningGear.skirts = true
+}
+
 /** The bureau's armour pattern at one scale, every plate on the drawing-office step. */
 function plated(pattern: Record<ZoneId, number>, scale: number, swaps: Swaps): Record<ZoneId, ArmourLayer[]> {
   const lim = TUNING.limits
@@ -206,6 +219,22 @@ function repair(spec: VehicleSpec, issue: Issue): boolean {
         return true
       }
       return false
+    // Dearer than the army will pay: the next cheaper engine, and failing that the commander's sight comes off.
+    case 'overCostLimit': {
+      const now = ENGINES[spec.powerpack.engine].costKr
+      const cheaper = (Object.keys(ENGINES) as EngineId[])
+        .filter((id) => ENGINES[id].costKr < now)
+        .sort((a, b) => ENGINES[b].costKr - ENGINES[a].costKr)[0]
+      if (cheaper) {
+        spec.powerpack.engine = cheaper
+        return true
+      }
+      if (spec.fireControl.commanderSight) {
+        spec.fireControl.commanderSight = false
+        return true
+      }
+      return false
+    }
     case 'turretNeedsAutoloader':
       spec.loading = 'carousel'
       return true
@@ -280,17 +309,9 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   spec.protection = { smokeLaunchers: true, fireSuppression: pick('fireSuppression'), spallLiner: pick('spallLiner'), active: 'none' }
   spec.crew.comfort = pick('comfort')
   for (const zone of ZONES) spec.era[zone] = philosophy.tiles.includes(zone) ? allTiles(zone) : 0
-  // What the bureau has moved on to by the tender's year.
-  const later = laterPicks(philosophy, limits.generation ?? 1)
-  if (later.loading) spec.loading = later.loading
-  if (later.computer) spec.fireControl.computer = later.computer
-  if (later.night) spec.fireControl.night = later.night
-  if (later.kinetic) spec.ammo.kinetic = later.kinetic
-  if (later.shaped) spec.ammo.shaped = later.shaped
-  if (later.turret) spec.turret.shape = later.turret
-  if (later.active) spec.protection.active = later.active
-  if (later.apu) spec.powerpack.apu = true
-  if (later.skirts) spec.runningGear.skirts = true
+  // What the bureau has moved on to by the tender's year, and what it fits for a tank destroyer.
+  fitPicks(spec, laterPicks(philosophy, limits.generation ?? 1))
+  if (limits.casemate && philosophy.destroyer) fitPicks(spec, philosophy.destroyer)
   // A gun outside the tender's calibres is no use: the bureau takes the biggest gun that is allowed.
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 
@@ -364,7 +385,9 @@ function learn(draft: Draft, lesson: Lesson, generation: Generation): boolean {
       return sight !== null
     }
     case 'drill': {
-      const loading = nextOf(LOADING, spec.loading)
+      // A casemate has no bustle for a loader to sit in, and the bureau keeps its casemate.
+      const casemate = TURRETS[spec.turret.shape].swingDeg !== null
+      const loading = nextOf(LOADING, spec.loading, (id) => !(casemate && LOADING[id].needsBustle))
       if (loading) spec.loading = loading
       return loading !== null
     }
@@ -382,7 +405,8 @@ function learn(draft: Draft, lesson: Lesson, generation: Generation): boolean {
       return longer !== null
     }
     case 'berm': {
-      // A turret that lets the gun dip further shows less of the tank over a crest.
+      // A turret that lets the gun dip further shows less of the tank over a crest. A casemate stays a casemate.
+      if (TURRETS[spec.turret.shape].swingDeg !== null) return false
       const now = TURRETS[spec.turret.shape].depressionDeg
       const deeper = (Object.keys(TURRETS) as TurretId[])
         .filter((id) => TURRETS[id].depressionDeg > now && TURRETS[id].crewed && TURRETS[id].swingDeg === null && available('turret.shape', id, generation))
