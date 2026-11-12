@@ -104,6 +104,8 @@ export const BATTLE = {
   field: { widthM: WIDTH_M, depthM: DEPTH_M },
   /** The fight is worked out in steps this long, seconds. */
   stepS: 0.1,
+  /** How fast a casemate tank swings its hull round on the spot to bring its gun to bear, degrees a second. */
+  hullTurnDegS: 30,
   /** With neither platoon beaten by now it is called off, seconds. */
   limitS: 600,
   /** With nobody moving and no round fired for this long it is over, seconds. */

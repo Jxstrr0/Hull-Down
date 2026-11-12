@@ -540,6 +540,27 @@ export function runBattle(
     return best
   }
 
+  /**
+   * A casemate's gun swings only a little each way, so the whole tank turns
+   * to bring it round: on the spot, at the hull's pace, in the open to face
+   * its target and behind a ridge only as far as it must. On the move it
+   * cannot turn off its way, so a careful crew stops first and a fast one
+   * holds its fire. True when the gun bears.
+   */
+  const aimHull = (tank: Tank, target: Tank, swing: number): boolean => {
+    const off = wrap(wayTo(tank.x, tank.y, target.x, target.y) - tank.heading)
+    const bears = Math.abs(off) <= swing
+    if (tank.moving) {
+      if (bears || tank.orders.pace !== 'careful' || tank.going === null) return bears
+      tank.haltedS = t
+      tank.moving = false
+    }
+    const want = covered(tank) ? (bears ? 0 : off - Math.sign(off) * swing) : off
+    const turn = Math.sign(want) * Math.min(Math.abs(want), BATTLE.hullTurnDegS * BATTLE.stepS)
+    tank.heading = wrap(tank.heading + turn)
+    return Math.abs(off - turn) <= swing
+  }
+
   const fight = (tank: Tank): void => {
     if (!fights(tank) || unseen(tank)) return
     const sheet = tank.tank.sheet
@@ -561,8 +582,11 @@ export function runBattle(
       tank.wasted = { hull: 0, turret: 0 }
       tank.wastedInAll = 0
     }
-    // A tank halted in the open turns its front to what it is shooting at.
-    if (!tank.moving && !covered(tank)) tank.heading = wayTo(tank.x, tank.y, target.x, target.y)
+    const swing = sheet.fire.swingDeg
+    if (swing === null) {
+      // A tank halted in the open turns its front to what it is shooting at.
+      if (!tank.moving && !covered(tank)) tank.heading = wayTo(tank.x, tank.y, target.x, target.y)
+    } else if (!aimHull(tank, target, swing)) return
     if (t < tank.loadedS || t < tank.laidS || tank.fired >= sheet.fire.carried) return
     // A platoon holding its fire waits for the range to close, or to be shot at.
     if (tank.role === 'hold' && tank.orders.range === 'close' && !shotAt[tank.side] &&

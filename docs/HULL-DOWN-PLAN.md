@@ -704,7 +704,8 @@ Kelbo's pick: the tank destroyer first, as a career tender, in small PRs.
    tender and 2001.
 3. Rival bureaus bid casemates on it (1.3.2.0): the light and the gunnery
    bureau; the heavy bureau keeps a turret.
-4. Maybe: the hull turns toward each new target in battle, not just the gun.
+4. The hull turns toward each new target in battle, not just the gun
+   (1.3.3.0, Kelbo's pick).
 
 ---
 
