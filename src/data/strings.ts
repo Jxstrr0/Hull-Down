@@ -46,6 +46,12 @@ export const STRINGS = {
       show: 'Drawing ▾',
       showLabel: 'Show the drawing again',
     },
+    /** A part's row: its name, what is fitted, and a mark when it has a fault. Tap to open. */
+    row: {
+      fault: '✕',
+      label: '{name}: {now}',
+      faultLabel: '{name}: {now}. Has a fault',
+    },
     cutaway: {
       button: 'Inside',
       buttonLabel: 'Show what is inside the armour',
