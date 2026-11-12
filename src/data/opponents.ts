@@ -59,12 +59,31 @@ export interface LaterPicks {
   materials?: Partial<Record<MaterialId, MaterialId>>
 }
 
+/** What a bureau builds when the tender is for a self-propelled gun. */
+export interface SpgPicks extends LaterPicks {
+  /** How much of the weight limit it builds up to: a gun that stays back needs less armour. */
+  massShare: number
+  rounds: number
+}
+
+/**
+ * How a self-propelled gun's armour leans, on top of each bureau's own
+ * pattern: it is raided by carriers' cannon from the side, not met head on
+ * by tank guns, so less goes on the front and more on the sides.
+ */
+export const SPG_ARMOUR: Partial<Record<ZoneId, number>> = {
+  upperGlacis: 0.7, lowerGlacis: 0.7, turretFrontLeft: 0.6, turretFrontRight: 0.6, mantlet: 0.6,
+  hullSideFront: 2, hullSideRear: 1.5, turretSides: 1.8,
+}
+
 export interface Philosophy {
   picks: Picks
   /** The newer parts the bureau fits from each generation on. */
   later: Partial<Record<Generation, LaterPicks>>
   /** What the bureau fits on top of that when the tender is for a tank destroyer. None: it bids a tank as before. */
   destroyer?: LaterPicks
+  /** What the bureau fits when the tender is for a self-propelled gun, in place of its destroyer picks. */
+  spg: SpgPicks
   /** How much of the weight limit the bureau builds up to, 0..1. */
   massShare: number
   /**
@@ -129,6 +148,8 @@ export const BUREAUS = {
       3: { active: 'hardKill', apu: true },
     },
     // No destroyer picks: asked for a tank destroyer, it bids a well-armoured tank with a turret.
+    // For a self-propelled gun: still a turret, the electronic computer, and more armour than the others.
+    spg: { computer: 'electronic', massShare: 0.85, rounds: 30 },
     massShare: 1,
     armour: {
       upperGlacis: 1.4, lowerGlacis: 1.3, hullSideFront: 1, hullSideRear: 0.9, hullRear: 0.8, hullRoof: 1, belly: 1,
@@ -166,6 +187,8 @@ export const BUREAUS = {
     later: { 2: { kinetic: 'longRod', shaped: 'tandem' }, 3: { active: 'softKill' } },
     // For a tank destroyer: the casemate, cheaper and lighter still.
     destroyer: { turret: 'casemate' },
+    // For a self-propelled gun: a cheap casemate, loaded by hand, worked out with the mechanical computer.
+    spg: { turret: 'casemate', loading: 'loader', computer: 'mechanical', massShare: 0.6, rounds: 30 },
     massShare: 0.75,
     armour: {
       upperGlacis: 1, lowerGlacis: 0.9, hullSideFront: 0.8, hullSideRear: 0.8, hullRear: 0.9, hullRoof: 1, belly: 1,
@@ -206,6 +229,8 @@ export const BUREAUS = {
     },
     // For a tank destroyer: the casemate, so the big gun rides on a smaller mount.
     destroyer: { turret: 'casemate' },
+    // For a self-propelled gun: a casemate with the carousel and the digital computer, for the quickest first round.
+    spg: { turret: 'casemate', loading: 'carousel', computer: 'digital', massShare: 0.8, rounds: 36 },
     massShare: 0.95,
     armour: {
       upperGlacis: 1, lowerGlacis: 1, hullSideFront: 0.9, hullSideRear: 0.9, hullRear: 1, hullRoof: 1, belly: 1,

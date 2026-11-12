@@ -8,14 +8,14 @@ import type { ZoneId } from '../../data/materials'
 import { COMPUTERS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS } from '../../data/parts'
 import { GUNNERY_TEST_IDS, type GunneryTestId, type ObstacleId } from '../../data/range'
 import type { Tender } from '../../data/tenders'
-import { runAcceleration, runBerm, runGunnery, runObstacles } from '../trials'
+import { runAcceleration, runBerm, runFireMission, runGunnery, runObstacles } from '../trials'
 import type { Issue } from '../vehicle/checks'
 import { testShot } from '../vehicle/shot'
 import type { VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 
 export const REMARK_KINDS = [
-  'fault', 'plate', 'shoot', 'slowShot', 'drill', 'sprint', 'top', 'obstacle', 'berm', 'warning', 'reliability', 'cost',
+  'fault', 'plate', 'shoot', 'slowShot', 'drill', 'missionReach', 'missionFirst', 'missionRate', 'missionClose', 'sprint', 'top', 'obstacle', 'berm', 'warning', 'reliability', 'cost',
 ] as const
 export type RemarkKind = (typeof REMARK_KINDS)[number]
 
@@ -92,8 +92,10 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
   }
   out.push(...holed.values())
 
+  // A self-propelled gun's tender counts no tank shoots, drill or berm, so he says nothing of them.
+  const tank = marks.fireMission === undefined
   // The firing tests, rehearsed a few times over.
-  for (const test of GUNNERY_TEST_IDS) {
+  for (const test of tank ? GUNNERY_TEST_IDS : []) {
     let hits = 0
     let firstShotS = 0
     let timed = 0
@@ -121,11 +123,43 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
       })
     }
   }
-  if (sheet.gunnery.sustainedTiredRpm < marks.drillRpm) {
+  if (tank && sheet.gunnery.sustainedTiredRpm < marks.drillRpm) {
     out.push({
       kind: 'drill', part: best(LOADING, spec.loading) ? 'crew.comfort' : 'loading',
       value: Math.round(sheet.gunnery.sustainedTiredRpm * 10) / 10, limit: marks.drillRpm,
     })
+  }
+
+  // A self-propelled gun's fire mission, rehearsed a few times over.
+  if (marks.fireMission) {
+    const M = marks.fireMission
+    let reached = true
+    let first = 0
+    let firsts = 0
+    let rpm = 0
+    let miss = 0
+    let misses = 0
+    for (let seed = 1; seed <= ADVISOR.rehearsals; seed++) {
+      const run = runFireMission(sheet.fire, seed)
+      reached &&= run.grids.every((grid) => grid.reached)
+      if (run.firstRoundS !== null) {
+        first += run.firstRoundS
+        firsts++
+      }
+      rpm += run.rpm / ADVISOR.rehearsals
+      if (run.missM !== null) {
+        miss += run.missM
+        misses++
+      }
+    }
+    if (!reached) out.push({ kind: 'missionReach', part: 'barrel' })
+    if (firsts > 0 && first / firsts > M.firstRoundS) {
+      out.push({ kind: 'missionFirst', part: 'fireControl.computer', value: Math.round(first / firsts), limit: M.firstRoundS })
+    }
+    if (rpm < M.rpm) out.push({ kind: 'missionRate', part: 'loading', value: Math.round(rpm * 10) / 10, limit: M.rpm })
+    if (misses > 0 && miss / misses > M.missM) {
+      out.push({ kind: 'missionClose', part: 'fireControl.computer', value: Math.round(miss / misses), limit: M.missM })
+    }
   }
 
   // The strip, the course and the berm come out the same every time, so he can simply work them out.
@@ -138,7 +172,7 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
     if (!result.passed) out.push({ kind: 'obstacle', part: OBSTACLE_PART[result.id], obstacle: result.id })
   }
   const ridge = runBerm(sheet.interior.frame, sheet.firepower.gunDepressionDeg)
-  if (ridge.showsM > marks.bermShowsM) {
+  if (tank && ridge.showsM > marks.bermShowsM) {
     out.push({ kind: 'berm', part: 'turret.shape', value: Math.round(ridge.showsM * 100) / 100, limit: marks.bermShowsM })
   }
 
