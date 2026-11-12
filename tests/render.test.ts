@@ -540,9 +540,13 @@ describe('the parts the tank is built from', () => {
   it('has a track loop, a sprocket and an idler each side, and a wheel for every road wheel', () => {
     const { spec, sheet } = sheetOf()
     const parts = tankShapeOf(spec, sheet.geometry).parts
-    expect(parts.filter((part) => part.kind === 'slab' && part.tone === 'dark')).toHaveLength(2)
-    const drums = parts.filter((part) => part.kind === 'drum' && part.axis === 'z')
-    expect(drums).toHaveLength(2 * (spec.runningGear.roadWheels + 2))
+    expect(parts.filter((part) => part.kind === 'band')).toHaveLength(2)
+    const pieces = parts.filter((part) => part.kind === 'piece')
+    const count = (piece: string) => pieces.filter((part) => part.piece === piece).length
+    expect(count('road-wheel')).toBe(2 * spec.runningGear.roadWheels)
+    expect(count('sprocket')).toBe(2)
+    expect(count('idler')).toBe(2)
+    expect(count('return-roller')).toBe(2 * RENDER.tank.runningGear.returnRollers)
   })
 
   it('shows tiles only where the design carries them', () => {

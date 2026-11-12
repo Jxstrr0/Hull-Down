@@ -1,8 +1,8 @@
 // The trial tank kit: pieces modelled in Blender (art/tank-kit.py) and
 // shipped as one file, public/kit/tank-kit.glb. Each piece is built at a
 // reference size; the range scales it to the design's own measurements.
-// Every tank is assembled from these, so the triangle caps keep eight tanks
-// light enough for a phone (Kelbo chose about 5,000 a tank).
+// Every tank is assembled from these. Kelbo chose detail over lightness:
+// about 5,000 triangles a tank.
 import type { TurretId } from './parts'
 
 export const KIT = {
@@ -11,26 +11,29 @@ export const KIT = {
   maxBytes: 200 * 1024,
   /** The two colours a piece is painted in, by material name. */
   tones: ['body', 'dark'],
-  /** Each piece, and the most triangles it may have. */
+  /**
+   * Each piece, and the triangles it is drawn with. A test checks these
+   * against the file; the tank's own budget is in RENDER.tank.maxTriangles.
+   */
   pieces: {
-    'turret-cast-dome': 260,
-    'turret-low-profile': 180,
-    'turret-welded-wedge': 80,
-    'turret-bustle': 160,
-    'turret-unmanned': 100,
-    'mantlet-cast': 80,
-    'mantlet-block': 30,
-    gun: 280,
-    'road-wheel': 220,
-    sprocket: 260,
-    idler: 150,
-    'return-roller': 60,
-    'skirt-panel': 30,
-    'era-tiles': 100,
-    'smoke-launchers': 140,
-    cupola: 150,
-    'sight-head': 60,
-    'engine-deck': 200,
+    'turret-cast-dome': 212,
+    'turret-low-profile': 140,
+    'turret-welded-wedge': 48,
+    'turret-bustle': 128,
+    'turret-unmanned': 76,
+    'mantlet-cast': 68,
+    'mantlet-block': 20,
+    gun: 252,
+    'road-wheel': 208,
+    sprocket: 232,
+    idler: 132,
+    'return-roller': 48,
+    'skirt-panel': 24,
+    'era-tiles': 84,
+    'smoke-launchers': 124,
+    cupola: 136,
+    'sight-head': 52,
+    'engine-deck': 180,
   },
   /** The piece each turret is drawn with. */
   turrets: {

@@ -33,12 +33,8 @@ describe('tank kit', () => {
     expect(gltf.nodes.map((node) => node.name).sort()).toEqual(Object.keys(KIT.pieces).sort())
   })
 
-  it('keeps every piece under its triangle cap', () => {
-    for (const [name, cap] of Object.entries(KIT.pieces)) {
-      const count = trianglesOf(name)
-      expect(count, name).toBeGreaterThan(0)
-      expect(count, name).toBeLessThanOrEqual(cap)
-    }
+  it('has the triangles the table says for every piece', () => {
+    for (const [name, count] of Object.entries(KIT.pieces)) expect(trianglesOf(name), name).toBe(count)
   })
 
   it('paints with the two tones only', () => {

@@ -2,6 +2,7 @@
 // parts. It uses the blueprint's own layout, so the tank on the range is
 // the tank on the drawing. Nothing here needs three.js, so it can be tested.
 import { DRAWING } from '../data/drawing'
+import { KIT, type KitPiece } from '../data/kit'
 import type { ZoneId } from '../data/materials'
 import { TURRETS } from '../data/parts'
 import { RENDER } from '../data/render'
@@ -52,7 +53,29 @@ export interface LoftPart extends PartBase {
   rings: { y: number; corners: { x: number; z: number }[] }[]
 }
 
-export type TankPart = BoxPart | DrumPart | SlabPart | LoftPart
+/** A closed loop of plate seen from the side, open in the middle: the track. Given width across and centred at `atZ`. */
+export interface BandPart extends PartBase {
+  kind: 'band'
+  outline: Point[]
+  thickM: number
+  widthM: number
+  atZ: number
+}
+
+/**
+ * A piece of the Blender kit (src/data/kit.ts), scaled along each axis and
+ * moved into place. A negative scale mirrors it. Its own two tones are kept:
+ * `tone` is for the simple shape drawn instead if the kit has not come.
+ */
+export interface PiecePart extends PartBase {
+  kind: 'piece'
+  piece: KitPiece
+  scale: { x: number; y: number; z: number }
+  at: { x: number; y: number; z: number }
+  fallback: Omit<DrumPart, 'mount' | 'tone'>
+}
+
+export type TankPart = BoxPart | DrumPart | SlabPart | LoftPart | BandPart | PiecePart
 
 type Bare<T> = T extends unknown ? Omit<T, 'mount' | 'tone'> : never
 /** The shape of a part alone: not what it is fixed to or how it is painted. Scenery is built from these too. */
@@ -117,7 +140,7 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   // --- The hull and what is fixed to it.
   parts.push({ ...hull('body'), kind: 'slab', outline: hullOutline, widthM: m.hull.bodyWidthM, atZ: 0 })
 
-  // The track loop, with its corners cut as on the drawing.
+  // The track loop, with its corners cut as on the drawing. It is open in the middle, so the wheels show.
   const c = DRAWING.trackCornerM
   const x0 = fromNose(DRAWING.trackInsetFrontM)
   const x1 = fromNose(m.length - DRAWING.trackInsetRearM)
@@ -126,22 +149,34 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     { x: x0 - c * 0.5, y: m.trackTop }, { x: x1 + c * 0.5, y: m.trackTop }, { x: x1, y: m.trackTop - c * 0.4 }, { x: x1, y: c },
   ]
   const endR = (m.trackTop - c) * 0.5
-  const outerZ = track.centreZM + track.widthM / 2 + t.wheelProudM
   const fenderWide = m.halfWidth - m.bodyHalf
+  const ref = KIT.reference
+  const gear = t.runningGear
+  // The drive sprocket sits at the engine's end, the idler at the other, as on the drawing.
+  const frontX = x0 - endR - gear.endInM
+  const backX = x1 + endR + gear.endInM
+  const [sprocketX, idlerX] = spec.hull.engineAt === 'front' ? [frontX, backX] : [backX, frontX]
+  const endY = m.trackTop - endR - DRAWING.trackThicknessM
+  const rollerR = gear.returnRollerM
+  const rollerY = m.trackTop - DRAWING.trackThicknessM - rollerR
+  const span = frontX - backX
   for (const side of [-1, 1]) {
-    parts.push({ ...hull('dark'), kind: 'slab', outline: loop, widthM: track.widthM, atZ: side * track.centreZM })
-    for (const x of wheelX) {
-      parts.push({
-        ...hull('body'), kind: 'drum', axis: 'z', radiusM: radius, lengthM: t.wheelThickM, sides: t.wheelSides,
-        at: { x, y: radius, z: side * outerZ },
-      })
+    const z = side * track.centreZM
+    parts.push({ ...hull('dark'), kind: 'band', outline: loop, thickM: gear.trackThickM, widthM: track.widthM, atZ: z })
+    // Each piece is modelled with its hub cap on the left; the right side's are mirrored.
+    const piece = (name: KitPiece, r: number, refR: number, x: number, y: number, sides: number): TankPart => {
+      const k = r / refR
+      return {
+        ...hull('body'), kind: 'piece', piece: name, scale: { x: k, y: k, z: -side * k }, at: { x, y, z },
+        fallback: { kind: 'drum', axis: 'z', radiusM: r, lengthM: t.wheelThickM, sides, at: { x, y, z: side * (track.centreZM + track.widthM / 2 + t.wheelProudM) } },
+      }
     }
-    // The sprocket and the idler, up off the ground at either end of the loop.
-    for (const x of [x0 - endR - 0.08, x1 + endR + 0.08]) {
-      parts.push({
-        ...hull('body'), kind: 'drum', axis: 'z', radiusM: endR, lengthM: t.wheelThickM, sides: t.endWheelSides,
-        at: { x, y: m.trackTop - endR - DRAWING.trackThicknessM, z: side * outerZ },
-      })
+    for (const x of wheelX) parts.push(piece('road-wheel', radius, ref.roadWheelRadiusM, x, radius, t.wheelSides))
+    parts.push(piece('sprocket', endR, ref.sprocketRadiusM, sprocketX, endY, t.endWheelSides))
+    parts.push(piece('idler', endR, ref.idlerRadiusM, idlerX, endY, t.endWheelSides))
+    for (let i = 0; i < gear.returnRollers; i++) {
+      const x = backX + (span * (i + 1)) / (gear.returnRollers + 1)
+      parts.push(piece('return-roller', rollerR, ref.returnRollerRadiusM, x, rollerY, t.endWheelSides))
     }
     if (fenderWide > 0.05) {
       parts.push({
@@ -289,6 +324,9 @@ export function partTriangles(part: Solid): number {
     case 'drum': return part.sides * 4
     // The edge all round, and a face each side.
     case 'slab': return part.outline.length * 2 + (part.outline.length - 2) * 2
+    // The edge outside and in, and a face each side.
+    case 'band': return part.outline.length * 8
+    case 'piece': return KIT.pieces[part.piece]
     case 'loft': {
       const corners = part.rings[0]?.corners.length ?? 0
       return (part.rings.length - 1) * corners * 2 + (corners - 2)

@@ -5,10 +5,13 @@ import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32
 import { PAINT, type PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import { camoOf, camoPlaces, type Camo } from './camo'
+import { placeCorners } from './glb'
+import { kitPiece } from './kitPieces'
 import type { Kit } from './rangeScene'
 import type { Mount, Solid, TankShape, Tone } from './tankShape'
 
 type Loft = Extract<Solid, { kind: 'loft' }>
+type Band = Extract<Solid, { kind: 'band' }>
 
 /** The name of the part of a built tank that turns with the gun. */
 export const TURRET = 'turret'
@@ -80,6 +83,57 @@ function loftCorners(part: Loft): number[] {
   return out
 }
 
+/** A loop of plate: the outline, the same outline set in by the plate's thickness, and the faces between. */
+function bandCorners(part: Band): number[] {
+  const outer = part.outline
+  const n = outer.length
+  // Which way round the outline runs, so "in" is the right side of each edge.
+  let area = 0
+  for (let i = 0; i < n; i++) area += outer[i]!.x * outer[(i + 1) % n]!.y - outer[(i + 1) % n]!.x * outer[i]!.y
+  const turn = area > 0 ? 1 : -1
+  const inner = outer.map((p1, i) => {
+    const p0 = outer[(i + n - 1) % n]!
+    const p2 = outer[(i + 1) % n]!
+    const e0 = norm(p1.x - p0.x, p1.y - p0.y)
+    const e1 = norm(p2.x - p1.x, p2.y - p1.y)
+    const n0 = { x: -e0.y * turn, y: e0.x * turn }
+    const n1 = { x: -e1.y * turn, y: e1.x * turn }
+    const m = norm(n0.x + n1.x, n0.y + n1.y)
+    const reach = part.thickM / Math.max(0.2, m.x * n0.x + m.y * n0.y)
+    return { x: p1.x + m.x * reach, y: p1.y + m.y * reach }
+  })
+  const near = part.atZ - part.widthM / 2
+  const far = part.atZ + part.widthM / 2
+  const out: number[] = []
+  const quad = (a: number[], b: number[], c: number[], d: number[]): void => {
+    out.push(...a, ...b, ...c, ...a, ...c, ...d)
+  }
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n
+    const o0 = outer[i]!, o1 = outer[j]!, i0 = inner[i]!, i1 = inner[j]!
+    quad([o0.x, o0.y, near], [o1.x, o1.y, near], [o1.x, o1.y, far], [o0.x, o0.y, far])
+    quad([i1.x, i1.y, near], [i0.x, i0.y, near], [i0.x, i0.y, far], [i1.x, i1.y, far])
+    quad([o1.x, o1.y, near], [o0.x, o0.y, near], [i0.x, i0.y, near], [i1.x, i1.y, near])
+    quad([o0.x, o0.y, far], [o1.x, o1.y, far], [i1.x, i1.y, far], [i0.x, i0.y, far])
+  }
+  return out
+}
+
+function norm(x: number, y: number): { x: number; y: number } {
+  const long = Math.hypot(x, y) || 1
+  return { x: x / long, y: y / long }
+}
+
+/** A part's triangle corners, by tone. Most parts are one tone; a kit piece brings its own two. */
+function toneCorners(part: Solid, tone: Tone): Partial<Record<Tone, number[]>> {
+  if (part.kind === 'piece') {
+    const piece = kitPiece(part.piece)
+    if (!piece) return { [tone]: partCorners(part.fallback) }
+    return { body: placeCorners(piece.body, part.scale, part.at), dark: placeCorners(piece.dark, part.scale, part.at) }
+  }
+  return { [tone]: partCorners(part) }
+}
+
 function partCorners(part: Solid): number[] {
   switch (part.kind) {
     case 'box': {
@@ -105,6 +159,10 @@ function partCorners(part: Solid): number[] {
     }
     case 'loft':
       return loftCorners(part)
+    case 'band':
+      return bandCorners(part)
+    case 'piece':
+      return toneCorners(part, 'body').body ?? []
   }
 }
 
@@ -121,13 +179,15 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
 
   const piles = new Map<string, { mount: Mount; tone: Tone; corners: number[] }>()
   for (const part of shape.parts) {
-    const key = `${part.mount}/${part.tone}`
-    let pile = piles.get(key)
-    if (!pile) {
-      pile = { mount: part.mount, tone: part.tone, corners: [] }
-      piles.set(key, pile)
+    for (const [tone, corners] of Object.entries(toneCorners(part, part.tone)) as [Tone, number[]][]) {
+      const key = `${part.mount}/${tone}`
+      let pile = piles.get(key)
+      if (!pile) {
+        pile = { mount: part.mount, tone, corners: [] }
+        piles.set(key, pile)
+      }
+      for (const value of corners) pile.corners.push(value)
     }
-    for (const value of partCorners(part)) pile.corners.push(value)
   }
   for (const pile of piles.values()) {
     const geometry = new BufferGeometry()

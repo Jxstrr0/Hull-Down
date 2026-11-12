@@ -193,7 +193,7 @@ export const RENDER = {
     /** Seconds of battle shown in each second of watching. */
     rate: 3,
     /** The most the whole scene may hold, so a phone draws it at speed. A test builds every ground and counts. */
-    maxTriangles: 12000,
+    maxTriangles: 52000,
     maxMeshes: 260,
     theirTank: '#6d6248',
     theirTankDark: '#40392b',
@@ -262,13 +262,23 @@ export const RENDER = {
     gunSides: 8,
     /** How much of the hull length rests on the ground, for working out how the tank tilts. */
     footprintShare: 0.62,
-    /** Road wheels are thin discs that stand a little proud of the track, so they show from the side. */
+    /** If the kit has not come, road wheels are thin discs that stand a little proud of the track, so they show from the side. */
     wheelThickM: 0.08,
     wheelProudM: 0.02,
+    /**
+     * The running gear from the kit: how thick the track plate is, how far the
+     * sprocket and idler stand in from the ends of the loop, and the return
+     * rollers along the top run, how many and how big.
+     */
+    runningGear: { trackThickM: 0.09, endInM: 0.08, returnRollers: 3, returnRollerM: 0.1 },
     /** A bustle is a box behind the turret: its width as a share of the turret radius. */
     bustleWidthShare: 1.5,
-    /** The most triangles one tank may be built from. A test builds every turret with every tile and counts. */
-    maxTriangles: 1100,
+    /**
+     * The most triangles one tank may be built from. A test builds every turret
+     * with every tile and the most road wheels, and counts. Kelbo chose about
+     * 5,000 a tank, so the kit's detail shows.
+     */
+    maxTriangles: 6000,
     /** Sides to the sprocket, the idler, the fume extractor and the cupola. */
     endWheelSides: 8,
     extractorSides: 8,
