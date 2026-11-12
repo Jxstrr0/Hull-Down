@@ -1419,15 +1419,15 @@ export const STRINGS = {
   opponents: {
     bureaus: {
       heavy: {
-        name: 'Heavy Machine Plant No. 2',
+        name: 'Pelnik Heavy Machine Works',
         line: 'Builds to the weight limit and puts the armour on the front.',
       },
       light: {
-        name: 'Tractor Works No. 7',
+        name: 'Dravec Tractor Works',
         line: 'Builds small and cheap, with a hand-loaded gun and plain sights.',
       },
       firepower: {
-        name: 'Ordnance Institute No. 4',
+        name: 'Sokolin Ordnance Institute',
         line: 'Builds around the biggest gun and the best sights on the parts list.',
       },
     },
@@ -1447,7 +1447,7 @@ export const STRINGS = {
     },
   },
   advisor: {
-    name: 'Radek Stanek',
+    name: 'Pavel Sedlar',
     title: 'Chief engineer',
     heading: 'The chief engineer',
     about: '{name} reads the design against the tender and says what he would not sign. He points at problems. He does not design the tank.',
