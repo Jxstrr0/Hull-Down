@@ -25,6 +25,7 @@ the plan names these fonts.
 | `public/sketches/gun-smooth115.png` | Sketch of the 115 mm gun, made the same way. |
 | `public/sketches/gun-smooth125.png` | Sketch of the 125 mm gun, made the same way. |
 | `public/sketches/gun-rifled120.png` | Sketch of the 120 mm gun, made the same way. |
+| `public/sketches/gun-howitzer155.png` | Sketch of the 155 mm howitzer, drawn for this game with Pillow (`art/sketch-howitzer.py`). |
 | `public/sketches/engine-diesel580.png` | Sketch of the 580 hp diesel, made the same way. |
 | `public/sketches/engine-diesel780.png` | Sketch of the 780 hp diesel, made the same way. |
 | `public/sketches/engine-multiFuel700.png` | Sketch of the 700 hp multi-fuel engine, made the same way. |

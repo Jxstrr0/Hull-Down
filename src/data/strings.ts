@@ -458,6 +458,7 @@ export const STRINGS = {
       smooth115: { name: '115 mm smoothbore', note: 'A step up, firing fin-stabilised rounds.' },
       smooth125: { name: '125 mm smoothbore', note: 'The heavy hitter of the Pact. Needs a wide turret ring.' },
       rifled120: { name: '120 mm rifled', note: 'A foreign pattern. Powerful, but not a Pact calibre.' },
+      howitzer155: { name: '155 mm howitzer', note: 'Lobs a heavy shell 20 km and more. Needs a big turret, and only a self-propelled gun tender asks for it.' },
     },
     barrels: {
       short: { name: 'Short barrel', note: 'Light, cheap and steady on the move. Slower rounds with less punch.' },
@@ -790,6 +791,8 @@ export const STRINGS = {
     shaped125: '125 mm shaped charge',
     sabot120: '120 mm sabot',
     shaped120: '120 mm shaped charge',
+    shot155: '155 mm armour-piercing shot',
+    shell155: '155 mm high-explosive shell',
   },
   ammo: {
     title: 'Pact ammunition for this gun',

@@ -147,24 +147,37 @@ export interface GunPart extends Part {
   roundVolumeM3: number
   /** Rounds a minute with a fresh human loader, tank halted. */
   loaderRof: number
+  /**
+   * Farthest it can drop a shell at full elevation, kilometres. A tank gun
+   * cannot lift its barrel far enough to reach a fire mission's map grid.
+   */
+  reachKm: number
+  /** Built to lob shells, not to fight tanks: the design office offers it only where the tender asks for its calibre. */
+  howitzer: boolean
 }
 
 export const GUNS = {
   rifled100: {
     massT: 1.9, volumeM3: 0.8, costKr: 150_000, reliability: 0.99,
-    calibreMm: 100, bore: 'rifled', minRingMm: 1800, roundMassT: 0.03, roundVolumeM3: 0.035, loaderRof: 7,
+    calibreMm: 100, bore: 'rifled', minRingMm: 1800, roundMassT: 0.03, roundVolumeM3: 0.035, loaderRof: 7, reachKm: 6, howitzer: false,
   },
   smooth115: {
     massT: 2.2, volumeM3: 0.9, costKr: 190_000, reliability: 0.99,
-    calibreMm: 115, bore: 'smoothbore', minRingMm: 1900, roundMassT: 0.028, roundVolumeM3: 0.038, loaderRof: 6,
+    calibreMm: 115, bore: 'smoothbore', minRingMm: 1900, roundMassT: 0.028, roundVolumeM3: 0.038, loaderRof: 6, reachKm: 5, howitzer: false,
   },
   smooth125: {
     massT: 2.5, volumeM3: 1.0, costKr: 240_000, reliability: 0.99,
-    calibreMm: 125, bore: 'smoothbore', minRingMm: 2050, roundMassT: 0.033, roundVolumeM3: 0.045, loaderRof: 4.5,
+    calibreMm: 125, bore: 'smoothbore', minRingMm: 2050, roundMassT: 0.033, roundVolumeM3: 0.045, loaderRof: 4.5, reachKm: 6, howitzer: false,
   },
   rifled120: {
     massT: 2.8, volumeM3: 1.1, costKr: 270_000, reliability: 0.99,
-    calibreMm: 120, bore: 'rifled', minRingMm: 2100, roundMassT: 0.036, roundVolumeM3: 0.048, loaderRof: 5,
+    calibreMm: 120, bore: 'rifled', minRingMm: 2100, roundMassT: 0.036, roundVolumeM3: 0.048, loaderRof: 5, reachKm: 7, howitzer: false,
+  },
+  // A howitzer for a self-propelled gun: it lobs a heavy shell far over the hill. It needs a big turret,
+  // its shell and charge go in separately, and 155 mm is not a calibre the Pact supplies for tanks.
+  howitzer155: {
+    massT: 3.8, volumeM3: 1.4, costKr: 340_000, reliability: 0.98,
+    calibreMm: 155, bore: 'rifled', minRingMm: 2350, roundMassT: 0.055, roundVolumeM3: 0.07, loaderRof: 4, reachKm: 22, howitzer: true,
   },
 } as const satisfies Record<string, GunPart>
 export type GunId = keyof typeof GUNS

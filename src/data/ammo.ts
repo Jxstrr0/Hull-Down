@@ -48,6 +48,12 @@ export const PACT_ROUNDS = {
     sabot120: { kind: 'kinetic', speedMs: 1370, spreadM: 0.3, penMm: 420, lossPerKmMm: 30 },
     shaped120: { kind: 'shaped', speedMs: 1100, spreadM: 0.45, penMm: 440, lossPerKmMm: 0 },
   },
+  // Heavy shells for lobbing, not for tank fighting. Fired straight at a tank, both are slow and loose:
+  // a solid shot for close in, and the high-explosive shell, which bursts on the plate.
+  howitzer155: {
+    shot155: { kind: 'kinetic', speedMs: 760, spreadM: 1.0, penMm: 190, lossPerKmMm: 60 },
+    shell155: { kind: 'shaped', speedMs: 820, spreadM: 1.2, penMm: 160, lossPerKmMm: 0 },
+  },
 } as const satisfies Record<GunId, Record<string, Round>>
 
 type RoundsOf<G extends GunId> = keyof (typeof PACT_ROUNDS)[G]
