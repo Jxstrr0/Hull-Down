@@ -2334,7 +2334,6 @@ export const STRINGS = {
     goTo: 'Go to',
     bureau: 'The bureau',
     saves: 'Saves and save code',
-    credits: 'Credits',
     career: 'Career',
   },
   sound: {
@@ -2385,7 +2384,7 @@ export const STRINGS = {
   },
   credits: {
     heading: 'Credits',
-    about: 'Everything in the game that somebody else made, with thanks. All of it is free to use; the licence is named on each line.',
+    about: 'Everything in the game that somebody else made, or a tool made for it, with thanks. Each line names its licence or terms.',
     groups: {
       fonts: 'Fonts',
       sounds: 'Sounds',

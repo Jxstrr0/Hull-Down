@@ -1,11 +1,12 @@
 // The page menu: the ☰ button in the top bar opens a sheet that holds the
-// settings (sound, look, graphics), quick ways to the bureau, saves and
-// credits, and "start a new career". Opening it holds any trial that is
+// settings (sound, look, graphics), quick ways to the bureau and saves,
+// "start a new career", and the credits. Opening it holds any trial that is
 // playing, so it doubles as the pause screen.
 
 import { STRINGS, fill } from '../data/strings'
 import { sound, switchSound } from '../audio/gameSound'
 import type { Office } from '../office/designScreen'
+import { drawCredits } from './credits'
 import { el } from './dom'
 import { holdAll } from './hold'
 import { applyTheme, loadTheme, otherTheme, type Theme } from './theme'
@@ -97,13 +98,8 @@ export function createMenu(office: Office): HTMLElement {
     bureau.addEventListener('click', () => go(() => office.openTab('bureau')))
     const saves = button('menu:saves', M.saves)
     saves.addEventListener('click', () => go(() => office.openTab('saves')))
-    const credits = button('menu:credits', M.credits)
-    credits.addEventListener('click', () => go(() => {
-      office.openTab('saves')
-      office.root.querySelector<HTMLElement>('[data-key="credits"]')?.scrollIntoView({ block: 'start' })
-    }))
     const links = el('div', 'mn-links')
-    links.append(bureau, saves, credits)
+    links.append(bureau, saves)
     places.append(links)
 
     // The career: tap twice to throw it away.
@@ -120,7 +116,11 @@ export function createMenu(office: Office): HTMLElement {
     })
     career.append(again)
 
-    sheet.replaceChildren(head, el('p', 'ctl-note mn-held', M.held), settings, places, career)
+    // Who made it: folded shut until asked for.
+    const credits = el('section', 'mn-group')
+    credits.append(drawCredits())
+
+    sheet.replaceChildren(head, el('p', 'ctl-note mn-held', M.held), settings, places, career, credits)
   }
 
   /** Draw the sheet again and put the finger's focus back where it was. */
@@ -145,7 +145,7 @@ export function createMenu(office: Office): HTMLElement {
     if (event.key === 'Escape') close()
     if (event.key !== 'Tab') return
     // Keep the keyboard inside the sheet while it is open.
-    const stops = [...sheet.querySelectorAll<HTMLElement>('button')]
+    const stops = [...sheet.querySelectorAll<HTMLElement>('button, summary, a[href]')]
     const first = stops[0]
     const last = stops[stops.length - 1]
     if (!first || !last) return
