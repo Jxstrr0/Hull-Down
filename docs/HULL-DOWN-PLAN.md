@@ -700,7 +700,8 @@ Kelbo's pick: the tank destroyer first, as a career tender, in small PRs.
    smaller mount, but the whole tank turns to aim, so it is slower onto each
    new target. Allowed only on a tank destroyer's tender, and in the sandbox.
 2. The tank destroyer tender in the career (1.3.1.0), with its own weights and
-   limits, and saves carried over.
+   limits, and saves carried over. Kelbo's pick: 1991, between the first
+   tender and 2001.
 3. Rival bureaus bid casemates on it (1.3.2.0).
 4. Maybe: the hull turns toward each new target in battle, not just the gun.
 
