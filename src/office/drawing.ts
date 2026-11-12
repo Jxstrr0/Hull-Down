@@ -393,34 +393,60 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
   const wheelR = Math.min(DRAWING.roadWheelMaxRadiusM, (pitch / 2) * DRAWING.wheelFill)
   const t = DRAWING.trackThicknessM
   const d = DRAWING.detail
+  // Behind side skirts the wheels are hidden: each is a plain dashed ring, and the top run's links are left out.
+  const skirted = spec.runningGear.skirts
   // Track links: the inner face of the track and a tick at every link, on both runs.
-  let links = stroke(pen, start, t, start + contact, t) + stroke(pen, x0 + c * 0.5, m.trackTop - t, x1 - c * 0.5, m.trackTop - t)
+  let links = stroke(pen, start, t, start + contact, t)
   for (let x = start + d.linkM / 2; x < start + contact; x += d.linkM) links += stroke(pen, x, 0, x, t)
-  for (let x = x0 + c * 0.5 + d.linkM / 2; x < x1 - c * 0.5; x += d.linkM) links += stroke(pen, x, m.trackTop - t, x, m.trackTop)
-  pen.path(links, 'fine')
-  for (let i = 0; i < wheels; i++) roadWheel(pen, start + pitch * (i + 0.5), wheelR + t, wheelR)
-  // Return rollers under the top run, between the first and last wheels.
-  let rollers = ''
-  for (let i = 0; i < d.returnRollers; i++) {
-    const x = start + pitch * 0.5 + ((contact - pitch) * (i + 0.5)) / d.returnRollers
-    rollers += ring(pen, x, m.trackTop - t - d.rollerR, d.rollerR)
+  if (!skirted) {
+    links += stroke(pen, x0 + c * 0.5, m.trackTop - t, x1 - c * 0.5, m.trackTop - t)
+    for (let x = x0 + c * 0.5 + d.linkM / 2; x < x1 - c * 0.5; x += d.linkM) links += stroke(pen, x, m.trackTop - t, x, m.trackTop)
   }
-  pen.path(rollers, 'thin')
-  // The drive sprocket sits at the engine's end, the idler at the other.
+  pen.path(links, 'fine')
   const endR = (m.trackTop - c) * 0.5
   const endY = m.trackTop - endR - t
   const front = x0 + endR + 0.08
   const back = x1 - endR - 0.08
-  if (engineFirstSide(spec)) {
-    sprocket(pen, front, endY, endR)
-    idler(pen, back, endY, endR)
+  const rollerX = (i: number): number => start + pitch * 0.5 + ((contact - pitch) * (i + 0.5)) / d.returnRollers
+  if (skirted) {
+    let hidden = ''
+    for (let i = 0; i < wheels; i++) hidden += ring(pen, start + pitch * (i + 0.5), wheelR + t, wheelR)
+    for (let i = 0; i < d.returnRollers; i++) hidden += ring(pen, rollerX(i), m.trackTop - t - d.rollerR, d.rollerR)
+    hidden += ring(pen, front, endY, endR) + ring(pen, back, endY, endR)
+    pen.path(hidden, 'hidden')
   } else {
-    idler(pen, front, endY, endR)
-    sprocket(pen, back, endY, endR)
+    for (let i = 0; i < wheels; i++) roadWheel(pen, start + pitch * (i + 0.5), wheelR + t, wheelR)
+    // Return rollers under the top run, between the first and last wheels.
+    let rollers = ''
+    for (let i = 0; i < d.returnRollers; i++) rollers += ring(pen, rollerX(i), m.trackTop - t - d.rollerR, d.rollerR)
+    pen.path(rollers, 'thin')
+    // The drive sprocket sits at the engine's end, the idler at the other.
+    if (engineFirstSide(spec)) {
+      sprocket(pen, front, endY, endR)
+      idler(pen, back, endY, endR)
+    } else {
+      idler(pen, front, endY, endR)
+      sprocket(pen, back, endY, endR)
+    }
   }
 
   // Hull fittings: the track guard, the engine grille, tow hooks and a weld seam.
   const fender = m.trackTop + d.fenderGapM
+  if (skirted) {
+    // The skirt plates, hung from the track guard the length of the track, each with its bolts.
+    const s = d.skirts
+    const plates = Math.max(1, Math.ceil((x1 - x0) / s.plateM))
+    const each = (x1 - x0) / plates
+    const bottom = m.trackTop * s.bottomShare
+    let bolts = ''
+    for (let i = 0; i < plates; i++) {
+      const a = x0 + i * each + s.gapM / 2
+      const b = a + each - s.gapM
+      pen.rect(a, bottom, b, fender, 'solid')
+      for (let k = 0; k < s.bolts; k++) bolts += ring(pen, a + ((b - a) * (k + 0.5)) / s.bolts, fender - s.boltDownM, s.boltR)
+    }
+    pen.path(bolts, 'fine')
+  }
   const noseY = belly + m.lowerH
   const glacisAt = (y: number): number => ((y - noseY) / (roof - noseY)) * m.upperRun
   pen.line(Math.max(glacisAt(fender), 0), fender, L - 0.02, fender, 'thin')
@@ -487,6 +513,13 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
   pen.line(DRAWING.trackInsetFrontM, W - m.trackWidth, L - DRAWING.trackInsetRearM, W - m.trackWidth, 'hidden')
   pen.line(DRAWING.trackInsetFrontM, -(W - m.trackWidth), L - DRAWING.trackInsetRearM, -(W - m.trackWidth), 'hidden')
   pen.line(m.upperRun, -bodyHalf, m.upperRun, bodyHalf, 'thin')
+  if (spec.runningGear.skirts) {
+    // Side skirts, seen from above: a thin plate along each side, outside the deck.
+    const s = DRAWING.detail.skirts
+    for (const side of [-1, 1]) {
+      pen.rect(DRAWING.trackInsetFrontM, side * (W + s.outM), L - DRAWING.trackInsetRearM, side * (W + s.outM + s.thickM), 'thin')
+    }
+  }
 
   // Engine deck louvres, and the driver's hatch beside or ahead of them.
   const bayHalf = bodyHalf * 0.8
@@ -636,6 +669,11 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
   pen.line(-bodyHalf, belly + m.lowerH, bodyHalf, belly + m.lowerH, 'thin')
   pen.rect(-W, 0, -W + m.trackWidth, m.trackTop, 'solid')
   pen.rect(W - m.trackWidth, 0, W, m.trackTop, 'solid')
+  if (spec.runningGear.skirts) {
+    // Side skirts, end on: a thin plate outside each track.
+    const s = DRAWING.detail.skirts
+    for (const side of [-1, 1]) pen.rect(side * (W + s.outM), m.trackTop * s.bottomShare, side * (W + s.outM + s.thickM), fender, 'solid')
+  }
 
   // The turret front is two armour zones, one each side of the gun. Seen
   // from the front, the tank's left is on the right of the page.

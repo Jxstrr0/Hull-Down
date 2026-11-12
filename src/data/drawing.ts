@@ -44,6 +44,8 @@ export const DRAWING = {
     fenderGapM: 0.03,
     /** A weld seam this far below the roof line. */
     seamM: 0.05,
+    /** Side skirts, as the trial tanks hang them: plates this long, this far out and this thick, reaching down to this share of the track's height, with bolts along the top. */
+    skirts: { plateM: 1.2, gapM: 0.03, outM: 0.05, thickM: 0.04, bottomShare: 0.3, boltR: 0.02, boltDownM: 0.06, bolts: 2 },
     /** Spacing of the engine grille's louvres. */
     louvreM: 0.09,
     /** The turret's casting line, as a share of its height. */
