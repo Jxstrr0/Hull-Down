@@ -209,6 +209,19 @@ export const RENDER = {
     lifeS: 14, fadeShare: 0.4, opacity: 0.4,
     colours: { concrete: '#5f5c55', earth: '#3f3222', mud: '#241b12' },
   },
+  /**
+   * Sparks where a round strikes a tank in battle: `count` of them (most when
+   * it bounces off), thrown back off the plate at up to `speedMs`, some
+   * `speedSpread` slower, over a cone `spreadRad` wide, with a `liftMs` lift,
+   * falling at `fallMs2`. Each lives `lifeS` watched seconds, shrinking to
+   * `endShare` of `sizeM` and cooling from `hot` to `cool`. The pool holds
+   * `battle`: anything over waits for the next strike's to go out.
+   */
+  sparks: {
+    battle: 48, count: { bounce: 12, through: 7, track: 6 },
+    speedMs: 9, speedSpread: 0.5, spreadRad: 0.9, liftMs: 2.5, fallMs2: 9.8,
+    lifeS: 0.5, sizeM: 0.35, endShare: 0.3, hot: '#fff4c2', cool: '#ff7a1f',
+  },
   dust: {
     trials: 64, battle: 120, mostPerFrame: 2,
     lifeS: 1.6, fromM: 0.3, toM: 1.3, riseM: 0.9, fadeShare: 0.4, opacity: 0.38, sides: 8, rings: 5,
