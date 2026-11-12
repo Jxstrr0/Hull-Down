@@ -1,5 +1,6 @@
 // The proving ground: every test a prototype is put through, run from its
 // stat sheet. The same tank always gives the same result.
+import { AIR_TRIAL, type AirMarks } from '../../data/airDefence'
 import { FIRE_MISSION } from '../../data/fireMission'
 import { SCOUT_TRIAL, type ScoutMarks } from '../../data/scout'
 import { SQUAD_TRIAL, type SquadMarks } from '../../data/squad'
@@ -8,6 +9,7 @@ import type { Limits, VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 import { unit } from '../rng'
 import { TURRET_PARTS, type TurretPart, type TurretPartId } from '../gunnery/fire'
+import { judgeAirDefence, runAirDefence, type AirRun } from './airDefence'
 import { runAcceleration, type AccelerationRun } from './acceleration'
 import { runArmourTrial, type ArmourRun } from './armour'
 import { runBerm, type BermRun } from './berm'
@@ -19,6 +21,7 @@ import { runObstacles, type ObstacleRun } from './obstacles'
 import { judgeScoutPatrol, runScoutPatrol, type ScoutRun } from './scout'
 import { judgeSquadDrop, runSquadDrop, type SquadRun } from './squad'
 
+export { judgeAirDefence, runAirDefence, type AirRaider, type AirRun } from './airDefence'
 export { runAcceleration, stepTime, type AccelerationRun, type Trace } from './acceleration'
 export {
   FINDING_KINDS, afterAction, timelineOf, weigh, type AfterAction, type Finding, type FindingKind, type Fix, type ShotLine,
@@ -56,6 +59,9 @@ export type SquadResult = SquadRun & ReturnType<typeof judgeSquadDrop> & { marks
 /** Spot and report with its marks applied. */
 export type ScoutResult = ScoutRun & ReturnType<typeof judgeScoutPatrol> & { marks: ScoutMarks }
 
+/** The air defence trial with its marks applied. */
+export type AirResult = AirRun & ReturnType<typeof judgeAirDefence> & { marks: AirMarks }
+
 /** The fire mission with its marks applied. */
 export type FireMissionResult = FireMissionRun & ReturnType<typeof judgeFireMission> & {
   marks: { firstRoundS: number; rpm: number; missM: number }
@@ -80,6 +86,8 @@ export interface RangeReport {
   squad: SquadResult | null
   /** Spot and report, for a car on wheels or where the tender asks for it. Null otherwise. */
   scout: ScoutResult | null
+  /** The air defence trial, for an anti-aircraft gun or where the tender asks for it. Null otherwise. */
+  air: AirResult | null
   /**
    * True on a self-propelled gun's tender: the tank shoots, the loading drill
    * and the berm are run but not counted, and the report leaves them out.
@@ -165,6 +173,10 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     ? runScoutPatrol(sheet.drive, sheet.fire, ridge.showsM, sheet.geometry.widthM, setup.seed)
     : null
   const scout = patrol && scoutMarks ? { ...patrol, ...judgeScoutPatrol(patrol, scoutMarks), marks: scoutMarks } : null
+  // An anti-aircraft gun is put through the air defence trial wherever it goes; a tender for one sets its own marks.
+  const airMarks = marks.air ?? (sheet.fire.air.antiAir ? AIR_TRIAL.marks : null)
+  const raid = airMarks ? runAirDefence(sheet.fire, setup.seed) : null
+  const air = raid && airMarks ? { ...raid, ...judgeAirDefence(raid, airMarks), marks: airMarks } : null
   const selfPropelled = marks.fireMission !== undefined
   const carrier = marks.squad !== undefined
   const scouting = marks.scout !== undefined
@@ -178,6 +190,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     ]
   if (squad) passed.push(squad.passed)
   if (scout) passed.push(scout.passed)
+  if (air) passed.push(air.passed)
   return {
     marks,
     acceleration,
@@ -190,6 +203,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     fireMission,
     squad,
     scout,
+    air,
     selfPropelled,
     carrier,
     scouting,

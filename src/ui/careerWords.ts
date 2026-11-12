@@ -57,6 +57,7 @@ export function failedTests(range: RangeReport): string[] {
   if (range.fireMission && !range.fireMission.passed) out.push(R.fireMission.title)
   if (range.squad && !range.squad.passed) out.push(R.squad.title)
   if (range.scout && !range.scout.passed) out.push(R.scout.title)
+  if (range.air && !range.air.passed) out.push(R.air.title)
   return out
 }
 

@@ -63,6 +63,8 @@ export interface Fire {
   /** Shooting from a moving tank. The mils already allow for the ride. */
   moving: { halts: boolean; acrossMil: number; upMil: number; extraS: number }
   night: { seeM: number; layFactor: number; search: number }
+  /** Shooting at aircraft (src/data/airDefence.ts): a gun built to track them, and a search radar to find them. */
+  air: { antiAir: boolean; radar: boolean }
   /** Seconds, for a fresh trained crew with nothing else to do. */
   times: { findS: number; rangeS: number; layS: number; relayS: number }
   /** How far the gun swings each way of the hull's front, degrees; null for a turret, which turns all the way round. */
@@ -141,6 +143,7 @@ export function fireOf(spec: VehicleSpec): Fire {
       extraS: stabiliser.moveS,
     },
     night: { ...G.nightSights[fc.night] },
+    air: { antiAir: gun.antiAir, radar: fc.searchRadar },
     times: {
       findS: fc.commanderSight ? G.find.ownSightS : G.find.plainS,
       rangeS: rangefinder.rangeS,

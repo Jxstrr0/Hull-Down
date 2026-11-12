@@ -1,6 +1,7 @@
 // The proving ground: what the ground is like, how the tests are laid out
 // and the marks a tank has to reach. Game-level abstractions, not
 // engineering data.
+import type { AirMarks } from './airDefence'
 import type { ThreatId } from './ammo'
 import type { FireMissionMarks } from './fireMission'
 import { SCOUT_TRIAL, type ScoutMarks } from './scout'
@@ -422,6 +423,12 @@ export type Marks = {
    * tender, where a car on wheels is held to the range's own marks.
    */
   scout?: ScoutMarks
+  /**
+   * The air defence trial, for an anti-aircraft gun vehicle's tender. Not
+   * given for any other tender, where an anti-aircraft gun is held to the
+   * range's own marks.
+   */
+  air?: AirMarks
   /** Obstacles the tender does not ask the vehicle to cross. They are tried, but count neither way. */
   waived?: readonly ObstacleId[]
 }
