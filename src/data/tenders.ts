@@ -6,7 +6,7 @@
 // check that each rival bureau leads a tender of its own.
 import type { Limits } from '../sim/vehicle/spec'
 import type { ThreatTankId } from './opponents'
-import { MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, type Marks } from './range'
+import { MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, MARKS_SPG, type Marks } from './range'
 import { PACT_LIMITS_GEN1, PACT_LIMITS_GEN3 } from './tuning'
 
 export const SCORE_AXES = ['protection', 'firepower', 'mobility', 'reliability', 'cost'] as const
@@ -19,7 +19,7 @@ export interface Tender {
   limits: Limits & { maxUnitCostKr: number }
   /** What the proving ground asks of a prototype. */
   marks: Marks
-  /** The Accord tanks the army expects it to meet. Every bid duels each of them. */
+  /** The Accord tanks the army expects it to meet. Every bid duels each of them. None for a self-propelled gun, which fights from beyond the hill. */
   threats: readonly ThreatTankId[]
   /** How the army weighs a bid. The five add up to 100. */
   weights: Record<ScoreAxis, number>
@@ -35,7 +35,7 @@ export interface Tender {
   luck: number
 }
 
-export const TENDER_IDS = ['improvedType1', 'destroyer1991', 'tank2001', 'tank2016'] as const
+export const TENDER_IDS = ['improvedType1', 'destroyer1991', 'tank2001', 'spg2008', 'tank2016'] as const
 export type TenderId = (typeof TENDER_IDS)[number]
 
 export const TENDERS: Record<TenderId, Tender> = {
@@ -92,6 +92,24 @@ export const TENDERS: Record<TenderId, Tender> = {
     luck: 1,
   },
   /**
+   * Seven years on: the army wants a self-propelled gun, a 155 mm howitzer on
+   * tracks that can keep up with its tanks and drop shells on map grids 20 km
+   * off. It is judged on a fire mission in place of the tank shoots and duels.
+   * Generation two parts. Firepower counts for most, then cost and
+   * reliability; it stays back, so its armour need only keep out splinters
+   * and cannon.
+   */
+  spg2008: {
+    year: 2008,
+    limits: { ...PACT_LIMITS_GEN1, generation: 2, maxUnitCostKr: 4_500_000, allowedCalibresMm: [155], casemate: true },
+    marks: MARKS_SPG,
+    threats: [],
+    weights: { protection: 5, firepower: 40, mobility: 15, reliability: 20, cost: 20 },
+    grantKr: 35_000_000,
+    rivalRevisions: 3,
+    luck: 4,
+  },
+  /**
    * Fifteen years on again: generation three. The Pact's bridges carry
    * more, but the army has a whole fleet to replace: it wants a tank it can
    * buy in numbers and keep running, so cost and reliability count for most.
@@ -128,6 +146,19 @@ export const SCORING = {
     /** Share from the loading drill, full marks at `drillBestRpm`. The rest is from the duels: rounds fired that got through. */
     drillShare: 0.2,
     drillBestRpm: 8,
+    /**
+     * For a self-propelled gun, all from the fire mission, times the share of
+     * grids it could reach. Each part scores nothing at the tender's mark and
+     * full marks at its best.
+     */
+    mission: {
+      timeShare: 0.3,
+      bestFirstRoundS: 60,
+      rateShare: 0.3,
+      bestRpm: 8,
+      /** The rest is how close the shells land. */
+      bestMissM: 25,
+    },
   },
   mobility: {
     /** The sprint: no marks at the tender's time, full marks at `bestSprintS`. */

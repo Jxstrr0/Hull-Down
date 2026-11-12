@@ -20,8 +20,12 @@ import { decide, scoreBid, trialBid, type BidScore, type Trialled } from './scor
 import { fieldReport, serviceUnitCostKr, type FieldReport } from './service'
 import { askMeasure, fixedPartsChanged, massCeilingT, type Upgrade, type UpgradeAsk } from './upgrade'
 
-/** Two since the tank destroyer tender of 1991 came in second (src/persist/careerCodec.ts moves older careers on). */
-export const CAREER_FORMAT = 2
+/**
+ * Three since the self-propelled gun tender of 2008 came in before 2016; two
+ * when the tank destroyer tender of 1991 came in second (src/persist/careerCodec.ts
+ * moves older careers on).
+ */
+export const CAREER_FORMAT = 3
 
 /** A prototype the bureau paid for. The first is number one; each after it is a revision. */
 export interface Prototype {

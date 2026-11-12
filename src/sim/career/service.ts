@@ -71,7 +71,8 @@ export interface FieldReport {
   /** The firing camp: targets put up, and those hit by conscripts and by the range's own crew. */
   shoot: { targets: number; conscripts: number; cadre: number }
   complaints: Complaint[]
-  exercise: Exercise
+  /** Null for a self-propelled gun, which has no tanks to meet: it fires from beyond the hill. */
+  exercise: Exercise | null
   /** What the report does to the bureau's standing, before the limits are applied. */
   standing: Record<Body, number>
   /** The bureau's fee on the year's tanks. */
@@ -167,7 +168,7 @@ function ranBadly(running: Running): boolean {
  */
 export function askOf(report: Pick<FieldReport, 'running' | 'exercise' | 'complaints'>): UpgradeAsk | null {
   if (ranBadly(report.running)) return { kind: 'reliability' }
-  for (const lesson of report.exercise.lessons) {
+  for (const lesson of report.exercise?.lessons ?? []) {
     if (lesson.good) continue
     if ((lesson.kind === 'holed' || lesson.kind === 'flanked') && lesson.zone) return { kind: 'protection', zone: lesson.zone }
     if (lesson.kind === 'outdrawn') return { kind: 'firstShot' }
@@ -207,14 +208,15 @@ export function fieldReport(
 
   const E = SERVICE.exercise
   const ground = E.grounds[(year - 1) % E.grounds.length] ?? BATTLE_GROUND_IDS[0]
-  const threat = tender.threats[(year - 1) % tender.threats.length] ?? tender.threats[0]!
-  const other = THREAT_TANKS[threat]
-  const series = runBattleSeries(
-    mine, combatantOf(other.spec, ACCORD_LIMITS, other.rounds), ground, DEFAULT_ORDERS, hash32(luck, ROLL.exercise), E.battles,
-    [SERVICE.crew, SERVICE.opposingCrew],
-  )
-  const exercise: Exercise = {
-    ground, threat, won: series.won, lost: series.lost, drawn: series.drawn, lessons: series.findings.slice(0, E.lessons),
+  const threat = tender.threats[(year - 1) % tender.threats.length] ?? tender.threats[0]
+  let exercise: Exercise | null = null
+  if (threat) {
+    const other = THREAT_TANKS[threat]
+    const series = runBattleSeries(
+      mine, combatantOf(other.spec, ACCORD_LIMITS, other.rounds), ground, DEFAULT_ORDERS, hash32(luck, ROLL.exercise), E.battles,
+      [SERVICE.crew, SERVICE.opposingCrew],
+    )
+    exercise = { ground, threat, won: series.won, lost: series.lost, drawn: series.drawn, lessons: series.findings.slice(0, E.lessons) }
   }
 
   const R = SERVICE.running
@@ -223,7 +225,7 @@ export function fieldReport(
   const standing: Record<Body, number> = {
     army:
       (bad ? R.army.bad : good ? R.army.good : 0) +
-      (exercise.won > exercise.lost ? E.army.won : exercise.lost > exercise.won ? E.army.lost : 0) +
+      (!exercise ? 0 : exercise.won > exercise.lost ? E.army.won : exercise.lost > exercise.won ? E.army.lost : 0) +
       (complaints.filter((each) => each.kind !== 'threeMen').length >= SERVICE.complaints.many ? SERVICE.complaints.army : 0),
     ministry: bad ? R.ministry.bad : 0,
     pact: 0,

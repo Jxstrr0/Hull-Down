@@ -64,6 +64,11 @@ export interface RangeReport {
   berm: BermRun & { passed: boolean }
   /** The fire mission, for a howitzer or where the tender asks for one. Null otherwise. */
   fireMission: FireMissionResult | null
+  /**
+   * True on a self-propelled gun's tender: the tank shoots, the loading drill
+   * and the berm are run but not counted, and the report leaves them out.
+   */
+  selfPropelled: boolean
   /** Hours the crew had been in the tank when the shoots and the drill came round. */
   crewHours: number
   /** Tests passed and tests run. */
@@ -118,10 +123,13 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   const missionMarks = marks.fireMission ?? (sheet.fire.mission.howitzer ? FIRE_MISSION.marks : null)
   const mission = missionMarks ? runFireMission(sheet.fire, setup.seed) : null
   const fireMission = mission && missionMarks ? { ...mission, ...judgeFireMission(mission, missionMarks), marks: missionMarks } : null
-  const passed = [
-    acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
-    armour.passed, berm.passed, ...(fireMission ? [fireMission.passed] : []),
-  ]
+  const selfPropelled = marks.fireMission !== undefined
+  const passed = selfPropelled
+    ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed, fireMission?.passed ?? false]
+    : [
+      acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
+      armour.passed, berm.passed, ...(fireMission ? [fireMission.passed] : []),
+    ]
   return {
     marks,
     acceleration,
@@ -132,6 +140,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     armour,
     berm,
     fireMission,
+    selfPropelled,
     crewHours: RANGE.crewHours,
     passes: passed.filter(Boolean).length,
     tests: passed.length,

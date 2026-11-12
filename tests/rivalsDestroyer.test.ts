@@ -22,7 +22,7 @@ describe('the rival bureaux asked for a tank destroyer', () => {
   })
 
   it('bid no casemate on any other tender', () => {
-    for (const id of TENDER_IDS.filter((each) => each !== 'destroyer1991')) {
+    for (const id of TENDER_IDS.filter((each) => !TENDERS[each].limits.casemate)) {
       for (const seed of SEEDS) {
         for (const bureau of BUREAU_IDS) expect(casemate(designRival(bureau, TENDERS[id].limits, seed).turret.shape), `${id} ${bureau}`).toBe(false)
       }

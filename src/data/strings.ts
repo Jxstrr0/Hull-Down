@@ -1505,6 +1505,10 @@ export const STRINGS = {
       name: 'A tank for a watched battlefield',
       brief: 'Fifteen years on. The Palisade B is still what the Accord fields, but the army has watched what small wars abroad do to tanks, and the range now drops a bomblet from a drone on the hull roof and the turret roof, and both must hold. A top-attack missile is fired at the turret roof for the record. But the army has a whole fleet to replace. Above all it wants a tank it can buy in numbers and keep running: cost counts for most, then reliability. The Pact has rebuilt its bridges to carry 48 t. Generation three parts are allowed as the bureau works them up.',
     },
+    spg2008: {
+      name: 'A self-propelled gun',
+      brief: 'Seven years on. The army wants guns that can keep up with its tanks: a 155 mm howitzer on tracks. It will not duel the Accord\'s tanks. An observer will call for fire on map grids 11 to 19 km off, and the army will time the first round, count the rounds in a minute and measure how close they land. The tank shoots, the loading drill and the berm do not count for it. Its armour need only keep out a raiding carrier\'s cannon. Firepower counts for most, then cost and reliability. Only the 155 mm calibre is accepted. A turret or a casemate. Generation two parts.',
+    },
     destroyer1991: {
       name: 'A tank destroyer',
       brief: 'Ten years on. The Accord still fields the Warden and the Palisade, and the army wants something to stand beside its tanks and stop them: a tank destroyer. It need not have a turret. A casemate, the gun fixed in a low box on the hull, is allowed for the first time, and lets a big gun ride on a light, cheap tank. It is meant to wait hull down for the enemy, not to lead the advance: firepower counts for most, then cost. The same bridges and the same generation one parts as before.',
@@ -1879,6 +1883,7 @@ export const STRINGS = {
       shootLine: 'Conscripts hit {conscripts} of {targets} targets. The range\'s crew, on the same targets, hit {cadre}.',
       exercise: 'On exercise',
       exerciseLine: '{ground}, against {threat} with trained crews. Of {n} battles: won {won}, lost {lost}, drawn {drawn}.',
+      noExercise: 'None against tanks: a self-propelled gun fires from beyond the hill.',
       lessons: 'The umpires\' lessons',
       noLessons: 'The umpires drew no lessons.',
       standing: 'What it did to the bureau\'s standing',

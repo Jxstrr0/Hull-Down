@@ -6,7 +6,7 @@ import { GUNNERY_TEST_IDS } from '../../data/range'
 import { SCORE_AXES, SCORING, type ScoreAxis, type Tender } from '../../data/tenders'
 import { combatantOf } from '../duel/duel'
 import { runCard, type DuelSeries } from '../duel/series'
-import { runProvingGround, type RangeReport } from '../trials'
+import { runProvingGround, type FireMissionResult, type RangeReport } from '../trials'
 import type { VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 
@@ -42,6 +42,16 @@ function between(value: number, none: number, full: number): number {
   return full === none ? 1 : clamp01((value - none) / (full - none))
 }
 
+/** A self-propelled gun's firepower, 0..1, all from its fire mission. */
+function missionFirepower(run: FireMissionResult): number {
+  const M = SCORING.firepower.mission
+  const reached = run.grids.filter((grid) => grid.reached).length / run.grids.length
+  const time = run.firstRoundS === null ? 0 : between(run.firstRoundS, run.marks.firstRoundS, M.bestFirstRoundS)
+  const rate = between(run.rpm, run.marks.rpm, M.bestRpm)
+  const close = run.missM === null ? 0 : between(run.missM, run.marks.missM, M.bestMissM)
+  return reached * (M.timeShare * time + M.rateShare * rate + (1 - M.timeShare - M.rateShare) * close)
+}
+
 /** Puts a bid through the tender's proving ground and duels. */
 export function trialBid(spec: VehicleSpec, tender: Tender, seed: number): Trialled {
   const sheet = buildStatSheet(spec, tender.limits)
@@ -72,9 +82,11 @@ export function scoreBid(bid: Trialled, tender: Tender): BidScore {
 
   const serials = range.armour.serials
   const held = serials.filter((serial) => serial.through === 0).length
-  const protection =
-    S.protection.trialShare * (serials.length ? held / serials.length : 1) +
-    (1 - S.protection.trialShare) * (taken ? 1 - holed / taken : 1)
+  const trial = serials.length ? held / serials.length : 1
+  // With no duels, as for a self-propelled gun, the armour trial is all there is to go by.
+  const protection = bid.duels.length === 0
+    ? trial
+    : S.protection.trialShare * trial + (1 - S.protection.trialShare) * (taken ? 1 - holed / taken : 1)
 
   let targets = 0
   let hits = 0
@@ -82,7 +94,8 @@ export function scoreBid(bid: Trialled, tender: Tender): BidScore {
     targets += range.gunnery[id].targets.length
     hits += range.gunnery[id].hits
   }
-  const firepower =
+  const mission = range.fireMission
+  const firepower = range.selfPropelled && mission ? missionFirepower(mission) :
     S.firepower.shootShare * (targets ? hits / targets : 0) +
     S.firepower.drillShare * between(range.drill.rpm, 0, S.firepower.drillBestRpm) +
     (1 - S.firepower.shootShare - S.firepower.drillShare) * (fired ? through / fired : 0)

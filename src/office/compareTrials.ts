@@ -115,6 +115,9 @@ function measures(): Measure[] {
   return list
 }
 
+/** The measures only a tank's tender counts. */
+const TANK_ONLY = /^(hits:|firstShot$|drill$|berm$)/
+
 /** The fire mission's measures, for two builds that both went through one. */
 function missionMeasures(): Measure[] {
   const mission = (r: RangeReport): NonNullable<RangeReport['fireMission']> => {
@@ -145,7 +148,9 @@ function missionMeasures(): Measure[] {
 
 /** Sets the later build's visit to the range against the earlier one's. */
 export function compareTrials(before: RangeReport, after: RangeReport): TrialMove[] {
-  const all = before.fireMission && after.fireMission ? [...measures(), ...missionMeasures()] : measures()
+  // A self-propelled gun's shoots, drill and berm are run but do not count, so they are left out.
+  const counted = before.selfPropelled && after.selfPropelled ? measures().filter((m) => !TANK_ONLY.test(m.key)) : measures()
+  const all = before.fireMission && after.fireMission ? [...counted, ...missionMeasures()] : counted
   return all.map((measure): TrialMove => {
     const a = measure.read(before)
     const b = measure.read(after)

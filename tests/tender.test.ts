@@ -23,7 +23,9 @@ describe('the tenders', () => {
       expect(tender.limits.maxMassT).toBeLessThanOrEqual(pact.maxMassT)
       expect(tender.limits.maxWidthM).toBeLessThanOrEqual(PACT_LIMITS_GEN1.maxWidthM)
       expect(tender.limits.maxUnitCostKr).toBeGreaterThan(SCORING.cost.bestKr)
-      expect(tender.threats.length).toBeGreaterThan(0)
+      // A self-propelled gun fights from beyond the hill, so it meets no tank.
+      if (tender.marks.fireMission) expect(tender.threats).toEqual([])
+      else expect(tender.threats.length).toBeGreaterThan(0)
       for (const threat of tender.threats) expect(THREAT_TANK_IDS).toContain(threat)
     }
   })

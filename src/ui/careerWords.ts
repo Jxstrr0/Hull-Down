@@ -48,10 +48,12 @@ export function failedTests(range: RangeReport): string[] {
   if (!range.acceleration.passed) out.push(R.acceleration.title)
   if (!range.obstacles.passed) out.push(R.obstacles.title)
   if (!range.endurance.passed) out.push(R.endurance.title)
-  for (const id of GUNNERY_TEST_IDS) if (!range.gunnery[id].passed) out.push(R.gunnery.titles[id])
-  if (!range.drill.passed) out.push(R.drill.title)
+  // A self-propelled gun's shoots, drill and berm are run but do not count.
+  const tank = !range.selfPropelled
+  if (tank) for (const id of GUNNERY_TEST_IDS) if (!range.gunnery[id].passed) out.push(R.gunnery.titles[id])
+  if (tank && !range.drill.passed) out.push(R.drill.title)
   if (!range.armour.passed) out.push(R.armour.title)
-  if (!range.berm.passed) out.push(R.berm.title)
+  if (tank && !range.berm.passed) out.push(R.berm.title)
   if (range.fireMission && !range.fireMission.passed) out.push(R.fireMission.title)
   return out
 }

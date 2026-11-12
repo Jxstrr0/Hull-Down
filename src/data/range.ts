@@ -302,6 +302,33 @@ export const MARKS_GEN3 = {
   ] as readonly ArmourSerial[],
 } as const
 
+/**
+ * What the army asks of a self-propelled gun in 2008. No tank shoots, no
+ * loading drill and no berm: the fire mission takes their place. The armour
+ * need only keep out the cannon of a raiding carrier, shell splinters and
+ * what drones drop; the tank rounds are fired for the record.
+ */
+export const MARKS_SPG = {
+  sprintS: 12,
+  topKmh: 50,
+  enduranceStops: 1,
+  hits: MARKS_GEN2.hits,
+  firstShotS: MARKS_GEN2.firstShotS,
+  drillRpm: MARKS_GEN2.drillRpm,
+  armour: [
+    { zone: 'upperGlacis', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: true },
+    { zone: 'turretFrontLeft', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: true },
+    { zone: 'hullSideFront', threat: 'autocannon', rangeM: 1000, angleDeg: 0, gate: true },
+    { zone: 'turretSides', threat: 'autocannon', rangeM: 1000, angleDeg: 0, gate: true },
+    { zone: 'turretRoof', threat: 'droneBomblet', rangeM: 100, angleDeg: 0, gate: false },
+    { zone: 'hullSideRear', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: false },
+    { zone: 'upperGlacis', threat: 'accord120Sabot', rangeM: 2000, angleDeg: 0, gate: false },
+    { zone: 'turretFrontLeft', threat: 'tandemRocket', rangeM: 200, angleDeg: 0, gate: false },
+  ] as readonly ArmourSerial[],
+  bermShowsM: MARKS_GEN2.bermShowsM,
+  fireMission: { firstRoundS: 110, rpm: 4, missM: 70 },
+} as const
+
 export type Marks = {
   sprintS: number
   topKmh: number
@@ -311,6 +338,11 @@ export type Marks = {
   drillRpm: number
   armour: readonly ArmourSerial[]
   bermShowsM: number
-  /** The fire mission, for a self-propelled gun's tender. Not given for a tank's: a howitzer is then held to the range's own marks. */
+  /**
+   * The fire mission, for a self-propelled gun's tender: the tank shoots, the
+   * loading drill and the berm then do not count, and the fire mission is
+   * marked in their place. Not given for a tank's tender, where a howitzer is
+   * held to the range's own fire mission marks.
+   */
   fireMission?: FireMissionMarks
 }

@@ -719,7 +719,8 @@ army judges it on a new fire mission trial rather than tank duels.
    close they land. It gets a card in the report, and runs for any howitzer.
 3. The 2008 tender in the career (1.4.2.0). The fire mission takes the place
    of the tank duels and the armour-piercing shoots; the driving, endurance
-   and armour tests stay. Saves carried over.
+   and armour tests stay. Saves carried over. Done: no duels and no
+   exercise in service; the report hides the tank-only cards.
 4. Rival bureaus bid self-propelled guns (1.4.3.0).
 5. Something to watch for the fire mission (1.4.4.0), such as shells landing
    on a map.
