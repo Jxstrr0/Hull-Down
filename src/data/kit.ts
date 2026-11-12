@@ -53,6 +53,8 @@ export const KIT = {
     sprocketRadiusM: 0.36,
     idlerRadiusM: 0.3,
     returnRollerRadiusM: 0.11,
+    /** The engine deck: its plate's length and width, and its height with the slats on. */
+    engineDeckM: { x: 1.6, y: 0.045, z: 2.0 },
   },
   /**
    * How each turret piece is fitted out, as it was modelled (art/tank-kit.py,

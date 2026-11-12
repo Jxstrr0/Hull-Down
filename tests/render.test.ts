@@ -8,7 +8,7 @@ import { PACT_LIMITS_GEN1 } from '../src/data/tuning'
 import { VIEWS, shotAt } from '../src/render/director'
 import { courseOutline, coursePath, mudPatch, pointAt, poseAt, stripPath, trenchPit } from '../src/render/path'
 import { frameAt, lengthS, type RunRecord } from '../src/render/playback'
-import { partTriangles, tankShapeOf, tankTriangles } from '../src/render/tankShape'
+import { below, partTriangles, tankShapeOf, tankTriangles } from '../src/render/tankShape'
 import { TURRETS, type TurretId } from '../src/data/parts'
 import { ZONES } from '../src/data/materials'
 import { allTiles } from '../src/sim/vehicle/era'
@@ -541,6 +541,27 @@ describe('the parts the tank is built from', () => {
     }
     expect(seen.size).toBe(shapes.length)
     expect(pieces.size).toBe(shapes.length)
+  })
+
+  it('builds an upper hull out over the tracks, and a lower hull under it', () => {
+    const { spec, sheet } = sheetOf()
+    const shape = tankShapeOf(spec, sheet.geometry)
+    const upper = shape.parts.find((part) => part.kind === 'sweep')
+    const lower = shape.parts.find((part) => part.kind === 'slab')
+    expect(upper?.kind).toBe('sweep')
+    expect(lower?.kind).toBe('slab')
+    if (upper?.kind !== 'sweep' || lower?.kind !== 'slab') return
+    const deck = Math.min(...upper.stations.flatMap((station) => station.corners.map((c) => c.y)))
+    // Out to the tracks' outer edge, and no lower hull above the deck to show through the roof.
+    expect(Math.max(...upper.stations.flatMap((station) => station.corners.map((c) => c.z)))).toBeCloseTo(shape.track.centreZM + shape.track.widthM / 2, 6)
+    expect(Math.max(...lower.outline.map((point) => point.y))).toBeLessThanOrEqual(deck + 1e-9)
+    for (const station of upper.stations) expect(station.corners).toHaveLength(8)
+    expect(partTriangles(upper)).toBe(3 * 16 + 2 * 6)
+  })
+
+  it('cuts an outline off at a height', () => {
+    const square = [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 2 }, { x: 0, y: 2 }]
+    expect(below(square, 1)).toEqual([{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 0, y: 1 }])
   })
 
   it('has a track loop, a sprocket and an idler each side, and a wheel for every road wheel', () => {

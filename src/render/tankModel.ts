@@ -12,6 +12,7 @@ import type { Mount, Solid, TankShape, Tone } from './tankShape'
 
 type Loft = Extract<Solid, { kind: 'loft' }>
 type Band = Extract<Solid, { kind: 'band' }>
+type Sweep = Extract<Solid, { kind: 'sweep' }>
 
 /** The name of the part of a built tank that turns with the gun. */
 export const TURRET = 'turret'
@@ -38,49 +39,50 @@ function cornersOf(geometry: BufferGeometry): number[] {
   return out
 }
 
-/** Rings skinned one to the next and closed on top, every triangle turned to face outward. */
-function loftCorners(part: Loft): number[] {
+type V = [number, number, number]
+
+/**
+ * Outlines skinned one to the next, every triangle turned to face outward
+ * from the middle. The last is closed with a lid, and the first too if asked.
+ */
+function skinCorners(rings: readonly (readonly V[])[], closeFirst: boolean): number[] {
   const out: number[] = []
-  let cx = 0
-  let cy = 0
-  let cz = 0
-  let n = 0
-  for (const ring of part.rings) {
-    for (const corner of ring.corners) {
-      cx += corner.x
-      cy += ring.y
-      cz += corner.z
-      n++
-    }
-  }
-  if (n === 0) return out
-  cx /= n
-  cy /= n
-  cz /= n
-  type V = [number, number, number]
+  const all = rings.flat()
+  if (all.length === 0) return out
+  const mid = [0, 1, 2].map((k) => all.reduce((sum, v) => sum + v[k]!, 0) / all.length) as V
   const face = (a: V, b: V, c: V): void => {
     const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2]
     const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2]
     const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx
-    const mx = (a[0] + b[0] + c[0]) / 3 - cx, my = (a[1] + b[1] + c[1]) / 3 - cy, mz = (a[2] + b[2] + c[2]) / 3 - cz
+    const mx = (a[0] + b[0] + c[0]) / 3 - mid[0], my = (a[1] + b[1] + c[1]) / 3 - mid[1], mz = (a[2] + b[2] + c[2]) / 3 - mid[2]
     if (nx * mx + ny * my + nz * mz >= 0) out.push(...a, ...b, ...c)
     else out.push(...a, ...c, ...b)
   }
-  const at = (ring: Loft['rings'][number], i: number): V => {
-    const corner = ring.corners[i % ring.corners.length]!
-    return [corner.x, ring.y, corner.z]
-  }
-  for (let r = 0; r + 1 < part.rings.length; r++) {
-    const low = part.rings[r]!
-    const high = part.rings[r + 1]!
-    for (let i = 0; i < low.corners.length; i++) {
-      face(at(low, i), at(low, i + 1), at(high, i + 1))
-      face(at(low, i), at(high, i + 1), at(high, i))
+  for (let r = 0; r + 1 < rings.length; r++) {
+    const low = rings[r]!
+    const high = rings[r + 1]!
+    const n = low.length
+    for (let i = 0; i < n; i++) {
+      face(low[i]!, low[(i + 1) % n]!, high[(i + 1) % n]!)
+      face(low[i]!, high[(i + 1) % n]!, high[i]!)
     }
   }
-  const lid = part.rings[part.rings.length - 1]!
-  for (let i = 1; i + 1 < lid.corners.length; i++) face(at(lid, 0), at(lid, i), at(lid, i + 1))
+  const lid = (ring: readonly V[]): void => {
+    for (let i = 1; i + 1 < ring.length; i++) face(ring[0]!, ring[i]!, ring[i + 1]!)
+  }
+  lid(rings[rings.length - 1]!)
+  if (closeFirst) lid(rings[0]!)
   return out
+}
+
+/** Rings skinned one to the next and closed on top. */
+function loftCorners(part: Loft): number[] {
+  return skinCorners(part.rings.map((ring) => ring.corners.map((c): V => [c.x, ring.y, c.z])), false)
+}
+
+/** Outlines along the tank skinned one to the next and closed at both ends. */
+function sweepCorners(part: Sweep): number[] {
+  return skinCorners(part.stations.map((station) => station.corners.map((c): V => [station.x, c.y, c.z])), true)
 }
 
 /** A loop of plate: the outline, the same outline set in by the plate's thickness, and the faces between. */
@@ -161,6 +163,8 @@ function partCorners(part: Solid): number[] {
       return loftCorners(part)
     case 'band':
       return bandCorners(part)
+    case 'sweep':
+      return sweepCorners(part)
     case 'piece':
       return toneCorners(part, 'body').body ?? []
   }
