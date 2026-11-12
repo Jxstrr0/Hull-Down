@@ -46,4 +46,23 @@ export const SQUAD_TRIAL = {
   coverS: 60,
   /** What the range asks of a vehicle that carries soldiers, until a tender sets its own. */
   marks: { troops: 6, dropS: 600, targets: 4 } satisfies SquadMarks,
+  /** The replay in the report. Only for the picture: the times it shows are the trial's own. */
+  replay: {
+    /** Seconds of the drop played in each second watched. */
+    speed: 4,
+    /** Each round's tracer is drawn this long, seconds of the drop. */
+    tracerS: 0.8,
+    /** A burst stays on the sight picture this long, seconds of the drop. */
+    burstS: 2,
+    /** The replay runs on this long after the last round when the gun finishes early, seconds. */
+    tailS: 4,
+    /** A soldier takes this long to run from the door to cover, seconds. */
+    walkS: 2,
+    /** The map is drawn this far out from the vehicle, metres. */
+    mapM: 1400,
+    /** The bearing of each target from the vehicle's nose on the map, degrees. */
+    bearingsDeg: [-22, 16, -8, 26],
+    /** The sight picture is this many metres across. */
+    sightM: 6,
+  },
 } as const

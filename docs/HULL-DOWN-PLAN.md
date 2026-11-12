@@ -764,7 +764,10 @@ than tank duels.
    limit with plain sights, light is cheap with the small engine and the
    low turret, firepower fits the laser and the electronic computer. Their
    armour leans to the sides. The speed mark is 50 km/h, as for a tank.
-6. Something to watch for the squad trial (1.5.5.0).
+6. Something to watch for the squad trial (1.5.5.0). Done: Watch the drop
+   under the Squad drop card, played four times faster: a map from above
+   with the squad getting out, tracer and crossed-out targets, and the
+   gunner's sight on the target being fired at.
 
 ---
 

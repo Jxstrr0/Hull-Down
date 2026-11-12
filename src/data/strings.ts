@@ -1199,6 +1199,23 @@ export const STRINGS = {
       targetNone: 'Still firing. The gun never got round to it.',
       ranOut: 'The gun ran dry before every target was down. Carry more rounds.',
       slowGun: 'Every target needs the gun laid on it and its own rounds. A cannon fires a burst every few seconds; a big gun hits as hard but loads slowly. A better rangefinder and computer get the first round on sooner.',
+      // The replay: the drop played back on a map, faster than it happened. The times shown are the trial's own.
+      replay: {
+        watch: 'Watch the drop',
+        label: 'The squad drop played back on a map.',
+        areaLabel: 'From above: the vehicle at the foot with the squad getting out of the back, the targets ahead. A target crossed out is out of action.',
+        sightLabel: 'Through the gunner\'s sight, on the target being fired at.',
+        readout: '{s} s since the halt · {n} of {of} out',
+        readoutNone: '{s} s since the halt',
+        halt: 'Halted at the drop point. The door goes down and the gunner picks out the first target.',
+        haltAfter: 'Halted at the drop point after {s} s across country. The door goes down and the gunner picks out the first target.',
+        fire: '{name}, {m} m off: {rounds}, {h} on it.',
+        down: '{name} is out of action. Laying on the next.',
+        clear: 'Every target out of action, the last {s} s after the halt.',
+        dry: 'The gun has run dry with {n} still firing.',
+        time: 'Time up: {n} of {of} out of action.',
+        sightKey: '{name}. The box is the target; a dot hit, a cross missed.',
+      },
     },
     drill: {
       title: 'Loading drill',

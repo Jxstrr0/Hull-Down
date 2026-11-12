@@ -7,6 +7,7 @@ import type { RangeReport } from '../sim/trials'
 import { el } from './dom'
 import { fixed } from './format'
 import type { CardKit } from './gunneryCards'
+import { squadReplay } from './squadReplay'
 
 const Q = STRINGS.range.squad
 const rounds = (n: number): string => n === 1 ? Q.rounds.one : fill(Q.rounds.many, { n: String(n) })
@@ -58,5 +59,6 @@ export function squadCards(report: RangeReport, kit: CardKit): HTMLElement[] {
   if (run.ranOut) notes.push(Q.ranOut)
   if (!run.coverPassed) notes.push(Q.slowGun)
   box.append(...notes.map((text) => el('p', 'ctl-note rg-note', text)))
+  if (run.roundsFired > 0) box.append(...squadReplay(run))
   return [box]
 }

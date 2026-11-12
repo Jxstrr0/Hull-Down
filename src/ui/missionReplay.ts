@@ -8,20 +8,12 @@ import type { FireMissionResult } from '../sim/trials'
 import { el } from './dom'
 import { fixed } from './format'
 import { missionFrame, missionTimeline, type MissionFrame, type MissionTimeline } from './missionTimeline'
+import { replayControls, svg } from './replayPlayer'
 
 const M = STRINGS.range.fireMission
 const P = M.replay
-const V = STRINGS.range.view
 const F = FIRE_MISSION
-const SVG = 'http://www.w3.org/2000/svg'
 const SIZE = 200
-
-function svg(tag: string, attrs: Record<string, string>, text?: string): SVGElement {
-  const node = document.createElementNS(SVG, tag)
-  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value)
-  if (text !== undefined) node.textContent = text
-  return node
-}
 
 const GUN = { x: SIZE / 2, y: SIZE - 10 }
 const PER_KM = (SIZE - 20) / F.replay.mapKm
@@ -113,32 +105,11 @@ function openReplay(run: FireMissionResult, reachKm: number, onClose: () => void
   const caption = el('p', 'rg-replay-caption')
   caption.setAttribute('aria-live', 'polite')
 
-  const scrubRow = el('div', 'rg-view-row')
-  const toggle = el('button', 'btn rg-view-toggle', V.pause)
-  toggle.type = 'button'
-  toggle.dataset.key = 'range-toggle:fireMission'
-  const scrub = el('input', 'rg-view-scrub')
-  scrub.type = 'range'
-  scrub.min = '0'
-  scrub.max = fixed(line.endS, 0)
-  scrub.step = '1'
-  scrub.value = '0'
-  scrub.dataset.key = 'range-scrub:fireMission'
-  scrub.setAttribute('aria-label', V.scrub)
-  scrubRow.append(toggle, scrub)
-
-  const bar = el('div', 'rg-view-row rg-replay-bar')
-  const readout = el('span', 'rg-view-readout')
-  const shut = el('button', 'btn', V.close)
-  shut.type = 'button'
-  shut.dataset.key = 'range-close:fireMission'
-  bar.append(readout, shut)
-
-  box.append(maps, caption, scrubRow, bar)
+  box.append(maps, caption)
 
   const clamp = (m: number): number => Math.max(-reach, Math.min(reach, m))
   let lastCaption = ''
-  const draw = (atS: number): void => {
+  const draw = (atS: number): string => {
     const frame = missionFrame(line, atS)
     for (const [gridNo, mark] of gridMarks.entries()) {
       // The grid being called for is drawn heavier and its number bold: not colour alone.
@@ -191,47 +162,9 @@ function openReplay(run: FireMissionResult, reachKm: number, onClose: () => void
       caption.textContent = words
       lastCaption = words
     }
-    readout.textContent = fill(P.readout, { s: fixed(Math.min(atS, line.endS), 0) })
-    scrub.value = fixed(Math.min(atS, line.endS), 0)
+    return fill(P.readout, { s: fixed(atS, 0) })
   }
 
-  let atS = 0
-  let playing = true
-  let lastMs: number | null = null
-  let frameId = 0
-  const setPlaying = (on: boolean): void => {
-    playing = on
-    lastMs = null
-    toggle.textContent = on ? V.pause : atS >= line.endS ? V.again : V.play
-    if (on) frameId = requestAnimationFrame(tick)
-    else cancelAnimationFrame(frameId)
-  }
-  const tick = (ms: number): void => {
-    if (!box.isConnected) return
-    if (lastMs !== null) atS = Math.min(line.endS, atS + ((ms - lastMs) / 1000) * F.replay.speed)
-    lastMs = ms
-    draw(atS)
-    if (atS >= line.endS) setPlaying(false)
-    else if (playing) frameId = requestAnimationFrame(tick)
-  }
-  toggle.addEventListener('click', () => {
-    if (playing) setPlaying(false)
-    else {
-      if (atS >= line.endS) atS = 0
-      setPlaying(true)
-    }
-  })
-  scrub.addEventListener('input', () => {
-    if (playing) setPlaying(false)
-    atS = Number(scrub.value)
-    toggle.textContent = atS >= line.endS ? V.again : V.play
-    draw(atS)
-  })
-  shut.addEventListener('click', () => {
-    cancelAnimationFrame(frameId)
-    onClose()
-  })
-  draw(0)
-  frameId = requestAnimationFrame(tick)
+  box.append(...replayControls(box, { key: 'fireMission', endS: line.endS, speed: F.replay.speed, draw, onClose }))
   return box
 }
