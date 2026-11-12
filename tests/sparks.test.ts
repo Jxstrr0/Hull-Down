@@ -67,3 +67,59 @@ describe('where a round struck', () => {
     expect(fromLeft.out.z).toBeLessThan(0)
   })
 })
+
+describe('strike marks on a tank', () => {
+  it('measure a turret strike from the turret ring, a hull one from the middle', async () => {
+    const { scorchOf } = await import('../src/render/battleScene')
+    const parts = { turretXM: 0.5, halfM: 3 }
+    expect(scorchOf(parts, { entry: { x: 1, y: 1, z: 0.2 }, zone: 'upperGlacis', through: false })).toEqual({ onTurret: false, x: 2, y: 1, z: 0.2, through: false })
+    expect(scorchOf(parts, { entry: { x: 1, y: 2, z: 0 }, zone: 'mantlet', through: true })).toEqual({ onTurret: true, x: 1.5, y: 2, z: 0, through: true })
+  })
+
+  it('keep the last few on the hull and on the turret, a gouge where it bounced and a hole where it went in', async () => {
+    const { Kit } = await import('../src/render/rangeScene')
+    const { buildTank, setScorch } = await import('../src/render/tankModel')
+    const { tankShapeOf } = await import('../src/render/tankShape')
+    const { BASELINE_SPEC } = await import('../src/data/baseline')
+    const { PACT_LIMITS_GEN1 } = await import('../src/data/tuning')
+    const { buildStatSheet } = await import('../src/sim/vehicle')
+    const S = RENDER.tank.scorch
+    const kit = new Kit()
+    const tank = buildTank(kit, tankShapeOf(BASELINE_SPEC, buildStatSheet(BASELINE_SPEC, PACT_LIMITS_GEN1).geometry))
+    const hull = Array.from({ length: S.most + 3 }, (_, i) => ({ onTurret: false, x: i, y: 1, z: 0, through: i % 2 === 0 }))
+    setScorch(tank, [...hull, { onTurret: true, x: 0.3, y: 2, z: 0, through: false }])
+    const mud = (tank.userData as { mud: { scorchHull: { value: { x: number; w: number }[] }; scorchTurret: { value: { x: number; w: number }[] } } }).mud
+    expect(mud.scorchHull.value.map((spot) => spot.x)).toEqual(hull.slice(-S.most).map((mark) => mark.x))
+    for (const [i, spot] of mud.scorchHull.value.entries()) expect(spot.w).toBe(hull.slice(-S.most)[i]!.through ? -S.throughM : S.bounceM)
+    expect(mud.scorchTurret.value.filter((spot) => spot.w !== 0).length).toBe(1)
+    setScorch(tank, [])
+    expect(mud.scorchHull.value.every((spot) => spot.w === 0)).toBe(true)
+    kit.dispose()
+  })
+
+  it('are drawn on the hull and the turret, each from its own list, and not on the wheels or tracks', async () => {
+    const { Mesh } = await import('three')
+    const { Kit } = await import('../src/render/rangeScene')
+    const { TRACKS, TURRET, WHEELS, buildTank } = await import('../src/render/tankModel')
+    const { tankShapeOf } = await import('../src/render/tankShape')
+    const { BASELINE_SPEC } = await import('../src/data/baseline')
+    const { PACT_LIMITS_GEN1 } = await import('../src/data/tuning')
+    const { buildStatSheet } = await import('../src/sim/vehicle')
+    const kit = new Kit()
+    const tank = buildTank(kit, tankShapeOf(BASELINE_SPEC, buildStatSheet(BASELINE_SPEC, PACT_LIMITS_GEN1).geometry))
+    const turret = tank.getObjectByName(TURRET)!
+    const keys = { hull: 0, turret: 0 }
+    tank.traverse((node) => {
+      if (!(node instanceof Mesh)) return
+      const key = (node.material as { customProgramCacheKey(): string }).customProgramCacheKey()
+      if (node.name === TRACKS || node.name === WHEELS) expect(key).not.toContain('scorch')
+      else if (node.parent === turret) {
+        expect(key).toContain('+scorch-turret')
+        keys.turret++
+      } else if (key.includes('+scorch-hull')) keys.hull++
+    })
+    expect(keys.hull).toBeGreaterThan(0)
+    expect(keys.turret).toBeGreaterThan(0)
+    kit.dispose()
+  })
+})

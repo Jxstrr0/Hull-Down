@@ -1,7 +1,7 @@
 // Builds the tank the range and the battle show, from its list of parts.
 // Parts of one colour are joined into one mesh, so a tank is a handful of
 // meshes however much detail it carries.
-import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Group, Mesh, Shape, type Material, type Texture } from 'three'
+import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Group, Mesh, Shape, Vector4, type Material, type Texture } from 'three'
 import { PAINT, type PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import { kickM } from './recoil'
@@ -114,6 +114,31 @@ export function setWear(tank: Group, share: number): void {
   if (mud) mud.wear.value = share
 }
 
+/** A strike to mark on a tank: on the hull or the turret, in that part's own frame, and whether it went in. */
+export interface ScorchMark {
+  onTurret: boolean
+  x: number
+  y: number
+  z: number
+  through: boolean
+}
+
+/** Mark where rounds struck the tank, oldest first; only the last few on the hull and on the turret show. */
+export function setScorch(tank: Group, marks: readonly ScorchMark[]): void {
+  const mud = (tank.userData as { mud?: TankMud }).mud
+  if (!mud) return
+  const k = RENDER.tank.scorch
+  for (const [onTurret, spots] of [[false, mud.scorchHull], [true, mud.scorchTurret]] as const) {
+    const mine = marks.filter((mark) => mark.onTurret === onTurret).slice(-k.most)
+    spots.value.forEach((spot, i) => {
+      const mark = mine[i]
+      // A positive size is a gouge where it bounced off, a negative one a hole where it went in.
+      if (mark) spot.set(mark.x, mark.y, mark.z, mark.through ? -k.throughM : k.bounceM)
+      else spot.set(0, 0, 0, 0)
+    })
+  }
+}
+
 interface TankMud {
   share: { value: number }
   lineM: { value: number }
@@ -121,6 +146,9 @@ interface TankMud {
   /** How far back the barrel is now, and how far it goes at the kick, metres. */
   recoilM: { value: number }
   kickM: number
+  /** Where rounds struck, on the hull and on the turret: x, y, z and a size, nought for none. */
+  scorchHull: { value: Vector4[] }
+  scorchTurret: { value: Vector4[] }
 }
 
 /**
@@ -267,9 +295,11 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
   const mud: TankMud = {
     share: { value: 0 }, lineM: { value: shape.track.topM + RENDER.tank.mud.lineM }, wear: { value: 0 },
     recoilM: { value: 0 }, kickM: kickM(shape.gun.lengthM),
+    scorchHull: { value: Array.from({ length: RENDER.tank.scorch.most }, () => new Vector4()) },
+    scorchTurret: { value: Array.from({ length: RENDER.tank.scorch.most }, () => new Vector4()) },
   }
   tank.userData.mud = mud
-  const dirty = (mesh: Mesh, take = { mud: true, wear: false }): Mesh => {
+  const dirty = (mesh: Mesh, take: { mud: boolean; wear: boolean; scorch?: 'hull' | 'turret' } = { mud: true, wear: false }): Mesh => {
     // The barrel's corners are marked, so it slides back alone.
     mesh.material = kit.muddy(mesh.material as Material, mud, { ...take, recoil: mesh.geometry.hasAttribute('recoil') })
     return mesh
@@ -319,8 +349,8 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
       geometry.setAttribute('uv', new Float32BufferAttribute(camoPlaces(pile.corners, tones.camo.tileM), 2))
       mesh = kit.patterned(geometry, tones.camo)
     } else mesh = kit.mesh(geometry, tones[pile.tone])
-    if (pile.mount === 'turret') top.add(dirty(mesh, { mud: false, wear: true }))
-    else tank.add(dirty(mesh, { mud: true, wear: true }))
+    if (pile.mount === 'turret') top.add(dirty(mesh, { mud: false, wear: true, scorch: 'turret' }))
+    else tank.add(dirty(mesh, { mud: true, wear: true, scorch: 'hull' }))
   }
   for (const [tone, pile] of wheels) {
     const geometry = new BufferGeometry()

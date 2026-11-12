@@ -4,7 +4,7 @@
 import {
   BoxGeometry, BufferGeometry, Color, DataTexture, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, Fog,
   Group, HemisphereLight, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, OctahedronGeometry, PerspectiveCamera, PlaneGeometry, Quaternion, RepeatWrapping,
-  Scene, Shape, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer, type Material, type Texture,
+  Scene, Shape, SphereGeometry, SRGBColorSpace, Vector3, Vector4, WebGLRenderer, type Material, type Texture,
 } from 'three'
 import { GUNNERY } from '../data/gunnery'
 import { RANGE, type GunneryTestId } from '../data/range'
@@ -179,7 +179,11 @@ export class Kit {
    * tank's floor, fading out over `fadeM` above. The tank's parts share one `mud`, so one number dirties them all.
    * With `take.wear`, its paint also rubs through to bare steel in patches as `mud.wear` goes up, the faces looking up first.
    */
-  muddy(material: Material, mud: { share: { value: number }; lineM: { value: number }; wear: { value: number }; recoilM: { value: number } }, take: { mud: boolean; wear: boolean; recoil?: boolean } = { mud: true, wear: true }): Material {
+  muddy(
+    material: Material,
+    mud: { share: { value: number }; lineM: { value: number }; wear: { value: number }; recoilM: { value: number }; scorchHull?: { value: Vector4[] }; scorchTurret?: { value: Vector4[] } },
+    take: { mud: boolean; wear: boolean; recoil?: boolean; scorch?: 'hull' | 'turret' } = { mud: true, wear: true },
+  ): Material {
     const copy = material.clone()
     const before = material.onBeforeCompile.bind(material)
     const key = material.customProgramCacheKey()
@@ -190,6 +194,28 @@ export class Kit {
       before(shader, renderer)
       shader.uniforms.wearShare = mud.wear
       shader.uniforms.wearColour = { value: new Color(w.colour) }
+      // Strike marks go on last, over the mud and the wear; they use the wear's place on the part.
+      const spots = take.scorch === 'turret' ? mud.scorchTurret : take.scorch === 'hull' ? mud.scorchHull : undefined
+      if (take.wear && spots) {
+        const s = RENDER.tank.scorch
+        shader.uniforms.scorchAt = spots
+        shader.uniforms.scorchSoot = { value: new Color(s.soot) }
+        shader.uniforms.scorchGouge = { value: new Color(s.gouge) }
+        shader.uniforms.scorchHole = { value: new Color(s.hole) }
+        shader.fragmentShader = `uniform vec4 scorchAt[${s.most}];\nuniform vec3 scorchSoot;\nuniform vec3 scorchGouge;\nuniform vec3 scorchHole;\n${shader.fragmentShader}`.replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+          for (int i = 0; i < ${s.most}; i++) {
+            vec4 spot = scorchAt[i];
+            float r = abs(spot.w);
+            if (r <= 0.0) continue;
+            float d = distance(vWearP, spot.xyz);
+            diffuseColor.rgb = mix(diffuseColor.rgb, scorchSoot, ${s.sootShare.toFixed(3)} * (1.0 - smoothstep(r * 0.2, r, d)));
+            float core = 1.0 - smoothstep(r * ${(s.coreShare * 0.6).toFixed(3)}, r * ${s.coreShare.toFixed(3)}, d);
+            diffuseColor.rgb = mix(diffuseColor.rgb, spot.w > 0.0 ? scorchGouge : scorchHole, core);
+          }`,
+        )
+      }
       if (take.recoil) {
         // The barrel's corners slide back along the turret by however far the gun has kicked.
         shader.uniforms.recoilM = mud.recoilM
@@ -252,7 +278,7 @@ export class Kit {
         )
       }
     }
-    copy.customProgramCacheKey = () => `${key}${take.mud ? '+mud' : ''}${take.wear ? '+wear' : ''}${take.recoil ? '+recoil' : ''}`
+    copy.customProgramCacheKey = () => `${key}${take.mud ? '+mud' : ''}${take.wear ? '+wear' : ''}${take.recoil ? '+recoil' : ''}${take.wear && take.scorch ? `+scorch-${take.scorch}` : ''}`
     this.materials.set(`mud/${this.mudCount++}`, copy)
     return copy
   }

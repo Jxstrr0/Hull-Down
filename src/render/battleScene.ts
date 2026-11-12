@@ -18,7 +18,7 @@ import { createFrameMeter } from './frameMeter'
 import { Dust, Kit, Marks, Sparks, Working, exhaustDeckX } from './rangeScene'
 import { sparkCount, sparkFlights } from './sparks'
 import { DustTrail, blastRing } from './dust'
-import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, setRecoil, setWear, tonesOf } from './tankModel'
+import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, setRecoil, setScorch, setWear, tonesOf, type ScorchMark } from './tankModel'
 import { recoilAt } from './recoil'
 import { battleMud, battleWear } from './mud'
 import { tankShapeOf } from './tankShape'
@@ -229,16 +229,21 @@ export function struckAt(parts: Pick<TankParts, 'turret' | 'turretXM' | 'halfM' 
   const d = hit.direction
   const out = new Vector3(d.x, -d.y, -d.z).normalize()
   if (!hit.entry) return { at: new Vector3(0, parts.trackUpM, (d.z > 0 ? -1 : 1) * parts.trackSideM), out }
-  const at = new Vector3(parts.halfM - hit.entry.x, hit.entry.y, hit.entry.z)
-  const onTurret = hit.zone !== null && (hit.zone === 'mantlet' || hit.zone.startsWith('turret'))
-  if (onTurret && parts.turret) {
+  const mark = scorchOf(parts, { ...hit, entry: hit.entry, through: false })
+  const at = new Vector3(mark.x, mark.y, mark.z)
+  if (mark.onTurret && parts.turret) {
     const turn = parts.turret.rotation.y
-    at.x -= parts.turretXM
     at.applyAxisAngle(UP, turn)
     at.x += parts.turretXM
     out.applyAxisAngle(UP, turn)
-  }
+  } else if (mark.onTurret) at.x += parts.turretXM
   return { at, out }
+}
+
+/** The mark a round leaves where it struck, in the frame of the part it struck: the hull, or the turret as it turns. */
+export function scorchOf(parts: Pick<TankParts, 'turretXM' | 'halfM'>, hit: { entry: { x: number; y: number; z: number }; zone: string | null; through: boolean }): ScorchMark {
+  const onTurret = hit.zone !== null && (hit.zone === 'mantlet' || hit.zone.startsWith('turret'))
+  return { onTurret, x: parts.halfM - hit.entry.x - (onTurret ? parts.turretXM : 0), y: hit.entry.y, z: hit.entry.z, through: hit.through }
 }
 
 /** Puts every piece where the battle has it at a moment. */
@@ -321,6 +326,7 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     parts.strike.visible = false
   })
   stage.sparks.clear()
+  const scorches: ScorchMark[][] = stage.tanks.map(() => [])
   for (const shot of battle.shots) {
     if (shot.atS > t) break
     if (t - shot.atS <= K.flashS) {
@@ -331,6 +337,7 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     const at = stage.tanks[shot.at]
     if (!hit || !at || (hit.zone === null && !hit.track) || t < shot.landS) continue
     const struck = struckAt(at, hit)
+    if (hit.entry && hit.zone !== null) scorches[shot.at]?.push(scorchOf(at, { entry: hit.entry, zone: hit.zone, through: hit.through }))
     if (t - shot.landS <= K.strikeS) {
       at.strike.visible = true
       at.strike.position.copy(struck.at)
@@ -342,6 +349,7 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     }
   }
   stage.sparks.show()
+  stage.tanks.forEach((parts, index) => setScorch(parts.group, scorches[index] ?? []))
   stage.tracers.forEach((tracer, i) => {
     const round = moment.rounds[i]
     tracer.visible = round !== undefined
