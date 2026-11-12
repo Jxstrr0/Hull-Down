@@ -58,7 +58,7 @@ describe('mud on the tank', () => {
       const hullMeshes = tank.children.filter((child) => child !== turret)
       expect(hullMeshes.length).toBeGreaterThan(3)
       const key = (mesh: object): string => (mesh as { material: { customProgramCacheKey(): string } }).material.customProgramCacheKey()
-      for (const mesh of hullMeshes) expect(key(mesh)).toMatch(/\+mud$/)
+      for (const mesh of hullMeshes) expect(key(mesh)).toMatch(/\+mud/)
       turret.traverse((node) => {
         if ('material' in node) expect(key(node)).not.toMatch(/mud/)
       })
@@ -68,6 +68,43 @@ describe('mud on the tank', () => {
       // The mud reaches a little above the track tops.
       expect((tank.userData as { mud: { lineM: { value: number } } }).mud.lineM.value).toBeCloseTo(shape.track.topM + K.lineM, 9)
     }
+    kit.dispose()
+  })
+})
+
+describe('wear on the metal', () => {
+  it('starts light on a trial tank, builds over the endurance run, and stops at its most', async () => {
+    const { enduranceWear, trialWear, battleWear } = await import('../src/render/mud')
+    const W = RENDER.tank.wear
+    expect(trialWear()).toBe(W.trial)
+    expect(enduranceWear(0)).toBe(trialWear())
+    expect(enduranceWear(150)).toBeGreaterThan(enduranceWear(10))
+    expect(enduranceWear(300)).toBeGreaterThan(enduranceWear(150))
+    expect(enduranceWear(5000)).toBe(W.most)
+    expect(battleWear()).toBeGreaterThan(trialWear())
+    expect(battleWear()).toBeLessThanOrEqual(W.most)
+  })
+
+  it('is one number for the whole tank, on the hull and the turret but not the wheels or tracks', async () => {
+    const { Mesh } = await import('three')
+    const { Kit } = await import('../src/render/rangeScene')
+    const { TRACKS, WHEELS, buildTank, setWear } = await import('../src/render/tankModel')
+    const { tankShapeOf } = await import('../src/render/tankShape')
+    const { BASELINE_SPEC } = await import('../src/data/baseline')
+    const { PACT_LIMITS_GEN1 } = await import('../src/data/tuning')
+    const { buildStatSheet } = await import('../src/sim/vehicle')
+    const kit = new Kit()
+    const tank = buildTank(kit, tankShapeOf(BASELINE_SPEC, buildStatSheet(BASELINE_SPEC, PACT_LIMITS_GEN1).geometry))
+    setWear(tank, 0.3)
+    expect((tank.userData as { mud: { wear: { value: number } } }).mud.wear.value).toBe(0.3)
+    let worn = 0
+    tank.traverse((node) => {
+      if (!(node instanceof Mesh)) return
+      const key = (node.material as { customProgramCacheKey(): string }).customProgramCacheKey()
+      if (node.name === TRACKS || node.name === WHEELS) expect(key).not.toContain('+wear')
+      else if (key.includes('+wear')) worn++
+    })
+    expect(worn).toBeGreaterThanOrEqual(2)
     kit.dispose()
   })
 })

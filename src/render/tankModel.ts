@@ -96,9 +96,16 @@ export function setMud(tank: Group, share: number): void {
   if (mud) mud.share.value = share
 }
 
+/** How worn the tank's paint is, nought (new) to one. */
+export function setWear(tank: Group, share: number): void {
+  const mud = (tank.userData as { mud?: TankMud }).mud
+  if (mud) mud.wear.value = share
+}
+
 interface TankMud {
   share: { value: number }
   lineM: { value: number }
+  wear: { value: number }
 }
 
 /**
@@ -240,11 +247,12 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
   top.position.set(shape.turret.xM, 0, 0)
   tank.add(top)
 
-  // Mud on the hull, the wheels and the tracks, up to a little over the track tops. The turret stays clean.
-  const mud: TankMud = { share: { value: 0 }, lineM: { value: shape.track.topM + RENDER.tank.mud.lineM } }
+  // Mud on the hull, the wheels and the tracks, up to a little over the track tops; the turret is too high
+  // for it. Wear on the hull and the turret: the wheels turn and the tracks are bare steel already.
+  const mud: TankMud = { share: { value: 0 }, lineM: { value: shape.track.topM + RENDER.tank.mud.lineM }, wear: { value: 0 } }
   tank.userData.mud = mud
-  const dirty = (mesh: Mesh): Mesh => {
-    mesh.material = kit.muddy(mesh.material as Material, mud)
+  const dirty = (mesh: Mesh, take = { mud: true, wear: false }): Mesh => {
+    mesh.material = kit.muddy(mesh.material as Material, mud, take)
     return mesh
   }
   const piles = new Map<string, { mount: Mount; tone: Tone; corners: number[] }>()
@@ -290,8 +298,8 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
       geometry.setAttribute('uv', new Float32BufferAttribute(camoPlaces(pile.corners, tones.camo.tileM), 2))
       mesh = kit.patterned(geometry, tones.camo)
     } else mesh = kit.mesh(geometry, tones[pile.tone])
-    if (pile.mount === 'turret') top.add(mesh)
-    else tank.add(dirty(mesh))
+    if (pile.mount === 'turret') top.add(dirty(mesh, { mud: false, wear: true }))
+    else tank.add(dirty(mesh, { mud: true, wear: true }))
   }
   for (const [tone, pile] of wheels) {
     const geometry = new BufferGeometry()

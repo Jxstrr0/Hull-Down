@@ -21,9 +21,9 @@ import { reelOf, type ReelFrame } from './shootReel'
 import type { Camo } from './camo'
 import { createFrameMeter } from './frameMeter'
 import { rangeScenery } from './scenery'
-import { buildSolids, buildTank, rollTracks, setMud, tonesOf } from './tankModel'
+import { buildSolids, buildTank, rollTracks, setMud, setWear, tonesOf } from './tankModel'
 import { DustTrail, dustAt, type DustKind, type PuffLook } from './dust'
-import { courseMud, enduranceMud } from './mud'
+import { courseMud, enduranceMud, enduranceWear, trialWear } from './mud'
 import { trackLinkPixels } from './trackLinks'
 import { tankShapeOf, type TankShape } from './tankShape'
 import { legGround, placeOnLeg, type LegGround } from './terrain'
@@ -159,35 +159,74 @@ export class Kit {
   /**
    * A copy of `material` that takes mud: `mud.share` of the way to the mud colour up to `lineM` from the
    * tank's floor, fading out over `fadeM` above. The tank's parts share one `mud`, so one number dirties them all.
+   * With `take.wear`, its paint also rubs through to bare steel in patches as `mud.wear` goes up, the faces looking up first.
    */
-  muddy(material: Material, mud: { share: { value: number }; lineM: { value: number } }): Material {
+  muddy(material: Material, mud: { share: { value: number }; lineM: { value: number }; wear: { value: number } }, take = { mud: true, wear: true }): Material {
     const copy = material.clone()
     const before = material.onBeforeCompile.bind(material)
     const key = material.customProgramCacheKey()
     copy.userData = { ...material.userData }
     const k = RENDER.tank.mud
+    const w = RENDER.tank.wear
     copy.onBeforeCompile = (shader, renderer) => {
       before(shader, renderer)
-      shader.uniforms.mudShare = mud.share
-      shader.uniforms.mudLineM = mud.lineM
-      shader.uniforms.mudFadeM = { value: k.fadeM }
-      shader.uniforms.mudColour = { value: new Color(k.colour) }
-      shader.vertexShader = `varying float vMudY;\n${shader.vertexShader}`.replace(
-        '#include <project_vertex>',
-        'vMudY = transformed.y;\n#include <project_vertex>',
-      )
-      shader.fragmentShader = `varying float vMudY;\nuniform float mudShare;\nuniform float mudLineM;\nuniform float mudFadeM;\nuniform vec3 mudColour;\n${shader.fragmentShader}`.replace(
-        '#include <color_fragment>',
-        // A painted picture (the links, the camouflage) still shows faintly through: its dark parts take darker mud.
-        `#include <color_fragment>
-        vec3 dirt = mudColour;
-        #ifdef USE_MAP
-          dirt *= mix(${k.underShade.toFixed(3)}, 1.0, sampledDiffuseColor.g);
-        #endif
-        diffuseColor.rgb = mix(diffuseColor.rgb, dirt, mudShare * clamp(1.0 - (vMudY - mudLineM) / mudFadeM, 0.0, 1.0));`,
-      )
+      shader.uniforms.wearShare = mud.wear
+      shader.uniforms.wearColour = { value: new Color(w.colour) }
+      if (take.mud) {
+        shader.uniforms.mudShare = mud.share
+        shader.uniforms.mudLineM = mud.lineM
+        shader.uniforms.mudFadeM = { value: k.fadeM }
+        shader.uniforms.mudColour = { value: new Color(k.colour) }
+        shader.vertexShader = `varying float vMudY;\n${shader.vertexShader}`.replace(
+          '#include <project_vertex>',
+          'vMudY = transformed.y;\n#include <project_vertex>',
+        )
+        shader.fragmentShader = `varying float vMudY;\nuniform float mudShare;\nuniform float mudLineM;\nuniform float mudFadeM;\nuniform vec3 mudColour;\n${shader.fragmentShader}`.replace(
+          '#include <color_fragment>',
+          // A painted picture (the links, the camouflage) still shows faintly through: its dark parts take darker mud.
+          `#include <color_fragment>
+          vec3 dirt = mudColour;
+          #ifdef USE_MAP
+            dirt *= mix(${k.underShade.toFixed(3)}, 1.0, sampledDiffuseColor.g);
+          #endif
+          diffuseColor.rgb = mix(diffuseColor.rgb, dirt, mudShare * clamp(1.0 - (vMudY - mudLineM) / mudFadeM, 0.0, 1.0));`,
+        )
+      }
+      // Each patch goes in just after the paint is read, so the last laid runs first: wear, then mud over it.
+      if (take.wear) {
+        shader.vertexShader = `varying vec3 vWearP;\nvarying vec3 vWearN;\n${shader.vertexShader}`.replace(
+          '#include <project_vertex>',
+          'vWearP = transformed;\nvWearN = objectNormal;\n#include <project_vertex>',
+        )
+        shader.fragmentShader = `varying vec3 vWearP;
+        varying vec3 vWearN;
+        uniform float wearShare;
+        uniform vec3 wearColour;
+        float wearHash(vec3 c) { return fract(sin(dot(c, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+        float wearNoise(vec3 p) {
+          vec3 i = floor(p);
+          vec3 f = fract(p);
+          f = f * f * (3.0 - 2.0 * f);
+          return mix(
+            mix(mix(wearHash(i), wearHash(i + vec3(1, 0, 0)), f.x), mix(wearHash(i + vec3(0, 1, 0)), wearHash(i + vec3(1, 1, 0)), f.x), f.y),
+            mix(mix(wearHash(i + vec3(0, 0, 1)), wearHash(i + vec3(1, 0, 1)), f.x), mix(wearHash(i + vec3(0, 1, 1)), wearHash(i + vec3(1, 1, 1)), f.x), f.y),
+            f.z);
+        }
+        ${shader.fragmentShader}`.replace(
+          '#include <color_fragment>',
+          // Bare steel where the noise tops what is left of the paint: more of it on faces looking up.
+          `#include <color_fragment>
+          {
+            vec3 at = vWearP * ${w.scale.toFixed(3)};
+            float rub = wearNoise(at) * 0.65 + wearNoise(at * 2.7 + 11.0) * 0.35;
+            float face = mix(${w.sideShare.toFixed(3)}, 1.0, clamp(normalize(vWearN).y, 0.0, 1.0));
+            float paint = 1.0 - wearShare * face;
+            diffuseColor.rgb = mix(diffuseColor.rgb, wearColour, smoothstep(paint, paint + ${w.edgeShare.toFixed(3)}, rub));
+          }`,
+        )
+      }
     }
-    copy.customProgramCacheKey = () => `${key}+mud`
+    copy.customProgramCacheKey = () => `${key}${take.mud ? '+mud' : ''}${take.wear ? '+wear' : ''}`
     this.materials.set(`mud/${this.mudCount++}`, copy)
     return copy
   }
@@ -381,6 +420,8 @@ interface Moment {
   sinkM: number
   /** How muddy the tank is by now, nought to one. */
   mudShare: number
+  /** How worn its paint is by now, nought to one. */
+  wearShare: number
   /** What the tracks throw up behind it, if anything. */
   dust: DustKind | null
   where: Where
@@ -413,6 +454,7 @@ function driveShow(kit: Kit, scene: Scene, test: 'acceleration' | 'obstacles', r
         sinkM: frame.sinkM,
         // The strip is concrete; the course is earth, and the pit leaves its mark.
         mudShare: pit ? courseMud(pose.x, pit) : 0,
+        wearShare: trialWear(),
         // Concrete dust on the strip, earth on the course, and mud flung up in the pit.
         dust: test === 'acceleration' ? 'concrete' : pit && pose.x >= pit.fromX && pose.x <= pit.toX ? 'mud' : 'earth',
         where: test === 'acceleration' ? { test, s: frame.s } : { test, s: frame.s, path },
@@ -463,6 +505,7 @@ function enduranceShow(kit: Kit, scene: Scene, run: EnduranceRun, shape: TankSha
         pose,
         sinkM: 0,
         mudShare: enduranceMud(frame.km),
+        wearShare: enduranceWear(frame.km),
         // A lap is hours long: puffs would be gone before they were seen.
         dust: null,
         where: { test: 'endurance', leg: ground.id },
@@ -579,6 +622,7 @@ function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: T
         pose: { x: frame.tankM, y: 0, pitchRad: 0 },
         sinkM: 0,
         mudShare: 0,
+        wearShare: trialWear(),
         dust: 'earth',
         where: {
           test: 'shoot',
@@ -669,6 +713,7 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     if (lastDistanceM !== null) rollTracks(tank, now.frame.distanceM - lastDistanceM)
     lastDistanceM = now.frame.distanceM
     setMud(tank, now.mudShare)
+    setWear(tank, now.wearShare)
     // Puffs at the back of both tracks, aged in watched seconds so a sped-up run does not blink them away.
     const watchedS = timeS / show.rate
     const ground = now.dust ? RENDER.dust.kinds[now.dust] : null

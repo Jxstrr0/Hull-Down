@@ -327,6 +327,17 @@ export const RENDER = {
       course: 0.15, pit: 0.75,
       battle: { defend: 0.25, meeting: 0.45, advance: 0.55, night: 0.4 },
     },
+    /**
+     * Wear: paint rubbed through to bare `colour` steel in patches, on the hull
+     * and turret. Patches come from a noise `scale` times a metre; faces looking
+     * up wear most, sides `sideShare` as much. Every trial tank starts with
+     * `trial` worth, an endurance run adds `perKm`, a battle tank has `battle`,
+     * and none goes past `most`. `edgeShare` softens a patch's edge.
+     */
+    wear: {
+      colour: '#77746b', most: 0.4, scale: 4, sideShare: 0.4, edgeShare: 0.04,
+      trial: 0.16, perKm: 0.0008, battle: 0.3,
+    },
     /** A bustle is a box behind the turret: its width as a share of the turret radius. */
     bustleWidthShare: 1.5,
     /**
