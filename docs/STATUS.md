@@ -477,6 +477,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.2.31.1, visit counts.** Kelbo asked for Cloudflare Web Analytics on every Longlight game. A cookieless beacon at the end of `index.html` counts visits and load speed; nothing about the player or the saves. The loading screen ignores it if an ad blocker stops it. It shares the studio's zone-wide analytics site (the free limit of 11 sites is used up).
 - **1.2.31.0, turbine recording.** A gas turbine now has its own recorded roar ("Rocket Engine" by theMinesAreShakin, CC0, from OpenGameArt), looped under its synth whine and played faster as it spools up. The diesel and multi-fuel engines keep their chug. Credited in the game and in CREDITS.md.
 - **1.2.30.0, track sound.** The tracks are a real recording now: a winch's ratchet, "Chain winch sounds" by bart (CC0, OpenGameArt), credited in the game and in CREDITS.md. A steady 2 s cut from it loops seamlessly under the synth clatter and plays faster with speed, its clicks keeping step with the track links. 32 KB, fetched when the sound first starts.
 - **1.2.29.0, engine sound.** The tank engine is a real recording now: "Engine-loop heavy vehicle/tank" by Nayckron, from a car engine loop by qubodup (CC BY 3.0, OpenGameArt), credited in the game and in CREDITS.md. It loops seamlessly under the synth engine, faster as the revs climb and falling back at each gear change; bigger engines sound lower; a turbine keeps its whine over it. 64 KB, fetched when the sound first starts.

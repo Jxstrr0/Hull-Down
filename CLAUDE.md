@@ -33,7 +33,7 @@ trade-offs.
   (`publish-release.yml`), with that version's `docs/STATUS.md` log line as notes.
   Live at `https://hulldown.longlight.games/` (the old
   `https://jxstrr0.github.io/Hull-Down/` address redirects there).
-- No backend, accounts, analytics, ads or API keys.
+- No backend, accounts, ads or API keys. No analytics except the cookieless Cloudflare Web Analytics beacon at the end of `index.html`, which counts visits and load speed (Kelbo, 2026-11-12).
 
 ## Folders
 
