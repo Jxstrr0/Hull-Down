@@ -1,5 +1,6 @@
 // The proving ground: every test a prototype is put through, run from its
 // stat sheet. The same tank always gives the same result.
+import { FIRE_MISSION } from '../../data/fireMission'
 import { GUNNERY_TEST_IDS, MARKS_GEN1, RANGE, type ClimateId, type GunneryTestId, type Marks } from '../../data/range'
 import type { Limits, VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
@@ -10,6 +11,7 @@ import { runArmourTrial, type ArmourRun } from './armour'
 import { runBerm, type BermRun } from './berm'
 import { runLoadingDrill, type DrillRun } from './drill'
 import { runEndurance, type EnduranceRun } from './endurance'
+import { judgeFireMission, runFireMission, type FireMissionRun } from './fireMission'
 import { runGunnery, type GunneryRun } from './gunnery'
 import { runObstacles, type ObstacleRun } from './obstacles'
 
@@ -24,6 +26,7 @@ export { TURRET_PARTS, type TurretPartId } from '../gunnery/fire'
 export {
   runEndurance, type EnduranceEvent, type EnduranceLeg, type EnduranceRun, type EnduranceSetup, type PartLoad,
 } from './endurance'
+export { judgeFireMission, runFireMission, type FireMissionRun, type MissionGrid, type MissionShell } from './fireMission'
 export {
   MISS_CAUSES, runGunnery, type GunneryRun, type MissCause, type ShotRecord, type TargetResult,
 } from './gunnery'
@@ -41,6 +44,11 @@ export type GunneryResult = GunneryRun & {
   passed: boolean
 }
 
+/** The fire mission with its marks applied. */
+export type FireMissionResult = FireMissionRun & ReturnType<typeof judgeFireMission> & {
+  marks: { firstRoundS: number; rpm: number; missM: number }
+}
+
 export interface RangeReport {
   marks: Marks
   acceleration: AccelerationRun & {
@@ -54,6 +62,8 @@ export interface RangeReport {
   drill: DrillRun & { passed: boolean }
   armour: ArmourRun & { passed: boolean }
   berm: BermRun & { passed: boolean }
+  /** The fire mission, for a howitzer or where the tender asks for one. Null otherwise. */
+  fireMission: FireMissionResult | null
   /** Hours the crew had been in the tank when the shoots and the drill came round. */
   crewHours: number
   /** Tests passed and tests run. */
@@ -82,7 +92,7 @@ function faultIn(parts: TurretPart[], testNo: number, seed: number): TurretPart 
 }
 
 export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeReport {
-  const marks = setup.marks ?? MARKS_GEN1
+  const marks: Marks = setup.marks ?? MARKS_GEN1
   const run = runAcceleration(sheet.drive)
   const sprintPassed = run.sprintS !== null && run.sprintS <= marks.sprintS
   const topPassed = run.topKmh >= marks.topKmh
@@ -104,9 +114,13 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   const armour = { ...shots, passed: shots.failed.length === 0 }
   const ridge = runBerm(sheet.interior.frame, sheet.firepower.gunDepressionDeg)
   const berm = { ...ridge, passed: ridge.showsM <= marks.bermShowsM }
+  // A howitzer is put through a fire mission wherever it goes; a tender for one sets its own marks.
+  const missionMarks = marks.fireMission ?? (sheet.fire.mission.howitzer ? FIRE_MISSION.marks : null)
+  const mission = missionMarks ? runFireMission(sheet.fire, setup.seed) : null
+  const fireMission = mission && missionMarks ? { ...mission, ...judgeFireMission(mission, missionMarks), marks: missionMarks } : null
   const passed = [
     acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
-    armour.passed, berm.passed,
+    armour.passed, berm.passed, ...(fireMission ? [fireMission.passed] : []),
   ]
   return {
     marks,
@@ -117,6 +131,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     drill,
     armour,
     berm,
+    fireMission,
     crewHours: RANGE.crewHours,
     passes: passed.filter(Boolean).length,
     tests: passed.length,

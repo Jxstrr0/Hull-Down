@@ -23,6 +23,7 @@ import { onHold } from './hold'
 import { fixed } from './format'
 import { placeOf } from './gunneryAdvice'
 import { gunneryCards } from './gunneryCards'
+import { missionCards } from './missionCard'
 import { runRange } from './rangeRunner'
 import { cardFacts, shareBlock } from './shareCard'
 
@@ -604,6 +605,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     root.append(
       summary, accel, course, long,
       ...gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch }),
+      ...missionCards(report, sheet.fire.mission.reachKm, { card, line, fixButton, watch }),
       ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }),
     )
     const after = afterAction(report.armour, args.spec)

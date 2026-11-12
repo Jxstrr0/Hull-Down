@@ -714,9 +714,9 @@ army judges it on a new fire mission trial rather than tank duels.
    needs a big turret ring, so a turret only fits the heavy hull; a casemate
    takes it on any hull. Not a Pact tank calibre, so it is offered only where
    a tender asks for 155 mm, and in the sandbox with no limits.
-2. The fire mission trial (1.4.1.0): shells onto a map grid 10 to 20 km off,
-   judged on time to the first round, rounds in a minute, and how close they
-   land. It gets a page in the report.
+2. The fire mission trial (1.4.1.0): shells onto map grids 11, 15 and 19 km
+   off, judged on reach, time to the first round, rounds in a minute, and how
+   close they land. It gets a card in the report, and runs for any howitzer.
 3. The 2008 tender in the career (1.4.2.0). The fire mission takes the place
    of the tank duels and the armour-piercing shoots; the driving, endurance
    and armour tests stay. Saves carried over.
