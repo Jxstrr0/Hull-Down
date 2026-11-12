@@ -290,6 +290,7 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   if (later.turret) spec.turret.shape = later.turret
   if (later.active) spec.protection.active = later.active
   if (later.apu) spec.powerpack.apu = true
+  if (later.skirts) spec.runningGear.skirts = true
   // A gun outside the tender's calibres is no use: the bureau takes the biggest gun that is allowed.
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 

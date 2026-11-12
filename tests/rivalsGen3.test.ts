@@ -27,6 +27,19 @@ describe('the rival bureaux in generation three', () => {
     }
   })
 
+  it('hang side skirts as the rockets come: the heavy bureau from 2001, the gunnery bureau from 2016, the light one never', () => {
+    const T1 = TENDERS.improvedType1
+    for (const seed of SEEDS) {
+      const skirts = (bureau: (typeof BUREAU_IDS)[number], limits: typeof T1.limits) => designRival(bureau, limits, seed).runningGear.skirts
+      for (const bureau of BUREAU_IDS) expect(skirts(bureau, T1.limits), bureau).toBe(false)
+      expect(skirts('heavy', T2.limits)).toBe(true)
+      expect(skirts('firepower', T2.limits)).toBe(false)
+      expect(skirts('heavy', T3.limits)).toBe(true)
+      expect(skirts('firepower', T3.limits)).toBe(true)
+      expect(skirts('light', T3.limits)).toBe(false)
+    }
+  })
+
   it('put in tanks that can be built and powered', () => {
     for (const seed of SEEDS) {
       for (const bureau of BUREAU_IDS) {
