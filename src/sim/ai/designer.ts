@@ -4,7 +4,7 @@
 // weight it has left on armour. Same parts list, same limits, same checks.
 import { BASELINE_SPEC } from '../../data/baseline'
 import { MATERIALS, ZONES, type MaterialId, type ZoneId } from '../../data/materials'
-import { BUREAUS, BUREAU_IDS, DESIGNER, IFV_ARMOUR, SPG_ARMOUR, type BureauId, type LaterPicks, type Philosophy, type Picks } from '../../data/opponents'
+import { BUREAUS, BUREAU_IDS, DESIGNER, IFV_ARMOUR, SCOUT_ARMOUR, SPG_ARMOUR, type BureauId, type LaterPicks, type Philosophy, type Picks } from '../../data/opponents'
 import {
   COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS,
   TRANSMISSIONS, TURRETS, type EngineId, type GunId, type TransmissionId, type TurretId,
@@ -79,9 +79,15 @@ export function wantsCannon(limits: Limits): boolean {
   return guns.length > 0 && guns.every((gun) => GUNS[gun].beltFed)
 }
 
+/** True when the tender takes only wheels and belt-fed cannon: it wants a scout car. */
+export function wantsScout(limits: Limits): boolean {
+  return limits.wheelsOnly === true && wantsCannon(limits)
+}
+
 /** The share of the weight limit the bureau builds up to on this tender. */
 function massShareOf(philosophy: Philosophy, limits: Limits): number {
   if (wantsHowitzer(limits)) return philosophy.spg.massShare
+  if (wantsScout(limits)) return philosophy.scout.massShare
   if (wantsCannon(limits)) return philosophy.ifv.massShare
   return philosophy.massShare
 }
@@ -333,6 +339,16 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   if (wantsHowitzer(limits)) {
     fitPicks(spec, philosophy.spg)
     spec.ammo.rounds = philosophy.spg.rounds
+  } else if (wantsScout(limits)) {
+    // A scout car: on wheels, with no squad, the engine at the back, and no tiles.
+    const scout = philosophy.scout
+    fitPicks(spec, scout)
+    spec.hull.size = scout.hull
+    spec.runningGear.layout = scout.layout
+    spec.ammo.rounds = scout.rounds
+    spec.fireControl.commanderSight = scout.commanderSight
+    if (scout.engine) spec.powerpack.engine = scout.engine
+    for (const zone of ZONES) spec.era[zone] = 0
   } else if (wantsCannon(limits)) {
     // A carrier for a squad: the engine goes in front to leave the back for the soldiers, and no tiles.
     const ifv = philosophy.ifv
@@ -344,18 +360,12 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
     if (ifv.engine) spec.powerpack.engine = ifv.engine
     if (ifv.rangefinder) spec.fireControl.rangefinder = ifv.rangefinder
     for (const zone of ZONES) spec.era[zone] = 0
-    // A scout car's tender wants wheels and no squad. For now each bureau puts its carrier on eight wheels.
-    if (limits.wheelsOnly) {
-      spec.runningGear.layout = 'wheels8'
-      spec.crew.troops = 0
-      spec.hull.engineAt = 'rear'
-    }
   } else if (limits.casemate && philosophy.destroyer) fitPicks(spec, philosophy.destroyer)
   // A gun outside the tender's calibres is no use: the bureau takes the biggest gun that is allowed.
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 
   const pattern = { ...philosophy.armour }
-  const lean = wantsHowitzer(limits) ? SPG_ARMOUR : wantsCannon(limits) ? IFV_ARMOUR : {}
+  const lean = wantsHowitzer(limits) ? SPG_ARMOUR : wantsScout(limits) ? SCOUT_ARMOUR : wantsCannon(limits) ? IFV_ARMOUR : {}
   for (const [zone, share] of Object.entries(lean) as [ZoneId, number][]) pattern[zone] *= share
   if (settle(spec, pattern, philosophy, limits)) return { spec, pattern }
   // Nothing the bureau wanted could be built: it enters the licence-built tank as it stands.
@@ -373,7 +383,7 @@ export function designRival(bureau: BureauId, limits: Limits, seed: number): Veh
  * What a trial can teach a bureau. A word names a test its tank failed; a
  * zone names a plate that let a round through.
  */
-export const LESSONS = ['night', 'onTheMove', 'halted', 'drill', 'power', 'trench', 'berm', 'fireData'] as const
+export const LESSONS = ['night', 'onTheMove', 'halted', 'drill', 'power', 'trench', 'berm', 'fireData', 'search', 'mud'] as const
 export type Lesson = (typeof LESSONS)[number] | { zone: ZoneId }
 
 /** The part after this one in its table, which lists them plainest first. Null at the end. */
@@ -395,6 +405,23 @@ function learn(draft: Draft, lesson: Lesson, generation: Generation): boolean {
     return true
   }
   switch (lesson) {
+    case 'search': {
+      // Hidden vehicles missed: the commander's own sight first, then a better night sight, whose heat picture finds them by day.
+      if (!fc.commanderSight) {
+        fc.commanderSight = true
+        return true
+      }
+      return learn(draft, 'night', generation)
+    }
+    case 'mud': {
+      // Bogged in the mud on wheels: more wheels to spread the weight. On tracks, or on eight wheels already, a stronger engine.
+      const more = spec.runningGear.layout === 'wheels4' ? 'wheels6' : spec.runningGear.layout === 'wheels6' ? 'wheels8' : null
+      if (more) {
+        spec.runningGear.layout = more
+        return true
+      }
+      return learn(draft, 'power', generation)
+    }
     case 'night': {
       const night = nextOf(NIGHT_SIGHTS, fc.night, nightOk)
       if (night) fc.night = night

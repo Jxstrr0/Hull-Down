@@ -809,7 +809,14 @@ it on a new spot-and-report trial rather than tank duels.
    scored from spot and report, 0.7 on what it found and 0.3 on not being
    seen first. Rivals put in eight-wheelers until step 5. Saves move on one
    place from 2008.
-5. Rival bureaus bid scout cars (1.6.4.0).
+5. Rival bureaus bid scout cars (1.6.4.0). Done: each bureau has its own
+   scout car. Heavy: the medium hull on eight wheels with the big engine,
+   up to the weight limit, plain sights. Light: the light hull on six
+   wheels, the low turret and the commander's own sight, at three quarters
+   of the limit. Firepower: the light hull on eight wheels with the
+   commander's sight and a thermal sight. From spot and report they learn
+   the commander's sight, then a better night sight, for vehicles missed;
+   and more wheels, then more power, for the mud.
 6. Something to watch for the spot-and-report trial (1.6.5.0).
 
 ---
