@@ -72,12 +72,15 @@ export interface PiecePart extends PartBase {
   piece: KitPiece
   scale: { x: number; y: number; z: number }
   at: { x: number; y: number; z: number }
-  fallback: Omit<DrumPart, 'mount' | 'tone'>
+  /** The simple shapes drawn instead, in `tone`, if the kit has not come. */
+  fallback: readonly Plain[]
 }
 
 export type TankPart = BoxPart | DrumPart | SlabPart | LoftPart | BandPart | PiecePart
 
 type Bare<T> = T extends unknown ? Omit<T, 'mount' | 'tone'> : never
+/** A simple shape: anything but a kit piece. */
+export type Plain = Bare<Exclude<TankPart, PiecePart>>
 /** The shape of a part alone: not what it is fixed to or how it is painted. Scenery is built from these too. */
 export type Solid = Bare<TankPart>
 
@@ -131,7 +134,14 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     centreZM: m.halfWidth - m.trackWidth / 2,
   }
   const turret = { xM: fromNose(m.turretX), baseM: m.roof, heightM: geometry.turretHeightM, radiusM: m.radius, bustleM: m.bustle }
-  const gun = { rootXM: fromNose(m.gunRootX), lengthM: m.gunRootX - m.muzzleX, radiusM: m.barrelHalf, yM: m.gunY }
+  // The gun sits where the kit's turret was modelled to carry it, which is close to the drawing's place for it.
+  const fit = KIT.fit[spec.turret.shape]
+  const gun = {
+    rootXM: turret.xM + fit.gunAhead * turret.radiusM,
+    lengthM: m.gunRootX - m.muzzleX,
+    radiusM: m.barrelHalf,
+    yM: turret.baseM + fit.gunUp * turret.heightM,
+  }
 
   const parts: TankPart[] = []
   const hull = (tone: Tone): PartBase => ({ mount: 'hull', tone })
@@ -168,7 +178,7 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
       const k = r / refR
       return {
         ...hull('body'), kind: 'piece', piece: name, scale: { x: k, y: k, z: -side * k }, at: { x, y, z },
-        fallback: { kind: 'drum', axis: 'z', radiusM: r, lengthM: t.wheelThickM, sides, at: { x, y, z: side * (track.centreZM + track.widthM / 2 + t.wheelProudM) } },
+        fallback: [{ kind: 'drum', axis: 'z', radiusM: r, lengthM: t.wheelThickM, sides, at: { x, y, z: side * (track.centreZM + track.widthM / 2 + t.wheelProudM) } }],
       }
     }
     for (const x of wheelX) parts.push(piece('road-wheel', radius, ref.roadWheelRadiusM, x, radius, t.wheelSides))
@@ -227,9 +237,10 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   // --- Everything that turns with the gun, placed from the middle of the ring.
   const R = turret.radiusM
   const h = turret.heightM
+  const k = R / ref.turretRadiusM
   const rings = t.turrets[spec.turret.shape]
-  parts.push({
-    ...top('body'), kind: 'loft',
+  const shell: Plain[] = [{
+    kind: 'loft',
     rings: rings.map((ring) => {
       const a = ring.ahead * R
       const b = ring.behind * R
@@ -243,53 +254,78 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
         ],
       }
     }),
-  })
+  }]
   const lowest = rings[0]
   const sideZ = (lowest?.half ?? 1) * R
   if (turret.bustleM > 0) {
     const long = turret.bustleM + R * 0.1
-    parts.push({
-      ...top('body'), kind: 'box',
+    const bustle: Plain = {
+      kind: 'box',
       size: { x: long, y: m.top - m.bustleFloor, z: R * t.bustleWidthShare },
       at: { x: -(R * 0.9 + long / 2), y: (m.top + m.bustleFloor) / 2, z: 0 },
-    })
+    }
+    // The bustle turret's piece has its own overhang; any other turret keeps the plain one.
+    if (spec.turret.shape === 'bustle') shell.push(bustle)
+    else parts.push({ ...top('body'), ...bustle })
   }
   const rootX = gun.rootXM - turret.xM
-  parts.push({
-    ...top('dark'), kind: 'box',
+  const mantlet: Plain = {
+    kind: 'box',
     size: { x: t.mantlet.longM, y: h * t.mantlet.highShare, z: R * t.mantlet.wideShare },
     at: { x: rootX + t.mantlet.longM / 4, y: gun.yM, z: 0 },
-  })
+  }
+  // A turret with no mantlet in the kit (the unmanned one, its gun in a cradle) keeps the plain one in its stand-in.
+  if (!fit.mantlet) shell.push(mantlet)
   parts.push({
-    ...top('dark'), kind: 'drum', axis: 'x', radiusM: gun.radiusM, lengthM: gun.lengthM, sides: t.gunSides,
-    at: { x: rootX + gun.lengthM / 2, y: gun.yM, z: 0 },
+    ...top('body'), kind: 'piece', piece: KIT.turrets[spec.turret.shape],
+    scale: { x: k, y: h / ref.turretHeightM[spec.turret.shape], z: k }, at: { x: 0, y: turret.baseM, z: 0 },
+    fallback: shell,
   })
-  parts.push({
-    ...top('dark'), kind: 'drum', axis: 'x', radiusM: m.extractorHalf, lengthM: DRAWING.extractorLengthM, sides: t.extractorSides,
-    at: { x: fromNose(m.extractorX) - turret.xM + DRAWING.extractorLengthM / 2, y: gun.yM, z: 0 },
-  })
-  // The commander's hatch, and the sight head if one is fitted. A turret with nobody in it has no hatch.
-  const cupolaM = TURRETS[spec.turret.shape].crewed ? DRAWING.cupolaHeightM : 0
-  const hatch = { x: -R * t.cupola.backShare, z: TURRETS[spec.turret.shape].crewed ? R * t.cupola.acrossShare : 0 }
-  if (cupolaM > 0) {
+  if (fit.mantlet) {
+    const st = fit.mantletStretch
     parts.push({
-      ...top('body'), kind: 'drum', axis: 'y', radiusM: DRAWING.hatchRadiusM, lengthM: cupolaM, sides: t.cupolaSides,
-      at: { x: hatch.x, y: m.top + cupolaM / 2, z: hatch.z },
+      ...top('dark'), kind: 'piece', piece: fit.mantlet,
+      scale: { x: k * st.x, y: k * st.y, z: k * st.z }, at: { x: rootX - fit.mantletBackM * k, y: gun.yM, z: 0 },
+      fallback: [mantlet],
+    })
+  }
+  const extractorX = fromNose(m.extractorX) - fromNose(m.gunRootX) + rootX
+  const across = gun.radiusM / ref.gunRadiusM
+  parts.push({
+    ...top('dark'), kind: 'piece', piece: 'gun',
+    scale: { x: gun.lengthM / ref.gunLengthM, y: across, z: across }, at: { x: rootX, y: gun.yM, z: 0 },
+    fallback: [
+      { kind: 'drum', axis: 'x', radiusM: gun.radiusM, lengthM: gun.lengthM, sides: t.gunSides, at: { x: rootX + gun.lengthM / 2, y: gun.yM, z: 0 } },
+      { kind: 'drum', axis: 'x', radiusM: m.extractorHalf, lengthM: DRAWING.extractorLengthM, sides: t.extractorSides, at: { x: extractorX + DRAWING.extractorLengthM / 2, y: gun.yM, z: 0 } },
+    ],
+  })
+  // The commander's cupola, and the sight head if one is fitted. A turret with nobody in it has no cupola.
+  const crewed = TURRETS[spec.turret.shape].crewed
+  const roof = KIT.roof
+  const hatch = { x: -R * t.cupola.backShare, z: R * t.cupola.acrossShare }
+  if (crewed) {
+    const cupolaY = turret.baseM + h * roof.cupolaUp
+    parts.push({
+      ...top('body'), kind: 'piece', piece: 'cupola', scale: { x: 1, y: 1, z: 1 }, at: { x: hatch.x, y: cupolaY, z: hatch.z },
+      fallback: [{ kind: 'drum', axis: 'y', radiusM: DRAWING.hatchRadiusM, lengthM: DRAWING.cupolaHeightM, sides: t.cupolaSides, at: { x: hatch.x, y: cupolaY + DRAWING.cupolaHeightM / 2, z: hatch.z } }],
     })
   }
   if (spec.fireControl.commanderSight) {
     const s = DRAWING.sightHeadM
+    const sight = { x: -R * roof.sightBackShare, y: turret.baseM + h * roof.sightUp, z: -R * roof.sightAcrossShare }
     parts.push({
-      ...top('dark'), kind: 'box', size: { x: s.width, y: s.height, z: s.width },
-      at: { x: hatch.x, y: m.top + cupolaM + s.height / 2, z: hatch.z },
+      ...top('dark'), kind: 'piece', piece: 'sight-head', scale: { x: 1, y: 1, z: 1 }, at: sight,
+      fallback: [{ kind: 'box', size: { x: s.width, y: s.height, z: s.width }, at: { ...sight, y: sight.y + s.height / 2 } }],
     })
   }
   if (spec.protection.smokeLaunchers) {
     const l = t.launcher
     for (const side of [-1, 1]) {
+      // Modelled for the left side; the right one is mirrored so its tubes face out.
+      const at = { x: -R * l.backShare, y: turret.baseM + h * l.upShare, z: side * (fit.launcherOut * R + l.wideM / 2) }
       parts.push({
-        ...top('dark'), kind: 'box', size: { x: l.longM, y: l.highM, z: l.wideM },
-        at: { x: -R * l.backShare, y: turret.baseM + h * l.upShare, z: side * (sideZ + l.wideM / 2) },
+        ...top('dark'), kind: 'piece', piece: 'smoke-launchers', scale: { x: 1, y: 1, z: -side }, at,
+        fallback: [{ kind: 'box', size: { x: l.longM, y: l.highM, z: l.wideM }, at }],
       })
     }
   }
