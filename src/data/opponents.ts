@@ -76,6 +76,29 @@ export const SPG_ARMOUR: Partial<Record<ZoneId, number>> = {
   hullSideFront: 2, hullSideRear: 1.5, turretSides: 1.8,
 }
 
+/** What a bureau builds when the tender is for an infantry fighting vehicle. */
+export interface IfvPicks extends LaterPicks {
+  hull: HullId
+  engine?: EngineId
+  rangefinder?: RangefinderId
+  /** Soldiers in the back. */
+  troops: number
+  /** How much of the weight limit it builds up to. */
+  massShare: number
+  rounds: number
+}
+
+/**
+ * How an infantry fighting vehicle's armour leans, on top of each bureau's
+ * own pattern: it need only keep out another carrier's cannon, front and
+ * sides, so the heavy front plates of a tank go and the sides of the troop
+ * compartment get the most.
+ */
+export const IFV_ARMOUR: Partial<Record<ZoneId, number>> = {
+  upperGlacis: 0.3, lowerGlacis: 0.3, turretFrontLeft: 0.2, turretFrontRight: 0.2, mantlet: 0.2,
+  hullSideFront: 1, hullSideRear: 1.4, hullRear: 0.6, turretSides: 0.5, turretRear: 0.4,
+}
+
 export interface Philosophy {
   picks: Picks
   /** The newer parts the bureau fits from each generation on. */
@@ -84,6 +107,8 @@ export interface Philosophy {
   destroyer?: LaterPicks
   /** What the bureau fits when the tender is for a self-propelled gun, in place of its destroyer picks. */
   spg: SpgPicks
+  /** What the bureau fits when the tender is for an infantry fighting vehicle. Each bureau carries a squad of six. */
+  ifv: IfvPicks
   /** How much of the weight limit the bureau builds up to, 0..1. */
   massShare: number
   /**
@@ -150,6 +175,8 @@ export const BUREAUS = {
     // No destroyer picks: asked for a tank destroyer, it bids a well-armoured tank with a turret.
     // For a self-propelled gun: still a turret, the electronic computer, and more armour than the others.
     spg: { computer: 'electronic', massShare: 0.85, rounds: 30 },
+    // For an infantry fighting vehicle: the weight limit used to the last tonne, most of it on the sides, and the plain sights it always fits.
+    ifv: { hull: 'medium', loading: 'loader', troops: 6, massShare: 1, rounds: 50 },
     massShare: 1,
     armour: {
       upperGlacis: 1.4, lowerGlacis: 1.3, hullSideFront: 1, hullSideRear: 0.9, hullRear: 0.8, hullRoof: 1, belly: 1,
@@ -189,6 +216,8 @@ export const BUREAUS = {
     destroyer: { turret: 'casemate' },
     // For a self-propelled gun: a cheap casemate, loaded by hand, worked out with the mechanical computer.
     spg: { turret: 'casemate', loading: 'loader', computer: 'mechanical', massShare: 0.6, rounds: 30 },
+    // For an infantry fighting vehicle: cheap and quick, with the small engine, the low turret and thin plate.
+    ifv: { hull: 'medium', engine: 'diesel580', turret: 'lowProfile', loading: 'loader', troops: 6, massShare: 0.85, rounds: 40 },
     massShare: 0.75,
     armour: {
       upperGlacis: 1, lowerGlacis: 0.9, hullSideFront: 0.8, hullSideRear: 0.8, hullRear: 0.9, hullRoof: 1, belly: 1,
@@ -231,6 +260,8 @@ export const BUREAUS = {
     destroyer: { turret: 'casemate' },
     // For a self-propelled gun: a casemate with the carousel and the digital computer, for the quickest first round.
     spg: { turret: 'casemate', loading: 'carousel', computer: 'digital', massShare: 0.8, rounds: 36 },
+    // For an infantry fighting vehicle: the laser and the electronic computer, to put down every target quickly, and the most rounds.
+    ifv: { hull: 'medium', loading: 'loader', rangefinder: 'laser', computer: 'electronic', troops: 6, massShare: 0.9, rounds: 60 },
     massShare: 0.95,
     armour: {
       upperGlacis: 1, lowerGlacis: 1, hullSideFront: 0.9, hullSideRear: 0.9, hullRear: 1, hullRoof: 1, belly: 1,

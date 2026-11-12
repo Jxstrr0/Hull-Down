@@ -20,6 +20,8 @@ export function lessonsOf(range: RangeReport): Lesson[] {
   } else if (range.carrier) {
     // Only the squad drop counts of the shooting: targets left standing want a better rangefinder and computer.
     if (range.squad && !range.squad.coverPassed) lessons.push('halted')
+    // A squad late to the drop point wants a stronger engine.
+    if (range.squad && !range.squad.dropPassed) lessons.push('power')
   } else {
     if (!range.gunnery.night.passed) lessons.push('night')
     if (!range.gunnery.onTheMove.passed) lessons.push('onTheMove')

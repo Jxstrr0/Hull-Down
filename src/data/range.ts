@@ -340,7 +340,7 @@ export const MARKS_SPG = {
  */
 export const MARKS_IFV = {
   sprintS: MARKS_GEN1.sprintS,
-  topKmh: 55,
+  topKmh: MARKS_GEN1.topKmh,
   enduranceStops: 1,
   hits: MARKS_GEN1.hits,
   firstShotS: MARKS_GEN1.firstShotS,
