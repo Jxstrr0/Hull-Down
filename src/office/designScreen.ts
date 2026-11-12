@@ -3,6 +3,7 @@
 // The blueprint on top is drawn from the same spec, and tapping it opens a part.
 import { SANDBOX, SANDBOX_LIMIT_IDS } from '../data/sandbox'
 import { OFFICE } from '../data/office'
+import { SKETCHES } from '../data/sketches'
 import { loadSandbox, saveSandbox } from '../persist/sandboxStore'
 import { createDaily, type Daily } from './dailyBox'
 import { sandboxLimits } from '../sim/vehicle/sandbox'
@@ -559,6 +560,14 @@ export function renderDesignScreen(first: Tender): Office {
     else if (change) headRow.append(el('span', 'opt-delta', deltaText(change)))
     button.append(headRow)
     if (withNote && text.note) button.append(el('span', 'opt-note', text.note))
+    // The fitted part's sketch, painted in the page's ink.
+    const sketch = on ? SKETCHES[key] : undefined
+    if (sketch) {
+      const picture = el('span', 'opt-sketch')
+      picture.style.setProperty('--sketch', `url("${sketch}")`)
+      picture.setAttribute('aria-hidden', 'true')
+      button.append(picture)
+    }
     const first = change?.newErrors[0]
     if (first) button.append(el('span', 'opt-warn', fill(O.wouldCause, { issue: issueText(first) })))
     return button
