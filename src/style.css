@@ -241,35 +241,6 @@ body {
 .chip-value { margin: 0; font-family: var(--font-mono); font-size: 0.9rem; white-space: nowrap; }
 .chip-bad { color: var(--pencil); font-weight: 500; }
 
-.tabs {
-  position: relative;
-  flex: none;
-  display: flex;
-  overflow-x: auto;
-  border-bottom: 2px solid var(--ink);
-  scrollbar-width: none;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tab {
-  flex: none;
-  min-height: 46px;
-  padding: 0 14px;
-  border: 0;
-  border-right: 1px solid var(--grid);
-  background: transparent;
-  color: var(--ink-dim);
-  font-family: var(--font-head);
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.tab-on { background: var(--ink); color: var(--paper); }
-.tab-faulty:not(.tab-on) { color: var(--pencil); }
-.tab:focus-visible { outline: 3px solid var(--pencil); outline-offset: -3px; }
-
 .panel {
   flex: 1;
   min-height: 0;
@@ -283,6 +254,36 @@ body {
 
 /* One control: a label, a note, then options or a slider. */
 .ctl { scroll-margin-top: 8px; }
+/* The design list: one row per system, each opening to its parts. */
+.sys-row { border: 2px solid var(--ink); border-radius: 2px; background: color-mix(in srgb, var(--ink) 4%, var(--paper)); }
+.sys-row + .sys-row { margin-top: -12px; }
+.sys-row > .ctl-heading .ctl-head { min-height: 52px; font-size: 1.02rem; }
+.sys-row.ctl-faulty { border-color: var(--pencil); }
+.sys-body { display: flex; flex-direction: column; gap: 8px; padding: 8px; }
+.sys-body > .ctl-row + .ctl-row { margin-top: 0; }
+.sys-row.ctl-open { border-width: 2.5px; }
+
+/* The bar along the bottom: Design, Trials, Bureau, Saves. */
+.office-nav { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 2px solid var(--ink); background: var(--paper); }
+.nav-btn {
+  min-height: 52px;
+  padding: 0 4px;
+  border: 0;
+  border-right: 1px solid var(--grid);
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nav-btn:last-child { border-right: 0; }
+.nav-on { background: var(--ink); color: var(--paper); }
+.nav-btn:focus-visible { outline: 3px solid var(--pencil); outline-offset: -3px; }
+
 /* A part as a row: name, what is fitted, and a chevron. Tap to open; one opens at a time. */
 .ctl-row { border: 1.5px solid var(--ink); border-radius: 2px; background: var(--paper); }
 .ctl-row + .ctl-row { margin-top: -12px; }
@@ -690,8 +691,10 @@ body {
 
 /* Landscape phones and desktop: summary on the left, parts on the right. */
 @media (orientation: landscape) and (min-width: 640px) {
-  .office { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; grid-template-rows: auto 1fr; }
+  .office { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; grid-template-rows: 1fr auto; }
   .office-top { grid-row: 1 / -1; border-bottom: 0; border-right: 2px solid var(--ink); overflow-y: auto; }
+  .office > .panel { grid-column: 2; grid-row: 1; }
+  .office-nav { grid-column: 2; grid-row: 2; max-width: 720px; }
   .chips { flex-wrap: wrap; }
   .bp-svg { max-height: 130px; }
   .panel { max-width: 720px; }

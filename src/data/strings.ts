@@ -51,6 +51,9 @@ export const STRINGS = {
       fault: '✕',
       label: '{name}: {now}',
       faultLabel: '{name}: {now}. Has a fault',
+      faultCount: '{n} to fix',
+      noFaults: 'None',
+      readouts: '{speed} · {range}',
     },
     cutaway: {
       button: 'Inside',
@@ -76,8 +79,9 @@ export const STRINGS = {
         tailTank: '{n} l behind the turret',
       },
     },
-    tabsLabel: 'Design areas',
+    navLabel: 'Parts of the office',
     tabs: {
+      design: 'Design',
       hull: 'Hull',
       turret: 'Turret',
       armour: 'Armour',
