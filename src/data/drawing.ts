@@ -27,6 +27,32 @@ export const DRAWING = {
   /** Extra tap room above the turret and below the ground. */
   tapSkyM: 0.85,
   tapGroundM: 0.5,
+  /** The finer details of the drawing. Shares are of the part they sit on. */
+  detail: {
+    tyreShare: 0.84,
+    boltRingShare: 0.24,
+    boltShare: 0.035,
+    wheelBolts: 6,
+    sprocketTeeth: 12,
+    toothRootShare: 0.84,
+    idlerSpokes: 5,
+    /** Length of one track link. */
+    linkM: 0.16,
+    returnRollers: 3,
+    rollerR: 0.075,
+    /** The track guard sits this far above the top run. */
+    fenderGapM: 0.03,
+    /** A weld seam this far below the roof line. */
+    seamM: 0.05,
+    /** Spacing of the engine grille's louvres. */
+    louvreM: 0.09,
+    /** The turret's casting line, as a share of its height. */
+    castLineShare: 0.14,
+    basketM: 0.38,
+    muzzleRingM: 0.14,
+    muzzleRingShare: 1.25,
+    sleeveBandM: 0.55,
+  },
 } as const
 
 /** The armour section view, in millimetres of drawing. */

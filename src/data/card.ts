@@ -30,7 +30,7 @@ export const CARD = {
   decided: { y: 930, px: 30, textY: 976, textPx: 28, minPx: 20, lineHeight: 1.25, gap: 12, indent: 40, bottom: 1250 },
   credit: { y: 1296, px: 23 },
   /** Line widths on the cutaway. */
-  line: { solid: 3, thin: 1.6, ground: 4, item: 1.6, path: 5, mark: 6 },
+  line: { solid: 3, thin: 1.6, fine: 1, ground: 4, item: 1.6, path: 5, mark: 6 },
   /** The marks on the round's path. */
   mark: { head: 20, bar: 20, ring: 9, cross: 11 },
   /** Hatching inside the tank: the size of one tile and the width of its line. */

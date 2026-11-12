@@ -12,7 +12,7 @@ export const VIEWS = ['side', 'top', 'front'] as const
 export type View = (typeof VIEWS)[number]
 
 /** Line styles, in the manner of a technical drawing. */
-export type LineStyle = 'solid' | 'thin' | 'hidden' | 'centre' | 'ground' | 'face' | 'item'
+export type LineStyle = 'solid' | 'thin' | 'fine' | 'hidden' | 'centre' | 'ground' | 'face' | 'item'
 
 /** How the things inside are told apart on the cutaway. Each has its own mark, so none relies on colour. */
 export const CUT_KINDS = ['crew', 'ammo', 'fuel', 'drive', 'gun'] as const
@@ -179,6 +179,58 @@ class Pen {
   }
 }
 
+/** A circle as path data, for joining several into one shape. */
+function ring(pen: Pen, cx: number, cy: number, r: number): string {
+  pen.p(cx, cy + r)
+  pen.p(cx, cy - r)
+  const left = pen.p(cx - r, cy)
+  const right = pen.p(cx + r, cy)
+  const rr = `${round(r)} ${round(r)}`
+  return `M${left} A${rr} 0 1 0 ${right} A${rr} 0 1 0 ${left} Z`
+}
+
+/** A straight stroke as path data, for joining several into one shape. */
+function stroke(pen: Pen, x0: number, y0: number, x1: number, y1: number): string {
+  return `M${pen.p(x0, y0)} L${pen.p(x1, y1)}`
+}
+
+/** A road wheel: the rim, then the tyre line, hub and bolt circle as one finer shape. */
+function roadWheel(pen: Pen, cx: number, cy: number, r: number): void {
+  pen.circle(cx, cy, r, 'solid')
+  const d = DRAWING.detail
+  let inner = ring(pen, cx, cy, r * d.tyreShare) + ring(pen, cx, cy, r * DRAWING.hubShare)
+  for (let i = 0; i < d.wheelBolts; i++) {
+    const a = (i / d.wheelBolts) * Math.PI * 2
+    inner += ring(pen, cx + Math.cos(a) * r * d.boltRingShare, cy + Math.sin(a) * r * d.boltRingShare, r * d.boltShare)
+  }
+  pen.path(inner, 'thin')
+}
+
+/** The drive sprocket: a toothed rim and its hub. */
+function sprocket(pen: Pen, cx: number, cy: number, r: number): void {
+  const d = DRAWING.detail
+  const points: Point[] = []
+  for (let i = 0; i < d.sprocketTeeth * 2; i++) {
+    const a = (i / (d.sprocketTeeth * 2)) * Math.PI * 2
+    const rr = i % 2 === 0 ? r : r * d.toothRootShare
+    points.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr])
+  }
+  pen.poly(points, 'thin')
+  pen.path(ring(pen, cx, cy, r * 0.42) + ring(pen, cx, cy, r * 0.16), 'fine')
+}
+
+/** The idler: a plain wheel with spokes. */
+function idler(pen: Pen, cx: number, cy: number, r: number): void {
+  const d = DRAWING.detail
+  let spokes = ''
+  for (let i = 0; i < d.idlerSpokes; i++) {
+    const a = (i / d.idlerSpokes) * Math.PI * 2 + 0.3
+    spokes += stroke(pen, cx + Math.cos(a) * r * 0.22, cy + Math.sin(a) * r * 0.22, cx + Math.cos(a) * r * 0.78, cy + Math.sin(a) * r * 0.78)
+  }
+  pen.path(ring(pen, cx, cy, r) + ring(pen, cx, cy, r * 0.8) + ring(pen, cx, cy, r * 0.22), 'thin')
+  pen.path(spokes, 'fine')
+}
+
 /** A closed outline through the points, as path data. */
 function outline(pen: Pen, points: readonly Point[]): string {
   return `${points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${pen.p(x, y)}`).join(' ')} Z`
@@ -204,8 +256,25 @@ export type Layout = ReturnType<typeof layout>
 
 /** The barrel runs along x. `axis` is its height (side view) or its offset from the centre line (top view). */
 function barrel(pen: Pen, m: Layout, axis: number): void {
+  const d = DRAWING.detail
   pen.rect(m.muzzleX, axis - m.barrelHalf, m.gunRootX, axis + m.barrelHalf, 'solid')
   pen.rect(m.extractorX - DRAWING.extractorLengthM, axis - m.extractorHalf, m.extractorX, axis + m.extractorHalf, 'solid')
+  // The muzzle reference ring and the bands of the thermal sleeve.
+  const ring = m.barrelHalf * d.muzzleRingShare
+  pen.rect(m.muzzleX, axis - ring, m.muzzleX + d.muzzleRingM, axis + ring, 'thin')
+  let bands = ''
+  const from = m.muzzleX + d.muzzleRingM + d.sleeveBandM
+  for (let x = from; x < m.gunRootX - d.sleeveBandM; x += d.sleeveBandM) {
+    if (x > m.extractorX - DRAWING.extractorLengthM - 0.02 && x < m.extractorX + 0.02) continue
+    bands += stroke(pen, x, axis - m.barrelHalf, x, axis + m.barrelHalf)
+  }
+  if (bands) pen.path(bands, 'fine')
+  pen.line(m.muzzleX - 0.15, axis, m.gunRootX, axis, 'centre')
+}
+
+/** Is the engine, and so the drive sprocket, at the front? */
+function engineFirstSide(spec: VehicleSpec): boolean {
+  return spec.hull.engineAt === 'front'
 }
 
 function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
@@ -290,14 +359,66 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
   const wheels = spec.runningGear.roadWheels
   const pitch = contact / wheels
   const wheelR = Math.min(DRAWING.roadWheelMaxRadiusM, (pitch / 2) * DRAWING.wheelFill)
-  for (let i = 0; i < wheels; i++) {
-    const cx = start + pitch * (i + 0.5)
-    pen.circle(cx, wheelR + DRAWING.trackThicknessM, wheelR, 'solid')
-    pen.circle(cx, wheelR + DRAWING.trackThicknessM, wheelR * DRAWING.hubShare, 'thin')
+  const t = DRAWING.trackThicknessM
+  const d = DRAWING.detail
+  // Track links: the inner face of the track and a tick at every link, on both runs.
+  let links = stroke(pen, start, t, start + contact, t) + stroke(pen, x0 + c * 0.5, m.trackTop - t, x1 - c * 0.5, m.trackTop - t)
+  for (let x = start + d.linkM / 2; x < start + contact; x += d.linkM) links += stroke(pen, x, 0, x, t)
+  for (let x = x0 + c * 0.5 + d.linkM / 2; x < x1 - c * 0.5; x += d.linkM) links += stroke(pen, x, m.trackTop - t, x, m.trackTop)
+  pen.path(links, 'fine')
+  for (let i = 0; i < wheels; i++) roadWheel(pen, start + pitch * (i + 0.5), wheelR + t, wheelR)
+  // Return rollers under the top run, between the first and last wheels.
+  let rollers = ''
+  for (let i = 0; i < d.returnRollers; i++) {
+    const x = start + pitch * 0.5 + ((contact - pitch) * (i + 0.5)) / d.returnRollers
+    rollers += ring(pen, x, m.trackTop - t - d.rollerR, d.rollerR)
   }
+  pen.path(rollers, 'thin')
+  // The drive sprocket sits at the engine's end, the idler at the other.
   const endR = (m.trackTop - c) * 0.5
-  pen.circle(x0 + endR + 0.08, m.trackTop - endR - DRAWING.trackThicknessM, endR, 'thin')
-  pen.circle(x1 - endR - 0.08, m.trackTop - endR - DRAWING.trackThicknessM, endR, 'thin')
+  const endY = m.trackTop - endR - t
+  const front = x0 + endR + 0.08
+  const back = x1 - endR - 0.08
+  if (engineFirstSide(spec)) {
+    sprocket(pen, front, endY, endR)
+    idler(pen, back, endY, endR)
+  } else {
+    idler(pen, front, endY, endR)
+    sprocket(pen, back, endY, endR)
+  }
+
+  // Hull fittings: the track guard, the engine grille, tow hooks and a weld seam.
+  const fender = m.trackTop + d.fenderGapM
+  const noseY = belly + m.lowerH
+  const glacisAt = (y: number): number => ((y - noseY) / (roof - noseY)) * m.upperRun
+  pen.line(Math.max(glacisAt(fender), 0), fender, L - 0.02, fender, 'thin')
+  let seams = stroke(pen, glacisAt(roof - d.seamM), roof - d.seamM, L - 0.03, roof - d.seamM)
+  const grilleTop = roof - 0.1
+  const grilleBottom = fender + 0.06
+  for (let x = m.bayStart + 0.15; x < m.bayEnd - DRAWING.rearUndercutM - 0.2; x += d.louvreM) {
+    seams += stroke(pen, x, grilleBottom, x + 0.06, grilleTop)
+  }
+  pen.path(seams, 'fine')
+  pen.poly([[0.02, noseY - 0.03], [-0.07, noseY - 0.06], [-0.07, noseY - 0.13], [0.04, noseY - 0.13]], 'thin')
+  pen.poly([[L - DRAWING.rearUndercutM * 0.5, belly + 0.12], [L + 0.04, belly + 0.1], [L + 0.04, belly + 0.03], [L - DRAWING.rearUndercutM * 0.7, belly + 0.03]], 'thin')
+
+  // Turret fittings: periscopes on the roof, a stowage basket at the back, the casting line.
+  let fittings = stroke(pen, xc - R * 0.9, roof + h * d.castLineShare, xc + R * 0.9, roof + h * d.castLineShare)
+  for (const at of [-0.05, 0.12]) {
+    const px = xc + R * at
+    fittings += `M${pen.p(px - 0.05, top)} L${pen.p(px - 0.035, top + 0.07)} L${pen.p(px + 0.035, top + 0.07)} L${pen.p(px + 0.05, top)}`
+  }
+  pen.path(fittings, 'fine')
+  if (spec.turret.shape !== 'bustle' && spec.turret.shape !== 'unmanned') {
+    const b0 = xc + R * 0.98
+    const b1 = b0 + d.basketM
+    const y0 = roof + h * 0.18
+    const y1 = roof + h * 0.55
+    pen.rect(b0, y0, b1, y1, 'thin')
+    let mesh = ''
+    for (let x = b0 + 0.07; x < b1 - 0.02; x += 0.07) mesh += stroke(pen, x, y0, x, y1)
+    pen.path(mesh, 'fine')
+  }
 
   pen.line(xc, -0.1, xc, top + DRAWING.cupolaHeightM + 0.35, 'centre')
 
