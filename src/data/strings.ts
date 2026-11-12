@@ -1145,6 +1145,23 @@ export const STRINGS = {
       firstOff: 'The first round on each grid lands as far off as the fire data is wrong. A better ballistic computer gets the data right first time, and works it out quicker.',
       mapLabel: '{near} rounds landed within {m} m of the middle of their grid and {far} further off.',
       mapKey: 'Every round on one map, each grid laid over the middle. A dot landed within the mark of {m} m (the circle); a cross landed further off. The square is a first round.',
+      // The replay: the mission played back on a map, faster than it happened. The times shown are the trial's own.
+      replay: {
+        watch: 'Watch the mission',
+        label: 'The fire mission played back on a map.',
+        areaLabel: 'The area: the gun at the foot, the grids beyond the hill. The dashed arc is as far as the gun reaches.',
+        closeLabel: 'Close up on the grid being fired on.',
+        gun: 'Gun',
+        readout: '{s} s since the halt',
+        emplace: 'Halted. Getting into action: aiming posts out, laying on the line.',
+        plot: 'Grid {n} called, {km} km off. Working out the fire data.',
+        turn: 'Grid {n} called, {km} km off. Swinging the vehicle round and working out the fire data.',
+        fire: 'Firing on grid {n}: {k} rounds down.',
+        out: 'Grid {n} is {km} km off: out of reach.',
+        left: 'Grid {n} called, but there are no rounds left.',
+        done: 'Mission over: {k} rounds in {s} s.',
+        closeKey: 'Grid {n}. A dot is within {m} m (the circle); a cross is further off. The square is the first round.',
+      },
     },
     drill: {
       title: 'Loading drill',

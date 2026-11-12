@@ -49,4 +49,17 @@ export const FIRE_MISSION = {
   marks: { firstRoundS: 120, rpm: 3, missM: 80 } satisfies FireMissionMarks,
   /** On the report map, a shell further than this from the middle of the grid is drawn on its edge, metres. */
   plotM: 400,
+  /** The replay in the report. Only for the picture: the times it shows are the trial's own. */
+  replay: {
+    /** Seconds of the mission played in each second watched. */
+    speed: 8,
+    /** Each shell's flight is drawn for this many seconds of the mission before it lands. */
+    trailS: 8,
+    /** A burst stays on the close-up of the grid this long, seconds of the mission. */
+    burstS: 4,
+    /** A grid out of reach is passed over in this long, seconds of the mission. */
+    skipS: 10,
+    /** The map is drawn this far out from the gun, kilometres. */
+    mapKm: 21,
+  },
 } as const

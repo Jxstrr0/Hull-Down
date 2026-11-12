@@ -6,6 +6,7 @@ import type { FireMissionResult, RangeReport } from '../sim/trials'
 import { el } from './dom'
 import { fixed } from './format'
 import type { CardKit } from './gunneryCards'
+import { missionReplay } from './missionReplay'
 
 const M = STRINGS.range.fireMission
 const SVG = 'http://www.w3.org/2000/svg'
@@ -105,6 +106,7 @@ export function missionCards(report: RangeReport, reachKm: number, kit: CardKit)
     item.append(head, el('p', 'rg-line-text', words))
     lines.append(item)
   }
+  if (run.grids.some((grid) => grid.shells.length > 0)) box.append(...missionReplay(run, reachKm))
   box.append(lines)
   if (run.grids.some((grid) => grid.shells.length > 0)) box.append(missionMap(run))
   const notes: string[] = []
