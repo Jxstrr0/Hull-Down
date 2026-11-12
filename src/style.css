@@ -989,6 +989,20 @@ body {
 .rg-board-target { fill: none; stroke: var(--ink); stroke-width: 1.5; }
 .rg-board-hit { fill: var(--stamp); }
 .rg-board-miss { fill: none; stroke: var(--pencil); stroke-width: 1.6; stroke-linecap: round; }
+.rg-replay-maps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px; }
+.rg-replay-area, .rg-replay-close { width: 100%; height: auto; display: block; }
+.rg-replay-close-box .rg-board-key { font-size: 0.72rem; }
+.rg-replay-reach { fill: none; stroke: var(--ink-dim); stroke-width: 1; stroke-dasharray: 4 3; }
+.rg-replay-grid { fill: none; stroke: var(--ink); stroke-width: 1.2; }
+.rg-replay-grid-out { stroke-dasharray: 2 2; }
+.rg-replay-now { stroke-width: 3; }
+.rg-replay-now-label { font-weight: 700; font-size: 12px; fill: var(--ink); }
+.rg-replay-gun { fill: var(--ink); }
+.rg-replay-trail { stroke: var(--ink-dim); stroke-width: 1.4; stroke-linecap: round; }
+.rg-replay-shell { fill: var(--ink); }
+.rg-replay-burst { fill: none; stroke: var(--pencil); stroke-width: 1.4; }
+.rg-replay-caption { min-height: 2.6em; margin: 0; padding: 6px 10px; border-top: 3px solid var(--ink); font-size: 0.86rem; font-weight: 600; }
+.rg-replay-bar { padding-bottom: 8px; justify-content: space-between; }
 .rg-board-key { margin: 0; padding: 4px 6px; border-top: 1px solid var(--grid); font-size: 0.8rem; color: var(--ink-dim); white-space: pre-wrap; }
 .rg-target-missed { padding-left: 8px; border-left: 4px solid var(--grid); }
 .rg-lines { margin: 0; padding: 0; list-style: none; }
