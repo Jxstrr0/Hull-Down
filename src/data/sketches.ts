@@ -20,6 +20,7 @@ export const SKETCHES: Readonly<Record<string, string>> = {
   'turret.shape:lowProfile': 'sketches/turret-lowProfile.png',
   'turret.shape:bustle': 'sketches/turret-bustle.png',
   'turret.shape:unmanned': 'sketches/turret-unmanned.png',
+  'turret.shape:casemate': 'sketches/turret-casemate.png',
   'barrel:short': 'sketches/barrel-short.png',
   'barrel:standard': 'sketches/barrel-standard.png',
   'barrel:long': 'sketches/barrel-long.png',

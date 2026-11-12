@@ -5,7 +5,7 @@ import type { PactRoundId, Round, RoundKind } from '../../data/ammo'
 import { CREW, type StationId } from '../../data/crew'
 import { CREWS, GUNNERY, type CrewId } from '../../data/gunnery'
 import {
-  BARRELS, COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, STABILISERS,
+  BARRELS, COMMANDER_SIGHT, COMPUTERS, GUNS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, STABILISERS, TURRETS,
 } from '../../data/parts'
 import { RANGE } from '../../data/range'
 import { TUNING } from '../../data/tuning'
@@ -131,7 +131,8 @@ export function fireOf(spec: VehicleSpec): Fire {
     times: {
       findS: fc.commanderSight ? G.find.ownSightS : G.find.plainS,
       rangeS: rangefinder.rangeS,
-      layS: sight.layS + computer.setS,
+      // A casemate's gunner waits for the driver to swing the hull round.
+      layS: (sight.layS + computer.setS) * TURRETS[spec.turret.shape].layPace,
       relayS: stabiliser.relayS,
     },
     pace: { commander: paceOf('commander'), gunner: paceOf('gunner'), ranging: paceOf(CREW.ranging[fc.rangefinder]) },

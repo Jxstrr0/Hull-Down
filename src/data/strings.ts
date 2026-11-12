@@ -450,6 +450,7 @@ export const STRINGS = {
       weldedWedge: { name: 'Welded wedge', note: 'Flat plates welded to shape. Roomier, and the gun dips further.' },
       lowProfile: { name: 'Low-profile', note: 'The smallest target. Very cramped, and the gun barely dips.' },
       bustle: { name: 'Bustle turret', note: 'A long overhang at the back. Heavy, but takes a bustle autoloader and blow-out panels.' },
+      casemate: { name: 'Casemate', note: 'No turret: the gun sits in a low box on the hull behind a steep plate. Light and cheap, and a big gun needs a smaller mount, but the whole tank turns to aim, so it is slow onto each new target. For a tank destroyer only.' },
       unmanned: { name: 'Unmanned turret', note: 'Nobody in it: small and light, and the whole crew sits in the hull. Needs an autoloader, a digital computer and the engine at the back. Draws 4 kW, and the commander sees only by screens.' },
     },
     guns: {
@@ -724,6 +725,7 @@ export const STRINGS = {
     turretNeedsAutoloader: 'There is nobody in an unmanned turret to load the gun. Fit an autoloader.',
     turretNeedsRearEngine: 'With an unmanned turret the crew sit together in the nose. The engine has to go at the back.',
     turretNeedsComputer: 'The crew fight an unmanned turret by screens. It needs the digital computer.',
+    casemateNotAllowed: 'The army wants a turret on a tank. A casemate is for a tank destroyer.',
     overPowerBudget: 'The systems fitted draw {value} kW and the tank makes {limit} kW. Fit the auxiliary power unit, or something that draws less.',
     missileNeedsComputer: 'A gun-launched missile is steered by the digital computer. Fit one, or carry another round.',
   },
