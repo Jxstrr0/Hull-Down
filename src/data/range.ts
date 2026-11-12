@@ -3,6 +3,7 @@
 // engineering data.
 import type { ThreatId } from './ammo'
 import type { FireMissionMarks } from './fireMission'
+import type { SquadMarks } from './squad'
 import type { ZoneId } from './materials'
 
 export interface Ground {
@@ -345,4 +346,10 @@ export type Marks = {
    * held to the range's own fire mission marks.
    */
   fireMission?: FireMissionMarks
+  /**
+   * The squad drop, for an infantry fighting vehicle's tender. Not given for a
+   * tank's tender, where a vehicle that carries soldiers is held to the
+   * range's own squad drop marks.
+   */
+  squad?: SquadMarks
 }

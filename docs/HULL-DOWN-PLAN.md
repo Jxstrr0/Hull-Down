@@ -746,6 +746,12 @@ than tank duels.
    result between "cannot move" and "crew out of action".
 3. The squad trial (1.5.2.0): carry the squad to a drop point, let it out,
    and cover it with bursts on light targets. It gets a card in the report.
+   Done: 4 km across firm ground at 0.6 of top speed, then 6 s for the door
+   and 1.5 s a soldier. Four targets open up as it halts, 400 to 1,300 m
+   off, and the gun has 60 s to put them out of action. The marks: six
+   soldiers, the last one out within 600 s, and all four targets down. The
+   crew is fresh. It runs for any design that carries soldiers; the 1996
+   tender will set its own marks.
 4. The 1996 tender in the career (1.5.3.0). Saves carried over.
 5. Rival bureaus bid infantry fighting vehicles (1.5.4.0).
 6. Something to watch for the squad trial (1.5.5.0).

@@ -1,6 +1,7 @@
 // The proving ground: every test a prototype is put through, run from its
 // stat sheet. The same tank always gives the same result.
 import { FIRE_MISSION } from '../../data/fireMission'
+import { SQUAD_TRIAL, type SquadMarks } from '../../data/squad'
 import { GUNNERY_TEST_IDS, MARKS_GEN1, RANGE, type ClimateId, type GunneryTestId, type Marks } from '../../data/range'
 import type { Limits, VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
@@ -14,6 +15,7 @@ import { runEndurance, type EnduranceRun } from './endurance'
 import { judgeFireMission, runFireMission, type FireMissionRun } from './fireMission'
 import { runGunnery, type GunneryRun } from './gunnery'
 import { runObstacles, type ObstacleRun } from './obstacles'
+import { judgeSquadDrop, runSquadDrop, type SquadRun } from './squad'
 
 export { runAcceleration, stepTime, type AccelerationRun, type Trace } from './acceleration'
 export {
@@ -30,6 +32,7 @@ export { judgeFireMission, runFireMission, type FireMissionRun, type MissionGrid
 export {
   MISS_CAUSES, runGunnery, type GunneryRun, type MissCause, type ShotRecord, type TargetResult,
 } from './gunnery'
+export { judgeSquadDrop, runSquadDrop, type CoverShot, type CoverTarget, type SquadRun } from './squad'
 export {
   courseLayout, runObstacles, type CourseSpan, type ObstacleCause, type ObstacleResult, type ObstacleRun,
 } from './obstacles'
@@ -43,6 +46,9 @@ export type GunneryResult = GunneryRun & {
   timePassed: boolean | null
   passed: boolean
 }
+
+/** The squad drop with its marks applied. */
+export type SquadResult = SquadRun & ReturnType<typeof judgeSquadDrop> & { marks: SquadMarks }
 
 /** The fire mission with its marks applied. */
 export type FireMissionResult = FireMissionRun & ReturnType<typeof judgeFireMission> & {
@@ -64,6 +70,8 @@ export interface RangeReport {
   berm: BermRun & { passed: boolean }
   /** The fire mission, for a howitzer or where the tender asks for one. Null otherwise. */
   fireMission: FireMissionResult | null
+  /** The squad drop, for a vehicle that carries soldiers or where the tender asks for one. Null otherwise. */
+  squad: SquadResult | null
   /**
    * True on a self-propelled gun's tender: the tank shoots, the loading drill
    * and the berm are run but not counted, and the report leaves them out.
@@ -123,6 +131,10 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   const missionMarks = marks.fireMission ?? (sheet.fire.mission.howitzer ? FIRE_MISSION.marks : null)
   const mission = missionMarks ? runFireMission(sheet.fire, setup.seed) : null
   const fireMission = mission && missionMarks ? { ...mission, ...judgeFireMission(mission, missionMarks), marks: missionMarks } : null
+  // A vehicle with soldiers aboard is put through the squad drop wherever it goes; a tender for one sets its own marks.
+  const squadMarks = marks.squad ?? (sheet.rollup.troops > 0 ? SQUAD_TRIAL.marks : null)
+  const drop = squadMarks ? runSquadDrop(sheet.drive, sheet.fire, sheet.rollup.troops, setup.seed) : null
+  const squad = drop && squadMarks ? { ...drop, ...judgeSquadDrop(drop, squadMarks), marks: squadMarks } : null
   const selfPropelled = marks.fireMission !== undefined
   const passed = selfPropelled
     ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed, fireMission?.passed ?? false]
@@ -130,6 +142,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
       acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
       armour.passed, berm.passed, ...(fireMission ? [fireMission.passed] : []),
     ]
+  if (squad) passed.push(squad.passed)
   return {
     marks,
     acceleration,
@@ -140,6 +153,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     armour,
     berm,
     fireMission,
+    squad,
     selfPropelled,
     crewHours: RANGE.crewHours,
     passes: passed.filter(Boolean).length,
