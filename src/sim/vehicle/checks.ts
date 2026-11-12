@@ -1,7 +1,7 @@
 // Constraint checks. Each issue names the part to fix, so the design office
 // can show it in red with a "fix it" link.
 import { MATERIALS, ZONES } from '../../data/materials'
-import { COOLING, ENGINES, GUNS, HULLS, LOADING, STOWAGE, SUSPENSIONS, TRANSMISSIONS, TURRETS } from '../../data/parts'
+import { COOLING, ENGINES, GUNS, HULLS, LOADING, STOWAGE, SUSPENSIONS, TRANSMISSIONS, TROOPS, TURRETS } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { gunRingMm } from '../gunnery/mount'
 import type { Geometry } from './geometry'
@@ -47,6 +47,9 @@ export const ISSUE_CODES = [
   'turretNeedsComputer',
   'casemateNotAllowed',
   'autoloaderWasted',
+  'troopsOutOfRange',
+  'squadTooSmall',
+  'troopsNeedFrontEngine',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -141,6 +144,11 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   if (outside(spec.ammo.rounds, lim.rounds) || !Number.isInteger(spec.ammo.rounds)) {
     error('roundsOutOfRange', 'ammo.rounds', spec.ammo.rounds)
   }
+  const troops = spec.crew.troops
+  if (outside(troops, lim.troops) || !Number.isInteger(troops)) error('troopsOutOfRange', 'crew.troops', troops)
+  else if (troops > 0 && troops < TROOPS.minSquad) error('squadTooSmall', 'crew.troops', troops, TROOPS.minSquad)
+  // The soldiers leave by a door in the rear plate, so the engine cannot be there.
+  if (troops > 0 && spec.hull.engineAt !== 'front') error('troopsNeedFrontEngine', 'hull.engineAt')
   const wheels = spec.runningGear.roadWheels
   if (wheels < hull.minWheels || wheels > hull.maxWheels || !Number.isInteger(wheels)) {
     error('wheelsOutOfRange', 'runningGear.roadWheels', wheels, wheels < hull.minWheels ? hull.minWheels : hull.maxWheels)

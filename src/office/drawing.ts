@@ -19,7 +19,7 @@ export const CUT_KINDS = ['crew', 'ammo', 'fuel', 'drive', 'gun'] as const
 export type CutKind = (typeof CUT_KINDS)[number]
 
 const CUT_KIND: Record<ItemKind, CutKind> = {
-  crew: 'crew', ammo: 'ammo', autoloader: 'ammo', fuel: 'fuel', engine: 'drive', transmission: 'drive', gun: 'gun', sight: 'gun',
+  crew: 'crew', ammo: 'ammo', autoloader: 'ammo', fuel: 'fuel', engine: 'drive', transmission: 'drive', gun: 'gun', sight: 'gun', troops: 'crew',
 }
 
 export interface Shape {
@@ -866,6 +866,23 @@ function cutaway(pen: Pen, interior: Interior, across: 'y' | 'z'): void {
         pen.itemRect(cx - head * 1.1, Math.max(a0, a1 - head * 6), cx + head * 1.1, a1 - head * 2.3, kind)
       } else {
         pen.itemDot(cx, (a0 + a1) / 2, head * 1.5, kind)
+      }
+      continue
+    }
+    if (item.kind === 'troops') {
+      // The compartment in hidden line, with the soldiers in it: a figure for each
+      // pair of seats from the side, a head for each seat from above.
+      pen.rect(box.x0, a0, box.x1, a1, 'hidden')
+      const pairs = Math.ceil(item.troops / 2)
+      const pitch = (box.x1 - box.x0) / pairs
+      for (let n = 0; n < pairs; n++) {
+        const cx = box.x0 + pitch * (n + 0.5)
+        if (across === 'y') {
+          pen.itemDot(cx, a1 - head * 1.5, head, kind)
+          pen.itemRect(cx - head * 1.1, Math.max(a0, a1 - head * 6.5), cx + head * 1.1, a1 - head * 2.8, kind)
+        } else {
+          for (const side of [0.25, 0.75]) pen.itemDot(cx, a0 + (a1 - a0) * side, head * 1.2, kind)
+        }
       }
       continue
     }

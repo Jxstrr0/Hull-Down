@@ -35,6 +35,7 @@ export const TUNING = {
     trackWidthMm: { min: 480, max: 700 },
     fuelL: { min: 400, max: 1800 },
     rounds: { min: 20, max: 60 },
+    troops: { min: 0, max: 8 },
     ringStepMm: 50,
     /** What the design office sliders offer. The hull and gun narrow these further. */
     ringMm: { min: 1800, max: 2400 },

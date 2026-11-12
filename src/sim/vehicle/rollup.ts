@@ -4,7 +4,7 @@ import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
 import {
   ACTIVE, APU, BARRELS, COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, HULLS, LOADING,
   NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, SKIRTS, SMOKE_LAUNCHERS, SPALL_LINER, STABILISERS, STOWAGE, SUSPENSIONS,
-  TRANSMISSIONS, TURRETS, type Part,
+  TRANSMISSIONS, TROOPS, TURRETS, type Part,
 } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { eraOf, type ZoneEra } from './era'
@@ -146,6 +146,14 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
   massT.crew += crewCount * (TUNING.mass.crewmanT + comfort.massPerCrewT)
   volumeM3.crew += crewCount * comfort.volumePerCrewM3
   costKr.crew += crewCount * comfort.costPerCrewKr
+  // Soldiers in the back, and the door they leave by
+  const troops = spec.crew.troops
+  if (troops > 0) {
+    add('crew', TROOPS.door)
+    massT.crew += troops * TROOPS.perSoldierT
+    volumeM3.crew += troops * TROOPS.perSoldierM3
+    costKr.crew += troops * TROOPS.perSoldierKr
+  }
 
   // Fittings ride on everything else; assembly is charged on the parts bill.
   massT.structure += sum(massT) * TUNING.mass.fittingsShare

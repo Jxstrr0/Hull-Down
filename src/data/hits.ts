@@ -11,7 +11,7 @@ export const HITS = {
    * What each thing inside takes out of a round that goes through it, in
    * millimetres of rolled steel. A round with nothing left stops there.
    */
-  stopMm: { crew: 15, ammo: 50, fuel: 40, engine: 350, transmission: 300, gun: 400, autoloader: 80, sight: 30 },
+  stopMm: { crew: 15, ammo: 50, fuel: 40, engine: 350, transmission: 300, gun: 400, autoloader: 80, sight: 30, troops: 30 },
   /** An armoured bin has to be gone through before the rounds in it are reached. */
   binMm: 25,
   /** The chance that rounds reached by a shot go up, by how they are stowed. An autoloader holds its rounds bare. */

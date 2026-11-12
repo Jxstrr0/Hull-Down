@@ -78,6 +78,10 @@ export const INTERIOR = {
   crossTankDepthM: 0.38,
   /** Room kept clear of the rear plate. */
   rearClearM: 0.25,
+  /** With soldiers in the back: the racks and the fuel tank become strips this wide along the walls. */
+  troopStripM: 0.3,
+  /** Length of hull each pair of soldiers takes, sitting face to face. */
+  troopPairM: 0.55,
   /** Engine and gearbox: half width as a share of the hull's inside, and the engine's share of the bay's length. */
   bayHalfShare: 0.8,
   engineShare: 0.62,

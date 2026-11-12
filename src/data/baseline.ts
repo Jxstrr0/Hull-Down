@@ -22,7 +22,7 @@ export const BASELINE_SPEC: VehicleSpec = {
   powerpack: { engine: 'diesel780', transmission: 'manual44', cooling: 'standard', fuelL: 1000, apu: false },
   runningGear: { suspension: 'torsionBar', roadWheels: 6, trackWidthMm: 580, skirts: false },
   protection: { smokeLaunchers: true, fireSuppression: true, spallLiner: false, active: 'none' },
-  crew: { comfort: 'basic' },
+  crew: { comfort: 'basic', troops: 0 },
   armour: {
     upperGlacis: [
       { material: 'rolledSteel', mm: 60 },

@@ -86,7 +86,7 @@ export interface Reached {
 
 /** The one-line result, least to worst. */
 export const OUTCOMES = [
-  'missed', 'track', 'skidded', 'stopped', 'noHarm', 'firepower', 'mobility', 'crew', 'burned', 'destroyed',
+  'missed', 'track', 'skidded', 'stopped', 'noHarm', 'firepower', 'mobility', 'squad', 'crew', 'burned', 'destroyed',
 ] as const
 export type Outcome = (typeof OUTCOMES)[number]
 
@@ -115,6 +115,8 @@ export interface HitResult {
   spalled: StationId[]
   /** Everyone out of action from this shot, by any cause. */
   crewOut: StationId[]
+  /** True when it reached the soldiers in the back. */
+  squadOut: boolean
   fire: 'none' | 'putOut' | 'burned'
   explosion: 'none' | 'vented' | 'destroyed'
   /** The tank can no longer move, or can no longer fight. */
@@ -155,7 +157,7 @@ export function tileKey(zone: ZoneId, place: number, point: Vec): string {
 function missed(direction: Vec, track: boolean, trackBroken: boolean): HitResult {
   return {
     direction, entry: null, zone: null, track, trackBroken, tile: false, armour: null, through: false, reached: [], end: null, exits: false,
-    spalled: [], crewOut: [], fire: 'none', explosion: 'none', mobilityKill: trackBroken, firepowerKill: false,
+    spalled: [], crewOut: [], squadOut: false, fire: 'none', explosion: 'none', mobilityKill: trackBroken, firepowerKill: false,
     outcome: trackBroken ? 'mobility' : track ? 'track' : 'missed',
   }
 }
@@ -195,7 +197,7 @@ export function traceShot(target: Target, shot: Incoming, spent?: Set<string>): 
   if (shot.round.flight && system !== 'none' && roll(ACTIVE_ROLL) < ACTIVE[system].defeats[shot.round.flight]) {
     return {
       direction: d, entry, zone, track: false, trackBroken: false, tile: false, armour: null, through: false, reached: [], end: null,
-      exits: false, spalled: [], crewOut: [], fire: 'none', explosion: 'none', mobilityKill: false, firepowerKill: false,
+      exits: false, spalled: [], crewOut: [], squadOut: false, fire: 'none', explosion: 'none', mobilityKill: false, firepowerKill: false,
       outcome: 'stopped', defeated: system,
     }
   }
@@ -220,7 +222,7 @@ export function traceShot(target: Target, shot: Incoming, spent?: Set<string>): 
   const through = !armour.ricochet && armour.leftMm > 0
   const result: HitResult = {
     direction: d, entry, zone, track, trackBroken, tile, armour, through, reached: [], end: null, exits: false,
-    spalled: [], crewOut: [], fire: 'none', explosion: 'none', mobilityKill: trackBroken, firepowerKill: false,
+    spalled: [], crewOut: [], squadOut: false, fire: 'none', explosion: 'none', mobilityKill: trackBroken, firepowerKill: false,
     outcome: trackBroken ? 'mobility' : armour.ricochet ? 'skidded' : 'stopped',
   }
   if (!through) return result
@@ -307,6 +309,10 @@ export function traceShot(target: Target, shot: Incoming, spent?: Set<string>): 
         result.firepowerKill = true
         reach('wrecked')
         break
+      case 'troops':
+        result.squadOut = true
+        reach('crew')
+        break
     }
     left -= HITS.stopMm[item.kind]
     // Nothing after an explosion matters.
@@ -348,6 +354,7 @@ export function traceShot(target: Target, shot: Incoming, spent?: Set<string>): 
     result.explosion === 'destroyed' ? 'destroyed'
     : result.fire === 'burned' ? 'burned'
     : result.crewOut.length > 0 ? 'crew'
+    : result.squadOut ? 'squad'
     : result.mobilityKill ? 'mobility'
     : result.firepowerKill || result.explosion === 'vented' ? 'firepower'
     : 'noHarm'

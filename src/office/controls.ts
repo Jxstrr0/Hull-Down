@@ -157,6 +157,7 @@ export const CONTROLS: readonly Control[] = [
   toggle('protection.spallLiner', 'crew', P.spallLiner,
     (s) => s.protection.spallLiner, (s, v) => { s.protection.spallLiner = v }),
   choice('protection.active', 'crew', texts(ACTIVE, P.active), (s) => s.protection.active, (s, v) => { s.protection.active = v }),
+  number('crew.troops', 'crew', L.troops, 1, 'soldiers', (s) => s.crew.troops, (s, v) => { s.crew.troops = v }),
 ]
 
 /** The control a fault points at, if the design office has one for it yet. */
