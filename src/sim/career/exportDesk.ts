@@ -20,6 +20,11 @@ export function exportOpen(career: Career): boolean {
   return career.adopted.length >= EXPORT_DESK.opensAfterAdopted
 }
 
+/** True when the customer buys this kind of vehicle: it looks at nothing else. */
+export function buys(customer: CustomerId, tank: Adopted): boolean {
+  return CUSTOMERS[customer].wants === TENDERS[tank.tender].kind
+}
+
 /** The tank's own figure for one need. A fitted part is 1 or 0. */
 export function needFigure(need: NeedId, spec: VehicleSpec, sheet: StatSheet): number {
   switch (need) {
@@ -115,7 +120,7 @@ export function orderOf(customer: CustomerId, trial: ExportTrial): number {
   return Math.round(CUSTOMERS[customer].tanks * share)
 }
 
-export const SALE_BLOCKS = ['closed', 'sold', 'noLine', 'needs', 'secret', 'standing'] as const
+export const SALE_BLOCKS = ['closed', 'sold', 'kind', 'noLine', 'needs', 'secret', 'standing'] as const
 /** Why a tank cannot be sold to a customer. */
 export type SaleBlock = (typeof SALE_BLOCKS)[number]
 
@@ -128,6 +133,7 @@ export function saleBlock(career: Career, index: number, customer: CustomerId): 
   const tank = career.adopted[index]
   if (!exportOpen(career) || !tank) return 'closed'
   if (career.sales.some((sale) => sale.customer === customer)) return 'sold'
+  if (!buys(customer, tank)) return 'kind'
   if (!tank.production) return 'noLine'
   const spec = serviceSpec(tank)
   const sheet = buildStatSheet(spec, TENDERS[tank.tender].limits)
@@ -170,7 +176,7 @@ export function variantCostKr(career: Career, tank: Adopted, spec: VehicleSpec):
   return Math.round((unitKr * EXPORT_DESK.variantWorkUnits) / 1000) * 1000
 }
 
-export const VARIANT_BLOCKS = ['closed', 'sold', 'noLine', 'same', 'fixed', 'illegal', 'needs', 'secret', 'standing', 'noMoney'] as const
+export const VARIANT_BLOCKS = ['closed', 'sold', 'kind', 'noLine', 'same', 'fixed', 'illegal', 'needs', 'secret', 'standing', 'noMoney'] as const
 /** Why a design cannot be sold to a customer as a version of a tank in service. */
 export type VariantBlock = (typeof VARIANT_BLOCKS)[number]
 
@@ -183,6 +189,7 @@ export function variantBlock(career: Career, index: number, customer: CustomerId
   const tank = career.adopted[index]
   if (!exportOpen(career) || !tank) return 'closed'
   if (career.sales.some((sale) => sale.customer === customer)) return 'sold'
+  if (!buys(customer, tank)) return 'kind'
   if (!tank.production) return 'noLine'
   if (sameTank(serviceSpec(tank), spec)) return 'same'
   if (variantFixed(tank, spec).length > 0) return 'fixed'

@@ -12,9 +12,15 @@ import { PACT_LIMITS_GEN1, PACT_LIMITS_GEN3 } from './tuning'
 export const SCORE_AXES = ['protection', 'firepower', 'mobility', 'reliability', 'cost'] as const
 export type ScoreAxis = (typeof SCORE_AXES)[number]
 
+/** The kinds of vehicle the army asks for. A tank destroyer counts as a tank: it is built and bought as one. */
+export const VEHICLE_KIND_IDS = ['tank', 'ifv', 'spg', 'scout', 'aa'] as const
+export type VehicleKind = (typeof VEHICLE_KIND_IDS)[number]
+
 export interface Tender {
   /** The year on the paperwork. There is no calendar: it is a label, and it gates technology. */
   year: number
+  /** What kind of vehicle it asks for. A customer abroad buys only the kind it wants. */
+  kind: VehicleKind
   /** The Pact's limits, with the army's ceiling on unit cost. */
   limits: Limits & { maxUnitCostKr: number }
   /** What the proving ground asks of a prototype. */
@@ -49,6 +55,7 @@ export const TENDERS: Record<TenderId, Tender> = {
    */
   improvedType1: {
     year: 1981,
+    kind: 'tank',
     limits: { ...PACT_LIMITS_GEN1, maxUnitCostKr: 3_200_000 },
     marks: { ...MARKS_GEN1, hits: { ...MARKS_GEN1.hits, night: 4 } },
     threats: ['warden', 'palisade'],
@@ -66,6 +73,7 @@ export const TENDERS: Record<TenderId, Tender> = {
    */
   destroyer1991: {
     year: 1991,
+    kind: 'tank',
     limits: { ...PACT_LIMITS_GEN1, maxUnitCostKr: 2_800_000, casemate: true },
     // It waits with its hull already pointed down the likely line, so the first shot may come a little later.
     marks: { ...MARKS_GEN1, firstShotS: 26 },
@@ -86,6 +94,7 @@ export const TENDERS: Record<TenderId, Tender> = {
    */
   ifv1996: {
     year: 1996,
+    kind: 'ifv',
     limits: { ...PACT_LIMITS_GEN1, maxMassT: 34, maxUnitCostKr: 2_600_000, allowedCalibresMm: [30] },
     marks: MARKS_IFV,
     threats: [],
@@ -102,6 +111,7 @@ export const TENDERS: Record<TenderId, Tender> = {
    */
   tank2001: {
     year: 2001,
+    kind: 'tank',
     limits: { ...PACT_LIMITS_GEN1, generation: 2, maxUnitCostKr: 5_000_000 },
     marks: MARKS_GEN2,
     threats: ['palisade', 'palisadeB'],
@@ -121,6 +131,7 @@ export const TENDERS: Record<TenderId, Tender> = {
    */
   scout2004: {
     year: 2004,
+    kind: 'scout',
     limits: {
       ...PACT_LIMITS_GEN1, generation: 2, maxMassT: 20, maxUnitCostKr: 2_400_000, allowedCalibresMm: [30], wheels: true, wheelsOnly: true,
     },
@@ -141,6 +152,7 @@ export const TENDERS: Record<TenderId, Tender> = {
    */
   spg2008: {
     year: 2008,
+    kind: 'spg',
     limits: { ...PACT_LIMITS_GEN1, generation: 2, maxUnitCostKr: 4_500_000, allowedCalibresMm: [155], casemate: true },
     marks: MARKS_SPG,
     threats: [],
@@ -160,6 +172,7 @@ export const TENDERS: Record<TenderId, Tender> = {
    */
   aa2012: {
     year: 2012,
+    kind: 'aa',
     limits: { ...PACT_LIMITS_GEN1, generation: 2, maxMassT: 38, maxUnitCostKr: 3_600_000, allowedCalibresMm: [35], wheels: true },
     marks: MARKS_AA,
     threats: [],
@@ -175,6 +188,7 @@ export const TENDERS: Record<TenderId, Tender> = {
    */
   tank2016: {
     year: 2016,
+    kind: 'tank',
     limits: { ...PACT_LIMITS_GEN3, generation: 3, maxUnitCostKr: 8_000_000 },
     marks: MARKS_GEN3,
     threats: ['palisadeB'],

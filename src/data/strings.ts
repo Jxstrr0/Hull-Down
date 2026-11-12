@@ -1825,6 +1825,9 @@ export const STRINGS = {
       },
       climates: { desert: 'Desert', jungle: 'Jungle', mountain: 'Mountain' },
       title: '{name} · {climate}',
+      wants: 'Buys {kind} only.',
+      kinds: { tank: 'tanks', ifv: 'infantry fighting vehicles', spg: 'self-propelled guns', scout: 'scout cars', aa: 'anti-aircraft gun vehicles' },
+      noneOfKind: 'The bureau has no {kind} in army service to offer it.',
       order: 'Would order {n} tanks.',
       needs: {
         heavyCooling: 'Heavy-duty cooling',
