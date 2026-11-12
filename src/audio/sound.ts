@@ -18,6 +18,9 @@ interface DroneNodes {
   hissOut: GainNode
   beat: OscillatorNode
   trackOut: GainNode
+  /** The engine recording, once it has arrived, and its loudness. */
+  tape: AudioBufferSourceNode | null
+  tapeOut: GainNode | null
   sources: AudioScheduledSourceNode[]
   voice: TankVoice
 }
@@ -79,6 +82,8 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
   let wind: { out: GainNode; sources: AudioScheduledSourceNode[] } | null = null
   /** The recordings that have arrived, by cue. */
   const taped = new Map<CueId, AudioBuffer>()
+  /** The engine recording, once it has arrived. */
+  let engineTape: AudioBuffer | null = null
 
   function ready(): AudioContext | null {
     if (context || failed) return context
@@ -111,6 +116,30 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
         // A file this browser cannot read: the synth plays alone.
       }
     }
+    try {
+      const bytes = await load(AUDIO.engineTape.file)
+      if (bytes) engineTape = await ctx.decodeAudioData(bytes)
+    } catch {
+      // The synth engine plays alone.
+    }
+  }
+
+  /** Lay the engine recording into a running engine, going round and round its middle. */
+  function addTape(ctx: AudioContext, into: DroneNodes, tape: AudioBuffer): void {
+    const T = AUDIO.engineTape
+    const source = ctx.createBufferSource()
+    source.buffer = tape
+    source.loop = true
+    source.loopStart = T.fromS
+    source.loopEnd = T.fromS + T.loopS
+    const out = ctx.createGain()
+    out.gain.value = 0
+    source.connect(out)
+    out.connect(master ?? ctx.destination)
+    source.start(0, T.fromS)
+    into.tape = source
+    into.tapeOut = out
+    into.sources.push(source)
   }
 
   function wake(): void {
@@ -261,7 +290,7 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
 
     const sources = [engine, sub, chug, whine, air, clatter, beat]
     for (const source of sources) source.start()
-    return { engine, sub, bright, chug, engineOut, whine, whineOut, hissOut, beat, trackOut, sources, voice }
+    return { engine, sub, bright, chug, engineOut, whine, whineOut, hissOut, beat, trackOut, tape: null, tapeOut: null, sources, voice }
   }
 
   function calm(): void {
@@ -329,7 +358,7 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     const old = nodes
     nodes = null
     const at = (context?.currentTime ?? 0) + AUDIO.engine.hushS * 4
-    for (const out of [old.engineOut, old.whineOut, old.hissOut, old.trackOut]) {
+    for (const out of [old.engineOut, old.whineOut, old.hissOut, old.trackOut, ...(old.tapeOut ? [old.tapeOut] : [])]) {
       out.gain.cancelScheduledValues(0)
       out.gain.setTargetAtTime(0, context?.currentTime ?? 0, AUDIO.engine.hushS)
     }
@@ -342,6 +371,7 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     if (!ctx || !master || ctx.state !== 'running') return
     if (nodes && nodes.voice !== voice) still()
     nodes ??= build(ctx, master, voice)
+    if (engineTape && !nodes.tape) addTape(ctx, nodes, engineTape)
     const E = AUDIO.engine
     const tone = E.voices[voice.engine]
     const now = ctx.currentTime
@@ -354,13 +384,15 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     glide(nodes.chug.frequency, levels.engineHz * tone.chugRatio)
     glide(nodes.whine.frequency, Math.max(1, levels.whineHz))
     glide(nodes.beat.frequency, Math.max(0.01, levels.beatHz))
+    if (nodes.tape) glide(nodes.tape.playbackRate, levels.tapeRate)
     // Each loudness is set, and then told to fade if no new picture comes.
     const hold = (param: AudioParam, value: number): void => {
       param.cancelScheduledValues(now)
       param.setTargetAtTime(value, now, E.followS)
       param.setTargetAtTime(0, now + E.hushAfterS, E.hushS)
     }
-    hold(nodes.engineOut.gain, levels.engineGain * E.gain)
+    hold(nodes.engineOut.gain, levels.engineGain * E.gain * (nodes.tape ? AUDIO.engineTape.synthGain : 1))
+    if (nodes.tapeOut) hold(nodes.tapeOut.gain, levels.engineGain * E.gain * AUDIO.engineTape.gain)
     hold(nodes.whineOut.gain, levels.engineGain * E.gain * tone.whine * E.whineGain)
     hold(nodes.hissOut.gain, levels.engineGain * E.gain * tone.hiss)
     hold(nodes.trackOut.gain, levels.trackGain * AUDIO.tracks.gain)

@@ -42,6 +42,8 @@ export interface Drone {
   engineGain: number
   /** A turbine's whine, Hz. */
   whineHz: number
+  /** How fast the engine recording plays: 1 is as recorded. */
+  tapeRate: number
   /** Track links a second, and how loud the clatter is, 0 to 1. */
   beatHz: number
   trackGain: number
@@ -58,6 +60,7 @@ export function droneAt(voice: TankVoice, speedKmh: number): Drone {
     engineHz: (tone.idleHz + (tone.fullHz - tone.idleHz) * revs) * pull,
     engineGain: E.idleGain + (1 - E.idleGain) * revs,
     whineHz: tone.whineIdleHz + (tone.whineFullHz - tone.whineIdleHz) * revs,
+    tapeRate: (tone.tapeIdle + (tone.tapeFull - tone.tapeIdle) * revs) * pull,
     beatHz: Math.min(T.maxBeatHz, speedMs / T.linkM),
     trackGain: Math.min(1, Math.max(0, speedKmh) / T.fullKmh),
   }
