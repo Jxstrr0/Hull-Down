@@ -25,6 +25,7 @@ export const CREDITS: Record<CreditGroup, readonly Credit[]> = {
     { id: 'public/audio/gun.mp3', title: 'Cannon fire', by: 'Thimras', licence: 'CC0 1.0', source: 'https://opengameart.org/content/cannon-fire' },
     { id: 'public/audio/hit.mp3', title: 'Metal Impact Sounds (bong1)', by: 'BMacZero', licence: 'CC0 1.0', source: 'https://opengameart.org/content/metal-impact-sounds' },
     { id: 'public/audio/engine.mp3', title: 'Engine-loop heavy vehicle/tank', by: 'Nayckron, from a car engine loop by qubodup', licence: 'CC BY 3.0', source: 'https://opengameart.org/content/engine-loop-heavy-vehicletank' },
+    { id: 'public/audio/turbine.mp3', title: 'Rocket Engine', by: 'theMinesAreShakin', licence: 'CC0 1.0', source: 'https://opengameart.org/content/rocket-engine' },
     { id: 'public/audio/tracks.mp3', title: 'Chain winch sounds (Marker #9)', by: 'bart', licence: 'CC0 1.0', source: 'https://opengameart.org/content/chain-winch-sounds' },
     { id: 'public/audio/short.mp3', title: 'Metal Impact Sounds (thud2)', by: 'BMacZero', licence: 'CC0 1.0', source: 'https://opengameart.org/content/metal-impact-sounds' },
   ],
