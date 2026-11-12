@@ -119,6 +119,8 @@ from them with ffmpeg.
 | `art/third-party/sounds/engine_heavy_loop_0.wav` | Engine-loop heavy vehicle/tank | Nayckron, from a car engine loop by qubodup | https://opengameart.org/content/engine-loop-heavy-vehicletank | CC BY 3.0 | None (the original) |
 | `public/audio/engine.mp3` | Engine-loop heavy vehicle/tank | Nayckron, from a car engine loop by qubodup | https://opengameart.org/content/engine-loop-heavy-vehicletank | CC BY 3.0 | Played twice over, mixed to mono, saved as MP3 |
 | `art/third-party/sounds/winch - Marker #9.wav` | Chain winch sounds (Marker #9) | bart | https://opengameart.org/content/chain-winch-sounds | CC0 1.0 | None (the original) |
+| `art/third-party/sounds/rocket_engine.001.wav` | Rocket Engine | theMinesAreShakin | https://opengameart.org/content/rocket-engine | CC0 1.0 | None (the original) |
+| `public/audio/turbine.mp3` | Rocket Engine | theMinesAreShakin | https://opengameart.org/content/rocket-engine | CC0 1.0 | The steady 3 s from 1 s cut out, its end faded over its start to loop, mixed to mono, played twice over, saved as MP3 |
 | `public/audio/tracks.mp3` | Chain winch sounds (Marker #9) | bart | https://opengameart.org/content/chain-winch-sounds | CC0 1.0 | The steady 2 s from 0.7 s cut out, its end faded over its start to loop, mixed to mono, played twice over, saved as MP3 |
 | `art/third-party/sounds/thud2.wav` | Metal Impact Sounds (thud2) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | None (the original) |
 | `public/audio/short.mp3` | Metal Impact Sounds (thud2) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | Cut to 0.45 s, made 6 dB louder, faded out, saved as MP3 |

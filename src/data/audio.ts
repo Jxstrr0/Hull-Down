@@ -134,13 +134,19 @@ export const AUDIO = {
    * it is turned down to.
    */
   /**
-   * The engine, recorded (CC BY, listed in CREDITS.md): a loop `loopS` long
-   * played round from `fromS`, faster as the engine works harder (each engine's
-   * `tapeIdle` to `tapeFull`), at `gain`. The file holds the loop twice so
-   * the part played never touches its ends. Once it has arrived, the synth
-   * engine under it is turned down to `synthGain`; a turbine keeps its whine.
+   * The engines, recorded (listed in CREDITS.md): a diesel's chug for the
+   * diesel and the multi-fuel engine (CC BY), a low roar for the gas turbine
+   * (CC0), each a loop `loopS` long played round from `fromS`, faster as the
+   * engine works harder (each engine's `tapeIdle` to `tapeFull`), at `gain`.
+   * Each file holds its loop twice so the part played never touches its
+   * ends. Once one has arrived, the synth engine under it is turned down to
+   * `synthGain`; a turbine keeps its whine.
    */
-  engineTape: { file: 'audio/engine.mp3', fromS: 2, loopS: 3.99238, gain: 1.1, synthGain: 0.3 },
+  engineTapes: {
+    diesel: { file: 'audio/engine.mp3', fromS: 2, loopS: 3.99238, gain: 1.1, synthGain: 0.3 },
+    multiFuel: { file: 'audio/engine.mp3', fromS: 2, loopS: 3.99238, gain: 1.1, synthGain: 0.3 },
+    gasTurbine: { file: 'audio/turbine.mp3', fromS: 1.5, loopS: 3, gain: 0.9, synthGain: 0.45 },
+  } satisfies Record<EngineKind, { file: string; fromS: number; loopS: number; gain: number; synthGain: number }>,
 
   /**
    * The tracks, recorded (CC0, a winch's ratchet, listed in CREDITS.md): a

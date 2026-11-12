@@ -86,7 +86,8 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
   /** The recordings that have arrived, by cue. */
   const taped = new Map<CueId, AudioBuffer>()
   /** The engine recording, once it has arrived. */
-  let engineTape: AudioBuffer | null = null
+  /** The engine recordings that have arrived, by file. */
+  const engineTapes = new Map<string, AudioBuffer>()
   let trackTape: AudioBuffer | null = null
 
   function ready(): AudioContext | null {
@@ -120,11 +121,13 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
         // A file this browser cannot read: the synth plays alone.
       }
     }
-    try {
-      const bytes = await load(AUDIO.engineTape.file)
-      if (bytes) engineTape = await ctx.decodeAudioData(bytes)
-    } catch {
-      // The synth engine plays alone.
+    for (const file of new Set(Object.values(AUDIO.engineTapes).map((each) => each.file))) {
+      try {
+        const bytes = await load(file)
+        if (bytes) engineTapes.set(file, await ctx.decodeAudioData(bytes))
+      } catch {
+        // That engine's synth plays alone.
+      }
     }
     try {
       const bytes = await load(AUDIO.trackTape.file)
@@ -382,8 +385,10 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     if (!ctx || !master || ctx.state !== 'running') return
     if (nodes && nodes.voice !== voice) still()
     nodes ??= build(ctx, master, voice)
+    const engineLoop = AUDIO.engineTapes[voice.engine]
+    const engineTape = engineTapes.get(engineLoop.file)
     if (engineTape && !nodes.tape) {
-      const added = addTape(ctx, nodes, engineTape, AUDIO.engineTape)
+      const added = addTape(ctx, nodes, engineTape, engineLoop)
       nodes.tape = added.source
       nodes.tapeOut = added.out
     }
@@ -412,8 +417,8 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
       param.setTargetAtTime(value, now, E.followS)
       param.setTargetAtTime(0, now + E.hushAfterS, E.hushS)
     }
-    hold(nodes.engineOut.gain, levels.engineGain * E.gain * (nodes.tape ? AUDIO.engineTape.synthGain : 1))
-    if (nodes.tapeOut) hold(nodes.tapeOut.gain, levels.engineGain * E.gain * AUDIO.engineTape.gain)
+    hold(nodes.engineOut.gain, levels.engineGain * E.gain * (nodes.tape ? engineLoop.synthGain : 1))
+    if (nodes.tapeOut) hold(nodes.tapeOut.gain, levels.engineGain * E.gain * engineLoop.gain)
     hold(nodes.whineOut.gain, levels.engineGain * E.gain * tone.whine * E.whineGain)
     hold(nodes.hissOut.gain, levels.engineGain * E.gain * tone.hiss)
     hold(nodes.trackOut.gain, levels.trackGain * AUDIO.tracks.gain * (nodes.trackTape ? AUDIO.trackTape.synthGain : 1))

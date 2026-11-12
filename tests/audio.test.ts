@@ -292,7 +292,7 @@ describe('the synth', () => {
     sound.cue('short')
     const alone = sources() - before
     await new Promise((done) => setTimeout(done, 0))
-    expect(asked).toEqual([...Object.values(AUDIO.recordings).map((each) => each.file), AUDIO.engineTape.file, AUDIO.trackTape.file])
+    expect(asked).toEqual([...Object.values(AUDIO.recordings).map((each) => each.file), ...new Set(Object.values(AUDIO.engineTapes).map((each) => each.file)), AUDIO.trackTape.file])
     before = sources()
     sound.cue('short')
     expect(sources() - before).toBe(alone + 1)
@@ -332,14 +332,17 @@ describe('the engine recording', () => {
     expect(fake.calls.get('stop')).toBe(fake.calls.get('start'))
   })
 
-  it('is in the build, and is played round inside the file, never across its ends', () => {
-    const T = AUDIO.engineTape
-    expect(T.file).toMatch(/^audio\/[a-z]+\.mp3$/)
-    expect(existsSync(`public/${T.file}`)).toBe(true)
-    // The file holds the loop twice over.
-    expect(T.fromS).toBeGreaterThan(0.5)
-    expect(T.fromS + T.loopS).toBeLessThan(2 * T.loopS - 0.5)
-    expect(T.synthGain).toBeLessThan(1)
+  it('is in the build for every kind of engine, and is played round inside its file, never across its ends', () => {
+    for (const T of Object.values(AUDIO.engineTapes)) {
+      expect(T.file).toMatch(/^audio\/[a-z]+\.mp3$/)
+      expect(existsSync(`public/${T.file}`)).toBe(true)
+      // The file holds the loop twice over.
+      expect(T.fromS).toBeGreaterThan(0.5)
+      expect(T.fromS + T.loopS).toBeLessThan(2 * T.loopS - 0.5)
+      expect(T.synthGain).toBeLessThan(1)
+    }
+    // A turbine roars rather than chugs: it has its own recording.
+    expect(AUDIO.engineTapes.gasTurbine.file).not.toBe(AUDIO.engineTapes.diesel.file)
   })
 })
 
