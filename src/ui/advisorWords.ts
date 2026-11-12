@@ -31,7 +31,13 @@ export function remarkText(remark: Remark): string {
       })
     case 'shoot':
       return fill(R.shoot[remark.test ?? 'halted'], numbers(remark, (value) => fixed(value, Number.isInteger(value) ? 0 : 1)))
+    case 'missionReach':
+      return R.missionReach
+    case 'missionRate':
+      return fill(R.missionRate, numbers(remark, (value) => fixed(value, 1)))
     case 'slowShot':
+    case 'missionFirst':
+    case 'missionClose':
     case 'top':
       return fill(R[remark.kind], numbers(remark, plain))
     case 'drill':

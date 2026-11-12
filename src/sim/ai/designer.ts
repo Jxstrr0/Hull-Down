@@ -4,7 +4,7 @@
 // weight it has left on armour. Same parts list, same limits, same checks.
 import { BASELINE_SPEC } from '../../data/baseline'
 import { MATERIALS, ZONES, type MaterialId, type ZoneId } from '../../data/materials'
-import { BUREAUS, BUREAU_IDS, DESIGNER, type BureauId, type LaterPicks, type Philosophy, type Picks } from '../../data/opponents'
+import { BUREAUS, BUREAU_IDS, DESIGNER, SPG_ARMOUR, type BureauId, type LaterPicks, type Philosophy, type Picks } from '../../data/opponents'
 import {
   COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS,
   TRANSMISSIONS, TURRETS, type EngineId, type GunId, type TransmissionId, type TurretId,
@@ -65,6 +65,12 @@ function massOf(spec: VehicleSpec): number {
 
 function allowed(gun: GunId, limits: Limits): boolean {
   return limits.allowedCalibresMm.includes(GUNS[gun].calibreMm)
+}
+
+/** True when the tender takes only howitzers: it wants a self-propelled gun. */
+export function wantsHowitzer(limits: Limits): boolean {
+  const guns = (Object.keys(GUNS) as GunId[]).filter((gun) => allowed(gun, limits))
+  return guns.length > 0 && guns.every((gun) => GUNS[gun].howitzer)
 }
 
 function biggestGun(limits: Limits): GunId | null {
@@ -259,7 +265,7 @@ export interface Draft {
  * whatever cannot be built. False when the tank cannot be built at all.
  */
 function settle(spec: VehicleSpec, pattern: Record<ZoneId, number>, philosophy: Philosophy, limits: Limits): boolean {
-  const targetT = limits.maxMassT * philosophy.massShare
+  const targetT = limits.maxMassT * (wantsHowitzer(limits) ? philosophy.spg.massShare : philosophy.massShare)
   const swaps = laterPicks(philosophy, limits.generation ?? 1).materials ?? {}
   for (let turn = 0; turn < DESIGNER.repairTurns; turn++) {
     armourUp(spec, pattern, fit(spec, targetT, limits), swaps)
@@ -311,11 +317,15 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   for (const zone of ZONES) spec.era[zone] = philosophy.tiles.includes(zone) ? allTiles(zone) : 0
   // What the bureau has moved on to by the tender's year, and what it fits for a tank destroyer.
   fitPicks(spec, laterPicks(philosophy, limits.generation ?? 1))
-  if (limits.casemate && philosophy.destroyer) fitPicks(spec, philosophy.destroyer)
+  if (wantsHowitzer(limits)) {
+    fitPicks(spec, philosophy.spg)
+    spec.ammo.rounds = philosophy.spg.rounds
+  } else if (limits.casemate && philosophy.destroyer) fitPicks(spec, philosophy.destroyer)
   // A gun outside the tender's calibres is no use: the bureau takes the biggest gun that is allowed.
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 
   const pattern = { ...philosophy.armour }
+  if (wantsHowitzer(limits)) for (const [zone, share] of Object.entries(SPG_ARMOUR) as [ZoneId, number][]) pattern[zone] *= share
   if (settle(spec, pattern, philosophy, limits)) return { spec, pattern }
   // Nothing the bureau wanted could be built: it enters the licence-built tank as it stands.
   const fallback = copyOf(BASELINE_SPEC)
@@ -332,7 +342,7 @@ export function designRival(bureau: BureauId, limits: Limits, seed: number): Veh
  * What a trial can teach a bureau. A word names a test its tank failed; a
  * zone names a plate that let a round through.
  */
-export const LESSONS = ['night', 'onTheMove', 'halted', 'drill', 'power', 'trench', 'berm'] as const
+export const LESSONS = ['night', 'onTheMove', 'halted', 'drill', 'power', 'trench', 'berm', 'fireData'] as const
 export type Lesson = (typeof LESSONS)[number] | { zone: ZoneId }
 
 /** The part after this one in its table, which lists them plainest first. Null at the end. */
@@ -403,6 +413,12 @@ function learn(draft: Draft, lesson: Lesson, generation: Generation): boolean {
       const longer = spec.hull.size === 'light' ? 'medium' : spec.hull.size === 'medium' ? 'heavy' : null
       if (longer) spec.hull.size = longer
       return longer !== null
+    }
+    case 'fireData': {
+      // A fire mission's first round came late or wide: a better computer works out the data quicker and truer.
+      const computer = nextOf(COMPUTERS, fc.computer, computerOk)
+      if (computer) fc.computer = computer
+      return computer !== null
     }
     case 'berm': {
       // A turret that lets the gun dip further shows less of the tank over a crest. A casemate stays a casemate.
