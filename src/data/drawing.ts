@@ -32,6 +32,9 @@ export const DRAWING = {
   /** The finer details of the drawing. Shares are of the part they sit on. */
   detail: {
     tyreShare: 0.84,
+    /** On a wheeled hull: the rim inside the tyre, and the tread blocks round its edge. */
+    rimShare: 0.6,
+    treadBlocks: 24,
     boltRingShare: 0.24,
     boltShare: 0.035,
     wheelBolts: 6,

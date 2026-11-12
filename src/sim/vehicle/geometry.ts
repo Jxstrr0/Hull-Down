@@ -1,9 +1,10 @@
 // Sizes worked out from the spec: armour zone areas, turret size, outer dimensions.
 import { ZONES, type ZoneId } from '../../data/materials'
-import { HULLS, LOADING, TURRETS } from '../../data/parts'
+import { HULLS, LOADING, TURRETS, WHEELS } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { PI, detCos } from '../det'
 import type { VehicleSpec } from './spec'
+import { wheelsOf } from './wheels'
 
 export interface Geometry {
   /** Armour plate area of each zone, square metres. */
@@ -15,7 +16,7 @@ export interface Geometry {
   /** Usable space inside the turret. */
   turretVolumeM3: number
   lengthM: number
-  /** Overall width over the tracks. */
+  /** Overall width over the tracks, or over the tyres. */
   widthM: number
   /** Ground to turret roof. */
   heightM: number
@@ -77,7 +78,9 @@ export function geometryOf(spec: VehicleSpec): Geometry {
     turretRadiusM: radius,
     turretVolumeM3: disc * height * turret.volumeFactor,
     lengthM: hull.lengthM,
-    widthM: hull.widthM + (2 * (spec.runningGear.trackWidthMm - g.standardTrackMm)) / 1000,
+    widthM: wheelsOf(spec) > 0
+      ? hull.bodyWidthM + 2 * WHEELS.tyreWidthM
+      : hull.widthM + (2 * (spec.runningGear.trackWidthMm - g.standardTrackMm)) / 1000,
     heightM: hull.roofHeightM + height,
     trackContactM: hull.lengthM * g.trackContactShare,
   }

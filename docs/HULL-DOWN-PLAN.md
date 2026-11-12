@@ -769,6 +769,30 @@ than tank duels.
    with the squad getting out, tracer and crossed-out targets, and the
    gunner's sight on the target being fired at.
 
+Then three more, Kelbo's picks, in this order: a wheeled scout car, an
+anti-aircraft gun vehicle, and the export desk selling the new vehicles.
+
+The wheeled scout car, in small PRs. Kelbo's picks: its tender is in 2004,
+between 2001 and 2008, with generation two parts; four, six or eight wheels
+are a design choice; only the 30 mm cannon is accepted; and the army judges
+it on a new spot-and-report trial rather than tank duels.
+1. Wheels (1.6.0.0): tracks, or four, six or eight wheels, in the sim and
+   the design office, drawn on the blueprint. Offered only where a tender
+   asks for a wheeled vehicle, and in the sandbox. Done: wheels are lighter
+   and cheaper, geared half again as fast, use 0.7 of the fuel, and roll
+   easily on a road; they press harder on the ground, drag in mud, bridge a
+   shorter trench (0.08 of the hull length on four wheels, 0.28 on eight)
+   and mount a lower step. Each tyre carries 3.8 t, and tyres seldom fail.
+2. Wheels at the trials (1.6.1.0): the 3D range draws wheels, and the
+   reports talk of tyres, not tracks.
+3. The spot-and-report trial (1.6.2.0): drive a mixed road and
+   cross-country route to three lookout points, find vehicles hidden in the
+   landscape with the sights, and report back. Marked on time, how many it
+   found, and whether it was seen first. It gets a card in the report.
+4. The 2004 tender in the career (1.6.3.0), with saves carried over.
+5. Rival bureaus bid scout cars (1.6.4.0).
+6. Something to watch for the spot-and-report trial (1.6.5.0).
+
 ---
 
 ## 15. Hosting and the studio site

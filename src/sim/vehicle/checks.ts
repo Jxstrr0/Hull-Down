@@ -1,7 +1,7 @@
 // Constraint checks. Each issue names the part to fix, so the design office
 // can show it in red with a "fix it" link.
 import { MATERIALS, ZONES } from '../../data/materials'
-import { COOLING, ENGINES, GUNS, HULLS, LOADING, STOWAGE, SUSPENSIONS, TRANSMISSIONS, TROOPS, TURRETS } from '../../data/parts'
+import { COOLING, ENGINES, GUNS, HULLS, LOADING, STOWAGE, SUSPENSIONS, TRANSMISSIONS, TROOPS, TURRETS, WHEELS } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { gunRingMm } from '../gunnery/mount'
 import type { Geometry } from './geometry'
@@ -9,6 +9,7 @@ import type { Rollup } from './rollup'
 import type { Limits, VehicleSpec } from './spec'
 import { electricsOf } from './electrics'
 import { tooNew, unresearched } from './tech'
+import { wheelsOf } from './wheels'
 
 export const ISSUE_CODES = [
   'ringTooSmallForGun',
@@ -50,6 +51,8 @@ export const ISSUE_CODES = [
   'troopsOutOfRange',
   'squadTooSmall',
   'troopsNeedFrontEngine',
+  'wheelsNotAllowed',
+  'tyresOverloaded',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -97,6 +100,9 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
 
   // A casemate is for a tank destroyer's tender only
   if (turret.swingDeg !== null && !limits.casemate) error('casemateNotAllowed', 'turret.shape')
+  // And wheels for a wheeled vehicle's
+  const wheeled = wheelsOf(spec)
+  if (wheeled > 0 && !limits.wheels) error('wheelsNotAllowed', 'runningGear.layout')
 
   // Turret ring
   const gunRing = gunRingMm(spec)
@@ -137,7 +143,7 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   if (outside(spec.hull.glacisAngleDeg, lim.glacisAngleDeg)) {
     error('glacisAngleOutOfRange', 'hull.glacisAngleDeg', spec.hull.glacisAngleDeg)
   }
-  if (outside(spec.runningGear.trackWidthMm, lim.trackWidthMm)) {
+  if (wheeled === 0 && outside(spec.runningGear.trackWidthMm, lim.trackWidthMm)) {
     error('trackWidthOutOfRange', 'runningGear.trackWidthMm', spec.runningGear.trackWidthMm)
   }
   if (outside(spec.powerpack.fuelL, lim.fuelL)) error('fuelOutOfRange', 'powerpack.fuelL', spec.powerpack.fuelL)
@@ -150,7 +156,7 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   // The soldiers leave by a door in the rear plate, so the engine cannot be there.
   if (troops > 0 && spec.hull.engineAt !== 'front') error('troopsNeedFrontEngine', 'hull.engineAt')
   const wheels = spec.runningGear.roadWheels
-  if (wheels < hull.minWheels || wheels > hull.maxWheels || !Number.isInteger(wheels)) {
+  if (wheeled === 0 && (wheels < hull.minWheels || wheels > hull.maxWheels || !Number.isInteger(wheels))) {
     error('wheelsOutOfRange', 'runningGear.roadWheels', wheels, wheels < hull.minWheels ? hull.minWheels : hull.maxWheels)
   }
 
@@ -184,7 +190,9 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
 
   // Hard limits
   if (rollup.totalMassT > limits.maxMassT) error('overMassLimit', 'armour', rollup.totalMassT, limits.maxMassT)
-  if (geo.widthM > limits.maxWidthM) error('overWidthLimit', 'runningGear.trackWidthMm', geo.widthM, limits.maxWidthM)
+  if (geo.widthM > limits.maxWidthM) {
+    error('overWidthLimit', wheeled > 0 ? 'hull.size' : 'runningGear.trackWidthMm', geo.widthM, limits.maxWidthM)
+  }
   if (limits.maxUnitCostKr !== undefined && rollup.unitCostKr > limits.maxUnitCostKr) {
     error('overCostLimit', 'hull.size', rollup.unitCostKr, limits.maxUnitCostKr)
   }
@@ -204,9 +212,14 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   if (engine.powerHp > cooling.capacityHp) {
     warn('coolingOverloaded', 'powerpack.cooling', engine.powerHp, cooling.capacityHp)
   }
-  const trackRatedT = spec.runningGear.trackWidthMm * TUNING.tracks.ratedTPerMm
-  if (rollup.totalMassT > trackRatedT) {
-    warn('tracksOverloaded', 'runningGear.trackWidthMm', rollup.totalMassT, trackRatedT)
+  if (wheeled > 0) {
+    const tyreRatedT = wheeled * WHEELS.tyreRatedT
+    if (rollup.totalMassT > tyreRatedT) warn('tyresOverloaded', 'runningGear.layout', rollup.totalMassT, tyreRatedT)
+  } else {
+    const trackRatedT = spec.runningGear.trackWidthMm * TUNING.tracks.ratedTPerMm
+    if (rollup.totalMassT > trackRatedT) {
+      warn('tracksOverloaded', 'runningGear.trackWidthMm', rollup.totalMassT, trackRatedT)
+    }
   }
 
   return issues

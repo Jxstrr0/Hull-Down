@@ -459,6 +459,46 @@ export const SUSPENSIONS = {
 } as const satisfies Record<string, SuspensionPart>
 export type SuspensionId = keyof typeof SUSPENSIONS
 
+/** Tracks, or a number of wheels in place of them. */
+export const LAYOUTS = {
+  tracks: { wheels: 0 },
+  wheels4: { wheels: 4 },
+  wheels6: { wheels: 6 },
+  wheels8: { wheels: 8 },
+} as const satisfies Record<string, { wheels: number }>
+export type LayoutId = keyof typeof LAYOUTS
+
+/**
+ * Wheels in place of tracks. Every wheel is driven and hangs on its own arm
+ * and spring, of the suspension picked, so each wheel is a wheel station.
+ * Game-level abstractions, not engineering data.
+ */
+export const WHEELS = {
+  /** A wheel with its tyre and driven hub. */
+  wheelT: 0.3,
+  wheelKr: 6_000,
+  /** The drive shafts and differentials for each pair of wheels. */
+  axle: { massT: 0.25, volumeM3: 0.12, costKr: 12_000, reliability: 1 } satisfies Part,
+  /** Weight each tyre is rated to carry, tonnes. */
+  tyreRatedT: 3.8,
+  /** 0..1 chance a set of tyres gets through an endurance run unstressed. Tracks are 0.97. */
+  tyreReliability: 0.99,
+  /** Ground each tyre presses on, square centimetres. A soft tyre spreads under load. */
+  contactCm2: 2_800,
+  /** How far each tyre stands out from the hull side, metres. */
+  tyreWidthM: 0.4,
+  /** Ground to the wheel's centre, metres. */
+  radiusM: 0.55,
+  /** The longest trench bridged, as a share of the hull length, by the number of wheels. Tracks bridge 0.42. */
+  trenchShare: { 4: 0.08, 6: 0.18, 8: 0.28 },
+  /** The highest step mounted, as a share of the height of the hull roof. Tracks mount 0.57. */
+  stepShare: 0.35,
+  /** Wheels are geared taller than tracks: top speed and bottom gear both this much faster. */
+  gearFactor: 1.5,
+  /** Fuel used on wheels, as a share of what tracks would use. */
+  fuelShare: 0.7,
+} as const
+
 // --- Protection systems ---------------------------------------------------
 
 export const SMOKE_LAUNCHERS: Part = { massT: 0.08, volumeM3: 0, costKr: 15_000, reliability: 1 }

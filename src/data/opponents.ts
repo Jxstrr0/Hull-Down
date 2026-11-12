@@ -324,7 +324,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
         night: 'activeInfrared', commanderSight: true,
       },
       powerpack: { engine: 'diesel780', transmission: 'hydro50', cooling: 'standard', fuelL: 1400, apu: false },
-      runningGear: { suspension: 'torsionBar', roadWheels: 7, trackWidthMm: 640, skirts: false },
+      runningGear: { layout: 'tracks', suspension: 'torsionBar', roadWheels: 7, trackWidthMm: 640, skirts: false },
       protection: { smokeLaunchers: true, fireSuppression: true, spallLiner: false, active: 'none' },
       crew: { comfort: 'improved', troops: 0 },
       armour: {
@@ -363,7 +363,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
         night: 'imageIntensifier', commanderSight: true,
       },
       powerpack: { engine: 'diesel780', transmission: 'hydro50', cooling: 'standard', fuelL: 1000, apu: true },
-      runningGear: { suspension: 'hydropneumatic', roadWheels: 7, trackWidthMm: 700, skirts: false },
+      runningGear: { layout: 'tracks', suspension: 'hydropneumatic', roadWheels: 7, trackWidthMm: 700, skirts: false },
       protection: { smokeLaunchers: true, fireSuppression: true, spallLiner: true, active: 'none' },
       crew: { comfort: 'improved', troops: 0 },
       armour: {
@@ -414,7 +414,7 @@ export const THREAT_TANKS: Record<ThreatTankId, ThreatTank> = {
         night: 'thermal', commanderSight: true,
       },
       powerpack: { engine: 'diesel780', transmission: 'hydro50', cooling: 'standard', fuelL: 950, apu: true },
-      runningGear: { suspension: 'hydropneumatic', roadWheels: 7, trackWidthMm: 700, skirts: false },
+      runningGear: { layout: 'tracks', suspension: 'hydropneumatic', roadWheels: 7, trackWidthMm: 700, skirts: false },
       protection: { smokeLaunchers: true, fireSuppression: true, spallLiner: true, active: 'none' },
       crew: { comfort: 'improved', troops: 0 },
       armour: {

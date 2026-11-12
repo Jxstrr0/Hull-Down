@@ -14,7 +14,7 @@ import { BASELINE_SPEC } from '../data/baseline'
 import { STRINGS, fill } from '../data/strings'
 import {
   AREAS, buildStatSheet, gunRounds, penetrationAt, tiledVerdictsAgainst, tileGrid, verdictsAgainst, type Issue, type Limits,
-  type StatSheet, type VehicleSpec,
+  wheelsOf, type StatSheet, type VehicleSpec,
 } from '../sim/vehicle'
 import { el } from '../ui/dom'
 import { pageTextOf, renderGlossary, type GlossaryState } from '../ui/glossary'
@@ -104,6 +104,9 @@ export interface Office {
 function isAskedFor(option: string): boolean {
   return option in GUNS && (GUNS[option as keyof typeof GUNS].howitzer || GUNS[option as keyof typeof GUNS].beltFed)
 }
+
+/** The running-gear parts a wheeled vehicle does not have. */
+const TRACK_ONLY: readonly ControlId[] = ['runningGear.roadWheels', 'runningGear.trackWidthMm', 'runningGear.skirts']
 
 /** True for a turret option that is a casemate: the gun swings only a little each way. */
 function isCasemate(option: string): boolean {
@@ -495,7 +498,18 @@ export function renderDesignScreen(first: Tender): Office {
     if (id === 'faults') return sheet.issues.some((issue) => issue.severity === 'error')
     if (id === 'armour') return sheet.issues.some((issue) => armourZoneOf(issue.part) !== undefined)
     if (id === 'readouts') return false
-    return CONTROLS.some((control) => control.tab === id && issuesFor(control.id).length > 0)
+    return CONTROLS.some((control) => control.tab === id && shown(control) && issuesFor(control.id).length > 0)
+  }
+
+  /**
+   * Does this part get a row? The tracks-or-wheels row only where wheels are
+   * allowed (or already fitted); the track parts only on tracks.
+   */
+  function shown(control: Control): boolean {
+    const wheeled = wheelsOf(spec) > 0
+    if (control.id === 'runningGear.layout') return wheeled || limits.wheels === true
+    if (TRACK_ONLY.includes(control.id)) return !wheeled
+    return true
   }
 
   /** What a part holds now, in a few words, for its row. */
@@ -516,7 +530,7 @@ export function renderDesignScreen(first: Tender): Office {
     }
     if (id === 'faults') return sheet.issues.length > 0 ? fill(O.row.faultCount, { n: String(sheet.issues.length) }) : O.row.noFaults
     if (id === 'armour') return ''
-    return CONTROLS.filter((control) => control.tab === id).slice(0, 2).map(controlNow).join(' · ')
+    return CONTROLS.filter((control) => control.tab === id && shown(control)).slice(0, 2).map(controlNow).join(' · ')
   }
 
   /** The bar along the bottom: which page is open, and whether Saves wants a backup. */
@@ -668,6 +682,8 @@ export function renderDesignScreen(first: Tender): Office {
       const on = option === current
       // A casemate is offered only where the tender is for a tank destroyer.
       if (!on && control.id === 'turret.shape' && isCasemate(option) && !limits.casemate) continue
+      // Wheels only where the tender is for a wheeled vehicle.
+      if (!on && control.id === 'runningGear.layout' && option !== 'tracks' && !limits.wheels) continue
       // So is a howitzer or a cannon only where the tender asks for its calibre.
       if (!on && control.id === 'gun' && isAskedFor(option) && !limits.allowedCalibresMm.includes(GUNS[option as keyof typeof GUNS].calibreMm)) continue
       // A part newer than the tender allows is shown, and cannot be picked.
@@ -1380,7 +1396,7 @@ export function renderDesignScreen(first: Tender): Office {
     }
     const parts: HTMLElement[] = []
     for (const control of CONTROLS) {
-      if (control.tab !== id) continue
+      if (control.tab !== id || !shown(control)) continue
       if (control.kind === 'choice') parts.push(drawChoice(control))
       else if (control.kind === 'number') parts.push(drawNumber(control))
       else parts.push(drawToggle(control))

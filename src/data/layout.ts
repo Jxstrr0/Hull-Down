@@ -19,6 +19,8 @@ export const LAYOUT = {
   engineBay: { rear: [0.68, 0.97], front: [0.2, 0.42] },
   /** Top of the track run, as a share of the hull roof height. */
   trackTopShare: 0.62,
+  /** Where each pair of wheels sits on a wheeled hull, as shares of hull length from the nose, by number of wheels. */
+  wheelAxles: { 4: [0.2, 0.78], 6: [0.18, 0.6, 0.81], 8: [0.15, 0.34, 0.63, 0.83] },
 } as const
 
 /** What is inside, and how big. Metres unless a name says otherwise. */
