@@ -71,7 +71,7 @@
           'error',
           function (e) {
             var t = e.target
-            if (!t || t.tagName !== 'SCRIPT' || !document.getElementById('loading')) return
+            if (!t || t.tagName !== 'SCRIPT' || t.hasAttribute('data-cf-beacon') || !document.getElementById('loading')) return
             root.classList.add('ld-failed')
             root.querySelector('.ld-error').hidden = false
           },
@@ -81,5 +81,7 @@
     </script>
     <main id="app"></main>
     <script type="module" src="/src/main.ts"></script>
+    <!-- Cloudflare Web Analytics: cookieless visit counts for Longlight Interactive (no personal data). -->
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "8cd1c879bc894231a7d6cc91a20b0acb"}'></script>
   </body>
 </html>
