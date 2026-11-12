@@ -1,7 +1,7 @@
 // The proving ground: what the ground is like, how the tests are laid out
 // and the marks a tank has to reach. Game-level abstractions, not
 // engineering data.
-import type { AirMarks } from './airDefence'
+import { AIR_TRIAL, type AirMarks } from './airDefence'
 import type { ThreatId } from './ammo'
 import type { FireMissionMarks } from './fireMission'
 import { SCOUT_TRIAL, type ScoutMarks } from './scout'
@@ -392,6 +392,37 @@ export const MARKS_SCOUT = {
   scout: SCOUT_TRIAL.marks,
   // No car on wheels bridges the trench, mounts the step or grips the slope, and
   // the tender allows nothing else, so only the mud pit is asked for.
+  waived: ['trench', 'step', 'slope'] as readonly ObstacleId[],
+} as const
+
+/**
+ * What the army asks of an anti-aircraft gun vehicle in 2012. No tank
+ * shoots, no loading drill and no berm: the air defence trial takes their
+ * place. It must keep up with the tanks it guards, so the drive is asked for
+ * as of a tank, but it keeps to the roads and tracks behind them: it is not
+ * asked to cross the trench, mount the step or climb the slope, which lets
+ * it go on wheels. Its armour need only keep out a carrier's cannon at long
+ * range, front and sides; a drone's bomblet, the cannon close in and a tank
+ * round are fired for the record.
+ */
+export const MARKS_AA = {
+  sprintS: MARKS_GEN2.sprintS,
+  topKmh: MARKS_GEN2.topKmh,
+  enduranceStops: 1,
+  hits: MARKS_GEN2.hits,
+  firstShotS: MARKS_GEN2.firstShotS,
+  drillRpm: MARKS_GEN2.drillRpm,
+  armour: [
+    { zone: 'upperGlacis', threat: 'autocannon', rangeM: 2000, angleDeg: 0, gate: true },
+    { zone: 'turretFrontLeft', threat: 'autocannon', rangeM: 2000, angleDeg: 0, gate: true },
+    { zone: 'hullSideFront', threat: 'autocannon', rangeM: 2500, angleDeg: 0, gate: true },
+    { zone: 'turretSides', threat: 'autocannon', rangeM: 2500, angleDeg: 0, gate: true },
+    { zone: 'turretRoof', threat: 'droneBomblet', rangeM: 100, angleDeg: 0, gate: false },
+    { zone: 'upperGlacis', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: false },
+    { zone: 'upperGlacis', threat: 'accord120Sabot', rangeM: 2000, angleDeg: 0, gate: false },
+  ] as readonly ArmourSerial[],
+  bermShowsM: MARKS_GEN2.bermShowsM,
+  air: AIR_TRIAL.marks,
   waived: ['trench', 'step', 'slope'] as readonly ObstacleId[],
 } as const
 

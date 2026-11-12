@@ -1461,6 +1461,9 @@ export const STRINGS = {
       scoutTimeNever: 'It will not get round spot and report.',
       scoutFound: 'It will find about {value} of the hidden vehicles where the tender asks {limit}.',
       scoutSeen: 'About {value} of the hidden vehicles will see it before it sees them. The tender allows {limit}.',
+      airDowned: 'It will bring down about {value} of the raiders before their line where the tender asks {limit}.',
+      airReaction: 'It will open fire about {value} s after a raider comes within range where the tender allows {limit} s.',
+      airReactionNever: 'It will not get a burst off at any of the raiders.',
       sprint: 'It is slow off the mark: {value} s to the sprint speed where the tender allows {limit} s.',
       sprintNever: 'It never reaches the sprint speed.',
       top: 'It tops out at {value} km/h where the tender asks {limit}.',
@@ -1695,6 +1698,10 @@ export const STRINGS = {
     note: 'Each battle is fought {n} times, each with its own luck. The same design, opponent, ground and orders always give the same battles, so a change in the result is a change in the tank or in the orders.',
   },
   tenders: {
+    aa2012: {
+      name: 'An anti-aircraft gun vehicle',
+      brief: 'Four years after the self-propelled gun. The army has watched jets, helicopters and small drones pick off tanks on the move, and wants a gun vehicle to go with them and bring the aircraft down. It carries the twin 35 mm cannon, the only gun accepted, on tracks or wheels. It will not duel the Accord\'s tanks. At the range six raiders come at it one after another, fast jets low, helicopters popping up from behind the trees and small drones, and it is marked on how many it brings down before they reach their line and on how quickly it opens fire. The tank shoots, the loading drill and the berm do not count. It keeps to the roads behind the tanks, so of the obstacles it is asked only through the mud. Its armour need only keep out a carrier\'s cannon at long range. It must weigh 38 t or less. Firepower counts for most, then cost. Generation two parts.',
+    },
     tank2016: {
       name: 'A tank for a watched battlefield',
       brief: 'Fifteen years on. The Palisade B is still what the Accord fields, but the army has watched what small wars abroad do to tanks, and the range now drops a bomblet from a drone on the hull roof and the turret roof, and both must hold. A top-attack missile is fired at the turret roof for the record. But the army has a whole fleet to replace. Above all it wants a tank it can buy in numbers and keep running: cost counts for most, then reliability. The Pact has rebuilt its bridges to carry 48 t. Generation three parts are allowed as the bureau works them up.',

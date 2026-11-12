@@ -43,6 +43,11 @@ export function remarkText(remark: Remark): string {
     case 'scoutFound':
     case 'scoutSeen':
       return fill(remark.kind === 'scoutFound' ? R.scoutFound : R.scoutSeen, numbers(remark, (value) => fixed(value, Number.isInteger(value) ? 0 : 1)))
+    case 'airDowned':
+      return fill(R.airDowned, numbers(remark, (value) => fixed(value, Number.isInteger(value) ? 0 : 1)))
+    case 'airReaction':
+      if (remark.value === undefined) return R.airReactionNever
+      return fill(R.airReaction, numbers(remark, (value) => fixed(value, 1)))
     case 'scoutTime':
       if (remark.value === undefined) return R.scoutTimeNever
       return fill(R.scoutTime, numbers(remark, plain))

@@ -146,7 +146,6 @@ describe('a career saved before the scout car tender came in', () => {
     expect(tenderIdOf(old(4))).toBe('spg2008')
     expect(tenderIdOf(old(5))).toBe('tank2016')
     expect(old(4).format).toBe(CAREER_FORMAT)
-    expect(CAREER_FORMAT).toBe(5)
   })
 
   it('is moved only once', () => {

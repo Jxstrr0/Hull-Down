@@ -105,6 +105,12 @@ export interface RangeReport {
    * report is marked in their place.
    */
   scouting: boolean
+  /**
+   * True on an anti-aircraft gun vehicle's tender: the tank shoots, the
+   * loading drill and the berm are run but not counted, and the report
+   * leaves them out. The air defence trial is marked in their place.
+   */
+  airDefence: boolean
   /** Hours the crew had been in the tank when the shoots and the drill came round. */
   crewHours: number
   /** Tests passed and tests run. */
@@ -167,8 +173,9 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   const squadMarks = marks.squad ?? (sheet.rollup.troops > 0 ? SQUAD_TRIAL.marks : null)
   const drop = squadMarks ? runSquadDrop(sheet.drive, sheet.fire, sheet.rollup.troops, setup.seed) : null
   const squad = drop && squadMarks ? { ...drop, ...judgeSquadDrop(drop, squadMarks), marks: squadMarks } : null
-  // A car on wheels is sent to spot and report wherever it goes; a tender for a scout car sets its own marks.
-  const scoutMarks = marks.scout ?? (sheet.drive.wheeled ? SCOUT_TRIAL.marks : null)
+  // A car on wheels is sent to spot and report wherever it goes, but for an anti-aircraft gun vehicle's tender, which asks
+  // for the air defence trial in its place; a tender for a scout car sets its own marks.
+  const scoutMarks = marks.scout ?? (sheet.drive.wheeled && !marks.air ? SCOUT_TRIAL.marks : null)
   const patrol = scoutMarks
     ? runScoutPatrol(sheet.drive, sheet.fire, ridge.showsM, sheet.geometry.widthM, setup.seed)
     : null
@@ -180,9 +187,10 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   const selfPropelled = marks.fireMission !== undefined
   const carrier = marks.squad !== undefined
   const scouting = marks.scout !== undefined
+  const airDefence = marks.air !== undefined
   const passed = selfPropelled
     ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed, fireMission?.passed ?? false]
-    : carrier || scouting
+    : carrier || scouting || airDefence
     ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed]
     : [
       acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
@@ -207,6 +215,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     selfPropelled,
     carrier,
     scouting,
+    airDefence,
     crewHours: RANGE.crewHours,
     passes: passed.filter(Boolean).length,
     tests: passed.length,

@@ -73,10 +73,16 @@ export function wantsHowitzer(limits: Limits): boolean {
   return guns.length > 0 && guns.every((gun) => GUNS[gun].howitzer)
 }
 
-/** True when the tender takes only belt-fed cannon: it wants an infantry fighting vehicle. */
+/** True when the tender takes only belt-fed cannon built for ground targets: it wants an infantry fighting vehicle. */
 export function wantsCannon(limits: Limits): boolean {
   const guns = (Object.keys(GUNS) as GunId[]).filter((gun) => allowed(gun, limits))
-  return guns.length > 0 && guns.every((gun) => GUNS[gun].beltFed)
+  return guns.length > 0 && guns.every((gun) => GUNS[gun].beltFed && !GUNS[gun].antiAir)
+}
+
+/** True when the tender takes only anti-aircraft guns: it wants an anti-aircraft gun vehicle. */
+export function wantsAirDefence(limits: Limits): boolean {
+  const guns = (Object.keys(GUNS) as GunId[]).filter((gun) => allowed(gun, limits))
+  return guns.length > 0 && guns.every((gun) => GUNS[gun].antiAir)
 }
 
 /** True when the tender takes only wheels and belt-fed cannon: it wants a scout car. */
@@ -88,7 +94,7 @@ export function wantsScout(limits: Limits): boolean {
 function massShareOf(philosophy: Philosophy, limits: Limits): number {
   if (wantsHowitzer(limits)) return philosophy.spg.massShare
   if (wantsScout(limits)) return philosophy.scout.massShare
-  if (wantsCannon(limits)) return philosophy.ifv.massShare
+  if (wantsCannon(limits) || wantsAirDefence(limits)) return philosophy.ifv.massShare
   return philosophy.massShare
 }
 
@@ -350,6 +356,16 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
     spec.fireControl.commanderSight = scout.commanderSight
     if (scout.engine) spec.powerpack.engine = scout.engine
     for (const zone of ZONES) spec.era[zone] = 0
+  } else if (wantsAirDefence(limits)) {
+    // An anti-aircraft gun vehicle. For now each bureau builds it as its carrier, with no squad, the engine at the back,
+    // the search radar and no tiles.
+    const ifv = philosophy.ifv
+    fitPicks(spec, ifv)
+    spec.hull.size = ifv.hull
+    spec.ammo.rounds = ifv.rounds
+    spec.fireControl.searchRadar = true
+    if (ifv.engine) spec.powerpack.engine = ifv.engine
+    for (const zone of ZONES) spec.era[zone] = 0
   } else if (wantsCannon(limits)) {
     // A carrier for a squad: the engine goes in front to leave the back for the soldiers, and no tiles.
     const ifv = philosophy.ifv
@@ -366,7 +382,7 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 
   const pattern = { ...philosophy.armour }
-  const lean = wantsHowitzer(limits) ? SPG_ARMOUR : wantsScout(limits) ? SCOUT_ARMOUR : wantsCannon(limits) ? IFV_ARMOUR : {}
+  const lean = wantsHowitzer(limits) || wantsAirDefence(limits) ? SPG_ARMOUR : wantsScout(limits) ? SCOUT_ARMOUR : wantsCannon(limits) ? IFV_ARMOUR : {}
   for (const [zone, share] of Object.entries(lean) as [ZoneId, number][]) pattern[zone] *= share
   if (settle(spec, pattern, philosophy, limits)) return { spec, pattern }
   // Nothing the bureau wanted could be built: it enters the licence-built tank as it stands.

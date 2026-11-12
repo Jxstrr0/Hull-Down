@@ -28,6 +28,9 @@ export function lessonsOf(range: RangeReport): Lesson[] {
     // Seen first wants less of the car over a crest; late home wants a stronger engine.
     if (range.scout && !range.scout.seenPassed) lessons.push('berm')
     if (range.scout && !range.scout.timePassed) lessons.push('power')
+  } else if (range.airDefence) {
+    // Only the air defence trial counts of the shooting: raiders missed or fired at late want a better computer.
+    if (range.air && !range.air.passed) lessons.push('fireData')
   } else {
     if (!range.gunnery.night.passed) lessons.push('night')
     if (!range.gunnery.onTheMove.passed) lessons.push('onTheMove')
@@ -39,7 +42,7 @@ export function lessonsOf(range: RangeReport): Lesson[] {
   if (range.scouting && failed('mud')) lessons.push('mud')
   if (!range.acceleration.passed || failed('slope') || (!range.scouting && failed('mud'))) lessons.push('power')
   if (failed('trench')) lessons.push('trench')
-  if (!range.selfPropelled && !range.carrier && !range.scouting && !range.berm.passed) lessons.push('berm')
+  if (!range.selfPropelled && !range.carrier && !range.scouting && !range.airDefence && !range.berm.passed) lessons.push('berm')
   for (const zone of range.armour.failed) lessons.push({ zone })
   return lessons
 }

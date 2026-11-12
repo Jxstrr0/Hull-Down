@@ -72,8 +72,11 @@ describe('the twin 35 mm cannon', () => {
     expect(buildStatSheet(spec, sandbox).firepower.rateOfFireRpm).toBe(GUNS.twin35.loaderRof)
   })
 
-  it('is refused on every tender so far, since 35 mm is not a tank calibre, and can be built in the sandbox', () => {
-    for (const id of TENDER_IDS) expect(issues(flak(), 'error', TENDERS[id].limits), id).toContain('calibreNotStandard')
+  it('is refused on every tender but the anti-aircraft gun vehicle\'s, since 35 mm is not a tank calibre, and can be built in the sandbox', () => {
+    for (const id of TENDER_IDS) {
+      if (id === 'aa2012') expect(issues(flak(), 'error', TENDERS[id].limits)).not.toContain('calibreNotStandard')
+      else expect(issues(flak(), 'error', TENDERS[id].limits), id).toContain('calibreNotStandard')
+    }
     expect(issues(flak(), 'error')).toEqual([])
   })
 

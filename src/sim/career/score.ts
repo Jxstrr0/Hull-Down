@@ -7,7 +7,7 @@ import { SQUAD_TRIAL } from '../../data/squad'
 import { SCORE_AXES, SCORING, type ScoreAxis, type Tender } from '../../data/tenders'
 import { combatantOf } from '../duel/duel'
 import { runCard, type DuelSeries } from '../duel/series'
-import { runProvingGround, type FireMissionResult, type RangeReport, type ScoutResult, type SquadResult } from '../trials'
+import { runProvingGround, type AirResult, type FireMissionResult, type RangeReport, type ScoutResult, type SquadResult } from '../trials'
 import type { VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 
@@ -69,6 +69,13 @@ function scoutFirepower(run: ScoutResult): number {
   return M.foundShare * (run.found / run.hidden) + (1 - M.foundShare) * (run.stops === null ? 0 : 1 - run.seen / run.hidden)
 }
 
+/** An anti-aircraft gun vehicle's firepower, 0..1: the raiders it brought down, and how quickly it opened fire. */
+function airFirepower(run: AirResult): number {
+  const M = SCORING.firepower.air
+  const quick = run.reactionS === null ? 0 : between(run.reactionS, run.marks.reactionS, M.bestReactionS)
+  return M.downedShare * (run.downed / run.raiders.length) + (1 - M.downedShare) * quick
+}
+
 /** Puts a bid through the tender's proving ground and duels. */
 export function trialBid(spec: VehicleSpec, tender: Tender, seed: number): Trialled {
   const sheet = buildStatSheet(spec, tender.limits)
@@ -115,6 +122,7 @@ export function scoreBid(bid: Trialled, tender: Tender): BidScore {
   const firepower = range.selfPropelled && mission ? missionFirepower(mission) :
     range.carrier && range.squad ? squadFirepower(range.squad) :
     range.scouting && range.scout ? scoutFirepower(range.scout) :
+    range.airDefence && range.air ? airFirepower(range.air) :
     S.firepower.shootShare * (targets ? hits / targets : 0) +
     S.firepower.drillShare * between(range.drill.rpm, 0, S.firepower.drillBestRpm) +
     (1 - S.firepower.shootShare - S.firepower.drillShare) * (fired ? through / fired : 0)
