@@ -285,9 +285,22 @@ export const RENDER = {
     flashS: 0.35,
     strikeM: 3.2,
     strikeS: 0.5,
-    /** A smoke screen round a tank, and the smoke standing over one put out of the fight. */
+    /** A smoke screen round a tank. */
     screenM: 9,
-    wreckSmoke: { puffs: 3, sizeM: 3.2, riseM: 4.5 },
+    /**
+     * The smoke rising off a tank put out of the fight: a puff every `everyS`
+     * watched seconds from `upM` above its roof, each living `lifeS`, swelling
+     * from `fromM` to `toM` across, rising `riseM` and blown `driftM` down the
+     * `wind` (east and south shares), swaying up to `swayM` off it and rolling over up to
+     * `rollRad` as it goes, and thinning
+     * away over the last `fadeShare` of its life. `puffs` is enough for a whole
+     * column, kept small for the phone budget. Black where it blew up or burned,
+     * grey where it only stopped.
+     */
+    wreckSmoke: {
+      puffs: 6, everyS: 0.55, lifeS: 3.3, upM: 0.3, fromM: 2.2, toM: 7, riseM: 15, driftM: 7, swayM: 1.5, rollRad: 2, fadeShare: 0.35,
+      wind: { x: 0.8, z: 0.6 }, opacity: 0.6, burnt: '#2b2926', stopped: '#6e6a63',
+    },
     nightLight: 0.3,
   },
   /**
