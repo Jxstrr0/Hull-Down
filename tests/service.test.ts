@@ -93,7 +93,7 @@ describe('a field report', () => {
     expect(fieldReport(BASELINE_SPEC, T, STEADY, 1, 7)).toEqual(report)
     const next = fieldReport(BASELINE_SPEC, T, STEADY, 2, 7)
     expect(next.year).toBe(2)
-    expect(next.exercise.ground).not.toBe(report.exercise.ground)
+    expect(next.exercise?.ground).not.toBe(report.exercise?.ground)
     expect(fieldReport(BASELINE_SPEC, T, STEADY, 1, 8)).not.toEqual(report)
   })
 
@@ -106,6 +106,7 @@ describe('a field report', () => {
     else expect(running.worst).toBeNull()
     expect(shoot.conscripts).toBeLessThanOrEqual(shoot.targets)
     expect(shoot.cadre).toBeLessThanOrEqual(shoot.targets)
+    if (!exercise) throw new Error("a tank always goes on exercise")
     expect(exercise.won + exercise.lost + exercise.drawn).toBe(SERVICE.exercise.battles)
     expect(exercise.lessons.length).toBeLessThanOrEqual(SERVICE.exercise.lessons)
     expect(T.threats).toContain(exercise.threat)

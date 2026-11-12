@@ -7,10 +7,10 @@ import { MARKS_GEN2 } from '../src/data/range'
 import { TENDER_IDS, TENDERS } from '../src/data/tenders'
 import { cleanCareer } from '../src/persist/careerCodec'
 import {
-  buildBlock, buildPrototype, enterTender, newCareer, nextTender, research, tenderIdOf, tenderOf, tendersLeft, trialSeed, upgradeLimits,
+  CAREER_FORMAT, buildBlock, buildPrototype, enterTender, newCareer, nextTender, research, tenderIdOf, tenderOf, tendersLeft, trialSeed, upgradeLimits,
 } from '../src/sim/career/career'
 import { rivalBid } from '../src/sim/career/rival'
-import { buildStatSheet, type VehicleSpec } from '../src/sim/vehicle'
+import { buildStatSheet, gunRingMm, type VehicleSpec } from '../src/sim/vehicle'
 
 const SLOW = 60_000
 
@@ -21,6 +21,13 @@ function tank(change: (spec: VehicleSpec) => void): VehicleSpec {
 }
 const NIGHT = tank((spec) => { spec.fireControl.night = 'imageIntensifier' })
 const THERMAL = tank((spec) => { spec.fireControl.night = 'thermal' })
+const HOWITZER = tank((spec) => {
+  spec.gun = 'howitzer155'
+  spec.turret.shape = 'casemate'
+  spec.loading = 'loader'
+  spec.ammo.rounds = 30
+  spec.turret.ringMm = gunRingMm(spec)
+})
 type Career = Parameters<typeof nextTender>[0]
 /** On from the first tender, through the tank destroyer's of 1991, to the tender of 2001. */
 const to2001 = (career: Career) => nextTender(enterTender(buildPrototype(nextTender(career), NIGHT), 1))
@@ -31,11 +38,11 @@ describe('the tank destroyer tender of 1991', () => {
   const T = TENDERS.destroyer1991
 
   it('comes second, ten years after the first, with the same parts and a casemate allowed', () => {
-    expect(TENDER_IDS).toEqual(['improvedType1', 'destroyer1991', 'tank2001', 'tank2016'])
+    expect(TENDER_IDS).toEqual(['improvedType1', 'destroyer1991', 'tank2001', 'spg2008', 'tank2016'])
     expect(T.year).toBe(1991)
     expect(T.limits.generation ?? 1).toBe(1)
     expect(T.limits.casemate).toBe(true)
-    expect(TENDER_IDS.filter((id) => TENDERS[id].limits.casemate)).toEqual(['destroyer1991'])
+    expect(TENDER_IDS.filter((id) => TENDERS[id].limits.casemate)).toEqual(['destroyer1991', 'spg2008'])
     expect(T.limits.maxUnitCostKr).toBeLessThan(TENDERS.improvedType1.limits.maxUnitCostKr)
     expect(Object.values(T.weights).reduce((sum, each) => sum + each, 0)).toBe(100)
     expect(Math.max(...Object.values(T.weights))).toBe(T.weights.firepower)
@@ -46,7 +53,7 @@ describe('the tank destroyer tender of 1991', () => {
     const casemate = tank((spec) => { spec.turret.shape = 'casemate' })
     const refused = (limits: typeof T.limits) => buildStatSheet(casemate, limits).issues.some((issue) => issue.code === 'casemateNotAllowed')
     expect(refused(T.limits)).toBe(false)
-    for (const id of TENDER_IDS) if (id !== 'destroyer1991') expect(refused(TENDERS[id].limits), id).toBe(true)
+    for (const id of TENDER_IDS) if (!TENDERS[id].limits.casemate) expect(refused(TENDERS[id].limits), id).toBe(true)
   })
 
   it('lets every rival bureau put in a legal bid', () => {
@@ -54,7 +61,7 @@ describe('the tank destroyer tender of 1991', () => {
   }, SLOW)
 
   it('has luck of its own, and leaves the other tenders\' luck as it was before it came in', () => {
-    expect(TENDER_IDS.map((id) => TENDERS[id].luck)).toEqual([0, 3, 1, 2])
+    expect(TENDER_IDS.map((id) => TENDERS[id].luck)).toEqual([0, 3, 1, 4, 2])
   })
 })
 
@@ -124,7 +131,10 @@ describe('going on to the next tender', () => {
   it('stops at the last tender', () => {
     const second = onward(decided)
     expect(tendersLeft(second)).toBe(true)
-    const third = nextTender(enterTender(buildPrototype(second, THERMAL), 1))
+    const spg = nextTender(enterTender(buildPrototype(second, THERMAL), 1))
+    expect(tenderIdOf(spg)).toBe('spg2008')
+    expect(tendersLeft(spg)).toBe(true)
+    const third = nextTender(enterTender(buildPrototype(spg, HOWITZER), 1))
     expect(tenderIdOf(third)).toBe('tank2016')
     expect(tendersLeft(third)).toBe(false)
     const done = enterTender(buildPrototype(third, THERMAL), 1)
@@ -166,7 +176,7 @@ describe('a career saved before the tank destroyer tender came in', () => {
 
   it('is saved in the new format, so it is moved only once', () => {
     const moved = old(1)
-    expect(moved.format).toBe(2)
+    expect(moved.format).toBe(CAREER_FORMAT)
     expect(tenderIdOf(cleanCareer(JSON.parse(JSON.stringify(moved)))!)).toBe('tank2001')
   })
 

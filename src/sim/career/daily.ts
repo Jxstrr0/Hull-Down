@@ -54,8 +54,11 @@ export interface DailyChallenge {
   tender: Tender
 }
 
-/** The tank tenders a challenge is built on. The tank destroyer's is left out, so the days stay as they were. */
-const DAILY_BASES = TENDER_IDS.filter((id) => !TENDERS[id].limits.casemate)
+/**
+ * The tank tenders a challenge is built on. The tank destroyer's and the
+ * self-propelled gun's are left out, so the days stay as they were.
+ */
+const DAILY_BASES = TENDER_IDS.filter((id) => !TENDERS[id].limits.casemate && TENDERS[id].marks.fireMission === undefined)
 
 function pick<T>(list: readonly T[], seed: number, key: number): T {
   return list[Math.floor(unit(seed, key) * list.length)]!
