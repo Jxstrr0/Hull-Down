@@ -17,11 +17,15 @@ describe('part sketches', () => {
     }
   })
 
-  it('has one for every main gun and every engine', () => {
-    for (const id of ['gun', 'powerpack.engine']) {
+  it('has one for every option of the parts drawn so far, but "none"', () => {
+    const drawn = ['gun', 'powerpack.engine', 'hull.size', 'hull.engineAt', 'turret.shape', 'barrel', 'recoil', 'loading',
+      'ammo.stowage', 'ammo.kinetic', 'ammo.shaped']
+    for (const id of drawn) {
       const control = CONTROLS.find((each) => each.id === id)
       if (control?.kind !== 'choice') throw new Error(id)
-      for (const option of control.options) expect(SKETCHES[`${id}:${option}`], `${id}:${option}`).toBeDefined()
+      for (const option of control.options) {
+        if (option !== 'none') expect(SKETCHES[`${id}:${option}`], `${id}:${option}`).toBeDefined()
+      }
     }
   })
 })

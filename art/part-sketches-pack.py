@@ -1,6 +1,7 @@
 # Packs the Blender renders from art/part-sketches.py into public/sketches/:
-# each one cropped to its lines, set on a 2:1 sheet, made 360 x 180, and kept as
-# a mask (white lines, the rest clear). The game paints the mask in the page's ink.
+# each one made 360 x 180 and kept as a mask (white lines, the rest clear). The
+# renders are already framed (and parts in a group share a scale), so nothing is
+# cropped. The game paints the mask in the page's ink.
 # Run: python3 art/part-sketches-pack.py <render folder> public/sketches   (needs Pillow)
 import os
 import sys
@@ -9,19 +10,13 @@ from PIL import Image
 
 src, out = sys.argv[1], sys.argv[2]
 os.makedirs(out, exist_ok=True)
-W, H, PAD = 360, 180, 10
+W, H = 360, 180
 for name in sorted(os.listdir(src)):
     if not name.endswith('.png'):
         continue
-    alpha = Image.open(os.path.join(src, name)).convert('RGBA').getchannel('A')
-    box = alpha.getbbox()
-    if not box:
+    alpha = Image.open(os.path.join(src, name)).convert('RGBA').getchannel('A').resize((W, H), Image.LANCZOS)
+    if not alpha.getbbox():
         continue
-    alpha = alpha.crop(box)
-    scale = min((W - 2 * PAD) / alpha.width, (H - 2 * PAD) / alpha.height)
-    alpha = alpha.resize((max(1, round(alpha.width * scale)), max(1, round(alpha.height * scale))), Image.LANCZOS)
-    sheet = Image.new('LA', (W, H), (255, 0))
-    lines = Image.new('L', alpha.size, 255)
-    sheet.paste(Image.merge('LA', (lines, alpha)), ((W - alpha.width) // 2, (H - alpha.height) // 2))
+    sheet = Image.merge('LA', (Image.new('L', (W, H), 255), alpha))
     sheet.save(os.path.join(out, name), optimize=True)
     print(name, os.path.getsize(os.path.join(out, name)))

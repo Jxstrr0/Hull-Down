@@ -29,6 +29,34 @@ the plan names these fonts.
 | `public/sketches/engine-diesel780.png` | Sketch of the 780 hp diesel, made the same way. |
 | `public/sketches/engine-multiFuel700.png` | Sketch of the 700 hp multi-fuel engine, made the same way. |
 | `public/sketches/engine-turbine1000.png` | Sketch of the 1,000 hp gas turbine, made the same way. |
+| `public/sketches/hull-light.png` | Sketch of the light hull, made the same way. |
+| `public/sketches/hull-medium.png` | Sketch of the medium hull, made the same way. |
+| `public/sketches/hull-heavy.png` | Sketch of the heavy hull, made the same way. |
+| `public/sketches/engineAt-rear.png` | Sketch of the hull with its engine at the rear, made the same way. |
+| `public/sketches/engineAt-front.png` | Sketch of the hull with its engine at the front, made the same way. |
+| `public/sketches/turret-castDome.png` | Sketch of the cast dome turret, made the same way. |
+| `public/sketches/turret-weldedWedge.png` | Sketch of the welded wedge turret, made the same way. |
+| `public/sketches/turret-lowProfile.png` | Sketch of the low-profile turret, made the same way. |
+| `public/sketches/turret-bustle.png` | Sketch of the bustle turret, made the same way. |
+| `public/sketches/turret-unmanned.png` | Sketch of the unmanned turret, made the same way. |
+| `public/sketches/barrel-short.png` | Sketch of the short barrel, made the same way. |
+| `public/sketches/barrel-standard.png` | Sketch of the standard barrel, made the same way. |
+| `public/sketches/barrel-long.png` | Sketch of the long barrel, made the same way. |
+| `public/sketches/recoil-stiff.png` | Sketch of the short-stroke mount, made the same way. |
+| `public/sketches/recoil-standard.png` | Sketch of the standard mount, made the same way. |
+| `public/sketches/recoil-longStroke.png` | Sketch of the long-stroke mount, made the same way. |
+| `public/sketches/loading-loader.png` | Sketch of the fourth crewman at the breech, made the same way. |
+| `public/sketches/loading-carousel.png` | Sketch of the carousel autoloader, made the same way. |
+| `public/sketches/loading-bustleLoader.png` | Sketch of the bustle autoloader, made the same way. |
+| `public/sketches/stowage-plainRacks.png` | Sketch of plain ammunition racks, made the same way. |
+| `public/sketches/stowage-wetStowage.png` | Sketch of wet stowage, made the same way. |
+| `public/sketches/stowage-armouredBins.png` | Sketch of armoured bins, made the same way. |
+| `public/sketches/stowage-blowOutPanels.png` | Sketch of blow-out panels, made the same way. |
+| `public/sketches/kinetic-supplied.png` | Sketch of the Pact sabot round, made the same way. |
+| `public/sketches/kinetic-longRod.png` | Sketch of the long rod round, made the same way. |
+| `public/sketches/shaped-supplied.png` | Sketch of the Pact shaped-charge round, made the same way. |
+| `public/sketches/shaped-tandem.png` | Sketch of the tandem warhead round, made the same way. |
+| `public/sketches/shaped-gunMissile.png` | Sketch of the gun-launched missile, made the same way. |
 | `public/manifest.webmanifest` | Tells a phone how to add Hull Down to the home screen. Written for this game. |
 
 ## Fonts (npm packages, self-hosted in the build)
