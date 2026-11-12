@@ -48,6 +48,7 @@ export const ISSUE_CODES = [
   'turretNeedsComputer',
   'casemateNotAllowed',
   'autoloaderWasted',
+  'searchRadarWasted',
   'troopsOutOfRange',
   'squadTooSmall',
   'troopsNeedFrontEngine',
@@ -131,11 +132,16 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   // Electrical power: what is fitted cannot draw more than the tank makes
   const electrics = electricsOf(spec)
   if (electrics.drawKw > electrics.supplyKw) {
-    error('overPowerBudget', !spec.powerpack.apu ? 'powerpack.apu' : spec.protection.active !== 'none' ? 'protection.active' : 'turret.shape', electrics.drawKw, electrics.supplyKw)
+    const part = !spec.powerpack.apu ? 'powerpack.apu'
+      : spec.protection.active !== 'none' ? 'protection.active'
+        : spec.fireControl.searchRadar ? 'fireControl.searchRadar' : 'turret.shape'
+    error('overPowerBudget', part, electrics.drawKw, electrics.supplyKw)
   }
 
   // A belt-fed cannon feeds itself: an autoloader only adds weight and cost.
   if (gun.beltFed && loading.fixedRof !== null) warn('autoloaderWasted', 'loading')
+  // A search radar finds aircraft for an anti-aircraft gun, and does nothing for any other.
+  if (spec.fireControl.searchRadar && !gun.antiAir) warn('searchRadarWasted', 'fireControl.searchRadar')
 
   // Things that need a bustle turret
   if (loading.needsBustle && !turret.hasBustle) error('loaderNeedsBustle', 'loading')

@@ -105,7 +105,7 @@ describe('the chief engineer', () => {
 
   it('says the worst few at once and counts the rest', () => {
     const mess = tank((spec) => {
-      spec.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'none', commanderSight: false }
+      spec.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'none', commanderSight: false, searchRadar: false }
       spec.powerpack.engine = 'diesel580'
       for (const zone of ['upperGlacis', 'turretFrontLeft', 'turretFrontRight', 'hullSideFront', 'turretSides'] as const) {
         spec.armour[zone] = [{ material: 'rolledSteel', mm: 20 }]
@@ -131,7 +131,7 @@ describe('the chief engineer\'s words', () => {
     const { remarkLink, remarkPart, remarkText } = await import('../src/ui/advisorWords')
     const { STRINGS } = await import('../src/data/strings')
     const mess = tank((spec) => {
-      spec.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'none', commanderSight: false }
+      spec.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'none', commanderSight: false, searchRadar: false }
       spec.powerpack.engine = 'diesel580'
       spec.turret.ringMm = 1500
       spec.armour.upperGlacis = [{ material: 'rolledSteel', mm: 20 }]

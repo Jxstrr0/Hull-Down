@@ -323,6 +323,23 @@ function barrel(pen: Pen, m: Layout, axis: number): void {
   pen.line(m.muzzleX - 0.15, axis, m.gunRootX, axis, 'centre')
 }
 
+/** The search radar seen from the side or the front: a mast up from the roof at `x`, the dish broadside on top. */
+function radarFace(pen: Pen, x: number, roofTop: number): void {
+  const r = DRAWING.radar
+  const w = r.mastWidthM / 2
+  pen.rect(x - w, roofTop, x + w, roofTop + r.mastM, 'solid')
+  const y = roofTop + r.mastM
+  pen.rect(x - r.dishWidthM / 2, y, x + r.dishWidthM / 2, y + r.dishHeightM, 'solid')
+  // The feed horn and the dish's ribs.
+  pen.line(x, y, x, y + r.dishHeightM, 'thin')
+  pen.line(x - r.dishWidthM / 2, y + r.dishHeightM / 2, x + r.dishWidthM / 2, y + r.dishHeightM / 2, 'fine')
+}
+
+/** Where the barrels stand across the tank: one on the centre line, or a twin gun's two either side of it. */
+function barrelAxes(spec: VehicleSpec): number[] {
+  return GUNS[spec.gun].twin ? [-DRAWING.twinOffsetM, DRAWING.twinOffsetM] : [0]
+}
+
 /** Is the engine, and so the drive sprocket, at the front? */
 function engineFirstSide(spec: VehicleSpec): boolean {
   return spec.hull.engineAt === 'front'
@@ -394,6 +411,8 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
     const s = DRAWING.sightHeadM
     pen.rect(hatchX - s.width / 2, top + cupola, hatchX + s.width / 2, top + cupola + s.height, 'solid')
   }
+  // The search radar, side on: its mast at the back of the roof, the dish broadside on top.
+  if (spec.fireControl.searchRadar) radarFace(pen, xc + R * DRAWING.radar.backShare, top)
   if (spec.protection.smokeLaunchers) {
     for (let i = 0; i < 3; i++) {
       const x = xc - R * 0.55 + i * 0.16
@@ -572,7 +591,7 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
   const driverX = Math.min(m.upperRun + 0.45, xc - R - 0.35)
   pen.circle(driverX, frontEngine ? -bodyHalf * 0.5 : 0, DRAWING.hatchRadiusM, 'thin')
 
-  barrel(pen, m, 0)
+  for (const axis of barrelAxes(spec)) barrel(pen, m, axis)
 
   // Turret outline, by shape, then the ring under it and the hatches on it.
   // Its roof is one armour zone.
@@ -628,6 +647,13 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
   if (spec.fireControl.commanderSight) {
     const s = DRAWING.sightHeadM.width / 2
     pen.rect(xc + R * 0.3 - s, commanderY - s, xc + R * 0.3 + s, commanderY + s, 'thin')
+  }
+  // The search radar from above: a thin dish across the back of the roof, over its mast.
+  if (spec.fireControl.searchRadar) {
+    const r = DRAWING.radar
+    const x = xc + R * r.backShare
+    pen.rect(x - r.dishDepthM / 2, -r.dishWidthM / 2, x + r.dishDepthM / 2, r.dishWidthM / 2, 'solid')
+    pen.circle(x, 0, r.mastWidthM, 'thin')
   }
 
   pen.line(m.muzzleX - 0.15, 0, L + 0.15, 0, 'centre')
@@ -768,8 +794,10 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
     [mantletHalf, m.gunY + h * 0.25], [-mantletHalf, m.gunY + h * 0.25],
   ], 'mantlet')
   pen.rect(-mantletHalf, m.gunY - h * 0.25, mantletHalf, m.gunY + h * 0.25, 'thin')
-  pen.circle(0, m.gunY, m.barrelHalf, 'solid')
-  pen.circle(0, m.gunY, m.calibre / 2, 'thin')
+  for (const x of barrelAxes(spec)) {
+    pen.circle(x, m.gunY, m.barrelHalf, 'solid')
+    pen.circle(x, m.gunY, m.calibre / 2, 'thin')
+  }
 
   const hatchX = -R * 0.42
   const cupola = TURRETS[spec.turret.shape].crewed ? DRAWING.cupolaHeightM : 0
@@ -778,6 +806,8 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
     const s = DRAWING.sightHeadM
     pen.rect(hatchX - s.width / 2, top + cupola, hatchX + s.width / 2, top + cupola + s.height, 'solid')
   }
+  // The search radar from the front, standing up behind the turret on the centre line.
+  if (spec.fireControl.searchRadar) radarFace(pen, 0, top)
   frontDetail(pen, spec, m, h, mantletHalf, fender, bodyHalf, hatchX, cupola)
   pen.line(0, -0.1, 0, top + DRAWING.cupolaHeightM + 0.35, 'centre')
 
@@ -859,8 +889,9 @@ function frontDetail(
     turret += ring(pen, x * (mantletHalf - 0.04), m.gunY + y * (h * 0.25 - 0.04), 0.012)
   }
   pen.path(turret, 'fine')
-  pen.circle(-mantletHalf * 0.62, m.gunY - h * 0.08, f.coaxR, 'thin')
-  pen.circle(0, m.gunY, m.barrelHalf * d.muzzleRingShare, 'thin')
+  // A twin gun has no coaxial gun beside it: its barrels fill the mantlet.
+  if (!GUNS[spec.gun].twin) pen.circle(-mantletHalf * 0.62, m.gunY - h * 0.08, f.coaxR, 'thin')
+  for (const x of barrelAxes(spec)) pen.circle(x, m.gunY, m.barrelHalf * d.muzzleRingShare, 'thin')
   let scopes = ''
   for (const at of [-0.12, 0.15]) {
     const x = R * at

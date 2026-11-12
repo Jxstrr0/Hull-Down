@@ -26,6 +26,10 @@ export const DRAWING = {
   marginM: 0.3,
   /** A gun's tap zone is at least this long, so a short cannon barrel can still be tapped on a phone, metres. */
   gunZoneM: 1.3,
+  /** A twin gun's barrels stand this far either side of the centre line, metres. */
+  twinOffsetM: 0.28,
+  /** The search radar: a mast at the back of the turret roof with a flat dish on top, metres. */
+  radar: { mastM: 0.45, mastWidthM: 0.08, dishWidthM: 0.9, dishDepthM: 0.12, dishHeightM: 0.32, backShare: 0.62 },
   /** Extra tap room above the turret and below the ground. */
   tapSkyM: 0.85,
   tapGroundM: 0.5,

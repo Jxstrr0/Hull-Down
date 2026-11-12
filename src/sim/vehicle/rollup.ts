@@ -3,7 +3,7 @@ import { LOAD_SHARE, OWN_ROUNDS } from '../../data/ammo'
 import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
 import {
   ACTIVE, APU, BARRELS, COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, HULLS, LOADING,
-  NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, SKIRTS, SMOKE_LAUNCHERS, SPALL_LINER, STABILISERS, STOWAGE, SUSPENSIONS,
+  NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SEARCH_RADAR, SIGHTS, SKIRTS, SMOKE_LAUNCHERS, SPALL_LINER, STABILISERS, STOWAGE, SUSPENSIONS,
   TRANSMISSIONS, TROOPS, TURRETS, WHEELS, type Part,
 } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
@@ -116,6 +116,7 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
   add('fireControl', COMPUTERS[fc.computer])
   add('fireControl', NIGHT_SIGHTS[fc.night])
   if (fc.commanderSight) add('fireControl', COMMANDER_SIGHT)
+  if (fc.searchRadar) add('fireControl', SEARCH_RADAR)
 
   // Powerpack and fuel
   add('powerpack', ENGINES[spec.powerpack.engine])

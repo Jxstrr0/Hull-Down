@@ -1,7 +1,7 @@
 // The stat sheet: every design-office readout worked out from a spec.
 // These are estimates. The proving ground has the final word.
 import {
-  COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, LOADING, NIGHT_SIGHTS,
+  COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, LOADING, NIGHT_SIGHTS, SEARCH_RADAR,
   RANGEFINDERS, RECOILS, SIGHTS, STABILISERS, SUSPENSIONS, TRANSMISSIONS, TURRETS, APU, ACTIVE, WHEELS,
 } from '../../data/parts'
 import type { ZoneId } from '../../data/materials'
@@ -155,6 +155,7 @@ export function buildStatSheet(spec: VehicleSpec, limits: Limits): StatSheet {
     NIGHT_SIGHTS[fc.night].reliability
   for (const id of RUN_PART_IDS) reliability *= survivalOf(id, wear[id])
   if (fc.commanderSight) reliability *= COMMANDER_SIGHT.reliability
+  if (fc.searchRadar) reliability *= SEARCH_RADAR.reliability
   if (spec.powerpack.apu) reliability *= APU.reliability
   if (spec.protection.fireSuppression) reliability *= FIRE_SUPPRESSION.reliability
   reliability *= ACTIVE[spec.protection.active].reliability

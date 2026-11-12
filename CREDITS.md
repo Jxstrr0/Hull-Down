@@ -27,6 +27,8 @@ the plan names these fonts.
 | `public/sketches/gun-rifled120.png` | Sketch of the 120 mm gun, made the same way. |
 | `public/sketches/gun-howitzer155.png` | Sketch of the 155 mm howitzer, drawn for this game with Pillow (`art/sketch-howitzer.py`). |
 | `public/sketches/gun-autocannon30.png` | Sketch of the 30 mm cannon, drawn for this game with Pillow (`art/sketch-autocannon.py`). |
+| `public/sketches/gun-twin35.png` | Sketch of the twin 35 mm cannon, drawn for this game with Pillow (`art/sketch-airdefence.py`). |
+| `public/sketches/searchRadar.png` | Sketch of the search radar, made the same way. |
 | `public/sketches/engine-diesel580.png` | Sketch of the 580 hp diesel, made the same way. |
 | `public/sketches/engine-diesel780.png` | Sketch of the 780 hp diesel, made the same way. |
 | `public/sketches/engine-multiFuel700.png` | Sketch of the 700 hp multi-fuel engine, made the same way. |

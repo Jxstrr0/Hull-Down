@@ -26,8 +26,8 @@ const issues = (spec: VehicleSpec, severity: 'error' | 'warning', limits = sandb
   buildStatSheet(spec, limits).issues.filter((issue) => issue.severity === severity).map((issue) => issue.code)
 
 describe('the 30 mm cannon', () => {
-  it('is the only belt-fed gun, with a name, a note and a sketch', () => {
-    for (const id of GUN_IDS) expect(GUNS[id].beltFed, id).toBe(id === 'autocannon30')
+  it('is belt-fed, like only the twin anti-aircraft cannon, with a name, a note and a sketch', () => {
+    for (const id of GUN_IDS) expect(GUNS[id].beltFed, id).toBe(id === 'autocannon30' || id === 'twin35')
     expect(STRINGS.parts.guns.autocannon30.name).not.toBe('')
     expect(SKETCHES['gun:autocannon30']).toBeDefined()
     for (const { id } of pactRounds('autocannon30')) expect(STRINGS.rounds[id]).not.toBe('')

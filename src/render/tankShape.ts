@@ -4,7 +4,7 @@
 import { DRAWING } from '../data/drawing'
 import { KIT, type KitPiece } from '../data/kit'
 import type { ZoneId } from '../data/materials'
-import { TURRETS } from '../data/parts'
+import { GUNS, TURRETS } from '../data/parts'
 import { RENDER } from '../data/render'
 import { layout } from '../office/drawing'
 import { skirtsFitted, type Geometry, type VehicleSpec } from '../sim/vehicle'
@@ -383,14 +383,17 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
   }
   const extractorX = fromNose(m.extractorX) - fromNose(m.gunRootX) + rootX
   const across = gun.radiusM / ref.gunRadiusM
-  parts.push({
-    ...top('dark'), kind: 'piece', piece: 'gun', recoils: true,
-    scale: { x: gun.lengthM / ref.gunLengthM, y: across, z: across }, at: { x: rootX, y: gun.yM, z: 0 },
-    fallback: [
-      { kind: 'drum', axis: 'x', radiusM: gun.radiusM, lengthM: gun.lengthM, sides: t.gunSides, at: { x: rootX + gun.lengthM / 2, y: gun.yM, z: 0 } },
-      { kind: 'drum', axis: 'x', radiusM: m.extractorHalf, lengthM: DRAWING.extractorLengthM, sides: t.extractorSides, at: { x: extractorX + DRAWING.extractorLengthM / 2, y: gun.yM, z: 0 } },
-    ],
-  })
+  // A twin gun's two barrels stand either side of the centre line, as on the drawing.
+  for (const z of GUNS[spec.gun].twin ? [-DRAWING.twinOffsetM, DRAWING.twinOffsetM] : [0]) {
+    parts.push({
+      ...top('dark'), kind: 'piece', piece: 'gun', recoils: true,
+      scale: { x: gun.lengthM / ref.gunLengthM, y: across, z: across }, at: { x: rootX, y: gun.yM, z },
+      fallback: [
+        { kind: 'drum', axis: 'x', radiusM: gun.radiusM, lengthM: gun.lengthM, sides: t.gunSides, at: { x: rootX + gun.lengthM / 2, y: gun.yM, z } },
+        { kind: 'drum', axis: 'x', radiusM: m.extractorHalf, lengthM: DRAWING.extractorLengthM, sides: t.extractorSides, at: { x: extractorX + DRAWING.extractorLengthM / 2, y: gun.yM, z } },
+      ],
+    })
+  }
   // The commander's cupola, and the sight head if one is fitted. A turret with nobody in it has no cupola.
   const crewed = TURRETS[spec.turret.shape].crewed
   const roof = KIT.roof
@@ -409,6 +412,14 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
       ...top('dark'), kind: 'piece', piece: 'sight-head', scale: { x: 1, y: 1, z: 1 }, at: sight,
       fallback: [{ kind: 'box', size: { x: s.width, y: s.height, z: s.width }, at: { ...sight, y: sight.y + s.height / 2 } }],
     })
+  }
+  // The search radar: a mast at the back of the roof with the dish on top.
+  if (spec.fireControl.searchRadar) {
+    const r = DRAWING.radar
+    const x = -R * r.backShare
+    const roofTop = turret.baseM + h
+    parts.push({ ...top('dark'), kind: 'box', size: { x: r.mastWidthM, y: r.mastM, z: r.mastWidthM }, at: { x, y: roofTop + r.mastM / 2, z: 0 } })
+    parts.push({ ...top('dark'), kind: 'box', size: { x: r.dishDepthM, y: r.dishHeightM, z: r.dishWidthM }, at: { x, y: roofTop + r.mastM + r.dishHeightM / 2, z: 0 } })
   }
   if (spec.protection.smokeLaunchers) {
     const l = t.launcher

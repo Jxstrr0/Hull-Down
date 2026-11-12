@@ -44,12 +44,12 @@ describe('crew stations', () => {
 
   it('keeps every station between the limits, whatever is fitted', () => {
     const worst = build((s) => {
-      s.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'activeInfrared', commanderSight: false }
+      s.fireControl = { sight: 'daySight', rangefinder: 'stadiametric', stabiliser: 'none', computer: 'none', night: 'activeInfrared', commanderSight: false, searchRadar: false }
     })
     const best = build((s) => {
       s.loading = 'loader'
       s.crew.comfort = 'improved'
-      s.fireControl = { sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'electronic', night: 'none', commanderSight: true }
+      s.fireControl = { sight: 'improvedDaySight', rangefinder: 'laser', stabiliser: 'twoPlane', computer: 'electronic', night: 'none', commanderSight: true, searchRadar: false }
     })
     for (const station of [...worst.crew, ...best.crew]) {
       expect(station.workload).toBeGreaterThanOrEqual(TUNING.crew.workloadMin)
