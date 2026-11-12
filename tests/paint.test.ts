@@ -118,7 +118,7 @@ describe('a painted tank', () => {
   it('carries its pattern on the plate only, and is no more meshes or triangles than a plain one', async () => {
     const { Mesh } = await import('three')
     const { Kit } = await import('../src/render/rangeScene')
-    const { buildTank, tonesOf } = await import('../src/render/tankModel')
+    const { TRACKS, buildTank, tonesOf } = await import('../src/render/tankModel')
     const { tankShapeOf, tankTriangles } = await import('../src/render/tankShape')
     const shape = tankShapeOf(BASELINE_SPEC, buildStatSheet(BASELINE_SPEC, PACT_LIMITS_GEN1).geometry)
     for (const id of PAINT_IDS) {
@@ -127,6 +127,7 @@ describe('a painted tank', () => {
       let meshes = 0
       let triangles = 0
       let patterned = 0
+      const pictures = new Set<unknown>()
       tank.traverse((node) => {
         if (!(node instanceof Mesh)) return
         meshes++
@@ -136,12 +137,15 @@ describe('a painted tank', () => {
         if (material.map) {
           patterned++
           expect(node.geometry.getAttribute('uv').count).toBe(corners)
+          if (node.name !== TRACKS) pictures.add(material.map)
         }
       })
       expect(meshes).toBeLessThanOrEqual(9)
       expect(triangles).toBe(tankTriangles(shape))
-      // The hull and the turret each have one painted mesh when the scheme has patches, and the tracks have their links.
-      expect(patterned).toBe((PAINT[id].patches.length > 0 ? 2 : 0) + 1)
+      // With patches, the hull, the turret and the wheels are each painted with them, from one picture; the tracks have their links.
+      const camo = PAINT[id].patches.length > 0
+      expect(patterned).toBe((camo ? 3 : 0) + 1)
+      expect(pictures.size).toBe(camo ? 1 : 0)
       kit.dispose()
     }
   })

@@ -190,10 +190,13 @@ export class Kit {
    * the shape carries its wheel's hub (x, y) and one over its radius; the material's `rollM` says how far
    * the tank has rolled, and each wheel turns that far round its rim. Each tank has its own material.
    */
-  wheels(geometry: BufferGeometry, colour: string): Mesh {
+  wheels(geometry: BufferGeometry, paint: string | Camo): Mesh {
     this.geometries.push(geometry)
     const rollM = { value: 0 }
-    const material = new MeshLambertMaterial({ color: new Color(colour), flatShading: true })
+    // A camouflaged tank's wheels carry the pattern too, and it turns with them.
+    const material = typeof paint === 'string'
+      ? new MeshLambertMaterial({ color: new Color(paint), flatShading: true })
+      : new MeshLambertMaterial({ map: this.camoTexture(paint), flatShading: true })
     material.userData.rollM = rollM
     material.onBeforeCompile = (shader) => {
       shader.uniforms.rollM = rollM
@@ -221,17 +224,28 @@ export class Kit {
     const key = `camo/${camo.key}`
     let material = this.materials.get(key)
     if (!material) {
-      const texture = new DataTexture(camo.pixels, camo.sizePx, camo.sizePx)
+      material = new MeshLambertMaterial({ map: this.camoTexture(camo), flatShading: true })
+      this.materials.set(key, material)
+    }
+    return new Mesh(geometry, material)
+  }
+
+  private readonly camoTextures = new Map<string, Texture>()
+
+  /** A pattern's picture, made once and shared by everything painted with it. */
+  private camoTexture(camo: Camo): Texture {
+    let texture = this.camoTextures.get(camo.key)
+    if (!texture) {
+      texture = new DataTexture(camo.pixels, camo.sizePx, camo.sizePx)
       texture.wrapS = RepeatWrapping
       texture.wrapT = RepeatWrapping
       texture.colorSpace = SRGBColorSpace
       texture.generateMipmaps = true
       texture.needsUpdate = true
       this.textures.push(texture)
-      material = new MeshLambertMaterial({ map: texture, flatShading: true })
-      this.materials.set(key, material)
+      this.camoTextures.set(camo.key, texture)
     }
-    return new Mesh(geometry, material)
+    return texture
   }
 
   /** A shape that shines by itself, whatever the light: a round in the air, the flash at the muzzle. */

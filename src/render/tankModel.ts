@@ -298,7 +298,10 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
     geometry.setAttribute('position', new Float32BufferAttribute(pile.corners, 3))
     geometry.setAttribute('hub', new Float32BufferAttribute(pile.hubs, 3))
     geometry.computeVertexNormals()
-    const mesh = kit.wheels(geometry, tones[tone])
+    // The pattern is laid on the wheels standing still, as on the hull; it turns with them.
+    const camo = tone === 'body' ? tones.camo : undefined
+    if (camo) geometry.setAttribute('uv', new Float32BufferAttribute(camoPlaces(pile.corners, camo.tileM), 2))
+    const mesh = kit.wheels(geometry, camo ?? tones[tone])
     mesh.name = WHEELS
     tank.add(dirty(mesh))
   }
