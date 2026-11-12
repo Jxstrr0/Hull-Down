@@ -346,8 +346,6 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 - **Try a tender** (0.8.6.0): Bureau tab. Tell me if the Type 1 as issued
   placing third of four feels right, and whether the tab reads well on
   your phone.
-- **The chief engineer's name** (0.8.5.0): working name Radek Stanek.
-  Say if you want another.
 - **Career numbers and the designation** (0.8.2.0), decided without you
   and easy to change:
   - Grant for the first tender Kr 22M. First prototype 4 x unit cost,
@@ -379,12 +377,10 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   smoke blinds both tanks for 25 s, once a duel; a tank is out of the
   fight when it blows up, burns, loses its gun or sight, or loses both
   commander and gunner. You can judge these once the duel screen is in.
-- **Names for the opponents** (0.7.0.0), all working names: the rival
-  bureaus "Heavy Machine Plant No. 2", "Tractor Works No. 7" and "Ordnance
-  Institute No. 4", and the Accord tanks "Warden" and "Palisade". Say if
-  you want others. Also say if three rivals is right (the plan says two or
-  three), and whether the Palisade should be in from the start or held
-  back as a later surprise.
+- **Names for the opponents** (0.7.0.0): you chose the rival bureaus'
+  names (1.8.2.0) and kept the Accord tanks'. Still open: whether three
+  rivals is right, and whether the Palisade should be in from the start or
+  held back as a later surprise.
 - **Voice** is still open: the plan says to decide it after the first
   playable. Nothing is generated without a quote and your yes.
 - **The cover image** for the hidden studio listing: free from the game's
@@ -489,6 +485,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.8.2.0, New names for the rivals and the chief engineer.** Your picks: the rival bureaus are now Pelnik Heavy Machine Works, Dravec Tractor Works and Sokolin Ordnance Institute (were Heavy Machine Plant No. 2, Tractor Works No. 7 and Ordnance Institute No. 4); the chief engineer is Pavel Sedlar (was Radek Stanek); the Accord tanks keep Warden, Palisade and Palisade B. Only the names change; saves keep working, as they store the bureau, not its name.
 - **1.8.1.0, four new customers.** Export desk step 2, the last. Four new customers abroad, one for each new kind of vehicle: the Republic of Ekunde buys infantry fighting vehicles with room for eight soldiers; the Principality of Orvenn self-propelled guns light and powerful enough for the mountain passes; the Federation of Zamuri scout cars that run cool and far in the desert; and the Sultanate of Qasirah anti-aircraft gun vehicles that keep up on desert roads. Each tries a troop on its own ground before ordering, and none buys a vehicle as the army has it: each needs a version reworked for it. The desk now talks of vehicles, not only tanks.
 - **1.8.0.0, each customer buys one kind of vehicle.** Export desk step 1. Every tender now names the kind of vehicle it asks for, and every customer abroad the kind it buys. Dahrat, Ilandu and Tolmar buy tanks only (a tank destroyer counts as one), so the desk no longer offers them an infantry fighting vehicle, self-propelled gun, scout car or anti-aircraft gun vehicle. Under each customer the desk says what it buys and lists only those. New customers for the new vehicles come next.
 - **1.7.4.0, watch the raid.** Anti-aircraft gun vehicle step 5, the last. A Watch the raid button under the Air defence card plays the trial back on two maps from above: out to 15 km, with the radar sweeping and a ring for how far out each raider can be found, by radar or by eye; and out to 4.5 km, with a ring where the gun opens fire, the raider's line, each burst a line out to it, and a cross when it comes down or a ! when it gets through. The raiders come one after another, each a different shape and dashed until found. It plays six times faster, about a minute in all; the readout shows which raider, how far off and how many are down.
