@@ -1001,6 +1001,8 @@ body {
 .rg-replay-trail { stroke: var(--ink-dim); stroke-width: 1.4; stroke-linecap: round; }
 .rg-replay-shell { fill: var(--ink); }
 .rg-replay-burst { fill: none; stroke: var(--pencil); stroke-width: 1.4; }
+.rg-replay-down { fill: none; stroke: var(--pencil); stroke-width: 2; stroke-linecap: round; }
+.rg-replay-barrel { stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
 .rg-replay-caption { min-height: 2.6em; margin: 0; padding: 6px 10px; border-top: 3px solid var(--ink); font-size: 0.86rem; font-weight: 600; }
 .rg-replay-bar { padding-bottom: 8px; justify-content: space-between; }
 .rg-board-key { margin: 0; padding: 4px 6px; border-top: 1px solid var(--grid); font-size: 0.8rem; color: var(--ink-dim); white-space: pre-wrap; }
