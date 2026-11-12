@@ -1,0 +1,59 @@
+name: bake-kit
+
+# Rebuilds the tank kit (public/kit/tank-kit.glb) from art/tank-kit.py in
+# headless Blender, and fails if the committed file is not what the script
+# makes. To update the kit: change the script, run its export locally, and
+# commit both. The rebuilt file is attached to the run either way.
+on:
+  pull_request:
+    paths:
+      - art/tank-kit.py
+      - public/kit/**
+      - .github/workflows/bake-kit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  BLENDER: blender-4.2.3-linux-x64
+  BLENDER_SHA256: 3a64efd1982465395abab4259b4091d5c8c56054c7267e9633e4f702a71ea3f4
+
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Blender
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BLENDER }}
+          key: ${{ env.BLENDER }}
+
+      - name: Download Blender
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          curl -sSfL -o blender.tar.xz "https://download.blender.org/release/Blender4.2/$BLENDER.tar.xz"
+          echo "$BLENDER_SHA256  blender.tar.xz" | sha256sum -c -
+          tar -xf blender.tar.xz
+          rm blender.tar.xz
+
+      - name: Libraries Blender needs
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libxi6 libxkbcommon0 libxrender1 libxxf86vm1 libxfixes3 libsm6 libgl1
+
+      - name: Export the kit
+        run: ./$BLENDER/blender --background --factory-startup --python art/tank-kit.py -- export baked/tank-kit.glb
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tank-kit
+          path: baked/tank-kit.glb
+
+      - name: The committed kit matches the script
+        run: |
+          if ! cmp baked/tank-kit.glb public/kit/tank-kit.glb; then
+            echo "::error::public/kit/tank-kit.glb is out of date. Run the export in art/tank-kit.py and commit the result."
+            exit 1
+          fi
