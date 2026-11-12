@@ -1,7 +1,7 @@
 // Builds the tank the range and the battle show, from its list of parts.
 // Parts of one colour are joined into one mesh, so a tank is a handful of
 // meshes however much detail it carries.
-import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Group, Mesh, Shape, type Texture } from 'three'
+import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Group, Mesh, Shape, type Material, type Texture } from 'three'
 import { PAINT, type PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import { camoOf, camoPlaces, type Camo } from './camo'
@@ -88,6 +88,17 @@ function loftCorners(part: Loft): number[] {
 /** Outlines along the tank skinned one to the next and closed at both ends. */
 function sweepCorners(part: Sweep): number[] {
   return skinCorners(part.stations.map((station) => station.corners.map((c): V => [station.x, c.y, c.z])), true)
+}
+
+/** Dirty the tank's running gear and lower hull: nought is clean, one as muddy as mud can make it. */
+export function setMud(tank: Group, share: number): void {
+  const mud = (tank.userData as { mud?: TankMud }).mud
+  if (mud) mud.share.value = share
+}
+
+interface TankMud {
+  share: { value: number }
+  lineM: { value: number }
 }
 
 /**
@@ -229,6 +240,13 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
   top.position.set(shape.turret.xM, 0, 0)
   tank.add(top)
 
+  // Mud on the hull, the wheels and the tracks, up to a little over the track tops. The turret stays clean.
+  const mud: TankMud = { share: { value: 0 }, lineM: { value: shape.track.topM + RENDER.tank.mud.lineM } }
+  tank.userData.mud = mud
+  const dirty = (mesh: Mesh): Mesh => {
+    mesh.material = kit.muddy(mesh.material as Material, mud)
+    return mesh
+  }
   const piles = new Map<string, { mount: Mount; tone: Tone; corners: number[] }>()
   // The tracks are bare steel with their links painted on, one mesh for both.
   const track = { corners: [] as number[], places: [] as number[] }
@@ -272,7 +290,8 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
       geometry.setAttribute('uv', new Float32BufferAttribute(camoPlaces(pile.corners, tones.camo.tileM), 2))
       mesh = kit.patterned(geometry, tones.camo)
     } else mesh = kit.mesh(geometry, tones[pile.tone])
-    ;(pile.mount === 'turret' ? top : tank).add(mesh)
+    if (pile.mount === 'turret') top.add(mesh)
+    else tank.add(dirty(mesh))
   }
   for (const [tone, pile] of wheels) {
     const geometry = new BufferGeometry()
@@ -281,7 +300,7 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
     geometry.computeVertexNormals()
     const mesh = kit.wheels(geometry, tones[tone])
     mesh.name = WHEELS
-    tank.add(mesh)
+    tank.add(dirty(mesh))
   }
   if (track.corners.length > 0) {
     const geometry = new BufferGeometry()
@@ -290,7 +309,7 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
     geometry.computeVertexNormals()
     const tracks = kit.tracked(geometry)
     tracks.name = TRACKS
-    tank.add(tracks)
+    tank.add(dirty(tracks))
   }
   return tank
 }
