@@ -87,6 +87,7 @@ the plan names these fonts.
 | `public/sketches/spallLiner.png` | Sketch of a spall liner panel, made the same way. |
 | `public/sketches/active-softKill.png` | Sketch of soft-kill active protection, made the same way. |
 | `public/sketches/active-hardKill.png` | Sketch of hard-kill active protection, made the same way. |
+| `public/sketches/turret-casemate.png` | Sketch of the casemate, drawn for this game as ink lines straight from a script (`art/sketch-casemate.py`), in the style of the Blender sketches. |
 | `public/sketches/skirts.png` | Sketch of the side skirts, drawn for this game as ink lines straight from a script (`art/sketch-skirts.py`), in the style of the Blender sketches. |
 | `public/kit/tank-kit.glb` | The trial tank kit (turrets, gun, running gear, skirts, tiles and fittings), modelled in Blender for this game (`art/tank-kit.py`). |
 | `public/manifest.webmanifest` | Tells a phone how to add Hull Down to the home screen. Written for this game. |

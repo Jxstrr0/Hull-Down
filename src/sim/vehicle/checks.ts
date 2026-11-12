@@ -45,6 +45,7 @@ export const ISSUE_CODES = [
   'turretNeedsAutoloader',
   'turretNeedsRearEngine',
   'turretNeedsComputer',
+  'casemateNotAllowed',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
 
@@ -89,6 +90,9 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   for (const part of unresearched(spec, limits.locked ?? [])) {
     if (!late.some((each) => each.part === part)) error('notResearched', part)
   }
+
+  // A casemate is for a tank destroyer's tender only
+  if (turret.swingDeg !== null && !limits.casemate) error('casemateNotAllowed', 'turret.shape')
 
   // Turret ring
   const gunRing = gunRingMm(spec)

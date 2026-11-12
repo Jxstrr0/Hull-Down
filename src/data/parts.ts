@@ -78,6 +78,16 @@ export interface TurretPart extends Part {
   drawKw: number
   /** Points on the commander's workload: he cannot put his head out and look round. */
   workload: number
+  /**
+   * How far the gun swings each way of straight ahead, degrees; null for a
+   * turret, which turns all the way round. A casemate's gun is fixed in a box
+   * built onto the hull, so the whole tank turns to bring it on a new target.
+   */
+  swingDeg: number | null
+  /** How much longer the gunner takes to lay on a new target: 1 for a turret, more where the hull must turn. */
+  layPace: number
+  /** Share of the ring the gun's kick would need in a turret: a casemate takes it into the hull. */
+  gunRingShare: number
 }
 
 export const TURRETS = {
@@ -85,27 +95,41 @@ export const TURRETS = {
     massT: 0.7, volumeM3: 0, costKr: 180_000, reliability: 1,
     heightM: 0.72, volumeFactor: 0.42, sideFactor: 1.0, roofFactor: 0.75, frontSlopeDeg: 35, sideSlopeDeg: 30,
     depressionDeg: 5, hasBustle: false, crewed: true, drawKw: 0, workload: 0,
+    swingDeg: null, layPace: 1, gunRingShare: 1,
   },
   weldedWedge: {
     massT: 0.8, volumeM3: 0, costKr: 230_000, reliability: 1,
     heightM: 0.82, volumeFactor: 0.5, sideFactor: 1.1, roofFactor: 1.0, frontSlopeDeg: 50, sideSlopeDeg: 10,
     depressionDeg: 7, hasBustle: false, crewed: true, drawKw: 0, workload: 0,
+    swingDeg: null, layPace: 1, gunRingShare: 1,
   },
   lowProfile: {
     massT: 0.65, volumeM3: 0, costKr: 210_000, reliability: 1,
     heightM: 0.62, volumeFactor: 0.36, sideFactor: 0.95, roofFactor: 0.9, frontSlopeDeg: 40, sideSlopeDeg: 25,
     depressionDeg: 4, hasBustle: false, crewed: true, drawKw: 0, workload: 0,
+    swingDeg: null, layPace: 1, gunRingShare: 1,
   },
   bustle: {
     massT: 1.1, volumeM3: 0, costKr: 290_000, reliability: 1,
     heightM: 0.85, volumeFactor: 0.62, sideFactor: 1.35, roofFactor: 1.3, frontSlopeDeg: 15, sideSlopeDeg: 5,
     depressionDeg: 8, hasBustle: true, crewed: true, drawKw: 0, workload: 0,
+    swingDeg: null, layPace: 1, gunRingShare: 1,
   },
   // Generation three (src/data/tech.ts): a gun on a mount with nobody in it.
   unmanned: {
     massT: 0.9, volumeM3: 0, costKr: 480_000, reliability: 1,
     heightM: 0.56, volumeFactor: 0.15, sideFactor: 0.85, roofFactor: 0.7, frontSlopeDeg: 35, sideSlopeDeg: 20,
     depressionDeg: 7, hasBustle: false, crewed: false, drawKw: 4, workload: 8,
+    swingDeg: null, layPace: 1, gunRingShare: 1,
+  },
+  // For a tank destroyer's tender (src/data/tenders.ts): no turret, the gun in a
+  // low box on the hull with a steep front plate. Light and cheap, and a big gun
+  // fits a small mount, but the tank has to turn to aim.
+  casemate: {
+    massT: 0.45, volumeM3: 0, costKr: 120_000, reliability: 1,
+    heightM: 0.58, volumeFactor: 0.6, sideFactor: 0.8, roofFactor: 0.9, frontSlopeDeg: 60, sideSlopeDeg: 15,
+    depressionDeg: 6, hasBustle: false, crewed: true, drawKw: 0, workload: 0,
+    swingDeg: 12, layPace: 1.6, gunRingShare: 0.7,
   },
 } as const satisfies Record<string, TurretPart>
 export type TurretId = keyof typeof TURRETS

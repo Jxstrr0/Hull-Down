@@ -694,6 +694,16 @@ cover and card clip from the live game, the studio site listing (section 15).
 Other armoured vehicles (infantry fighting vehicles, tank destroyers,
 self-propelled guns), each as its own tender type.
 
+Kelbo's pick: the tank destroyer first, as a career tender, in small PRs.
+1. The casemate (1.3.0.0): a new turret shape, the gun fixed in a low box on
+   the hull behind a steep plate. Light and cheap, and a big gun fits a
+   smaller mount, but the whole tank turns to aim, so it is slower onto each
+   new target. Allowed only on a tank destroyer's tender, and in the sandbox.
+2. The tank destroyer tender in the career (1.3.1.0), with its own weights and
+   limits, and saves carried over.
+3. Rival bureaus bid casemates on it (1.3.2.0).
+4. Maybe: the hull turns toward each new target in battle, not just the gun.
+
 ---
 
 ## 15. Hosting and the studio site

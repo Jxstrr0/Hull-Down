@@ -357,6 +357,10 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
         [xc - R, roof], [xc - R * 0.85, roof + h * 0.7], [xc - R * 0.5, top], [xc + R * 0.8, top], [xc + R, roof + h * 0.6], [xc + R, roof],
       ])
       break
+    case 'casemate':
+      // No turret: a low box built onto the hull, its front plate laid well back.
+      turret = outline(pen, [[xc - R, roof], [xc - R * 0.35, top], [xc + R, top], [xc + R, roof]])
+      break
   }
   pen.path(turret, 'solid')
   pen.body.push(turret)
@@ -467,7 +471,7 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
     fittings += `M${pen.p(px - 0.05, top)} L${pen.p(px - 0.035, top + 0.07)} L${pen.p(px + 0.035, top + 0.07)} L${pen.p(px + 0.05, top)}`
   }
   pen.path(fittings, 'fine')
-  if (spec.turret.shape !== 'bustle' && spec.turret.shape !== 'unmanned') {
+  if (spec.turret.shape !== 'bustle' && spec.turret.shape !== 'unmanned' && spec.turret.shape !== 'casemate') {
     const b0 = xc + R * 0.98
     const b1 = b0 + d.basketM
     const y0 = roof + h * 0.18
@@ -568,10 +572,18 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
         [xc + R, R * 0.45], [xc + R * 0.8, R * 0.65], [xc - R * 0.5, R * 0.65], [xc - R, R * 0.4],
       ], 'solid')
       break
+    case 'casemate':
+      // Square on the hull, the front corners cut.
+      pen.poly([
+        [xc - R, -R * 0.75], [xc - R * 0.8, -R * 0.95], [xc + R, -R * 0.95],
+        [xc + R, R * 0.95], [xc - R * 0.8, R * 0.95], [xc - R, R * 0.75],
+      ], 'solid')
+      break
   }
   const turret = pen.shapes[before]
   if (turret) pen.face(turret.d, 'turretRoof')
-  pen.circle(xc, 0, spec.turret.ringMm / 2000, 'hidden')
+  // A casemate has no ring: the gun's mount is in its front plate.
+  if (TURRETS[spec.turret.shape].swingDeg === null) pen.circle(xc, 0, spec.turret.ringMm / 2000, 'hidden')
   // The tank faces left, so its right-hand side is up the page. The commander sits on the right.
   const commanderY = R * 0.42
   if (TURRETS[spec.turret.shape].crewed) {
@@ -644,7 +656,7 @@ function topDetail(pen: Pen, spec: VehicleSpec, m: Layout, bayLow: number, bayHi
   }
   pen.path(roof, 'thin')
   pen.circle(xc + R * 0.05, -R * 0.55, tp.ventR, 'thin')
-  if (spec.turret.shape !== 'bustle' && spec.turret.shape !== 'unmanned') {
+  if (spec.turret.shape !== 'bustle' && spec.turret.shape !== 'unmanned' && spec.turret.shape !== 'casemate') {
     const b0 = xc + R * 0.9
     const b1 = b0 + d.basketM
     const half = R * 0.62
@@ -690,6 +702,8 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
         return outline(pen, [[side * R, roof], [side * R * 0.86, top], [0, top], [0, roof]])
       case 'unmanned':
         return outline(pen, [[side * R * 0.65, roof], [side * R * 0.55, top], [0, top], [0, roof]])
+      case 'casemate':
+        return outline(pen, [[side * R * 0.95, roof], [side * R * 0.85, top], [0, top], [0, roof]])
     }
   }
   switch (spec.turret.shape) {
@@ -707,6 +721,9 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
       break
     case 'unmanned':
       pen.poly([[-R * 0.65, roof], [-R * 0.55, top], [R * 0.55, top], [R * 0.65, roof]], 'solid')
+      break
+    case 'casemate':
+      pen.poly([[-R * 0.95, roof], [-R * 0.85, top], [R * 0.85, top], [R * 0.95, roof]], 'solid')
       break
   }
   pen.face(half(-1), 'turretFrontRight')

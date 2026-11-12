@@ -42,11 +42,13 @@ export const KIT = {
     weldedWedge: 'turret-welded-wedge',
     bustle: 'turret-bustle',
     unmanned: 'turret-unmanned',
-  } satisfies Record<TurretId, `turret-${string}`>,
+    // Not in the kit yet: the casemate is drawn from its plain shape.
+    casemate: null,
+  } satisfies Record<TurretId, `turret-${string}` | null>,
   /** The sizes the pieces are built at, in metres, to scale from. */
   reference: {
     turretRadiusM: 1.1,
-    turretHeightM: { castDome: 0.8, lowProfile: 0.5, weldedWedge: 0.66, bustle: 0.85, unmanned: 0.42 } satisfies Record<TurretId, number>,
+    turretHeightM: { castDome: 0.8, lowProfile: 0.5, weldedWedge: 0.66, bustle: 0.85, unmanned: 0.42, casemate: 0.58 } satisfies Record<TurretId, number>,
     gunLengthM: 5.2,
     gunRadiusM: 0.075,
     roadWheelRadiusM: 0.36,
@@ -76,6 +78,7 @@ export const KIT = {
     weldedWedge: { gunUp: 0.545, gunAhead: 0.72, mantlet: 'mantlet-block', mantletBackM: 0.3, mantletStretch: { x: 1.6, y: 1, z: 0.5 }, sideOut: 0.97, tileFront: { x: 1.035, z: 0.6, yawDeg: 59, long: 1.0 } },
     bustle: { gunUp: 0.53, gunAhead: 0.95, mantlet: 'mantlet-block', mantletBackM: 0, mantletStretch: { x: 1, y: 1, z: 1 }, sideOut: 0.94, tileFront: { x: 1.0, z: 0.3, yawDeg: 0, long: 0.45 } },
     unmanned: { gunUp: 1.57, gunAhead: 0.5, mantlet: null, mantletBackM: 0, mantletStretch: { x: 1, y: 1, z: 1 }, sideOut: 0.62, tileFront: { x: 0.96, z: 0.2, yawDeg: 0, long: 0.3 } },
+    casemate: { gunUp: 0.42, gunAhead: 0.62, mantlet: 'mantlet-cast', mantletBackM: 0.05, mantletStretch: { x: 1, y: 0.8, z: 0.8 }, sideOut: 0.95, tileFront: { x: 0.75, z: 0.5, yawDeg: 0, long: 0.7 } },
   } satisfies Record<TurretId, { gunUp: number; gunAhead: number; mantlet: 'mantlet-cast' | 'mantlet-block' | null; mantletBackM: number; mantletStretch: { x: number; y: number; z: number }; sideOut: number; tileFront: { x: number; z: number; yawDeg: number; long: number } }>,
   /** The cupola and the sight head stand on the roof at these shares of the turret's height; the sight is this far across, as a share of the radius, from the cupola's side. */
   roof: { cupolaUp: 0.97, sightUp: 0.9, sightBackShare: 0.02, sightAcrossShare: 0.42 },

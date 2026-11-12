@@ -2,7 +2,7 @@
 // recoil mount changes what turret ring the gun needs. Game-level
 // abstractions, not engineering data.
 import { OWN_ROUNDS, pactRounds, type KineticIssue, type PactRoundId, type Round, type ShapedIssue } from '../../data/ammo'
-import { BARRELS, GUNS, RECOILS } from '../../data/parts'
+import { BARRELS, GUNS, RECOILS, TURRETS } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
 import { detPow } from '../det'
 import type { VehicleSpec } from '../vehicle/spec'
@@ -59,6 +59,11 @@ function ownRound(round: Round, issue: KineticIssue | ShapedIssue): Round {
 }
 
 /** The smallest turret ring that takes the gun on its recoil mount. */
-export function gunRingMm(spec: Pick<VehicleSpec, 'gun' | 'recoil'>): number {
-  return GUNS[spec.gun].minRingMm + RECOILS[spec.recoil].ringMm
+export function gunRingMm(spec: Pick<VehicleSpec, 'gun' | 'recoil'> & { turret?: Pick<VehicleSpec['turret'], 'shape'> }): number {
+  const ring = GUNS[spec.gun].minRingMm + RECOILS[spec.recoil].ringMm
+  const share = spec.turret ? TURRETS[spec.turret.shape].gunRingShare : 1
+  if (share === 1) return ring
+  // A casemate takes the kick into the hull, so a smaller mount will do: to the next step up.
+  const step = TUNING.limits.ringStepMm
+  return Math.ceil((ring * share) / step) * step
 }

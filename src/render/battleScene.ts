@@ -6,6 +6,7 @@ import {
   PlaneGeometry, Scene, SphereGeometry, Vector3, WebGLRenderer, type Object3D,
 } from 'three'
 import { BATTLE } from '../data/battle'
+import { TURRETS, type TurretId } from '../data/parts'
 import { TIERS, type TierId } from '../data/graphics'
 import type { PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
@@ -47,6 +48,12 @@ function rad(degrees: number): number {
   return (degrees * Math.PI) / 180
 }
 
+/** How far a mount's gun swings each way, radians: null where it turns all the way round. */
+function swingOf(shape: TurretId): number | null {
+  const deg = TURRETS[shape].swingDeg
+  return deg === null ? null : rad(deg)
+}
+
 /** The way from one place to another, degrees: nought up the ground, 90 to the right. */
 function wayTo(from: { x: number; y: number }, to: { x: number; y: number }): number {
   return (Math.atan2(to.x - from.x, to.y - from.y) * 180) / Math.PI
@@ -60,6 +67,8 @@ interface TankParts {
   screen: Mesh
   /** How high its roof is, where the smoke rises from once it is out of the fight. */
   roofM: number
+  /** How far its gun swings each way, radians: null for a turret, which turns all the way round. */
+  swingRad: number | null
   /** Where the tank stood last time it was posed, to run its links round by how far it has come. */
   last: { x: number; z: number } | null
   /** How far it has gone all told, either way, and the puffs that is owed. */
@@ -159,6 +168,7 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
     root.add(group)
     return {
       group, turret, flash, strike, screen, roofM: shape.turret.baseM + K.wreckSmoke.upM, last: null,
+      swingRad: swingOf((tank.side === 0 ? mine : theirs).spec.turret.shape),
       travelledM: 0, trail: new DustTrail(), rearM: -shape.lengthM / 2 - RENDER.dust.behindM, sideM: shape.track.centreZM,
       deck: {
         x: exhaustDeckX(shape, (tank.side === 0 ? mine : theirs).spec.hull.engineAt),
@@ -358,7 +368,12 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
       const back = place(-ex.driftM, 0)
       stage.dust.kick(spot.x, parts.deck.y, spot.z, hard ? ex.hard : ex.light, watchedS, { x: back.x - at.x, z: back.z - at.z })
     }
-    if (parts.turret) parts.turret.rotation.y = -rad((guns[index] ?? tank.headingDeg) - tank.headingDeg)
+    if (parts.turret) {
+      const off = -rad((guns[index] ?? tank.headingDeg) - tank.headingDeg)
+      // A casemate's gun swings only a little: past that, it points as far round as it goes.
+      const swing = parts.swingRad
+      parts.turret.rotation.y = swing === null ? off : Math.max(-swing, Math.min(swing, Math.atan2(Math.sin(off), Math.cos(off))))
+    }
     parts.screen.visible = tank.state === 'smoke'
     parts.flash.visible = false
     parts.strike.visible = false
