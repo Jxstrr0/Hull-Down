@@ -479,6 +479,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.3.0.1, visit counts.** Kelbo asked for Cloudflare Web Analytics on every Longlight game. A cookieless beacon at the end of `index.html` counts visits and load speed; nothing about the player or the saves. The loading screen ignores it if an ad blocker stops it. It shares the studio's zone-wide analytics site (the free limit of 11 sites is used up).
 - **1.3.0.0, the casemate.** Tank destroyer step 1. A new turret shape: the gun in a low box on the hull behind a steep front plate. Lighter and cheaper, its gun needs a ring 30% smaller, but it lays on each new target 60% slower and the gun swings only 12° each way. Allowed only on a tank destroyer's tender (none yet) and in the sandbox, with its own blueprint, sketch and 3D shape.
 - **1.2.32.0, smoke on burning wrecks.** A rising, wind-blown column of smoke off every tank put out of the fight, black where it blew up or burned and grey where it only stopped. It replaces the three still smoke balls and stays inside the phone budget.
 - **1.2.31.0, turbine recording.** A gas turbine now has its own recorded roar ("Rocket Engine" by theMinesAreShakin, CC0, from OpenGameArt), looped under its synth whine and played faster as it spools up. The diesel and multi-fuel engines keep their chug. Credited in the game and in CREDITS.md.

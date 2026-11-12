@@ -46,7 +46,8 @@ describe('the studio splash', () => {
   it('shows the official logo from this site, with the studio named in full', () => {
     expect(splash).toContain('src="/brand/longlight-logo-dark.svg"')
     expect(splash).toContain(`alt="${STUDIO}"`)
-    expect(page).not.toMatch(/(src|href)="https?:/)
+    // Nothing hotlinked; the one outside file is Cloudflare's visit counter (Kelbo, 2026-11-12).
+    expect(page.replace('src="https://static.cloudflareinsights.com/beacon.min.js"', '')).not.toMatch(/(src|href)="https?:/)
   })
 
   it('is painted in brand colours only', () => {
