@@ -23,6 +23,8 @@ const FIRST_WITH_SPG = 3
 const SPG_AT_FORMAT_THREE = 3
 /** The first career format with the infantry fighting vehicle tender of 1996 before the tank of 2001. */
 const FIRST_WITH_IFV = 4
+/** The first career format with the scout car tender of 2004 before the self-propelled gun of 2008. */
+const FIRST_WITH_SCOUT = 5
 const BIDDERS: readonly Bidder[] = ['bureau', ...BUREAU_IDS]
 
 function isObject(raw: unknown): raw is Record<string, unknown> {
@@ -190,6 +192,8 @@ export function cleanCareer(raw: unknown): Career | null {
   if (format < FIRST_WITH_SPG && tenderNo >= SPG_AT_FORMAT_THREE) tenderNo++
   // Before format four there was no infantry fighting vehicle tender of 1996: from the tank of 2001 on, every tender is one place later now.
   if (format < FIRST_WITH_IFV && tenderNo >= TENDER_IDS.indexOf('ifv1996')) tenderNo++
+  // Before format five there was no scout car tender of 2004: from the self-propelled gun of 2008 on, every tender is one place later now.
+  if (format < FIRST_WITH_SCOUT && tenderNo >= TENDER_IDS.indexOf('scout2004')) tenderNo++
   return {
     format: CAREER_FORMAT,
     seed: raw.seed >>> 0,

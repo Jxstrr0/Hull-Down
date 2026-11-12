@@ -6,7 +6,7 @@
 // check that each rival bureau leads a tender of its own.
 import type { Limits } from '../sim/vehicle/spec'
 import type { ThreatTankId } from './opponents'
-import { MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, MARKS_IFV, MARKS_SPG, type Marks } from './range'
+import { MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, MARKS_IFV, MARKS_SCOUT, MARKS_SPG, type Marks } from './range'
 import { PACT_LIMITS_GEN1, PACT_LIMITS_GEN3 } from './tuning'
 
 export const SCORE_AXES = ['protection', 'firepower', 'mobility', 'reliability', 'cost'] as const
@@ -19,7 +19,7 @@ export interface Tender {
   limits: Limits & { maxUnitCostKr: number }
   /** What the proving ground asks of a prototype. */
   marks: Marks
-  /** The Accord tanks the army expects it to meet. Every bid duels each of them. None for a self-propelled gun, which fights from beyond the hill, or for an infantry fighting vehicle, which is judged on its squad. */
+  /** The Accord tanks the army expects it to meet. Every bid duels each of them. None for a self-propelled gun, which fights from beyond the hill, for an infantry fighting vehicle, which is judged on its squad, or for a scout car, which is meant to see and not be seen. */
   threats: readonly ThreatTankId[]
   /** How the army weighs a bid. The five add up to 100. */
   weights: Record<ScoreAxis, number>
@@ -35,7 +35,7 @@ export interface Tender {
   luck: number
 }
 
-export const TENDER_IDS = ['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'spg2008', 'tank2016'] as const
+export const TENDER_IDS = ['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'scout2004', 'spg2008', 'tank2016'] as const
 export type TenderId = (typeof TENDER_IDS)[number]
 
 export const TENDERS: Record<TenderId, Tender> = {
@@ -111,7 +111,28 @@ export const TENDERS: Record<TenderId, Tender> = {
     luck: 1,
   },
   /**
-   * Seven years on: the army wants a self-propelled gun, a 155 mm howitzer on
+   * Three years on: the army wants a scout car, quick on the road and quiet,
+   * to find the enemy and report back before it is found. It goes on four,
+   * six or eight wheels, never tracks, and carries only the 30 mm cannon.
+   * It is judged on spot and report in place of the tank shoots and duels,
+   * and is not asked to cross the trench. Generation two parts. Mobility
+   * and what it finds count most; its armour need only keep out a carrier's
+   * cannon at long range.
+   */
+  scout2004: {
+    year: 2004,
+    limits: {
+      ...PACT_LIMITS_GEN1, generation: 2, maxMassT: 20, maxUnitCostKr: 2_400_000, allowedCalibresMm: [30], wheels: true, wheelsOnly: true,
+    },
+    marks: MARKS_SCOUT,
+    threats: [],
+    weights: { protection: 5, firepower: 30, mobility: 30, reliability: 15, cost: 20 },
+    grantKr: 14_000_000,
+    rivalRevisions: 2,
+    luck: 6,
+  },
+  /**
+   * Four years on: the army wants a self-propelled gun, a 155 mm howitzer on
    * tracks that can keep up with its tanks and drop shells on map grids 20 km
    * off. It is judged on a fire mission in place of the tank shoots and duels.
    * Generation two parts. Firepower counts for most, then cost and
@@ -186,6 +207,13 @@ export const SCORING = {
     squad: {
       knockedShare: 0.6,
       bestCoverS: 20,
+    },
+    /**
+     * For a scout car, all from spot and report: the share of the hidden
+     * vehicles found, and the rest the share that did not see it first.
+     */
+    scout: {
+      foundShare: 0.7,
     },
   },
   mobility: {

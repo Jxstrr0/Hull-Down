@@ -52,6 +52,7 @@ export const ISSUE_CODES = [
   'squadTooSmall',
   'troopsNeedFrontEngine',
   'wheelsNotAllowed',
+  'tracksNotAllowed',
   'tyresOverloaded',
 ] as const
 export type IssueCode = (typeof ISSUE_CODES)[number]
@@ -103,6 +104,7 @@ export function checkSpec(spec: VehicleSpec, limits: Limits, geo: Geometry, roll
   // And wheels for a wheeled vehicle's
   const wheeled = wheelsOf(spec)
   if (wheeled > 0 && !limits.wheels) error('wheelsNotAllowed', 'runningGear.layout')
+  if (wheeled === 0 && limits.wheelsOnly) error('tracksNotAllowed', 'runningGear.layout')
 
   // Turret ring
   const gunRing = gunRingMm(spec)

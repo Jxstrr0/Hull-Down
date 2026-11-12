@@ -8,7 +8,7 @@ import type { ZoneId } from '../../data/materials'
 import { COMPUTERS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS } from '../../data/parts'
 import { GUNNERY_TEST_IDS, type GunneryTestId, type ObstacleId } from '../../data/range'
 import type { Tender } from '../../data/tenders'
-import { runAcceleration, runBerm, runFireMission, runGunnery, runObstacles, runSquadDrop } from '../trials'
+import { runAcceleration, runBerm, runFireMission, runGunnery, runObstacles, runScoutPatrol, runSquadDrop } from '../trials'
 import type { Issue } from '../vehicle/checks'
 import { testShot } from '../vehicle/shot'
 import type { VehicleSpec } from '../vehicle/spec'
@@ -16,7 +16,7 @@ import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 import { footprintControl } from '../vehicle/wheels'
 
 export const REMARK_KINDS = [
-  'fault', 'plate', 'shoot', 'slowShot', 'drill', 'missionReach', 'missionFirst', 'missionRate', 'missionClose', 'squadTroops', 'squadDrop', 'squadCover', 'sprint', 'top', 'obstacle', 'berm', 'warning', 'reliability', 'cost',
+  'fault', 'plate', 'shoot', 'slowShot', 'drill', 'missionReach', 'missionFirst', 'missionRate', 'missionClose', 'squadTroops', 'squadDrop', 'squadCover', 'scoutTime', 'scoutFound', 'scoutSeen', 'sprint', 'top', 'obstacle', 'berm', 'warning', 'reliability', 'cost',
 ] as const
 export type RemarkKind = (typeof REMARK_KINDS)[number]
 
@@ -93,8 +93,8 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
   }
   out.push(...holed.values())
 
-  // A self-propelled gun's or an infantry fighting vehicle's tender counts no tank shoots, drill or berm, so he says nothing of them.
-  const tank = marks.fireMission === undefined && marks.squad === undefined
+  // A self-propelled gun's, an infantry fighting vehicle's or a scout car's tender counts no tank shoots, drill or berm, so he says nothing of them.
+  const tank = marks.fireMission === undefined && marks.squad === undefined && marks.scout === undefined
   // The firing tests, rehearsed a few times over.
   for (const test of tank ? GUNNERY_TEST_IDS : []) {
     let hits = 0
@@ -188,6 +188,29 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
     }
   }
 
+  // A scout car's spot and report, rehearsed a few times over.
+  if (marks.scout) {
+    const M = marks.scout
+    const ridge = runBerm(sheet.interior.frame, sheet.firepower.gunDepressionDeg)
+    let found = 0
+    let seen = 0
+    let timeS: number | null = 0
+    for (let seed = 1; seed <= ADVISOR.rehearsals; seed++) {
+      const patrol = runScoutPatrol(sheet.drive, sheet.fire, ridge.showsM, sheet.geometry.widthM, seed)
+      found += patrol.found / ADVISOR.rehearsals
+      seen += patrol.seen / ADVISOR.rehearsals
+      timeS = patrol.totalS === null || timeS === null ? null : Math.max(timeS, patrol.totalS)
+    }
+    if (timeS === null || timeS > M.timeS) {
+      out.push({ kind: 'scoutTime', part: 'powerpack.engine', value: timeS === null ? undefined : Math.round(timeS / 60), limit: Math.round(M.timeS / 60) })
+    }
+    if (found < M.found) {
+      const part = spec.fireControl.commanderSight ? 'fireControl.night' : 'fireControl.commanderSight'
+      out.push({ kind: 'scoutFound', part, value: Math.round(found * 10) / 10, limit: M.found })
+    }
+    if (seen > M.seen + ADVISOR.scoutSeenSlack) out.push({ kind: 'scoutSeen', part: 'turret.shape', value: Math.round(seen * 10) / 10, limit: M.seen })
+  }
+
   // The strip, the course and the berm come out the same every time, so he can simply work them out.
   const run = runAcceleration(sheet.drive)
   if (run.sprintS === null || run.sprintS > marks.sprintS) {
@@ -195,7 +218,7 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
   }
   if (run.topKmh < marks.topKmh) out.push({ kind: 'top', part: 'powerpack.engine', value: Math.round(run.topKmh), limit: marks.topKmh })
   for (const result of runObstacles(sheet.drive).results) {
-    if (!result.passed) out.push({ kind: 'obstacle', part: result.id === 'mud' ? footprintControl(sheet.drive.wheeled) : OBSTACLE_PART[result.id], obstacle: result.id })
+    if (!result.passed && !marks.waived?.includes(result.id)) out.push({ kind: 'obstacle', part: result.id === 'mud' ? footprintControl(sheet.drive.wheeled) : OBSTACLE_PART[result.id], obstacle: result.id })
   }
   const ridge = runBerm(sheet.interior.frame, sheet.firepower.gunDepressionDeg)
   if (tank && ridge.showsM > marks.bermShowsM) {

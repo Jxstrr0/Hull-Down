@@ -7,7 +7,7 @@ import { SQUAD_TRIAL } from '../../data/squad'
 import { SCORE_AXES, SCORING, type ScoreAxis, type Tender } from '../../data/tenders'
 import { combatantOf } from '../duel/duel'
 import { runCard, type DuelSeries } from '../duel/series'
-import { runProvingGround, type FireMissionResult, type RangeReport, type SquadResult } from '../trials'
+import { runProvingGround, type FireMissionResult, type RangeReport, type ScoutResult, type SquadResult } from '../trials'
 import type { VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 
@@ -63,6 +63,12 @@ function squadFirepower(run: SquadResult): number {
   return M.knockedShare * knocked + (1 - M.knockedShare) * time
 }
 
+/** A scout car's firepower, 0..1: what it found on spot and report, and whether it was seen first. */
+function scoutFirepower(run: ScoutResult): number {
+  const M = SCORING.firepower.scout
+  return M.foundShare * (run.found / run.hidden) + (1 - M.foundShare) * (run.stops === null ? 0 : 1 - run.seen / run.hidden)
+}
+
 /** Puts a bid through the tender's proving ground and duels. */
 export function trialBid(spec: VehicleSpec, tender: Tender, seed: number): Trialled {
   const sheet = buildStatSheet(spec, tender.limits)
@@ -108,16 +114,19 @@ export function scoreBid(bid: Trialled, tender: Tender): BidScore {
   const mission = range.fireMission
   const firepower = range.selfPropelled && mission ? missionFirepower(mission) :
     range.carrier && range.squad ? squadFirepower(range.squad) :
+    range.scouting && range.scout ? scoutFirepower(range.scout) :
     S.firepower.shootShare * (targets ? hits / targets : 0) +
     S.firepower.drillShare * between(range.drill.rpm, 0, S.firepower.drillBestRpm) +
     (1 - S.firepower.shootShare - S.firepower.drillShare) * (fired ? through / fired : 0)
 
   const run = range.acceleration
-  const crossed = range.obstacles.results.filter((result) => result.passed).length
+  // An obstacle the tender does not ask for counts neither way.
+  const asked = range.obstacles.results.filter((result) => !result.waived)
+  const crossed = asked.filter((result) => result.passed).length
   const mobility =
     S.mobility.sprintShare * (run.sprintS === null ? 0 : between(run.sprintS, tender.marks.sprintS, S.mobility.bestSprintS)) +
     S.mobility.topShare * between(run.topKmh, tender.marks.topKmh, S.mobility.bestTopKmh) +
-    (1 - S.mobility.sprintShare - S.mobility.topShare) * (crossed / range.obstacles.results.length)
+    (1 - S.mobility.sprintShare - S.mobility.topShare) * (asked.length ? crossed / asked.length : 1)
 
   const long = range.endurance
   const reliability =

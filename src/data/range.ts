@@ -3,7 +3,7 @@
 // engineering data.
 import type { ThreatId } from './ammo'
 import type { FireMissionMarks } from './fireMission'
-import type { ScoutMarks } from './scout'
+import { SCOUT_TRIAL, type ScoutMarks } from './scout'
 import { SQUAD_TRIAL, type SquadMarks } from './squad'
 import type { ZoneId } from './materials'
 
@@ -364,6 +364,36 @@ export const MARKS_IFV = {
   squad: SQUAD_TRIAL.marks,
 } as const
 
+/**
+ * What the army asks of a scout car in 2004. No tank shoots, no loading
+ * drill and no berm: spot and report takes their place. It must be quick on
+ * the road, and is not asked to cross the trench, which no car on wheels
+ * can. Its armour need only keep out a carrier's cannon at long range,
+ * front and sides; it is meant to see and not be seen, not to fight.
+ */
+export const MARKS_SCOUT = {
+  sprintS: MARKS_GEN2.sprintS,
+  topKmh: 70,
+  enduranceStops: 1,
+  hits: MARKS_GEN2.hits,
+  firstShotS: MARKS_GEN2.firstShotS,
+  drillRpm: MARKS_GEN2.drillRpm,
+  armour: [
+    { zone: 'upperGlacis', threat: 'autocannon', rangeM: 2000, angleDeg: 0, gate: true },
+    { zone: 'turretFrontLeft', threat: 'autocannon', rangeM: 2000, angleDeg: 0, gate: true },
+    { zone: 'hullSideFront', threat: 'autocannon', rangeM: 2500, angleDeg: 0, gate: true },
+    { zone: 'turretSides', threat: 'autocannon', rangeM: 2500, angleDeg: 0, gate: true },
+    { zone: 'hullSideRear', threat: 'autocannon', rangeM: 1000, angleDeg: 0, gate: false },
+    { zone: 'upperGlacis', threat: 'autocannon', rangeM: 500, angleDeg: 0, gate: false },
+    { zone: 'hullSideFront', threat: 'infantryRocket', rangeM: 200, angleDeg: 0, gate: false },
+  ] as readonly ArmourSerial[],
+  bermShowsM: MARKS_GEN2.bermShowsM,
+  scout: SCOUT_TRIAL.marks,
+  // No car on wheels bridges the trench, mounts the step or grips the slope, and
+  // the tender allows nothing else, so only the mud pit is asked for.
+  waived: ['trench', 'step', 'slope'] as readonly ObstacleId[],
+} as const
+
 export type Marks = {
   sprintS: number
   topKmh: number
@@ -392,4 +422,6 @@ export type Marks = {
    * tender, where a car on wheels is held to the range's own marks.
    */
   scout?: ScoutMarks
+  /** Obstacles the tender does not ask the vehicle to cross. They are tried, but count neither way. */
+  waived?: readonly ObstacleId[]
 }

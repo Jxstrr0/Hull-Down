@@ -344,6 +344,12 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
     if (ifv.engine) spec.powerpack.engine = ifv.engine
     if (ifv.rangefinder) spec.fireControl.rangefinder = ifv.rangefinder
     for (const zone of ZONES) spec.era[zone] = 0
+    // A scout car's tender wants wheels and no squad. For now each bureau puts its carrier on eight wheels.
+    if (limits.wheelsOnly) {
+      spec.runningGear.layout = 'wheels8'
+      spec.crew.troops = 0
+      spec.hull.engineAt = 'rear'
+    }
   } else if (limits.casemate && philosophy.destroyer) fitPicks(spec, philosophy.destroyer)
   // A gun outside the tender's calibres is no use: the bureau takes the biggest gun that is allowed.
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
