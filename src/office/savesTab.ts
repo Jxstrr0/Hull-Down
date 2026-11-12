@@ -9,7 +9,6 @@ import {
 import type { KeyValue } from '../persist/designs'
 import { decodeSave, encodeSave, type SaveFile } from '../persist/saveCode'
 import { listSlots, openBackend, readSlot, writeSlot, type SlotBackend, type SlotInfo } from '../persist/slots'
-import { drawCredits } from '../ui/credits'
 import { el } from '../ui/dom'
 import { drawOffline } from '../ui/offline'
 import { slotLine } from '../ui/saveWords'
@@ -259,7 +258,7 @@ export function createSaves(options: SavesOptions): Saves {
       line.setAttribute('role', 'status')
       box.append(line)
     }
-    box.append(drawSlots(), drawBackup(), drawCode(), drawOffline(options.redraw), drawCredits())
+    box.append(drawSlots(), drawBackup(), drawCode(), drawOffline(options.redraw))
     return box
   }
 
