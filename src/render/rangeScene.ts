@@ -3,8 +3,8 @@
 // when the player first asks to watch a run, never before.
 import {
   BoxGeometry, BufferGeometry, Color, DataTexture, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, Fog,
-  Group, HemisphereLight, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, RepeatWrapping,
-  Scene, Shape, SphereGeometry, SRGBColorSpace, WebGLRenderer, type Material, type Texture,
+  Group, HemisphereLight, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, Quaternion, RepeatWrapping,
+  Scene, Shape, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer, type Material, type Texture,
 } from 'three'
 import { GUNNERY } from '../data/gunnery'
 import { RANGE, type GunneryTestId } from '../data/range'
@@ -24,6 +24,7 @@ import { rangeScenery } from './scenery'
 import { buildSolids, buildTank, rollTracks, setMud, setRecoil, setWear, tonesOf } from './tankModel'
 import { recoilAt } from './recoil'
 import { DustTrail, dustAt, type DustKind, type PuffLook } from './dust'
+import { markAt } from './marks'
 import { courseMud, enduranceMud, enduranceWear, trialWear } from './mud'
 import { trackLinkPixels } from './trackLinks'
 import { tankShapeOf, type TankShape } from './tankShape'
@@ -149,6 +150,21 @@ export class Kit {
   }
 
   private wheelCount = 0
+
+  /**
+   * Many copies of a flat shape lying on the ground, see-through, each placed and coloured on its own. They
+   * are pulled towards the camera a little, so the ground they lie on never shows through them.
+   */
+  decals(geometry: BufferGeometry, opacity: number, count: number): InstancedMesh {
+    this.geometries.push(geometry)
+    const material = new MeshLambertMaterial({
+      color: new Color('#ffffff'), transparent: true, opacity, depthWrite: false,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    })
+    this.materials.set(`decal/${this.decalCount++}`, material)
+    return new InstancedMesh(geometry, material, count)
+  }
+  private decalCount = 0
 
   /** Many copies of one shape in one flat, see-through material, each placed and coloured on its own: one thing to draw. */
   instanced(geometry: BufferGeometry, opacity: number, count: number): InstancedMesh {
@@ -715,6 +731,9 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   let lastDistanceM: number | null = null
   const dust = new Dust(kit, RENDER.dust.trials)
   scene.add(dust.mesh)
+  const marks = new Marks(kit, RENDER.marks.trials)
+  scene.add(marks.mesh)
+  const ruts = new DustTrail()
   const trail = new DustTrail()
   const fumes = new DustTrail()
   const working = new Working()
@@ -750,6 +769,16 @@ export function openRangeView(args: RangeViewArgs): RangeView {
       }
     }
     dust.show(watchedS)
+    // Ruts under the back of both tracks, tipped as the ground is.
+    const laid = now.dust ? ruts.due(now.frame.distanceM, RENDER.marks.everyM) : 0
+    for (let i = 0; i < laid; i++) {
+      const backM = -shape.track.lengthM / 2 + RENDER.marks.longM / 2
+      const y = now.pose.y - now.sinkM + Math.sin(now.pose.pitchRad) * backM
+      for (const side of [-1, 1]) {
+        marks.lay(now.pose.x + backM, y, side * shape.track.centreZM, 0, now.pose.pitchRad, shape.track.widthM * RENDER.marks.widthShare, RENDER.marks.colours[now.dust!], watchedS)
+      }
+    }
+    marks.show(watchedS)
     tank.position.set(now.pose.x, now.pose.y - now.sinkM, 0)
     // The gun kicks back when it fires, and the tank rocks with it.
     const rock = setRecoil(tank, recoilAt(now.firedS === null ? null : now.firedS / show.rate))
@@ -943,5 +972,76 @@ export class Working {
       this.lastMs = speedMs
     }
     return this.pulling || pitchRad > ex.climbRad
+  }
+}
+
+interface Mark {
+  bornS: number
+  matrix: Matrix4
+  widthM: number
+}
+
+/** A pool of track marks lying on the ground, the oldest given up for the newest. Times are seconds of watching. */
+export class Marks {
+  readonly mesh: InstancedMesh
+  private readonly marks: (Mark | null)[]
+  private next = 0
+  private lastS: number | null = null
+  private readonly matrix = new Matrix4()
+  private readonly colour = new Color()
+  private readonly spin = new Quaternion()
+  private readonly axisY = new Vector3(0, 1, 0)
+  private readonly axisZ = new Vector3(0, 0, 1)
+  private readonly tilt = new Quaternion()
+  private readonly at = new Vector3()
+  private readonly size = new Vector3()
+
+  constructor(kit: Kit, capacity: number) {
+    // A strip one metre square lying flat; each copy is stretched to the mark.
+    const strip = new PlaneGeometry(1, 1)
+    strip.rotateX(-Math.PI / 2)
+    this.mesh = kit.decals(strip, RENDER.marks.opacity, capacity)
+    this.marks = Array.from({ length: capacity }, () => null)
+    for (let i = 0; i < capacity; i++) {
+      this.mesh.setColorAt(i, this.colour.set('#000000'))
+      this.mesh.setMatrixAt(i, this.matrix.makeScale(0, 0, 0))
+    }
+    this.mesh.frustumCulled = false
+  }
+
+  /**
+   * Lay a mark centred here, now: `widthM` across, running the way the tank
+   * faces (`turnRad` about the upright, nought along x) and tipped `pitchRad`
+   * nose up, as the ground is under it.
+   */
+  lay(x: number, y: number, z: number, turnRad: number, pitchRad: number, widthM: number, colour: string, nowS: number): void {
+    this.spin.setFromAxisAngle(this.axisY, turnRad).multiply(this.tilt.setFromAxisAngle(this.axisZ, pitchRad))
+    const matrix = new Matrix4().compose(this.at.set(x, y + RENDER.marks.liftM, z), this.spin, this.size.set(1, 1, 1))
+    this.marks[this.next] = { bornS: nowS, matrix, widthM }
+    this.mesh.setColorAt(this.next, this.colour.set(colour))
+    if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true
+    this.next = (this.next + 1) % this.marks.length
+  }
+
+  /** Narrow every mark to how it is at `nowS`. Going back in time wipes the ground clean. */
+  show(nowS: number): void {
+    if (this.lastS !== null && nowS < this.lastS) this.marks.fill(null)
+    this.lastS = nowS
+    this.marks.forEach((mark, i) => {
+      const share = mark ? markAt(nowS - mark.bornS) : null
+      if (!mark || share === null) {
+        this.marks[i] = null
+        this.mesh.setMatrixAt(i, this.matrix.makeScale(0, 0, 0))
+        return
+      }
+      this.matrix.makeScale(RENDER.marks.longM, 1, mark.widthM * share).premultiply(mark.matrix)
+      this.mesh.setMatrixAt(i, this.matrix)
+    })
+    this.mesh.instanceMatrix.needsUpdate = true
+  }
+
+  /** How many marks are on the ground. */
+  get showing(): number {
+    return this.marks.filter((mark) => mark !== null).length
   }
 }

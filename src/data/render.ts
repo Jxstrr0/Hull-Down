@@ -197,8 +197,20 @@ export const RENDER = {
    * last `fadeShare` of its life. One mesh holds every puff: `trials` of them at a trial, `battle` in battle.
    * The endurance time-lapse throws none.
    */
+  /**
+   * Track marks: a dark strip `longM` long and `widthShare` of the track wide
+   * laid under each track every `everyM` driven, `liftM` off the ground. Each
+   * lasts `lifeS` watched seconds, narrowing away over the last `fadeShare` of
+   * it; the pool holds `trials` on the range and `battle` in a battle, the
+   * oldest given up first. See-through `opacity`, so ruts laid over ruts darken.
+   */
+  marks: {
+    trials: 160, battle: 560, everyM: 1.2, longM: 1.35, widthShare: 0.8, liftM: 0.03,
+    lifeS: 14, fadeShare: 0.4, opacity: 0.4,
+    colours: { concrete: '#5f5c55', earth: '#3f3222', mud: '#241b12' },
+  },
   dust: {
-    trials: 64, battle: 128, mostPerFrame: 2,
+    trials: 64, battle: 120, mostPerFrame: 2,
     lifeS: 1.6, fromM: 0.3, toM: 1.3, riseM: 0.9, fadeShare: 0.4, opacity: 0.38, sides: 8, rings: 5,
     behindM: 0.25, spreadM: 0.6, sizeSpread: 0.45, driftM: 0.8,
     kinds: {

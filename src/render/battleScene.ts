@@ -14,7 +14,7 @@ import type { Geometry, VehicleSpec } from '../sim/vehicle'
 import { momentOf, type BattleMoment } from '../ui/battleReplay'
 import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot } from './battleDirector'
 import { createFrameMeter } from './frameMeter'
-import { Dust, Kit, Working, exhaustDeckX } from './rangeScene'
+import { Dust, Kit, Marks, Working, exhaustDeckX } from './rangeScene'
 import { DustTrail } from './dust'
 import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, setRecoil, setWear, tonesOf } from './tankModel'
 import { recoilAt } from './recoil'
@@ -67,6 +67,10 @@ interface TankParts {
   /** Its exhaust: where it leaves the deck, how often, and whether the engine is working hard. */
   deck: { x: number; y: number; pipeM: number }
   fumes: DustTrail
+  /** Its ruts: how often, and where under the track they are laid, from the middle of the tank. */
+  ruts: DustTrail
+  rutM: number
+  rutWideM: number
   working: Working
   pipes: number
   lastS: number | null
@@ -77,6 +81,7 @@ export interface BattleStage {
   tanks: TankParts[]
   tracers: Mesh[]
   dust: Dust
+  marks: Marks
 }
 
 /**
@@ -154,6 +159,7 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
         pipeM: shape.track.centreZM * RENDER.dust.exhaust.pipeShare,
       },
       fumes: new DustTrail(), working: new Working(), pipes: 0, lastS: null,
+      ruts: new DustTrail(), rutM: -shape.track.lengthM / 2 + RENDER.marks.longM / 2, rutWideM: shape.track.widthM * RENDER.marks.widthShare,
     }
   })
 
@@ -166,7 +172,9 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
   }
   const dust = new Dust(kit, RENDER.dust.battle)
   root.add(dust.mesh)
-  return { root, tanks, tracers, dust }
+  const marks = new Marks(kit, RENDER.marks.battle)
+  root.add(marks.mesh)
+  return { root, tanks, tracers, dust, marks }
 }
 
 /** How much the stage asks of a phone: triangles and separate pieces. */
@@ -239,6 +247,14 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
         stage.dust.kick(spot.x, 0, spot.z, earth, watchedS)
       }
     }
+    // Ruts under the back of both tracks, running the way the tank faces.
+    const laid = fighting ? parts.ruts.due(parts.travelledM, RENDER.marks.everyM) : 0
+    for (let i = 0; i < laid; i++) {
+      for (const side of [-1, 1]) {
+        const spot = place(parts.rutM, side * parts.sideM)
+        stage.marks.lay(spot.x, 0, spot.z, turn, 0, parts.rutWideM, RENDER.marks.colours.earth, watchedS)
+      }
+    }
     // Exhaust off the engine deck, blown back, thick and dark while it pulls away.
     const ex = RENDER.dust.exhaust
     const hard = fighting && parts.working.at(t, speedMs, 0)
@@ -276,6 +292,7 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     tracer.rotation.y = rad(90 - wayTo({ x: round.fromX, y: round.fromY }, { x: round.toX, y: round.toY }))
   })
   stage.dust.show(t / RENDER.battle.rate)
+  stage.marks.show(t / RENDER.battle.rate)
 }
 
 export interface BattleFrame {
