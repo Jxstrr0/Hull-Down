@@ -142,6 +142,16 @@ export const AUDIO = {
    */
   engineTape: { file: 'audio/engine.mp3', fromS: 2, loopS: 3.99238, gain: 1.1, synthGain: 0.3 },
 
+  /**
+   * The tracks, recorded (CC0, a winch's ratchet, listed in CREDITS.md): a
+   * loop `loopS` long played round from `fromS`, held twice in the file like
+   * the engine. Its clicks come `clickHz` a second as recorded; it is played
+   * faster or slower to keep step with the links, never slower than
+   * `slowest` or faster than `fastest`. Once it has arrived, the synth
+   * clatter under it is turned down to `synthGain`.
+   */
+  trackTape: { file: 'audio/tracks.mp3', fromS: 1, loopS: 2, clickHz: 16, slowest: 0.5, fastest: 2, gain: 1, synthGain: 0.4 },
+
   recordings: {
     gun: { file: 'audio/gun.mp3', gain: 0.9, synthGain: 0.5 },
     hit: { file: 'audio/hit.mp3', gain: 0.7, synthGain: 0.4 },

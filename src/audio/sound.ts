@@ -21,6 +21,9 @@ interface DroneNodes {
   /** The engine recording, once it has arrived, and its loudness. */
   tape: AudioBufferSourceNode | null
   tapeOut: GainNode | null
+  /** The track recording, the same way. */
+  trackTape: AudioBufferSourceNode | null
+  trackTapeOut: GainNode | null
   sources: AudioScheduledSourceNode[]
   voice: TankVoice
 }
@@ -84,6 +87,7 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
   const taped = new Map<CueId, AudioBuffer>()
   /** The engine recording, once it has arrived. */
   let engineTape: AudioBuffer | null = null
+  let trackTape: AudioBuffer | null = null
 
   function ready(): AudioContext | null {
     if (context || failed) return context
@@ -122,11 +126,16 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     } catch {
       // The synth engine plays alone.
     }
+    try {
+      const bytes = await load(AUDIO.trackTape.file)
+      if (bytes) trackTape = await ctx.decodeAudioData(bytes)
+    } catch {
+      // The synth clatter plays alone.
+    }
   }
 
-  /** Lay the engine recording into a running engine, going round and round its middle. */
-  function addTape(ctx: AudioContext, into: DroneNodes, tape: AudioBuffer): void {
-    const T = AUDIO.engineTape
+  /** Lay a recording into a running engine, going round and round its middle. */
+  function addTape(ctx: AudioContext, into: DroneNodes, tape: AudioBuffer, T: { fromS: number; loopS: number }): { source: AudioBufferSourceNode; out: GainNode } {
     const source = ctx.createBufferSource()
     source.buffer = tape
     source.loop = true
@@ -137,9 +146,8 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     source.connect(out)
     out.connect(master ?? ctx.destination)
     source.start(0, T.fromS)
-    into.tape = source
-    into.tapeOut = out
     into.sources.push(source)
+    return { source, out }
   }
 
   function wake(): void {
@@ -290,7 +298,10 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
 
     const sources = [engine, sub, chug, whine, air, clatter, beat]
     for (const source of sources) source.start()
-    return { engine, sub, bright, chug, engineOut, whine, whineOut, hissOut, beat, trackOut, tape: null, tapeOut: null, sources, voice }
+    return {
+      engine, sub, bright, chug, engineOut, whine, whineOut, hissOut, beat, trackOut,
+      tape: null, tapeOut: null, trackTape: null, trackTapeOut: null, sources, voice,
+    }
   }
 
   function calm(): void {
@@ -358,7 +369,7 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     const old = nodes
     nodes = null
     const at = (context?.currentTime ?? 0) + AUDIO.engine.hushS * 4
-    for (const out of [old.engineOut, old.whineOut, old.hissOut, old.trackOut, ...(old.tapeOut ? [old.tapeOut] : [])]) {
+    for (const out of [old.engineOut, old.whineOut, old.hissOut, old.trackOut, ...[old.tapeOut, old.trackTapeOut].filter((out) => out !== null)]) {
       out.gain.cancelScheduledValues(0)
       out.gain.setTargetAtTime(0, context?.currentTime ?? 0, AUDIO.engine.hushS)
     }
@@ -371,7 +382,16 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     if (!ctx || !master || ctx.state !== 'running') return
     if (nodes && nodes.voice !== voice) still()
     nodes ??= build(ctx, master, voice)
-    if (engineTape && !nodes.tape) addTape(ctx, nodes, engineTape)
+    if (engineTape && !nodes.tape) {
+      const added = addTape(ctx, nodes, engineTape, AUDIO.engineTape)
+      nodes.tape = added.source
+      nodes.tapeOut = added.out
+    }
+    if (trackTape && !nodes.trackTape) {
+      const added = addTape(ctx, nodes, trackTape, AUDIO.trackTape)
+      nodes.trackTape = added.source
+      nodes.trackTapeOut = added.out
+    }
     const E = AUDIO.engine
     const tone = E.voices[voice.engine]
     const now = ctx.currentTime
@@ -385,6 +405,7 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     glide(nodes.whine.frequency, Math.max(1, levels.whineHz))
     glide(nodes.beat.frequency, Math.max(0.01, levels.beatHz))
     if (nodes.tape) glide(nodes.tape.playbackRate, levels.tapeRate)
+    if (nodes.trackTape) glide(nodes.trackTape.playbackRate, levels.trackRate)
     // Each loudness is set, and then told to fade if no new picture comes.
     const hold = (param: AudioParam, value: number): void => {
       param.cancelScheduledValues(now)
@@ -395,7 +416,8 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     if (nodes.tapeOut) hold(nodes.tapeOut.gain, levels.engineGain * E.gain * AUDIO.engineTape.gain)
     hold(nodes.whineOut.gain, levels.engineGain * E.gain * tone.whine * E.whineGain)
     hold(nodes.hissOut.gain, levels.engineGain * E.gain * tone.hiss)
-    hold(nodes.trackOut.gain, levels.trackGain * AUDIO.tracks.gain)
+    hold(nodes.trackOut.gain, levels.trackGain * AUDIO.tracks.gain * (nodes.trackTape ? AUDIO.trackTape.synthGain : 1))
+    if (nodes.trackTapeOut) hold(nodes.trackTapeOut.gain, levels.trackGain * AUDIO.tracks.gain * AUDIO.trackTape.gain)
   }
 
   return { on: () => enabled, setOn, wake, cue, drone, air, still }
