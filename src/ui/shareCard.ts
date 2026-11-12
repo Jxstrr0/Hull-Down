@@ -145,6 +145,7 @@ function drawPicture(g: Ctx, drawing: Drawing, shown: ShotLine, view: 'side' | '
   const lines: Record<Exclude<LineStyle, 'face' | 'item'>, () => { width: number; colour: string; dash?: number[]; fill?: boolean }> = {
     solid: () => ({ width: L.solid, colour: C.ink, fill: true }),
     thin: () => ({ width: L.thin, colour: C.ink }),
+    fine: () => ({ width: L.fine, colour: C.ink }),
     hidden: () => ({ width: L.thin, colour: C.inkDim, dash: [10, 6] }),
     centre: () => ({ width: L.thin, colour: C.inkDim, dash: [24, 6, 4, 6] }),
     ground: () => ({ width: L.ground, colour: C.ink }),

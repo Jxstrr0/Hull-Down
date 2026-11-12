@@ -148,6 +148,7 @@ body {
 .bp-svg path { vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .bp-solid { fill: var(--paper); stroke: var(--ink); stroke-width: 1.6; }
 .bp-thin { fill: none; stroke: var(--ink); stroke-width: 1; }
+.bp-fine { fill: none; stroke: var(--ink); stroke-width: 0.6; stroke-opacity: 0.8; }
 .bp-hidden { fill: none; stroke: var(--ink-dim); stroke-width: 1; stroke-dasharray: 5 3; }
 .bp-centre { fill: none; stroke: var(--ink-dim); stroke-width: 0.8; stroke-dasharray: 12 3 2 3; }
 .bp-ground { fill: none; stroke: var(--ink); stroke-width: 2.2; }

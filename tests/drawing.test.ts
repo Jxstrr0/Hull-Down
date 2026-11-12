@@ -140,6 +140,22 @@ describe('blueprint drawing', () => {
     expect(arcs(draw('top', (s) => { s.loading = 'loader' })) - arcs(draw('top'))).toBe(1)
   })
 
+  it('draws in three weights: outline, detail and fine', () => {
+    const lines = new Set(draw('side').shapes.map((shape) => shape.line))
+    for (const line of ['solid', 'thin', 'fine'] as const) expect(lines.has(line), line).toBe(true)
+  })
+
+  it('puts the drive sprocket at the engine end', () => {
+    // The sprocket is the one shape with many straight sides and no arcs.
+    const toothed = (d: Drawing): string | undefined => d.shapes.find((shape) => shape.line === 'thin' && !shape.d.includes('A') && (shape.d.match(/L/g) ?? []).length > 20)?.d
+    const rear = toothed(draw('side'))
+    const front = toothed(draw('side', (s) => { s.hull.engineAt = 'front' }))
+    expect(rear).toBeDefined()
+    expect(front).toBeDefined()
+    const firstX = (d: string): number => Number(d.slice(1).split(' ')[0])
+    expect(firstX(front ?? '')).toBeLessThan(firstX(rear ?? ''))
+  })
+
   it('measures the tank for the caption', () => {
     const base = draw('side')
     expect(base.hullLengthM).toBe(HULLS.medium.lengthM)
