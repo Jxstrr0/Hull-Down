@@ -475,6 +475,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.2.7.1, repo housekeeping.** Nothing in the game changes. From the studio security cycle: the build no longer keeps its GitHub login after checking out the code, `.env` files can never be committed, and Dependabot will open one grouped pull request a month for small package updates (major versions and three.js are left to do by hand).
 - **1.2.7.0, part sketches (last batch).** Sketches now cover fire control (sights, rangefinders, stabilisers, computers, night sights, the commander's sight), the powerpack (transmissions, cooling, auxiliary power), running gear (suspension), crew comfort and protection (smoke, fire suppression, spall liner, active protection): 30 more, 66 in all. Every part with something to draw has one.
 - **1.2.6.0, part sketches (second batch).** Sketches now cover the hulls, engine position, turrets, barrels, recoil mounts, loading, ammunition stowage and the rounds: 28 more. The guns and engines were drawn again a little larger, after a framing fix.
 - **1.2.5.0, part sketches (first batch).** The fitted main gun and engine now show a small line sketch under their description, modelled and drawn in Blender for this game and painted in the page's ink, so it suits both looks. Eight so far: the four guns and the four engines.

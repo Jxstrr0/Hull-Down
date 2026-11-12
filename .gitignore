@@ -6,3 +6,8 @@ shots/
 .vite/
 __pycache__/
 art/out/
+
+# Key files never go in the repo
+.env
+.env.*
+!.env.example
