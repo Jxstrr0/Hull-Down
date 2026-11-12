@@ -102,8 +102,11 @@ the plan names these fonts.
 
 ## Sounds (third-party recordings)
 
-All three come from OpenGameArt and are CC0 1.0 (public domain):
-https://creativecommons.org/publicdomain/zero/1.0/. The originals are kept
+All come from OpenGameArt. The gun and the two metal impacts are CC0 1.0
+(public domain): https://creativecommons.org/publicdomain/zero/1.0/. The
+engine loop is CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/),
+also offered there under GPL 3.0; the game uses it under CC BY 3.0, and it is
+credited in the game's own credits as well as here. The originals are kept
 unchanged in `art/third-party/sounds/`; the files the game plays are made
 from them with ffmpeg.
 
@@ -113,6 +116,8 @@ from them with ffmpeg.
 | `public/audio/gun.mp3` | Cannon fire | Thimras | https://opengameart.org/content/cannon-fire | CC0 1.0 | Cut to 1.7 s, faded out, mixed to mono, saved as MP3 |
 | `art/third-party/sounds/bong1.wav` | Metal Impact Sounds (bong1) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | None (the original) |
 | `public/audio/hit.mp3` | Metal Impact Sounds (bong1) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | Cut to 1.9 s, faded out, saved as MP3 |
+| `art/third-party/sounds/engine_heavy_loop_0.wav` | Engine-loop heavy vehicle/tank | Nayckron, from a car engine loop by qubodup | https://opengameart.org/content/engine-loop-heavy-vehicletank | CC BY 3.0 | None (the original) |
+| `public/audio/engine.mp3` | Engine-loop heavy vehicle/tank | Nayckron, from a car engine loop by qubodup | https://opengameart.org/content/engine-loop-heavy-vehicletank | CC BY 3.0 | Played twice over, mixed to mono, saved as MP3 |
 | `art/third-party/sounds/thud2.wav` | Metal Impact Sounds (thud2) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | None (the original) |
 | `public/audio/short.mp3` | Metal Impact Sounds (thud2) | BMacZero | https://opengameart.org/content/metal-impact-sounds | CC0 1.0 | Cut to 0.45 s, made 6 dB louder, faded out, saved as MP3 |
 

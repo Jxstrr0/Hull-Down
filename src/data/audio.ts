@@ -26,6 +26,9 @@ export interface EngineVoice {
   /** The whine's note at tick-over and flat out, Hz. */
   whineIdleHz: number
   whineFullHz: number
+  /** How fast the engine recording plays at tick-over and flat out, for an engine of the reference power: 1 is as recorded. */
+  tapeIdle: number
+  tapeFull: number
 }
 
 /** One layer of a short sound: a tone or a burst of noise that slides and dies away. */
@@ -77,15 +80,15 @@ export const AUDIO = {
     voices: {
       diesel: {
         wave: 'sawtooth', idleHz: 38, fullHz: 96, chug: 0.5, chugRatio: 0.5, bright: 5,
-        whine: 0, hiss: 0, whineIdleHz: 0, whineFullHz: 0,
+        whine: 0, hiss: 0, whineIdleHz: 0, whineFullHz: 0, tapeIdle: 0.75, tapeFull: 1.6,
       },
       multiFuel: {
         wave: 'square', idleHz: 34, fullHz: 88, chug: 0.65, chugRatio: 0.5, bright: 4,
-        whine: 0, hiss: 0.05, whineIdleHz: 0, whineFullHz: 0,
+        whine: 0, hiss: 0.05, whineIdleHz: 0, whineFullHz: 0, tapeIdle: 0.68, tapeFull: 1.45,
       },
       gasTurbine: {
         wave: 'triangle', idleHz: 70, fullHz: 120, chug: 0.05, chugRatio: 0.25, bright: 3,
-        whine: 0.5, hiss: 0.6, whineIdleHz: 1500, whineFullHz: 2900,
+        whine: 0.5, hiss: 0.6, whineIdleHz: 1500, whineFullHz: 2900, tapeIdle: 0.95, tapeFull: 1.35,
       },
     } satisfies Record<EngineKind, EngineVoice>,
     /** The band of noise a turbine's rush of air is cut from, Hz. */
@@ -130,6 +133,15 @@ export const AUDIO = {
    * `gain` is the recording's loudness; `synthGain` is what the synth under
    * it is turned down to.
    */
+  /**
+   * The engine, recorded (CC BY, listed in CREDITS.md): a loop `loopS` long
+   * played round from `fromS`, faster as the engine works harder (each engine's
+   * `tapeIdle` to `tapeFull`), at `gain`. The file holds the loop twice so
+   * the part played never touches its ends. Once it has arrived, the synth
+   * engine under it is turned down to `synthGain`; a turbine keeps its whine.
+   */
+  engineTape: { file: 'audio/engine.mp3', fromS: 2, loopS: 3.99238, gain: 1.1, synthGain: 0.3 },
+
   recordings: {
     gun: { file: 'audio/gun.mp3', gain: 0.9, synthGain: 0.5 },
     hit: { file: 'audio/hit.mp3', gain: 0.7, synthGain: 0.4 },

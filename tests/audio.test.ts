@@ -292,7 +292,7 @@ describe('the synth', () => {
     sound.cue('short')
     const alone = sources() - before
     await new Promise((done) => setTimeout(done, 0))
-    expect(asked).toEqual(Object.values(AUDIO.recordings).map((each) => each.file))
+    expect(asked).toEqual([...Object.values(AUDIO.recordings).map((each) => each.file), AUDIO.engineTape.file])
     before = sources()
     sound.cue('short')
     expect(sources() - before).toBe(alone + 1)
@@ -300,6 +300,45 @@ describe('the synth', () => {
     before = sources()
     sound.cue('hit')
     expect(sources() - before).toBe(AUDIO.cues.hit.filter((layer) => layer.kind === 'noise').length)
+  })
+})
+
+describe('the engine recording', () => {
+  it('plays faster the harder the engine works, and slower for a bigger engine', () => {
+    const idle = droneAt(VOICE, 0).tapeRate
+    const top = Math.max(...[5, 10, 20, 30, 40, 60].map((kmh) => droneAt(VOICE, kmh).tapeRate))
+    expect(top).toBeGreaterThan(idle)
+    expect(droneAt({ ...VOICE, powerHp: VOICE.powerHp * 2 }, 0).tapeRate).toBeLessThan(idle)
+    for (const tone of Object.values(AUDIO.engine.voices)) {
+      expect(tone.tapeIdle).toBeGreaterThan(0.5)
+      expect(tone.tapeFull).toBeLessThan(2)
+    }
+  })
+
+  it('goes into the engine once it has arrived, round and round, and stops with it', async () => {
+    const fake = fakeContext()
+    const sound = createSound(true, () => fake.context, () => Promise.resolve(new ArrayBuffer(8)))
+    const sources = (): number => fake.calls.get('createBufferSource') ?? 0
+    sound.wake()
+    sound.drone(VOICE, droneAt(VOICE, 10))
+    const before = sources()
+    await new Promise((done) => setTimeout(done, 0))
+    sound.drone(VOICE, droneAt(VOICE, 20))
+    expect(sources() - before).toBe(1)
+    sound.drone(VOICE, droneAt(VOICE, 30))
+    expect(sources() - before).toBe(1)
+    sound.still()
+    expect(fake.calls.get('stop')).toBe(fake.calls.get('start'))
+  })
+
+  it('is in the build, and is played round inside the file, never across its ends', () => {
+    const T = AUDIO.engineTape
+    expect(T.file).toMatch(/^audio\/[a-z]+\.mp3$/)
+    expect(existsSync(`public/${T.file}`)).toBe(true)
+    // The file holds the loop twice over.
+    expect(T.fromS).toBeGreaterThan(0.5)
+    expect(T.fromS + T.loopS).toBeLessThan(2 * T.loopS - 0.5)
+    expect(T.synthGain).toBeLessThan(1)
   })
 })
 
