@@ -57,6 +57,36 @@ the plan names these fonts.
 | `public/sketches/shaped-supplied.png` | Sketch of the Pact shaped-charge round, made the same way. |
 | `public/sketches/shaped-tandem.png` | Sketch of the tandem warhead round, made the same way. |
 | `public/sketches/shaped-gunMissile.png` | Sketch of the gun-launched missile, made the same way. |
+| `public/sketches/sight-daySight.png` | Sketch of the gunner's day sight, made the same way. |
+| `public/sketches/sight-improvedDaySight.png` | Sketch of the improved day sight, made the same way. |
+| `public/sketches/rangefinder-stadiametric.png` | Sketch of a sight with stadia lines, made the same way. |
+| `public/sketches/rangefinder-coincidence.png` | Sketch of the optical rangefinder, made the same way. |
+| `public/sketches/rangefinder-laser.png` | Sketch of the laser rangefinder, made the same way. |
+| `public/sketches/stabiliser-singlePlane.png` | Sketch of the one-plane stabiliser, made the same way. |
+| `public/sketches/stabiliser-twoPlane.png` | Sketch of the two-plane stabiliser, made the same way. |
+| `public/sketches/computer-mechanical.png` | Sketch of the mechanical computer, made the same way. |
+| `public/sketches/computer-electronic.png` | Sketch of the electronic computer, made the same way. |
+| `public/sketches/computer-digital.png` | Sketch of the digital computer, made the same way. |
+| `public/sketches/night-activeInfrared.png` | Sketch of the infrared searchlight, made the same way. |
+| `public/sketches/night-imageIntensifier.png` | Sketch of the image intensifier, made the same way. |
+| `public/sketches/night-thermal.png` | Sketch of the thermal sight, made the same way. |
+| `public/sketches/commanderSight.png` | Sketch of the commander's own sight, made the same way. |
+| `public/sketches/transmission-manual38.png` | Sketch of the 38 t manual gearbox, made the same way. |
+| `public/sketches/transmission-manual44.png` | Sketch of the 44 t manual gearbox, made the same way. |
+| `public/sketches/transmission-hydro50.png` | Sketch of the hydromechanical transmission, made the same way. |
+| `public/sketches/cooling-standard.png` | Sketch of standard cooling, made the same way. |
+| `public/sketches/cooling-heavyDuty.png` | Sketch of heavy-duty cooling, made the same way. |
+| `public/sketches/apu.png` | Sketch of the auxiliary power unit, made the same way. |
+| `public/sketches/suspension-torsionBar.png` | Sketch of a torsion bar station, made the same way. |
+| `public/sketches/suspension-hydropneumatic.png` | Sketch of a hydropneumatic station, made the same way. |
+| `public/sketches/comfort-basic.png` | Sketch of a basic crew seat, made the same way. |
+| `public/sketches/comfort-standard.png` | Sketch of a standard seat with heater, made the same way. |
+| `public/sketches/comfort-improved.png` | Sketch of an improved seat with air conditioning, made the same way. |
+| `public/sketches/smoke.png` | Sketch of the smoke launchers, made the same way. |
+| `public/sketches/fireSuppression.png` | Sketch of the fire suppression bottles, made the same way. |
+| `public/sketches/spallLiner.png` | Sketch of a spall liner panel, made the same way. |
+| `public/sketches/active-softKill.png` | Sketch of soft-kill active protection, made the same way. |
+| `public/sketches/active-hardKill.png` | Sketch of hard-kill active protection, made the same way. |
 | `public/manifest.webmanifest` | Tells a phone how to add Hull Down to the home screen. Written for this game. |
 
 ## Fonts (npm packages, self-hosted in the build)
