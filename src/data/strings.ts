@@ -1325,6 +1325,10 @@ export const STRINGS = {
       missionFirst: 'The first round of a fire mission will be slow: about {value} s where the tender allows {limit} s.',
       missionRate: 'It will fire about {value} rounds a minute on a fire mission where the tender asks {limit}.',
       missionClose: 'Its shells will land about {value} m off the grid where the tender allows {limit} m.',
+      squadTroops: 'It carries {value} soldiers where the tender asks for {limit}.',
+      squadDrop: 'The last soldier will be out about {value} s after the start where the tender allows {limit} s.',
+      squadDropNever: 'It will not get the squad to the drop point.',
+      squadCover: 'It will put down about {value} of the targets shooting at the squad where the tender asks {limit}.',
       sprint: 'It is slow off the mark: {value} s to the sprint speed where the tender allows {limit} s.',
       sprintNever: 'It never reaches the sprint speed.',
       top: 'It tops out at {value} km/h where the tender asks {limit}.',
@@ -1566,6 +1570,10 @@ export const STRINGS = {
     spg2008: {
       name: 'A self-propelled gun',
       brief: 'Seven years on. The army wants guns that can keep up with its tanks: a 155 mm howitzer on tracks. It will not duel the Accord\'s tanks. An observer will call for fire on map grids 11 to 19 km off, and the army will time the first round, count the rounds in a minute and measure how close they land. The tank shoots, the loading drill and the berm do not count for it. Its armour need only keep out a raiding carrier\'s cannon. Firepower counts for most, then cost and reliability. Only the 155 mm calibre is accepted. A turret or a casemate. Generation two parts.',
+    },
+    ifv1996: {
+      name: 'An infantry fighting vehicle',
+      brief: 'Five years after the tank destroyer. The army\'s infantry still ride to battle in open lorries, and it wants them carried in armour that can keep up with the tanks: an infantry fighting vehicle. It carries a squad of six in a compartment at the back, so the engine goes in front, and it fights with the 30 mm cannon, the only gun accepted. It will not duel the Accord\'s tanks. At the range it drives a squad 4 km to a drop point, lets them out, and has a minute to put down four targets that open up on them. The tank shoots, the loading drill and the berm do not count for it. Its armour need only keep out another carrier\'s cannon, front and sides. It must weigh 34 t or less. Firepower and mobility count most, then cost. The same generation one parts.',
     },
     destroyer1991: {
       name: 'A tank destroyer',
@@ -1941,7 +1949,7 @@ export const STRINGS = {
       shootLine: 'Conscripts hit {conscripts} of {targets} targets. The range\'s crew, on the same targets, hit {cadre}.',
       exercise: 'On exercise',
       exerciseLine: '{ground}, against {threat} with trained crews. Of {n} battles: won {won}, lost {lost}, drawn {drawn}.',
-      noExercise: 'None against tanks: a self-propelled gun fires from beyond the hill.',
+      noExercise: 'None against tanks: it was not bought to fight them.',
       lessons: 'The umpires\' lessons',
       noLessons: 'The umpires drew no lessons.',
       standing: 'What it did to the bureau\'s standing',

@@ -77,6 +77,12 @@ export interface RangeReport {
    * and the berm are run but not counted, and the report leaves them out.
    */
   selfPropelled: boolean
+  /**
+   * True on an infantry fighting vehicle's tender: the tank shoots, the
+   * loading drill and the berm are run but not counted, and the report
+   * leaves them out. The squad drop is marked in their place.
+   */
+  carrier: boolean
   /** Hours the crew had been in the tank when the shoots and the drill came round. */
   crewHours: number
   /** Tests passed and tests run. */
@@ -136,8 +142,11 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
   const drop = squadMarks ? runSquadDrop(sheet.drive, sheet.fire, sheet.rollup.troops, setup.seed) : null
   const squad = drop && squadMarks ? { ...drop, ...judgeSquadDrop(drop, squadMarks), marks: squadMarks } : null
   const selfPropelled = marks.fireMission !== undefined
+  const carrier = marks.squad !== undefined
   const passed = selfPropelled
     ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed, fireMission?.passed ?? false]
+    : carrier
+    ? [acceleration.passed, obstacles.passed, endurance.passed, armour.passed]
     : [
       acceleration.passed, obstacles.passed, endurance.passed, ...GUNNERY_TEST_IDS.map((id) => gunnery[id].passed), drill.passed,
       armour.passed, berm.passed, ...(fireMission ? [fireMission.passed] : []),
@@ -155,6 +164,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     fireMission,
     squad,
     selfPropelled,
+    carrier,
     crewHours: RANGE.crewHours,
     passes: passed.filter(Boolean).length,
     tests: passed.length,

@@ -5,6 +5,7 @@ import { BASELINE_SPEC } from '../src/data/baseline'
 import { BUREAU_IDS } from '../src/data/opponents'
 import { MARKS_GEN2 } from '../src/data/range'
 import { TENDER_IDS, TENDERS } from '../src/data/tenders'
+import { TUNING } from '../src/data/tuning'
 import { cleanCareer } from '../src/persist/careerCodec'
 import {
   CAREER_FORMAT, buildBlock, buildPrototype, enterTender, newCareer, nextTender, research, tenderIdOf, tenderOf, tendersLeft, trialSeed, upgradeLimits,
@@ -28,9 +29,20 @@ const HOWITZER = tank((spec) => {
   spec.ammo.rounds = 30
   spec.turret.ringMm = gunRingMm(spec)
 })
+const CARRIER = tank((spec) => {
+  spec.gun = 'autocannon30'
+  spec.hull.engineAt = 'front'
+  spec.loading = 'loader'
+  spec.crew.troops = 6
+  // Thin enough to come in under the tender's weight.
+  for (const zone of ['upperGlacis', 'turretFrontLeft', 'turretFrontRight', 'mantlet', 'turretSides', 'turretRear', 'lowerGlacis'] as const) spec.armour[zone] = [{ material: 'castSteel', mm: 40 }]
+  // The smallest ring the office offers: the cannon needs less.
+  spec.turret.ringMm = TUNING.limits.ringMm.min
+})
 type Career = Parameters<typeof nextTender>[0]
-/** On from the first tender, through the tank destroyer's of 1991, to the tender of 2001. */
-const to2001 = (career: Career) => nextTender(enterTender(buildPrototype(nextTender(career), NIGHT), 1))
+/** On from the first tender, through the tank destroyer's of 1991 and the infantry fighting vehicle's of 1996, to the tender of 2001. */
+const to2001 = (career: Career) =>
+  nextTender(enterTender(buildPrototype(nextTender(enterTender(buildPrototype(nextTender(career), NIGHT), 1)), CARRIER), 1))
 /** The tender of 2001, with the thermal sight researched. */
 const onward = (career: Career) => research(research(to2001(career), 'digitalComputer'), 'thermalSight')
 
@@ -38,7 +50,7 @@ describe('the tank destroyer tender of 1991', () => {
   const T = TENDERS.destroyer1991
 
   it('comes second, ten years after the first, with the same parts and a casemate allowed', () => {
-    expect(TENDER_IDS).toEqual(['improvedType1', 'destroyer1991', 'tank2001', 'spg2008', 'tank2016'])
+    expect(TENDER_IDS).toEqual(['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'spg2008', 'tank2016'])
     expect(T.year).toBe(1991)
     expect(T.limits.generation ?? 1).toBe(1)
     expect(T.limits.casemate).toBe(true)
@@ -61,15 +73,15 @@ describe('the tank destroyer tender of 1991', () => {
   }, SLOW)
 
   it('has luck of its own, and leaves the other tenders\' luck as it was before it came in', () => {
-    expect(TENDER_IDS.map((id) => TENDERS[id].luck)).toEqual([0, 3, 1, 4, 2])
+    expect(TENDER_IDS.map((id) => TENDERS[id].luck)).toEqual([0, 3, 5, 1, 4, 2])
   })
 })
 
 describe('the tender of 2001', () => {
   const T = TENDERS.tank2001
 
-  it('comes after the tank destroyer, twenty years on from the first, with generation two allowed', () => {
-    expect(TENDER_IDS.indexOf('tank2001')).toBe(TENDER_IDS.indexOf('destroyer1991') + 1)
+  it('comes after the infantry fighting vehicle, twenty years on from the first, with generation two allowed', () => {
+    expect(TENDER_IDS.indexOf('tank2001')).toBe(TENDER_IDS.indexOf('ifv1996') + 1)
     expect(T.year).toBe(2001)
     expect(T.limits.generation).toBe(2)
     expect(T.marks).toBe(MARKS_GEN2)

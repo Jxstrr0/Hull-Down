@@ -8,14 +8,14 @@ import type { ZoneId } from '../../data/materials'
 import { COMPUTERS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS } from '../../data/parts'
 import { GUNNERY_TEST_IDS, type GunneryTestId, type ObstacleId } from '../../data/range'
 import type { Tender } from '../../data/tenders'
-import { runAcceleration, runBerm, runFireMission, runGunnery, runObstacles } from '../trials'
+import { runAcceleration, runBerm, runFireMission, runGunnery, runObstacles, runSquadDrop } from '../trials'
 import type { Issue } from '../vehicle/checks'
 import { testShot } from '../vehicle/shot'
 import type { VehicleSpec } from '../vehicle/spec'
 import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 
 export const REMARK_KINDS = [
-  'fault', 'plate', 'shoot', 'slowShot', 'drill', 'missionReach', 'missionFirst', 'missionRate', 'missionClose', 'sprint', 'top', 'obstacle', 'berm', 'warning', 'reliability', 'cost',
+  'fault', 'plate', 'shoot', 'slowShot', 'drill', 'missionReach', 'missionFirst', 'missionRate', 'missionClose', 'squadTroops', 'squadDrop', 'squadCover', 'sprint', 'top', 'obstacle', 'berm', 'warning', 'reliability', 'cost',
 ] as const
 export type RemarkKind = (typeof REMARK_KINDS)[number]
 
@@ -92,8 +92,8 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
   }
   out.push(...holed.values())
 
-  // A self-propelled gun's tender counts no tank shoots, drill or berm, so he says nothing of them.
-  const tank = marks.fireMission === undefined
+  // A self-propelled gun's or an infantry fighting vehicle's tender counts no tank shoots, drill or berm, so he says nothing of them.
+  const tank = marks.fireMission === undefined && marks.squad === undefined
   // The firing tests, rehearsed a few times over.
   for (const test of tank ? GUNNERY_TEST_IDS : []) {
     let hits = 0
@@ -159,6 +159,31 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
     if (rpm < M.rpm) out.push({ kind: 'missionRate', part: 'loading', value: Math.round(rpm * 10) / 10, limit: M.rpm })
     if (misses > 0 && miss / misses > M.missM) {
       out.push({ kind: 'missionClose', part: 'fireControl.computer', value: Math.round(miss / misses), limit: M.missM })
+    }
+  }
+
+  // An infantry fighting vehicle's squad drop, rehearsed a few times over.
+  if (marks.squad) {
+    const M = marks.squad
+    const troops = sheet.rollup.troops
+    if (troops < M.troops) out.push({ kind: 'squadTroops', part: 'crew.troops', value: troops, limit: M.troops })
+    let knocked = 0
+    let dropS: number | null = null
+    for (let seed = 1; seed <= ADVISOR.rehearsals; seed++) {
+      const run = runSquadDrop(sheet.drive, sheet.fire, troops, seed)
+      knocked += run.knocked / ADVISOR.rehearsals
+      dropS = run.dropS
+    }
+    if (dropS === null || dropS > M.dropS) {
+      out.push({ kind: 'squadDrop', part: 'powerpack.engine', value: dropS === null ? undefined : Math.round(dropS), limit: M.dropS })
+    }
+    if (knocked < M.targets) {
+      const fc = spec.fireControl
+      out.push({
+        kind: 'squadCover',
+        part: firstToBetter([['fireControl.rangefinder', best(RANGEFINDERS, fc.rangefinder)], ['fireControl.computer', best(COMPUTERS, fc.computer)]]),
+        value: Math.round(knocked * 10) / 10, limit: M.targets,
+      })
     }
   }
 

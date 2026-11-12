@@ -17,6 +17,9 @@ export function lessonsOf(range: RangeReport): Lesson[] {
     // Only the fire mission counts: late or wide wants a better computer, slow wants a quicker way to load.
     if (mission && (!mission.timePassed || !mission.closePassed)) lessons.push('fireData')
     if (mission && !mission.ratePassed) lessons.push('drill')
+  } else if (range.carrier) {
+    // Only the squad drop counts of the shooting: targets left standing want a better rangefinder and computer.
+    if (range.squad && !range.squad.coverPassed) lessons.push('halted')
   } else {
     if (!range.gunnery.night.passed) lessons.push('night')
     if (!range.gunnery.onTheMove.passed) lessons.push('onTheMove')
@@ -26,7 +29,7 @@ export function lessonsOf(range: RangeReport): Lesson[] {
   const failed = (id: ObstacleId): boolean => range.obstacles.results.some((result) => result.id === id && !result.passed)
   if (!range.acceleration.passed || failed('slope') || failed('mud')) lessons.push('power')
   if (failed('trench')) lessons.push('trench')
-  if (!range.selfPropelled && !range.berm.passed) lessons.push('berm')
+  if (!range.selfPropelled && !range.carrier && !range.berm.passed) lessons.push('berm')
   for (const zone of range.armour.failed) lessons.push({ zone })
   return lessons
 }

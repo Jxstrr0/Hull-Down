@@ -605,11 +605,11 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     long.append(el('p', 'ctl-note rg-note', E.note))
     root.append(
       summary, accel, course, long,
-      // A self-propelled gun is judged on its fire mission, not on the tank shoots, the drill or the berm.
-      ...(report.selfPropelled ? [] : gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch })),
+      // A self-propelled gun is judged on its fire mission and an infantry fighting vehicle on its squad drop, not on the tank shoots, the drill or the berm.
+      ...(report.selfPropelled || report.carrier ? [] : gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch })),
       ...missionCards(report, sheet.fire.mission.reachKm, { card, line, fixButton, watch }),
       ...squadCards(report, { card, line, fixButton, watch }),
-      ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }).slice(0, report.selfPropelled ? 1 : 2),
+      ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }).slice(0, report.selfPropelled || report.carrier ? 1 : 2),
     )
     const after = afterAction(report.armour, args.spec)
     const debrief = afterActionCard(after, sheet, args.spec, { fixButton, fixZone })

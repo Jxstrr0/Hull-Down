@@ -35,6 +35,12 @@ export function remarkText(remark: Remark): string {
       return R.missionReach
     case 'missionRate':
       return fill(R.missionRate, numbers(remark, (value) => fixed(value, 1)))
+    case 'squadCover':
+      return fill(R.squadCover, numbers(remark, (value) => fixed(value, Number.isInteger(value) ? 0 : 1)))
+    case 'squadDrop':
+      if (remark.value === undefined) return R.squadDropNever
+      return fill(R.squadDrop, numbers(remark, plain))
+    case 'squadTroops':
     case 'slowShot':
     case 'missionFirst':
     case 'missionClose':
