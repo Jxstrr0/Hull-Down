@@ -759,7 +759,11 @@ than tank duels.
    and the squad drop, with no duels; firepower comes from the squad drop.
    Weights: firepower and mobility 25, cost 20, protection and reliability
    15. Careers saved from 2001 on move on one place.
-5. Rival bureaus bid infantry fighting vehicles (1.5.4.0).
+5. Rival bureaus bid infantry fighting vehicles (1.5.4.0). Done: each
+   carries six with the engine in front and no tiles. Heavy builds to the
+   limit with plain sights, light is cheap with the small engine and the
+   low turret, firepower fits the laser and the electronic computer. Their
+   armour leans to the sides. The speed mark is 50 km/h, as for a tank.
 6. Something to watch for the squad trial (1.5.5.0).
 
 ---

@@ -4,7 +4,7 @@
 // weight it has left on armour. Same parts list, same limits, same checks.
 import { BASELINE_SPEC } from '../../data/baseline'
 import { MATERIALS, ZONES, type MaterialId, type ZoneId } from '../../data/materials'
-import { BUREAUS, BUREAU_IDS, DESIGNER, SPG_ARMOUR, type BureauId, type LaterPicks, type Philosophy, type Picks } from '../../data/opponents'
+import { BUREAUS, BUREAU_IDS, DESIGNER, IFV_ARMOUR, SPG_ARMOUR, type BureauId, type LaterPicks, type Philosophy, type Picks } from '../../data/opponents'
 import {
   COMPUTERS, COOLING, ENGINES, GUNS, HULLS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS, SUSPENSIONS,
   TRANSMISSIONS, TURRETS, type EngineId, type GunId, type TransmissionId, type TurretId,
@@ -71,6 +71,19 @@ function allowed(gun: GunId, limits: Limits): boolean {
 export function wantsHowitzer(limits: Limits): boolean {
   const guns = (Object.keys(GUNS) as GunId[]).filter((gun) => allowed(gun, limits))
   return guns.length > 0 && guns.every((gun) => GUNS[gun].howitzer)
+}
+
+/** True when the tender takes only belt-fed cannon: it wants an infantry fighting vehicle. */
+export function wantsCannon(limits: Limits): boolean {
+  const guns = (Object.keys(GUNS) as GunId[]).filter((gun) => allowed(gun, limits))
+  return guns.length > 0 && guns.every((gun) => GUNS[gun].beltFed)
+}
+
+/** The share of the weight limit the bureau builds up to on this tender. */
+function massShareOf(philosophy: Philosophy, limits: Limits): number {
+  if (wantsHowitzer(limits)) return philosophy.spg.massShare
+  if (wantsCannon(limits)) return philosophy.ifv.massShare
+  return philosophy.massShare
 }
 
 function biggestGun(limits: Limits): GunId | null {
@@ -265,7 +278,7 @@ export interface Draft {
  * whatever cannot be built. False when the tank cannot be built at all.
  */
 function settle(spec: VehicleSpec, pattern: Record<ZoneId, number>, philosophy: Philosophy, limits: Limits): boolean {
-  const targetT = limits.maxMassT * (wantsHowitzer(limits) ? philosophy.spg.massShare : philosophy.massShare)
+  const targetT = limits.maxMassT * massShareOf(philosophy, limits)
   const swaps = laterPicks(philosophy, limits.generation ?? 1).materials ?? {}
   for (let turn = 0; turn < DESIGNER.repairTurns; turn++) {
     armourUp(spec, pattern, fit(spec, targetT, limits), swaps)
@@ -320,12 +333,24 @@ export function draftRival(bureau: BureauId, limits: Limits, seed: number): Draf
   if (wantsHowitzer(limits)) {
     fitPicks(spec, philosophy.spg)
     spec.ammo.rounds = philosophy.spg.rounds
+  } else if (wantsCannon(limits)) {
+    // A carrier for a squad: the engine goes in front to leave the back for the soldiers, and no tiles.
+    const ifv = philosophy.ifv
+    fitPicks(spec, ifv)
+    spec.hull.size = ifv.hull
+    spec.hull.engineAt = 'front'
+    spec.crew.troops = ifv.troops
+    spec.ammo.rounds = ifv.rounds
+    if (ifv.engine) spec.powerpack.engine = ifv.engine
+    if (ifv.rangefinder) spec.fireControl.rangefinder = ifv.rangefinder
+    for (const zone of ZONES) spec.era[zone] = 0
   } else if (limits.casemate && philosophy.destroyer) fitPicks(spec, philosophy.destroyer)
   // A gun outside the tender's calibres is no use: the bureau takes the biggest gun that is allowed.
   if (!allowed(spec.gun, limits)) spec.gun = biggestGun(limits) ?? spec.gun
 
   const pattern = { ...philosophy.armour }
-  if (wantsHowitzer(limits)) for (const [zone, share] of Object.entries(SPG_ARMOUR) as [ZoneId, number][]) pattern[zone] *= share
+  const lean = wantsHowitzer(limits) ? SPG_ARMOUR : wantsCannon(limits) ? IFV_ARMOUR : {}
+  for (const [zone, share] of Object.entries(lean) as [ZoneId, number][]) pattern[zone] *= share
   if (settle(spec, pattern, philosophy, limits)) return { spec, pattern }
   // Nothing the bureau wanted could be built: it enters the licence-built tank as it stands.
   const fallback = copyOf(BASELINE_SPEC)
