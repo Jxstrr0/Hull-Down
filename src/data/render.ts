@@ -275,10 +275,13 @@ export const RENDER = {
      * The track's links, painted on: bare steel, whatever the paint. One link is this long, as on the blueprint.
      * The picture is this many pixels along a link and across the track; each is a shade of the steel, 1 the steel itself:
      * the gap between links, the pin at the front of each link, and the guide horns down the middle.
+     * The links run round as the tank moves, but never more than `mostLinksPerFrame` from one picture to
+     * the next: any faster and they would seem to stand still or run backwards, as wheels do on film.
      */
     trackLinks: {
       linkM: 0.16, steel: '#5d5e55', alongPx: 16, acrossPx: 8,
       gapShare: 0.2, gapShade: 0.3, pinShade: 0.65, hornShare: 0.2, hornShade: 0.75,
+      mostLinksPerFrame: 0.4,
     },
     /** A bustle is a box behind the turret: its width as a share of the turret radius. */
     bustleWidthShare: 1.5,

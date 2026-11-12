@@ -1,11 +1,12 @@
 // Builds the tank the range and the battle show, from its list of parts.
 // Parts of one colour are joined into one mesh, so a tank is a handful of
 // meshes however much detail it carries.
-import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Group, Shape } from 'three'
+import { BoxGeometry, BufferGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Group, Mesh, Shape, type Texture } from 'three'
 import { PAINT, type PaintId } from '../data/paint'
 import { RENDER } from '../data/render'
 import { camoOf, camoPlaces, type Camo } from './camo'
 import { placeCorners } from './glb'
+import { trackStep } from './trackLinks'
 import { kitPiece } from './kitPieces'
 import type { Kit } from './rangeScene'
 import type { Mount, Solid, TankShape, Tone } from './tankShape'
@@ -16,6 +17,8 @@ type Sweep = Extract<Solid, { kind: 'sweep' }>
 
 /** The name of the part of a built tank that turns with the gun. */
 export const TURRET = 'turret'
+/** The name of the tank's tracks, both in one, found again to run their links round. */
+export const TRACKS = 'tracks'
 
 /** The three colours a tank is painted in, and the pattern over its plate if it wears one. */
 export type Tones = Record<Tone, string> & { camo?: Camo }
@@ -83,6 +86,19 @@ function loftCorners(part: Loft): number[] {
 /** Outlines along the tank skinned one to the next and closed at both ends. */
 function sweepCorners(part: Sweep): number[] {
   return skinCorners(part.stations.map((station) => station.corners.map((c): V => [station.x, c.y, c.z])), true)
+}
+
+/**
+ * Run the tank's links round its wheels as it moves `movedM` (forward
+ * positive). Each loop goes forward along the ground, so moving the picture
+ * on along it sends the links under the tank backwards, as they go.
+ */
+export function rollTracks(tank: Group, movedM: number): void {
+  const tracks = tank.getObjectByName(TRACKS)
+  if (!(tracks instanceof Mesh)) return
+  const map = (tracks.material as { map?: Texture | null }).map
+  if (!map) return
+  map.offset.x = (map.offset.x + trackStep(movedM)) % 1
 }
 
 /** A loop of plate: the outline, the same outline set in by the plate's thickness, and the faces between. */
@@ -240,7 +256,9 @@ export function buildTank(kit: Kit, shape: TankShape, tones: Tones = OUR_TONES):
     geometry.setAttribute('position', new Float32BufferAttribute(track.corners, 3))
     geometry.setAttribute('uv', new Float32BufferAttribute(track.places, 2))
     geometry.computeVertexNormals()
-    tank.add(kit.tracked(geometry))
+    const tracks = kit.tracked(geometry)
+    tracks.name = TRACKS
+    tank.add(tracks)
   }
   return tank
 }

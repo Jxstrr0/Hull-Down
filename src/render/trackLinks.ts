@@ -21,3 +21,14 @@ export function trackLinkPixels(): Uint8Array {
   }
   return pixels
 }
+
+/**
+ * How far the links run round, in links, when the tank has moved `movedM`
+ * since the last picture: forward positive. Held to a steady crawl when the
+ * tank moves further than the eye could follow, as in a time-lapse.
+ */
+export function trackStep(movedM: number): number {
+  const k = RENDER.tank.trackLinks
+  const links = movedM / k.linkM
+  return Math.max(-k.mostLinksPerFrame, Math.min(k.mostLinksPerFrame, links))
+}

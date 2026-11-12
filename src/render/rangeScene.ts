@@ -21,7 +21,7 @@ import { reelOf, type ReelFrame } from './shootReel'
 import type { Camo } from './camo'
 import { createFrameMeter } from './frameMeter'
 import { rangeScenery } from './scenery'
-import { buildSolids, buildTank, tonesOf } from './tankModel'
+import { buildSolids, buildTank, rollTracks, tonesOf } from './tankModel'
 import { trackLinkPixels } from './trackLinks'
 import { tankShapeOf, type TankShape } from './tankShape'
 import { legGround, placeOnLeg, type LegGround } from './terrain'
@@ -117,12 +117,17 @@ export class Kit {
     return new Mesh(geometry, this.paint(colour, opacity))
   }
 
-  /** A track: bare steel with its links painted on. The shape says where on the links each corner falls. */
+  private links: Texture | null = null
+  private trackCount = 0
+
+  /**
+   * A tank's tracks: bare steel with the links painted on. The shape says where on the links each corner
+   * falls. Each tank gets its own copy of the picture, so its links run round at its own pace.
+   */
   tracked(geometry: BufferGeometry): Mesh {
     this.geometries.push(geometry)
-    let material = this.materials.get('track')
-    if (!material) {
-      const k = RENDER.tank.trackLinks
+    const k = RENDER.tank.trackLinks
+    if (!this.links) {
       const texture = new DataTexture(trackLinkPixels(), k.alongPx, k.acrossPx)
       texture.wrapS = RepeatWrapping
       texture.wrapT = RepeatWrapping
@@ -130,9 +135,13 @@ export class Kit {
       texture.generateMipmaps = true
       texture.needsUpdate = true
       this.textures.push(texture)
-      material = new MeshLambertMaterial({ map: texture, color: new Color(k.steel), flatShading: true })
-      this.materials.set('track', material)
+      this.links = texture
     }
+    const texture = this.links.clone()
+    texture.needsUpdate = true
+    this.textures.push(texture)
+    const material = new MeshLambertMaterial({ map: texture, color: new Color(k.steel), flatShading: true })
+    this.materials.set(`track/${this.trackCount++}`, material)
     return new Mesh(geometry, material)
   }
 
@@ -539,9 +548,13 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   let disposed = false
   let meter = createFrameMeter()
 
+  let lastDistanceM: number | null = null
+
   /** Put the tank and the camera where the run has them at `timeS`, and draw. */
   function draw(): boolean {
     const now = show.at(timeS)
+    if (lastDistanceM !== null) rollTracks(tank, now.frame.distanceM - lastDistanceM)
+    lastDistanceM = now.frame.distanceM
     tank.position.set(now.pose.x, now.pose.y - now.sinkM, 0)
     tank.rotation.z = now.pose.pitchRad
     const shot = shotAt(view, now.where, now.pose)
