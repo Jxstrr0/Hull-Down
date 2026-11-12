@@ -22,16 +22,22 @@ export function lessonsOf(range: RangeReport): Lesson[] {
     if (range.squad && !range.squad.coverPassed) lessons.push('halted')
     // A squad late to the drop point wants a stronger engine.
     if (range.squad && !range.squad.dropPassed) lessons.push('power')
+  } else if (range.scouting) {
+    // Only spot and report counts of the sights: vehicles missed want a better night sight, whose heat picture finds them by day.
+    if (range.scout && !range.scout.foundPassed) lessons.push('night')
+    // Seen first wants less of the car over a crest; late home wants a stronger engine.
+    if (range.scout && !range.scout.seenPassed) lessons.push('berm')
+    if (range.scout && !range.scout.timePassed) lessons.push('power')
   } else {
     if (!range.gunnery.night.passed) lessons.push('night')
     if (!range.gunnery.onTheMove.passed) lessons.push('onTheMove')
     if (!range.gunnery.halted.passed) lessons.push('halted')
     if (!range.drill.passed) lessons.push('drill')
   }
-  const failed = (id: ObstacleId): boolean => range.obstacles.results.some((result) => result.id === id && !result.passed)
+  const failed = (id: ObstacleId): boolean => range.obstacles.results.some((result) => result.id === id && !result.passed && !result.waived)
   if (!range.acceleration.passed || failed('slope') || failed('mud')) lessons.push('power')
   if (failed('trench')) lessons.push('trench')
-  if (!range.selfPropelled && !range.carrier && !range.berm.passed) lessons.push('berm')
+  if (!range.selfPropelled && !range.carrier && !range.scouting && !range.berm.passed) lessons.push('berm')
   for (const zone of range.armour.failed) lessons.push({ zone })
   return lessons
 }

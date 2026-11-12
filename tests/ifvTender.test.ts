@@ -171,8 +171,9 @@ describe('a career saved before the infantry fighting vehicle tender came in', (
   })
 
   it('keeps the trial luck of the tender it was on', () => {
-    for (const id of ['tank2001', 'spg2008', 'tank2016'] as const) {
-      expect(trialSeed(old(TENDER_IDS.indexOf(id) - 1))).toBe(trialSeed({ ...newCareer(11), tenderNo: TENDER_IDS.indexOf(id) }))
+    // Where each was in format three's list.
+    for (const [id, was] of [['tank2001', 2], ['spg2008', 3], ['tank2016', 4]] as const) {
+      expect(trialSeed(old(was))).toBe(trialSeed({ ...newCareer(11), tenderNo: TENDER_IDS.indexOf(id) }))
     }
   })
 })

@@ -746,6 +746,7 @@ export const STRINGS = {
     turretNeedsRearEngine: 'With an unmanned turret the crew sit together in the nose. The engine has to go at the back.',
     turretNeedsComputer: 'The crew fight an unmanned turret by screens. It needs the digital computer.',
     wheelsNotAllowed: 'The army wants tracks on this one. Wheels are for a wheeled vehicle.',
+    tracksNotAllowed: 'The army wants a car on wheels: four, six or eight.',
     tyresOverloaded: 'These tyres are rated for {limit} t together and the vehicle weighs {value} t. Expect burst tyres.',
     casemateNotAllowed: 'The army wants a turret on a tank. A casemate is for a tank destroyer.',
     overPowerBudget: 'The systems fitted draw {value} kW and the tank makes {limit} kW. Fit the auxiliary power unit, or something that draws less.',
@@ -880,6 +881,7 @@ export const STRINGS = {
       slopePass: 'Climbed in {time} s. Bottom gear pulls {have} t and the slope needs {need} t.',
       slopePull: 'Stalled {reached} m up. Bottom gear pulls {have} t and the slope needs {need} t.',
       slopeGrip: 'The tracks slipped {reached} m up. They grip {have} t and the slope needs {need} t.',
+      waived: 'This tender does not ask for it, so it counts neither way.',
     },
     // The same report for a vehicle on wheels: tyres where a tank has tracks.
     onWheels: {
@@ -1399,6 +1401,10 @@ export const STRINGS = {
       squadDrop: 'The last soldier will be out about {value} s after the start where the tender allows {limit} s.',
       squadDropNever: 'It will not get the squad to the drop point.',
       squadCover: 'It will put down about {value} of the targets shooting at the squad where the tender asks {limit}.',
+      scoutTime: 'It will take about {value} min to get round spot and report where the tender allows {limit} min.',
+      scoutTimeNever: 'It will not get round spot and report.',
+      scoutFound: 'It will find about {value} of the hidden vehicles where the tender asks {limit}.',
+      scoutSeen: 'About {value} of the hidden vehicles will see it before it sees them. The tender allows {limit}.',
       sprint: 'It is slow off the mark: {value} s to the sprint speed where the tender allows {limit} s.',
       sprintNever: 'It never reaches the sprint speed.',
       top: 'It tops out at {value} km/h where the tender asks {limit}.',
@@ -1637,9 +1643,13 @@ export const STRINGS = {
       name: 'A tank for a watched battlefield',
       brief: 'Fifteen years on. The Palisade B is still what the Accord fields, but the army has watched what small wars abroad do to tanks, and the range now drops a bomblet from a drone on the hull roof and the turret roof, and both must hold. A top-attack missile is fired at the turret roof for the record. But the army has a whole fleet to replace. Above all it wants a tank it can buy in numbers and keep running: cost counts for most, then reliability. The Pact has rebuilt its bridges to carry 48 t. Generation three parts are allowed as the bureau works them up.',
     },
+    scout2004: {
+      name: 'A scout car',
+      brief: 'Three years after the new tank. The army wants to know where the enemy is before its tanks run into him: a scout car, quick on the road and hard to see. It goes on four, six or eight wheels, never tracks, and carries the 30 mm cannon, the only gun accepted. It will not duel the Accord\'s tanks. At the range it drives 33 km to three lookout points and back, and searches from each for vehicles hidden in the landscape while they watch for it. It is timed, and marked on how many it finds and whether any see it first. The tank shoots, the loading drill and the berm do not count, and of the obstacles it is asked only through the mud. Its armour need only keep out a carrier\'s cannon at long range. It must weigh 20 t or less. Mobility and what it finds count most, then cost. Generation two parts.',
+    },
     spg2008: {
       name: 'A self-propelled gun',
-      brief: 'Seven years on. The army wants guns that can keep up with its tanks: a 155 mm howitzer on tracks. It will not duel the Accord\'s tanks. An observer will call for fire on map grids 11 to 19 km off, and the army will time the first round, count the rounds in a minute and measure how close they land. The tank shoots, the loading drill and the berm do not count for it. Its armour need only keep out a raiding carrier\'s cannon. Firepower counts for most, then cost and reliability. Only the 155 mm calibre is accepted. A turret or a casemate. Generation two parts.',
+      brief: 'Four years after the scout car. The army wants guns that can keep up with its tanks: a 155 mm howitzer on tracks. It will not duel the Accord\'s tanks. An observer will call for fire on map grids 11 to 19 km off, and the army will time the first round, count the rounds in a minute and measure how close they land. The tank shoots, the loading drill and the berm do not count for it. Its armour need only keep out a raiding carrier\'s cannon. Firepower counts for most, then cost and reliability. Only the 155 mm calibre is accepted. A turret or a casemate. Generation two parts.',
     },
     ifv1996: {
       name: 'An infantry fighting vehicle',

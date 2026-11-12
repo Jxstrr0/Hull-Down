@@ -97,4 +97,6 @@ export interface Limits {
   casemate?: boolean
   /** True when the tender is for a wheeled vehicle, which may have wheels in place of tracks. */
   wheels?: boolean
+  /** True when the tender is for a car on wheels only: tracks are refused. */
+  wheelsOnly?: boolean
 }

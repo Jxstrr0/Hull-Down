@@ -799,7 +799,16 @@ it on a new spot-and-report trial rather than tank duels.
    more of it shows over a crest. Until the tender, every car on wheels is
    sent round it, marked at 50 min, five of six found and none seeing it
    first.
-4. The 2004 tender in the career (1.6.3.0), with saves carried over.
+4. The 2004 tender in the career (1.6.3.0), with saves carried over. Done:
+   between the tank of 2001 and the self-propelled gun of 2008, at most
+   20 t and 2.4 million kr, wheels only, the 30 mm cannon only, no threat
+   tanks to duel. It counts the drive, the endurance run, the armour (a
+   carrier's cannon at long range) and spot and report. Of the obstacles
+   only the mud pit is asked for: the trench, step and slope are run but
+   count neither way, as no car on wheels can cross them. Firepower is
+   scored from spot and report, 0.7 on what it found and 0.3 on not being
+   seen first. Rivals put in eight-wheelers until step 5. Saves move on one
+   place from 2008.
 5. Rival bureaus bid scout cars (1.6.4.0).
 6. Something to watch for the spot-and-report trial (1.6.5.0).
 

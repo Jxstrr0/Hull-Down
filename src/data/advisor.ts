@@ -10,6 +10,12 @@ export const ADVISOR = {
   defaultMode: 'always' as AdvisorMode,
   /** Firing tests he rehearses on paper to judge whether the tank will make its hits. */
   rehearsals: 4,
+  /**
+   * He warns that a scout car will be seen first when, over his rehearsals,
+   * more than this many hidden vehicles a run see it first on average above
+   * the tender's mark: one unlucky run in four is not worth a word.
+   */
+  scoutSeenSlack: 0.25,
   /** He remarks on a reliability figure below this. */
   reliabilityIndex: 60,
   /** He remarks on a unit cost above this share of the tender's ceiling. */

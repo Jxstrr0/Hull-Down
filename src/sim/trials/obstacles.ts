@@ -24,6 +24,8 @@ export type ObstacleCause =
 export interface ObstacleResult {
   id: ObstacleId
   passed: boolean
+  /** True when the tender does not ask the vehicle to cross it: it is tried, but neither passed nor failed. */
+  waived?: boolean
   cause?: ObstacleCause
   /**
    * What the tank has and what the obstacle needs. Metres for the trench and

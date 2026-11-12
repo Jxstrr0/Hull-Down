@@ -11,8 +11,8 @@ const T = TENDERS.ifv1996
 const SEEDS = [1, 5, 9]
 
 describe('the rival bureaus asked for an infantry fighting vehicle', () => {
-  it('know the tender of 1996 wants one, and no other', () => {
-    for (const id of TENDER_IDS) expect(wantsCannon(TENDERS[id].limits), id).toBe(id === 'ifv1996')
+  it('know the tenders of 1996 and 2004 want the cannon, and no other', () => {
+    for (const id of TENDER_IDS) expect(wantsCannon(TENDERS[id].limits), id).toBe(id === 'ifv1996' || id === 'scout2004')
   })
 
   it('each draw up a legal carrier: the cannon, the engine in front, six soldiers and no tiles', () => {
