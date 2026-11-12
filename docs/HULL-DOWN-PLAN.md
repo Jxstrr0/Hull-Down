@@ -793,6 +793,12 @@ it on a new spot-and-report trial rather than tank duels.
    cross-country route to three lookout points, find vehicles hidden in the
    landscape with the sights, and report back. Marked on time, how many it
    found, and whether it was seen first. It gets a card in the report.
+   Done: 33 km out and back, two vehicles hidden 1.4 to 3.2 km off at each
+   lookout, up to 180 s watching at each. The commander finds them sooner
+   with his own sight and a thermal sight; they notice the car sooner the
+   more of it shows over a crest. Until the tender, every car on wheels is
+   sent round it, marked at 50 min, five of six found and none seeing it
+   first.
 4. The 2004 tender in the career (1.6.3.0), with saves carried over.
 5. Rival bureaus bid scout cars (1.6.4.0).
 6. Something to watch for the spot-and-report trial (1.6.5.0).

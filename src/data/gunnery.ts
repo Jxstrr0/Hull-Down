@@ -48,6 +48,8 @@ export interface NightGunnery {
   seeM: number
   /** Aiming is this much rougher, and slower, at night. */
   layFactor: number
+  /** How much sooner the commander finds a hidden vehicle by day with it (src/data/scout.ts): an engine's heat shows through scrub and nets. */
+  search: number
 }
 
 export interface Crew {
@@ -106,11 +108,11 @@ export const GUNNERY = {
     digital: { uncorrected: 0.06, setS: 0.6 },
   } satisfies Record<ComputerId, ComputerGunnery>,
   nightSights: {
-    none: { seeM: 300, layFactor: 2.5 },
-    activeInfrared: { seeM: 800, layFactor: 1.6 },
-    imageIntensifier: { seeM: 1300, layFactor: 1.3 },
+    none: { seeM: 300, layFactor: 2.5, search: 1 },
+    activeInfrared: { seeM: 800, layFactor: 1.6, search: 1 },
+    imageIntensifier: { seeM: 1300, layFactor: 1.3, search: 1.2 },
     // Night is nearly day through a thermal sight.
-    thermal: { seeM: 2600, layFactor: 1.05 },
+    thermal: { seeM: 2600, layFactor: 1.05, search: 2.5 },
   } satisfies Record<NightSightId, NightGunnery>,
   /** Seconds for the commander to find a target and put the gunner on it. */
   find: { plainS: 5, ownSightS: 3 },

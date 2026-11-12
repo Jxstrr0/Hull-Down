@@ -1,6 +1,7 @@
 // The proving ground: every test a prototype is put through, run from its
 // stat sheet. The same tank always gives the same result.
 import { FIRE_MISSION } from '../../data/fireMission'
+import { SCOUT_TRIAL, type ScoutMarks } from '../../data/scout'
 import { SQUAD_TRIAL, type SquadMarks } from '../../data/squad'
 import { GUNNERY_TEST_IDS, MARKS_GEN1, RANGE, type ClimateId, type GunneryTestId, type Marks } from '../../data/range'
 import type { Limits, VehicleSpec } from '../vehicle/spec'
@@ -15,6 +16,7 @@ import { runEndurance, type EnduranceRun } from './endurance'
 import { judgeFireMission, runFireMission, type FireMissionRun } from './fireMission'
 import { runGunnery, type GunneryRun } from './gunnery'
 import { runObstacles, type ObstacleRun } from './obstacles'
+import { judgeScoutPatrol, runScoutPatrol, type ScoutRun } from './scout'
 import { judgeSquadDrop, runSquadDrop, type SquadRun } from './squad'
 
 export { runAcceleration, stepTime, type AccelerationRun, type Trace } from './acceleration'
@@ -32,6 +34,7 @@ export { judgeFireMission, runFireMission, type FireMissionRun, type MissionGrid
 export {
   MISS_CAUSES, runGunnery, type GunneryRun, type MissCause, type ShotRecord, type TargetResult,
 } from './gunnery'
+export { judgeScoutPatrol, runScoutPatrol, type ScoutRun, type ScoutSighting, type ScoutStop } from './scout'
 export { judgeSquadDrop, runSquadDrop, type CoverShot, type CoverTarget, type SquadRun } from './squad'
 export {
   courseLayout, runObstacles, type CourseSpan, type ObstacleCause, type ObstacleResult, type ObstacleRun,
@@ -49,6 +52,9 @@ export type GunneryResult = GunneryRun & {
 
 /** The squad drop with its marks applied. */
 export type SquadResult = SquadRun & ReturnType<typeof judgeSquadDrop> & { marks: SquadMarks }
+
+/** Spot and report with its marks applied. */
+export type ScoutResult = ScoutRun & ReturnType<typeof judgeScoutPatrol> & { marks: ScoutMarks }
 
 /** The fire mission with its marks applied. */
 export type FireMissionResult = FireMissionRun & ReturnType<typeof judgeFireMission> & {
@@ -72,6 +78,8 @@ export interface RangeReport {
   fireMission: FireMissionResult | null
   /** The squad drop, for a vehicle that carries soldiers or where the tender asks for one. Null otherwise. */
   squad: SquadResult | null
+  /** Spot and report, for a car on wheels or where the tender asks for it. Null otherwise. */
+  scout: ScoutResult | null
   /**
    * True on a self-propelled gun's tender: the tank shoots, the loading drill
    * and the berm are run but not counted, and the report leaves them out.
@@ -152,6 +160,13 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
       armour.passed, berm.passed, ...(fireMission ? [fireMission.passed] : []),
     ]
   if (squad) passed.push(squad.passed)
+  // A car on wheels is sent to spot and report wherever it goes; a tender for a scout car sets its own marks.
+  const scoutMarks = marks.scout ?? (sheet.drive.wheeled ? SCOUT_TRIAL.marks : null)
+  const patrol = scoutMarks
+    ? runScoutPatrol(sheet.drive, sheet.fire, ridge.showsM, sheet.geometry.widthM, setup.seed)
+    : null
+  const scout = patrol && scoutMarks ? { ...patrol, ...judgeScoutPatrol(patrol, scoutMarks), marks: scoutMarks } : null
+  if (scout) passed.push(scout.passed)
   return {
     marks,
     acceleration,
@@ -163,6 +178,7 @@ export function runProvingGround(sheet: StatSheet, setup: RangeSetup): RangeRepo
     berm,
     fireMission,
     squad,
+    scout,
     selfPropelled,
     carrier,
     crewHours: RANGE.crewHours,
