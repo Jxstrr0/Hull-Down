@@ -12,14 +12,21 @@ import { scoreBid, trialBid, type BidScore, type Trialled } from './score'
 /** What a range report tells a bureau to change, each lesson once. */
 export function lessonsOf(range: RangeReport): Lesson[] {
   const lessons: Lesson[] = []
-  if (!range.gunnery.night.passed) lessons.push('night')
-  if (!range.gunnery.onTheMove.passed) lessons.push('onTheMove')
-  if (!range.gunnery.halted.passed) lessons.push('halted')
-  if (!range.drill.passed) lessons.push('drill')
+  const mission = range.fireMission
+  if (range.selfPropelled) {
+    // Only the fire mission counts: late or wide wants a better computer, slow wants a quicker way to load.
+    if (mission && (!mission.timePassed || !mission.closePassed)) lessons.push('fireData')
+    if (mission && !mission.ratePassed) lessons.push('drill')
+  } else {
+    if (!range.gunnery.night.passed) lessons.push('night')
+    if (!range.gunnery.onTheMove.passed) lessons.push('onTheMove')
+    if (!range.gunnery.halted.passed) lessons.push('halted')
+    if (!range.drill.passed) lessons.push('drill')
+  }
   const failed = (id: ObstacleId): boolean => range.obstacles.results.some((result) => result.id === id && !result.passed)
   if (!range.acceleration.passed || failed('slope') || failed('mud')) lessons.push('power')
   if (failed('trench')) lessons.push('trench')
-  if (!range.berm.passed) lessons.push('berm')
+  if (!range.selfPropelled && !range.berm.passed) lessons.push('berm')
   for (const zone of range.armour.failed) lessons.push({ zone })
   return lessons
 }
