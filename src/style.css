@@ -342,6 +342,9 @@ body {
 .opt-locked .opt-name, .opt-locked .opt-note { color: var(--ink-dim); }
 .opt-note { font-size: 0.88rem; color: var(--ink-dim); }
 .opt-delta { font-family: var(--font-mono); font-size: 0.82rem; }
+/* The change an option makes sits on its name's line, at the right. */
+.opt-head .opt-name { min-width: 0; }
+.opt-head .opt-delta { flex: none; color: var(--ink-dim); white-space: nowrap; }
 .opt-warn { font-size: 0.85rem; color: var(--pencil); }
 
 .num { display: flex; align-items: center; gap: 10px; }
@@ -630,6 +633,15 @@ body {
 }
 .foot-studio:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
 .foot-build { font-family: var(--font-mono); color: var(--ink-dim); padding: 2px 0; }
+
+/* The folding drawing. Upright on a phone, scrolling the parts folds the drawing
+   and the view switch away; the name, weight bar and numbers stay. */
+.fold-show { display: none; border: 1.5px solid var(--ink); }
+@media not all and (orientation: landscape) and (min-width: 640px) {
+  .office-folded .bp, .office-folded .views { display: none; }
+  .office-folded .fold-show { display: block; flex: none; margin-left: auto; }
+  .office-folded .office-titles { flex: 1 1 auto; }
+}
 
 /* Landscape phones and desktop: summary on the left, parts on the right. */
 @media (orientation: landscape) and (min-width: 640px) {
