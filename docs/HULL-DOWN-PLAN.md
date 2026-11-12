@@ -853,6 +853,13 @@ air defence trial rather than tank duels.
    chief engineer remarks on the trial; rivals for now build their carrier
    with the radar. Not a basis for the challenge of the day.
 4. Rival bureaus bid anti-aircraft vehicles (1.7.3.0).
+   Done: each bureau has its own picks. Heavy: the medium hull on tracks,
+   the radar and the electronic computer. Light: the light hull on eight
+   wheels, cheap, without the radar at first. Firepower: the light hull on
+   eight wheels with the radar, the laser and the digital computer. They
+   learn the radar from raiders found too late, then a better computer,
+   more rounds when the belts run dry, and more wheels from the mud. The
+   tender's top speed is the self-propelled gun's 50 km/h.
 5. Something to watch for the air defence trial (1.7.4.0).
 
 ---

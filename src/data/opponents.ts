@@ -121,6 +121,30 @@ export const SCOUT_ARMOUR: Partial<Record<ZoneId, number>> = {
   hullSideFront: 0.8, hullSideRear: 0.5, hullRear: 0.3, turretSides: 0.6, turretRear: 0.3,
 }
 
+/** What a bureau builds when the tender is for an anti-aircraft gun vehicle. */
+export interface AaPicks extends LaterPicks {
+  hull: HullId
+  layout: LayoutId
+  engine?: EngineId
+  rangefinder?: RangefinderId
+  /** True when the bureau fits the search radar from the first draft. */
+  searchRadar: boolean
+  /** How much of the weight limit it builds up to. */
+  massShare: number
+  rounds: number
+}
+
+/**
+ * How an anti-aircraft gun vehicle's armour leans, on top of each bureau's
+ * own pattern: like a scout car's, it need only keep out a carrier's cannon
+ * at long range, front and side, but the turret it fights from is kept
+ * thicker than the hull.
+ */
+export const AA_ARMOUR: Partial<Record<ZoneId, number>> = {
+  upperGlacis: 0.3, lowerGlacis: 0.2, turretFrontLeft: 0.4, turretFrontRight: 0.4, mantlet: 0.3,
+  hullSideFront: 0.6, hullSideRear: 0.4, hullRear: 0.3, turretSides: 0.7, turretRear: 0.3,
+}
+
 export interface Philosophy {
   picks: Picks
   /** The newer parts the bureau fits from each generation on. */
@@ -133,6 +157,8 @@ export interface Philosophy {
   ifv: IfvPicks
   /** What the bureau fits when the tender is for a scout car. */
   scout: ScoutPicks
+  /** What the bureau fits when the tender is for an anti-aircraft gun vehicle. */
+  aa: AaPicks
   /** How much of the weight limit the bureau builds up to, 0..1. */
   massShare: number
   /**
@@ -165,6 +191,8 @@ export const DESIGNER = {
   shedFuelL: 100,
   /** A plate that let a round through at trial is made this much thicker, as a share of the bureau's pattern, at the next revision. */
   lessonArmour: 1.15,
+  /** Belts that ran dry at trial get this many more rounds at the next revision. */
+  lessonRounds: 20,
 } as const
 
 export const BUREAUS = {
@@ -203,6 +231,8 @@ export const BUREAUS = {
     ifv: { hull: 'medium', loading: 'loader', troops: 6, massShare: 1, rounds: 50 },
     // For a scout car: the medium hull on eight wheels and the big engine, as heavy as it may be, with the plain sights.
     scout: { hull: 'medium', layout: 'wheels8', engine: 'diesel780', loading: 'loader', commanderSight: false, massShare: 1, rounds: 50 },
+    // For an anti-aircraft gun vehicle: tracks and the medium hull with the big engine, the radar and the electronic computer it trusts.
+    aa: { hull: 'medium', layout: 'tracks', engine: 'diesel780', loading: 'loader', computer: 'electronic', searchRadar: true, massShare: 0.9, rounds: 60 },
     massShare: 1,
     armour: {
       upperGlacis: 1.4, lowerGlacis: 1.3, hullSideFront: 1, hullSideRear: 0.9, hullRear: 0.8, hullRoof: 1, belly: 1,
@@ -246,6 +276,8 @@ export const BUREAUS = {
     ifv: { hull: 'medium', engine: 'diesel580', turret: 'lowProfile', loading: 'loader', troops: 6, massShare: 0.85, rounds: 40 },
     // For a scout car: small, cheap and low, on six wheels, with the commander's own sight to search with.
     scout: { hull: 'light', layout: 'wheels6', engine: 'diesel580', turret: 'lowProfile', loading: 'loader', commanderSight: true, massShare: 0.75, rounds: 40 },
+    // For an anti-aircraft gun vehicle: cheap and quick on eight wheels, light enough for the mud. It saves the radar's price at first.
+    aa: { hull: 'light', layout: 'wheels8', engine: 'diesel580', turret: 'lowProfile', loading: 'loader', computer: 'electronic', searchRadar: false, massShare: 0.52, rounds: 40 },
     massShare: 0.75,
     armour: {
       upperGlacis: 1, lowerGlacis: 0.9, hullSideFront: 0.8, hullSideRear: 0.8, hullRear: 0.9, hullRoof: 1, belly: 1,
@@ -292,6 +324,8 @@ export const BUREAUS = {
     ifv: { hull: 'medium', loading: 'loader', rangefinder: 'laser', computer: 'electronic', troops: 6, massShare: 0.9, rounds: 60 },
     // For a scout car: the light hull on eight wheels, the commander's sight and a thermal sight, to find everything out there.
     scout: { hull: 'light', layout: 'wheels8', engine: 'diesel580', loading: 'loader', night: 'thermal', commanderSight: true, massShare: 0.85, rounds: 60 },
+    // For an anti-aircraft gun vehicle: the light hull on eight wheels, the radar, the laser, the digital computer and the deepest belts.
+    aa: { hull: 'light', layout: 'wheels8', engine: 'diesel580', loading: 'loader', rangefinder: 'laser', computer: 'digital', searchRadar: true, massShare: 0.55, rounds: 60 },
     massShare: 0.95,
     armour: {
       upperGlacis: 1, lowerGlacis: 1, hullSideFront: 0.9, hullSideRear: 0.9, hullRear: 1, hullRoof: 1, belly: 1,
