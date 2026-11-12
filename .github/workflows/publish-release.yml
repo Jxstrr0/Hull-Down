@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false # nothing here pushes, so the checkout keeps no token
 
       - uses: actions/setup-node@v7
         with:
