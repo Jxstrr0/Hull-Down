@@ -130,6 +130,8 @@ export function renderDesignScreen(first: Tender): Office {
   let tab: Tab = 'hull'
   /** A control to scroll to and mark after the next panel draw. */
   let flagged: ControlId | undefined
+  /** The one row that is open on its tab (a part, or a readout under them), if any. Opening another closes it. */
+  let openControl: string | undefined
   let view: View = 'side'
   const armourState: ArmourTabState = {
     zone: 'upperGlacis', zonesScroll: 0, threat: DEFAULT_THREAT, rangeM: TUNING.protection.defaultRangeM, mapOpen: false,
@@ -349,6 +351,7 @@ export function renderDesignScreen(first: Tender): Office {
     if (!target) return
     tab = target.tab
     flagged = target.id
+    openControl = target.id
     drawBlueprint()
     drawTabs()
     drawPanel()
@@ -525,27 +528,76 @@ export function renderDesignScreen(first: Tender): Office {
 
   const isTechField = (id: string): id is TechField => (TECH_FIELDS as readonly string[]).includes(id)
 
-  function frame(control: Control): HTMLElement {
-    const text = STRINGS.controls[control.id]
-    const box = el('section', 'ctl')
-    box.dataset.control = control.id
-    box.append(el('h3', 'ctl-label', text.label))
-    if (text.note) box.append(el('p', 'ctl-note', text.note))
-    for (const issue of issuesFor(control.id)) {
-      box.classList.add('ctl-faulty')
-      const line = el('p', 'ctl-issue')
-      line.append(el('strong', '', issue.severity === 'error' ? D.error : D.warning), ` ${issueText(issue)}`)
-      box.append(line)
-    }
+  /**
+   * A part as one row: its name, then what is fitted (`now`), marked when it has a fault.
+   * Tapping the row opens it and closes any other. Only an open row builds its options,
+   * so `body` is undefined while it is shut.
+   */
+  /** A row that opens when tapped: its name, then `now` (what it holds), marked when `faulty`. */
+  function foldRow(key: string, label: string, now: string | HTMLElement, faulty: boolean): { box: HTMLElement; open: boolean } {
+    const open = openControl === key
+    const box = el('section', open ? 'ctl ctl-row ctl-open' : 'ctl ctl-row')
+    if (faulty) box.classList.add('ctl-faulty')
+    const heading = el('h3', 'ctl-heading')
+    const head = el('button', 'ctl-head')
+    head.type = 'button'
+    head.dataset.key = `open:${key}`
+    head.setAttribute('aria-expanded', open ? 'true' : 'false')
+    const nowText = typeof now === 'string' ? now : now.textContent ?? ''
+    if (nowText) head.setAttribute('aria-label', fill(faulty ? O.row.faultLabel : O.row.label, { name: label, now: nowText }))
+    const sum = el('span', 'ctl-sum')
+    if (faulty) sum.append(el('span', 'ctl-sum-fault', O.row.fault), ' ')
+    sum.append(now)
+    head.append(el('span', 'ctl-name', label), sum, el('span', 'ctl-chev'))
+    head.addEventListener('click', () => {
+      // Keep the tapped row where the finger left it, though the row above may have shut.
+      const before = head.getBoundingClientRect().top
+      openControl = open ? undefined : key
+      drawPanel()
+      const again = panel.querySelector<HTMLElement>(`[data-key="open:${key}"]`)
+      if (again) panel.scrollTop += again.getBoundingClientRect().top - before
+    })
+    heading.append(head)
+    box.append(heading)
+    return { box, open }
+  }
+
+  /** A readout under the parts, folded into a row titled by its own heading. */
+  function foldSection(key: string, section: HTMLElement): HTMLElement {
+    const title = section.querySelector('h3')
+    const { box, open } = foldRow(key, title?.textContent ?? '', '', false)
+    if (!open) return box
+    title?.remove()
+    const body = el('div', 'ctl-body')
+    body.append(section)
+    box.append(body)
     return box
   }
 
+  function frame(control: Control, now: string | HTMLElement): { box: HTMLElement; body: HTMLElement | undefined } {
+    const text = STRINGS.controls[control.id]
+    const issues = issuesFor(control.id)
+    const { box, open } = foldRow(control.id, text.label, now, issues.length > 0)
+    box.dataset.control = control.id
+    if (!open) return { box, body: undefined }
+    const body = el('div', 'ctl-body')
+    if (text.note) body.append(el('p', 'ctl-note', text.note))
+    for (const issue of issues) {
+      const line = el('p', 'ctl-issue')
+      line.append(el('strong', '', issue.severity === 'error' ? D.error : D.warning), ` ${issueText(issue)}`)
+      body.append(line)
+    }
+    box.append(body)
+    return { box, body }
+  }
+
   function drawChoice(control: ChoiceControl): HTMLElement {
-    const box = frame(control)
+    const current = control.get(spec)
+    const { box, body } = frame(control, control.text[current]?.name ?? '')
+    if (!body) return box
     const group = el('div', 'opts')
     group.setAttribute('role', 'radiogroup')
     group.setAttribute('aria-label', STRINGS.controls[control.id].label)
-    const current = control.get(spec)
     for (const option of control.options) {
       const text = control.text[option]
       if (!text) continue
@@ -571,28 +623,30 @@ export function renderDesignScreen(first: Tender): Office {
       button.addEventListener('click', () => commit((s) => control.set(s, option)))
       group.append(button)
     }
-    box.append(group)
+    body.append(group)
     return box
   }
 
   function drawToggle(control: ToggleControl): HTMLElement {
-    const box = frame(control)
     const on = control.get(spec)
+    const { box, body } = frame(control, on ? O.fitted : O.notFitted)
+    if (!body) return box
     const change = preview(spec, limits, sheet, (copy) => control.set(copy, !on))
     const button = optionButton(control.id, on, control.text, change, true)
     if (!on) button.querySelector('.opt-head')?.append(el('span', 'opt-tag opt-tag-off', O.notFitted))
     button.setAttribute('role', 'switch')
     button.addEventListener('click', () => commit((s) => control.set(s, !on)))
-    box.append(button)
+    body.append(button)
     return box
   }
 
   function drawNumber(control: NumberControl): HTMLElement {
-    const box = frame(control)
     const label = STRINGS.controls[control.id].label
     const show = (value: number): string => fill(O.numberUnits[control.unit], { n: String(value) })
+    // The value sits in the row itself, so it can be read with the row shut and follows the slider.
     const value = el('output', 'num-value', show(control.get(spec)))
-    box.querySelector('.ctl-label')?.append(value)
+    const { box, body } = frame(control, value)
+    if (!body) return box
 
     const row = el('div', 'num')
     const step = (direction: number, text: string, aria: string): HTMLButtonElement => {
@@ -622,7 +676,7 @@ export function renderDesignScreen(first: Tender): Office {
     })
     slider.addEventListener('change', () => commit(() => undefined))
     row.append(step(-1, '−', O.less), slider, step(1, '+', O.more))
-    box.append(row)
+    body.append(row)
     return box
   }
 
@@ -1252,9 +1306,10 @@ export function renderDesignScreen(first: Tender): Office {
         else if (control.kind === 'number') parts.push(drawNumber(control))
         else parts.push(drawToggle(control))
       }
-      if (tab === 'gun') parts.push(drawAmmo())
-      if (tab === 'gun' || tab === 'fireControl') parts.push(renderGunnery(sheet))
-      if (tab === 'crew' || tab === 'fireControl') parts.push(renderStations(sheet))
+      // The readouts under the parts fold too, so the tab stays one screen of rows.
+      if (tab === 'gun') parts.push(foldSection('read:ammo', drawAmmo()))
+      if (tab === 'gun' || tab === 'fireControl') parts.push(foldSection('read:gunnery', renderGunnery(sheet)))
+      if (tab === 'crew' || tab === 'fireControl') parts.push(foldSection('read:stations', renderStations(sheet)))
     }
     // The words on this page that want explaining, for someone new to tanks.
     const words = renderGlossary(pageTextOf(parts), glossaryState)

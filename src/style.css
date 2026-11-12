@@ -283,6 +283,51 @@ body {
 
 /* One control: a label, a note, then options or a slider. */
 .ctl { scroll-margin-top: 8px; }
+/* A part as a row: name, what is fitted, and a chevron. Tap to open; one opens at a time. */
+.ctl-row { border: 1.5px solid var(--ink); border-radius: 2px; background: var(--paper); }
+.ctl-row + .ctl-row { margin-top: -12px; }
+.ctl-heading { margin: 0; font-size: 1rem; }
+.ctl-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 14px;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+}
+.ctl-head:focus-visible { outline: 3px solid var(--pencil); outline-offset: -3px; }
+.ctl-name { white-space: nowrap; }
+.ctl-sum {
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink-dim);
+}
+.ctl-sum .num-value { font-size: 0.9rem; color: var(--ink); }
+.ctl-sum-fault { color: var(--pencil); font-weight: 700; }
+.ctl-chev::after { content: '›'; display: block; font-family: var(--font-mono); text-align: center; transition: transform 0.2s; }
+.ctl-open .ctl-chev::after { transform: rotate(90deg); }
+.ctl-open { border-width: 2px; }
+.ctl-open .ctl-head { border-bottom: 1px solid var(--grid); }
+.ctl-body { padding: 10px 10px 12px; }
+.ctl-row.ctl-faulty { border-color: var(--pencil); }
 .ctl-label {
   display: flex;
   align-items: baseline;
@@ -610,7 +655,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wbar-seg { transition: none; }
+  .wbar-seg, .ctl-chev::after { transition: none; }
 }
 
 /* Studio piece: the credit line uses the studio font. Its colour follows the

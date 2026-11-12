@@ -26,3 +26,27 @@ describe('the build screen layout', () => {
     expect(source).toContain("optionButton(control.id, on, control.text, change, true)")
   })
 })
+
+describe('the part rows', () => {
+  it('has words for a row and its fault mark', () => {
+    for (const [key, text] of Object.entries(STRINGS.office.row)) expect(text, key).not.toBe('')
+    expect(STRINGS.office.row.label).toContain('{now}')
+    expect(STRINGS.office.row.faultLabel).toContain('{now}')
+  })
+
+  it('opens one row at a time, and a jump to a part opens its row', () => {
+    const source = readRepoFile('src/office/designScreen.ts')
+    expect(source).toContain('openControl = open ? undefined : key')
+    expect(source).toContain('openControl = target.id')
+  })
+
+  it('folds the readouts under the parts too', () => {
+    const source = readRepoFile('src/office/designScreen.ts')
+    for (const key of ['read:ammo', 'read:gunnery', 'read:stations']) expect(source, key).toContain(`'${key}'`)
+  })
+
+  it('keeps every row a full tap target', () => {
+    const css = readRepoFile('src/style.css')
+    expect(css).toMatch(/\.ctl-head \{[^}]*min-height: 48px/)
+  })
+})
