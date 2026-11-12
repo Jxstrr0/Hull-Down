@@ -54,6 +54,8 @@ export interface LaterPicks {
   active?: ActiveId
   /** True when the bureau fits the auxiliary power unit. */
   apu?: boolean
+  /** True when the bureau hangs side skirts against the infantry's rockets. */
+  skirts?: boolean
   materials?: Partial<Record<MaterialId, MaterialId>>
 }
 
@@ -118,10 +120,10 @@ export const BUREAUS = {
       spallLiner: [true, true],
       fireSuppression: [true, true],
     },
-    // By 2000: the new layers at the front, a thermal sight, and a warhead for reactive tiles.
+    // By 2000: the new layers at the front, a thermal sight, a warhead for reactive tiles, and side skirts.
     // By 2016: hard kill on the roof, and the auxiliary power unit to feed it.
     later: {
-      2: { night: 'thermal', shaped: 'tandem', materials: { compositeInsert: 'layeredComposite' } },
+      2: { night: 'thermal', shaped: 'tandem', materials: { compositeInsert: 'layeredComposite' }, skirts: true },
       3: { active: 'hardKill', apu: true },
     },
     massShare: 1,
@@ -192,10 +194,10 @@ export const BUREAUS = {
       fireSuppression: [true, true],
     },
     // By 2000: the digital computer, a thermal sight, and a missile down the barrel.
-    // By 2016: the turret with nobody in it, a machine to load it, and soft kill.
+    // By 2016: the turret with nobody in it, a machine to load it, soft kill, and side skirts.
     later: {
       2: { computer: 'digital', night: 'thermal', shaped: 'gunMissile' },
-      3: { turret: 'unmanned', loading: 'carousel', active: 'softKill' },
+      3: { turret: 'unmanned', loading: 'carousel', active: 'softKill', skirts: true },
     },
     massShare: 0.95,
     armour: {
