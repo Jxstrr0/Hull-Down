@@ -839,6 +839,11 @@ air defence trial rather than tank duels.
 2. The air defence trial (1.7.1.0): fast jets, pop-up helicopters and slow
    small drones cross the range. Marked on how many come down before they
    reach a line, and on reaction time. It gets a card in the report.
+   Done: six raiders in turn (two jets, two helicopters, two drones); found
+   by the radar far out or by eye close in, then laid on, then bursts until
+   down, past the line, or the belts run dry. Marks: four of six down, and
+   six seconds on average from in range to the first burst. Run on the
+   proving ground for an anti-aircraft gun only.
 3. The 2012 tender in the career (1.7.2.0). Saves carried over.
 4. Rival bureaus bid anti-aircraft vehicles (1.7.3.0).
 5. Something to watch for the air defence trial (1.7.4.0).
