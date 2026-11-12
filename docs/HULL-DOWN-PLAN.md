@@ -724,7 +724,8 @@ army judges it on a new fire mission trial rather than tank duels.
 4. Rival bureaus bid self-propelled guns (1.4.3.0). Done: each bureau has
    its own picks for one, and its revisions learn from the fire mission.
 5. Something to watch for the fire mission (1.4.4.0), such as shells landing
-   on a map.
+   on a map. Done: a replay in the fire mission card, an area map and a
+   close-up of the grid, played eight times faster than the trial ran.
 
 ---
 
