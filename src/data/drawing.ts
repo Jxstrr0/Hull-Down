@@ -53,6 +53,17 @@ export const DRAWING = {
     muzzleRingShare: 1.25,
     sleeveBandM: 0.55,
   },
+  /** Dimension lines, in metres of drawing. */
+  dims: {
+    arrowM: 0.12,
+    /** How far each extension line reaches either side of its dimension line. */
+    extensionM: 0.08,
+    /** Below the ground (side and front): the first line, then the second. */
+    firstM: 0.2,
+    secondM: 0.4,
+    /** Beside the tank: an upright line this far out from its end. */
+    besideM: 0.18,
+  },
   /** The top view's own details. */
   top: {
     /** Spacing of the seams along a track guard. */

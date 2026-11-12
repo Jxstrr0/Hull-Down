@@ -10,7 +10,7 @@ import { hasTile, type Geometry, type Interior, type VehicleSpec, type Verdict }
 import { el } from '../ui/dom'
 import { fixed } from '../ui/format'
 import type { ControlId } from './controls'
-import { CUT_KINDS, drawingOf, type View } from './drawing'
+import { CUT_KINDS, VIEWS, drawingOf, type Drawing, type View } from './drawing'
 import { insideLines } from './inside'
 
 const SVG = 'http://www.w3.org/2000/svg'
@@ -184,6 +184,55 @@ function sectionBand(body: readonly string[], pattern: string): SVGPathElement[]
   })
 }
 
+/**
+ * The drawing on its sheet: a box the drawing's own shape, a thin border with
+ * corner ticks, and the dimension figures laid over it as text, so they stay a
+ * readable size however small the drawing is.
+ */
+function onSheet(root: SVGSVGElement, drawing: Drawing): HTMLElement {
+  const { box } = drawing
+  const sheet = el('div', 'bp-sheet')
+  sheet.style.aspectRatio = `${box.w} / ${box.h}`
+  sheet.style.setProperty('--bp-ratio', String(box.w / box.h))
+  const inset = Math.min(box.w, box.h) * 0.015
+  const tick = Math.min(box.w, box.h) * 0.06
+  const [x0, y0, x1, y1] = [box.x + inset, box.y + inset, box.x + box.w - inset, box.y + box.h - inset]
+  let corners = ''
+  for (const [x, y, dx, dy] of [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]] as const) {
+    corners += `M${x + dx * tick} ${y} L${x} ${y} L${x} ${y + dy * tick} `
+  }
+  root.prepend(svg('path', { d: corners.trim(), class: 'bp-frame' }))
+  sheet.append(root)
+  const figures = el('div', 'bp-dims')
+  figures.setAttribute('aria-hidden', 'true')
+  for (const dim of drawing.dimensions) {
+    const figure = el('span', dim.vertical ? 'bp-dim bp-dim-up' : 'bp-dim', fill(O.sheet.figure, { n: fixed(dim.m, 2) }))
+    figure.style.left = `${((dim.x - box.x) / box.w) * 100}%`
+    figure.style.top = `${((dim.y - box.y) / box.h) * 100}%`
+    figures.append(figure)
+  }
+  sheet.append(figures)
+  return sheet
+}
+
+/** The title strip: which view, which sheet, and the unit. Reads out the measurements for a screen reader. */
+function titleStrip(view: View, drawing: Drawing): HTMLElement {
+  const strip = el('p', 'bp-title')
+  strip.setAttribute('aria-label', fill(O.captions[view], {
+    l: fixed(drawing.hullLengthM, 2),
+    g: fixed(drawing.overallLengthM, 2),
+    w: fixed(drawing.widthM, 2),
+    h: fixed(drawing.heightM, 2),
+  }))
+  const S = O.sheet
+  strip.append(
+    el('span', 'bp-title-cell bp-title-main', S.views[view]),
+    el('span', 'bp-title-cell', fill(S.number, { n: String(VIEWS.indexOf(view) + 1), of: String(VIEWS.length) })),
+    el('span', 'bp-title-cell', S.units),
+  )
+  return strip
+}
+
 /** The drawing and its caption, ready to put in the blueprint box. */
 export function renderBlueprint(
   spec: VehicleSpec, geo: Geometry, view: View, go: (id: ControlId) => void, map?: BlueprintMap, interior?: Interior,
@@ -272,11 +321,11 @@ export function renderBlueprint(
       item.append(el('span', 'bp-swatch bp-swatch-tile'), O.armour.legendTiles)
       legend.append(item)
     }
-    return [root, legend]
+    return [onSheet(root, drawing), legend]
   }
   if (interior) {
     const C = O.cutaway
-    if (view === 'front') return [root, el('p', 'bp-caption', C.frontNote)]
+    if (view === 'front') return [onSheet(root, drawing), el('p', 'bp-caption', C.frontNote)]
     const legend = el('p', 'bp-caption bp-legend')
     legend.setAttribute('aria-label', C.legendLabel)
     for (const kind of CUT_KINDS) {
@@ -286,13 +335,7 @@ export function renderBlueprint(
     }
     const list = el('ul', 'bp-inside-list')
     for (const line of insideLines(interior)) list.append(el('li', 'bp-inside-line', line))
-    return [root, legend, list]
+    return [onSheet(root, drawing), legend, list]
   }
-  const caption = el('p', 'bp-caption', fill(O.captions[view], {
-    l: fixed(drawing.hullLengthM, 2),
-    g: fixed(drawing.overallLengthM, 2),
-    w: fixed(drawing.widthM, 2),
-    h: fixed(drawing.heightM, 2),
-  }))
-  return [root, caption]
+  return [onSheet(root, drawing), titleStrip(view, drawing)]
 }

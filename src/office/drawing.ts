@@ -67,8 +67,18 @@ export const ZONE_VIEW: Partial<Record<ZoneId, View>> = {
   turretRoof: 'top',
 }
 
+/** A dimension's figure: where it sits (SVG space), the length it gives in metres, and which way it reads. */
+export interface Dimension {
+  x: number
+  y: number
+  m: number
+  vertical: boolean
+}
+
 export interface Drawing {
   box: { x: number; y: number; w: number; h: number }
+  /** The figures on the dimension lines; the lines themselves are among the shapes. */
+  dimensions: Dimension[]
   shapes: Shape[]
   zones: Zone[]
   armourTaps: ArmourTap[]
@@ -93,6 +103,7 @@ class Pen {
   readonly zones: Zone[] = []
   readonly armourTaps: ArmourTap[] = []
   readonly body: string[] = []
+  readonly dimensions: Dimension[] = []
   minX = Infinity
   maxX = -Infinity
   minY = Infinity
@@ -171,6 +182,27 @@ class Pen {
     const right = this.p(cx + radius, cy)
     const r = `${round(radius)} ${round(radius)}`
     this.item(`M${left} A${r} 0 1 0 ${right} A${r} 0 1 0 ${left} Z`, kind)
+  }
+
+  /**
+   * A dimension in the drawing-office way: a line with an arrowhead at each end,
+   * short extension lines out to it, and the figure on it. Drawing space (y up).
+   * `along` is the line's position across: its height for a level line, its x for an upright one.
+   */
+  dimension(from: number, to: number, along: number, vertical: boolean, m: number): void {
+    const a = DRAWING.dims.arrowM
+    const e = DRAWING.dims.extensionM
+    const at = (u: number, v: number): string => (vertical ? this.p(v, u) : this.p(u, v))
+    let line = `M${at(from, along)} L${at(to, along)}`
+    for (const [end, dir] of [[from, 1], [to, -1]] as const) {
+      line += ` M${at(end + dir * a, along - a * 0.45)} L${at(end, along)} L${at(end + dir * a, along + a * 0.45)}`
+    }
+    this.path(line, 'thin')
+    const ext = (u: number): string => `M${at(u, along - e)} L${at(u, along + e)}`
+    this.path(ext(from) + ' ' + ext(to), 'fine')
+    const mid = (from + to) / 2
+    const [x, y] = vertical ? [along, mid] : [mid, along]
+    this.dimensions.push({ x: round(x), y: round(-y), m, vertical })
   }
 
   /** A tap zone that picks an armour zone, given in drawing space (y up). */
@@ -422,6 +454,12 @@ function sideView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void {
 
   pen.line(xc, -0.1, xc, top + DRAWING.cupolaHeightM + 0.35, 'centre')
 
+  // Dimensions: the hull, the length with the gun, and the height.
+  const D = DRAWING.dims
+  pen.dimension(0, L, -D.firstM, false, L)
+  if (m.muzzleX < 0) pen.dimension(m.muzzleX, L, -D.secondM, false, L - m.muzzleX)
+  pen.dimension(0, geo.heightM, L + D.besideM, true, geo.heightM)
+
   // Tap zones. Upper band: gun, then turret. Lower band: front, middle, rear.
   const sky = top + DRAWING.tapSkyM
   const ground = -DRAWING.tapGroundM
@@ -516,6 +554,10 @@ function topView(pen: Pen, spec: VehicleSpec, m: Layout): void {
   }
 
   pen.line(m.muzzleX - 0.15, 0, L + 0.15, 0, 'centre')
+
+  // Dimensions: the hull's length below, its width at the back.
+  pen.dimension(0, L, -(W + DRAWING.dims.besideM), false, L)
+  pen.dimension(-W, W, L + DRAWING.dims.besideM, true, 2 * W)
 
   // Tap zones: four columns, full height.
   const edge = W + DRAWING.marginM
@@ -650,6 +692,10 @@ function frontView(pen: Pen, spec: VehicleSpec, geo: Geometry, m: Layout): void 
   }
   frontDetail(pen, spec, m, h, mantletHalf, fender, bodyHalf, hatchX, cupola)
   pen.line(0, -0.1, 0, top + DRAWING.cupolaHeightM + 0.35, 'centre')
+
+  // Dimensions: the width under the tracks, the height beside them.
+  pen.dimension(-W, W, -DRAWING.dims.firstM, false, 2 * W)
+  pen.dimension(0, geo.heightM, W + DRAWING.dims.besideM, true, geo.heightM)
 
   // Tap zones: turret above; a track column each side and the hull between.
   const sky = top + DRAWING.tapSkyM
@@ -794,6 +840,7 @@ export function drawingOf(spec: VehicleSpec, geo: Geometry, view: View, interior
   const pad = view === 'side' ? 0 : DRAWING.marginM * 0.5
   return {
     box: { x: round(minX - pad), y: round(minY - pad), w: round(maxX - minX + 2 * pad), h: round(maxY - minY + 2 * pad) },
+    dimensions: pen.dimensions,
     shapes: pen.shapes,
     zones: pen.zones,
     armourTaps: pen.armourTaps,

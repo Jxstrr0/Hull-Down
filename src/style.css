@@ -143,7 +143,41 @@ body {
 .view:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
 
 /* The blueprint: ink lines on the grid, in the manner of a technical drawing. */
-.bp { margin-top: 6px; }
+.bp { margin-top: 6px; --bp-h: 150px; }
+/* The sheet: exactly the drawing's shape, as wide as fits under the height allowed. */
+.bp-sheet { position: relative; width: min(100%, calc(var(--bp-h) * var(--bp-ratio, 2))); margin: 0 auto; }
+.bp-sheet > .bp-svg { width: 100%; height: 100%; max-height: none; }
+.bp-frame { fill: none; stroke: var(--ink-dim); stroke-width: 1; }
+.bp-dims { position: absolute; inset: 0; pointer-events: none; }
+.bp-dim {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 0 3px;
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  line-height: 1.2;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.bp-dim-up { transform: translate(-50%, -50%) rotate(-90deg); }
+/* The title strip under the drawing, in the manner of a drawing's title block. */
+.bp-title {
+  display: flex;
+  justify-content: center;
+  margin: 4px auto 0;
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid var(--ink-dim);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.bp-title-cell { padding: 1px 8px; white-space: nowrap; }
+.bp-title-cell + .bp-title-cell { border-left: 1px solid var(--ink-dim); }
+.bp-title-main { color: var(--ink); font-weight: 500; }
 .bp-svg { display: block; width: 100%; max-height: 150px; margin: 0 auto; overflow: visible; }
 .bp-svg path { vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .bp-solid { fill: var(--paper); stroke: var(--ink); stroke-width: 1.6; }
@@ -701,6 +735,7 @@ body {
   .office-nav { grid-column: 2; grid-row: 2; max-width: 720px; }
   .chips { flex-wrap: wrap; }
   .bp-svg { max-height: 130px; }
+  .bp { --bp-h: 130px; }
   .panel { max-width: 720px; }
 }
 
