@@ -623,13 +623,14 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     long.append(el('p', 'ctl-note rg-note', E.note))
     root.append(
       summary, accel, course, long,
-      // A self-propelled gun is judged on its fire mission, an infantry fighting vehicle on its squad drop and a scout car on spot and report, not on the tank shoots, the drill or the berm.
-      ...(report.selfPropelled || report.carrier || report.scouting ? [] : gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch })),
+      // A self-propelled gun is judged on its fire mission, an infantry fighting vehicle on its squad drop, a scout car on spot and report and an
+      // anti-aircraft gun vehicle on the air defence trial, not on the tank shoots, the drill or the berm.
+      ...(report.selfPropelled || report.carrier || report.scouting || report.airDefence ? [] : gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch })),
       ...missionCards(report, sheet.fire.mission.reachKm, { card, line, fixButton, watch }),
       ...squadCards(report, { card, line, fixButton, watch }),
       ...scoutCards(report, args.spec, { card, line, fixButton, watch }),
       ...airCards(report, args.spec, { card, line, fixButton, watch }),
-      ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }).slice(0, report.selfPropelled || report.carrier || report.scouting ? 1 : 2),
+      ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }).slice(0, report.selfPropelled || report.carrier || report.scouting || report.airDefence ? 1 : 2),
     )
     const after = afterAction(report.armour, args.spec)
     const debrief = afterActionCard(after, sheet, args.spec, { fixButton, fixZone })

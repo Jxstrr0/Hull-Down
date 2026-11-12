@@ -58,13 +58,14 @@ describe('the challenge of the day', () => {
     for (const each of challenges) expect(each.tender.weights).toEqual(DAILY.wishes[each.wish])
   })
 
-  it('varies: every tank tender and every wish turns up, and never the tank destroyer\'s, the infantry fighting vehicle\'s, the scout car\'s or the self-propelled gun\'s', () => {
+  it('varies: every tank tender and every wish turns up, and never the tank destroyer\'s, the infantry fighting vehicle\'s, the scout car\'s, the self-propelled gun\'s or the anti-aircraft gun vehicle\'s', () => {
     const bases = new Set(challenges.map((each) => each.basis))
     expect(bases.has('destroyer1991')).toBe(false)
     expect(bases.has('ifv1996')).toBe(false)
     expect(bases.has('scout2004')).toBe(false)
     expect(bases.has('spg2008')).toBe(false)
-    expect(bases.size).toBe(TENDER_IDS.length - 4)
+    expect(bases.has('aa2012')).toBe(false)
+    expect(bases.size).toBe(TENDER_IDS.length - 5)
     expect(new Set(challenges.map((each) => each.wish)).size).toBe(WISH_IDS.length)
     expect(new Set(challenges.map((each) => each.massCutT)).size).toBe(new Set(DAILY.massCutsT).size)
   })

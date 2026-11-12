@@ -48,8 +48,8 @@ export function failedTests(range: RangeReport): string[] {
   if (!range.acceleration.passed) out.push(R.acceleration.title)
   if (!range.obstacles.passed) out.push(R.obstacles.title)
   if (!range.endurance.passed) out.push(R.endurance.title)
-  // A self-propelled gun's, an infantry fighting vehicle's or a scout car's shoots, drill and berm are run but do not count.
-  const tank = !range.selfPropelled && !range.carrier && !range.scouting
+  // A self-propelled gun's, an infantry fighting vehicle's, a scout car's or an anti-aircraft gun vehicle's shoots, drill and berm are run but do not count.
+  const tank = !range.selfPropelled && !range.carrier && !range.scouting && !range.airDefence
   if (tank) for (const id of GUNNERY_TEST_IDS) if (!range.gunnery[id].passed) out.push(R.gunnery.titles[id])
   if (tank && !range.drill.passed) out.push(R.drill.title)
   if (!range.armour.passed) out.push(R.armour.title)

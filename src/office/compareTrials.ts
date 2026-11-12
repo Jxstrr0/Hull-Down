@@ -148,8 +148,9 @@ function missionMeasures(): Measure[] {
 
 /** Sets the later build's visit to the range against the earlier one's. */
 export function compareTrials(before: RangeReport, after: RangeReport): TrialMove[] {
-  // A self-propelled gun's or an infantry fighting vehicle's shoots, drill and berm are run but do not count, so they are left out.
-  const notTank = (r: RangeReport): boolean => r.selfPropelled || r.carrier || r.scouting
+  // A self-propelled gun's, an infantry fighting vehicle's, a scout car's or an anti-aircraft gun vehicle's shoots, drill and berm are run
+  // but do not count, so they are left out.
+  const notTank = (r: RangeReport): boolean => r.selfPropelled || r.carrier || r.scouting || r.airDefence
   const counted = notTank(before) && notTank(after) ? measures().filter((m) => !TANK_ONLY.test(m.key)) : measures()
   const all = before.fireMission && after.fireMission ? [...counted, ...missionMeasures()] : counted
   return all.map((measure): TrialMove => {

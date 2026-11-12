@@ -845,6 +845,13 @@ air defence trial rather than tank duels.
    six seconds on average from in range to the first burst. Run on the
    proving ground for an anti-aircraft gun only.
 3. The 2012 tender in the career (1.7.2.0). Saves carried over.
+   Done: between the self-propelled gun and the tank of 2016. Only 35 mm,
+   tracks or wheels, 38 t, Kr 3.6M, generation two. Judged on the air
+   defence trial in place of the tank shoots, drill and berm; the trench,
+   step and slope waived; armour against a carrier's cannon at long range.
+   Firepower 45, cost 20, mobility 15, reliability 15, protection 5. The
+   chief engineer remarks on the trial; rivals for now build their carrier
+   with the radar. Not a basis for the challenge of the day.
 4. Rival bureaus bid anti-aircraft vehicles (1.7.3.0).
 5. Something to watch for the air defence trial (1.7.4.0).
 

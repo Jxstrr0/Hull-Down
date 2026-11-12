@@ -21,9 +21,10 @@ export function airCards(report: RangeReport, spec: VehicleSpec, kit: CardKit): 
   const lines = el('ul', 'rg-lines')
   const fc = spec.fireControl
   // A miss is most often the radar, then the computer, then the rounds.
+  // A better computer also hits sooner, so it saves rounds: it comes before more of them.
   const downedFix = !fc.searchRadar ? 'fireControl.searchRadar'
-    : run.ranOut ? 'ammo.rounds'
-      : fc.computer !== 'digital' ? 'fireControl.computer' : 'fireControl.sight'
+    : fc.computer !== 'digital' ? 'fireControl.computer'
+      : run.ranOut ? 'ammo.rounds' : 'fireControl.sight'
   lines.append(
     kit.line(K.downed, [
       fill(K.downedValue, { n: String(run.downed), of: String(run.raiders.length) }),

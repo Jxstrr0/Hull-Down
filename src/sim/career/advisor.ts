@@ -8,7 +8,7 @@ import type { ZoneId } from '../../data/materials'
 import { COMPUTERS, LOADING, NIGHT_SIGHTS, RANGEFINDERS, SIGHTS, STABILISERS } from '../../data/parts'
 import { GUNNERY_TEST_IDS, type GunneryTestId, type ObstacleId } from '../../data/range'
 import type { Tender } from '../../data/tenders'
-import { runAcceleration, runBerm, runFireMission, runGunnery, runObstacles, runScoutPatrol, runSquadDrop } from '../trials'
+import { runAcceleration, runAirDefence, runBerm, runFireMission, runGunnery, runObstacles, runScoutPatrol, runSquadDrop } from '../trials'
 import type { Issue } from '../vehicle/checks'
 import { testShot } from '../vehicle/shot'
 import type { VehicleSpec } from '../vehicle/spec'
@@ -16,7 +16,7 @@ import { buildStatSheet, type StatSheet } from '../vehicle/stats'
 import { footprintControl } from '../vehicle/wheels'
 
 export const REMARK_KINDS = [
-  'fault', 'plate', 'shoot', 'slowShot', 'drill', 'missionReach', 'missionFirst', 'missionRate', 'missionClose', 'squadTroops', 'squadDrop', 'squadCover', 'scoutTime', 'scoutFound', 'scoutSeen', 'sprint', 'top', 'obstacle', 'berm', 'warning', 'reliability', 'cost',
+  'fault', 'plate', 'shoot', 'slowShot', 'drill', 'missionReach', 'missionFirst', 'missionRate', 'missionClose', 'squadTroops', 'squadDrop', 'squadCover', 'scoutTime', 'scoutFound', 'scoutSeen', 'airDowned', 'airReaction', 'sprint', 'top', 'obstacle', 'berm', 'warning', 'reliability', 'cost',
 ] as const
 export type RemarkKind = (typeof REMARK_KINDS)[number]
 
@@ -93,8 +93,9 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
   }
   out.push(...holed.values())
 
-  // A self-propelled gun's, an infantry fighting vehicle's or a scout car's tender counts no tank shoots, drill or berm, so he says nothing of them.
-  const tank = marks.fireMission === undefined && marks.squad === undefined && marks.scout === undefined
+  // A self-propelled gun's, an infantry fighting vehicle's, a scout car's or an anti-aircraft gun vehicle's tender counts no tank shoots,
+  // drill or berm, so he says nothing of them.
+  const tank = marks.fireMission === undefined && marks.squad === undefined && marks.scout === undefined && marks.air === undefined
   // The firing tests, rehearsed a few times over.
   for (const test of tank ? GUNNERY_TEST_IDS : []) {
     let hits = 0
@@ -209,6 +210,34 @@ export function review(spec: VehicleSpec, tender: Tender): Remark[] {
       out.push({ kind: 'scoutFound', part, value: Math.round(found * 10) / 10, limit: M.found })
     }
     if (seen > M.seen + ADVISOR.scoutSeenSlack) out.push({ kind: 'scoutSeen', part: 'turret.shape', value: Math.round(seen * 10) / 10, limit: M.seen })
+  }
+
+  // An anti-aircraft gun vehicle's air defence trial, rehearsed a few times over.
+  if (marks.air) {
+    const M = marks.air
+    const radar = spec.fireControl.searchRadar
+    let downed = 0
+    let reactionS: number | null = 0
+    let ranOut = false
+    for (let seed = 1; seed <= ADVISOR.rehearsals; seed++) {
+      const raid = runAirDefence(sheet.fire, seed)
+      downed += raid.downed / ADVISOR.rehearsals
+      ranOut ||= raid.ranOut
+      reactionS = raid.reactionS === null || reactionS === null ? null : reactionS + raid.reactionS / ADVISOR.rehearsals
+    }
+    if (downed < M.downed) {
+      // Without the radar he would fit that first; with it, a better computer, which hits sooner and so saves rounds; then more rounds.
+      const part = !radar ? 'fireControl.searchRadar'
+        : spec.fireControl.computer !== 'digital' ? 'fireControl.computer'
+          : ranOut ? 'ammo.rounds' : 'fireControl.sight'
+      out.push({ kind: 'airDowned', part, value: Math.round(downed * 10) / 10, limit: M.downed })
+    }
+    if (reactionS === null || reactionS > M.reactionS) {
+      out.push({
+        kind: 'airReaction', part: radar ? 'fireControl.computer' : 'fireControl.searchRadar',
+        value: reactionS === null ? undefined : Math.round(reactionS * 10) / 10, limit: M.reactionS,
+      })
+    }
   }
 
   // The strip, the course and the berm come out the same every time, so he can simply work them out.

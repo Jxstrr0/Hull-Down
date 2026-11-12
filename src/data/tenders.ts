@@ -6,7 +6,7 @@
 // check that each rival bureau leads a tender of its own.
 import type { Limits } from '../sim/vehicle/spec'
 import type { ThreatTankId } from './opponents'
-import { MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, MARKS_IFV, MARKS_SCOUT, MARKS_SPG, type Marks } from './range'
+import { MARKS_AA, MARKS_GEN1, MARKS_GEN2, MARKS_GEN3, MARKS_IFV, MARKS_SCOUT, MARKS_SPG, type Marks } from './range'
 import { PACT_LIMITS_GEN1, PACT_LIMITS_GEN3 } from './tuning'
 
 export const SCORE_AXES = ['protection', 'firepower', 'mobility', 'reliability', 'cost'] as const
@@ -19,7 +19,7 @@ export interface Tender {
   limits: Limits & { maxUnitCostKr: number }
   /** What the proving ground asks of a prototype. */
   marks: Marks
-  /** The Accord tanks the army expects it to meet. Every bid duels each of them. None for a self-propelled gun, which fights from beyond the hill, for an infantry fighting vehicle, which is judged on its squad, or for a scout car, which is meant to see and not be seen. */
+  /** The Accord tanks the army expects it to meet. Every bid duels each of them. None for a self-propelled gun, which fights from beyond the hill, for an infantry fighting vehicle, which is judged on its squad, or for a scout car, which is meant to see and not be seen, or for an anti-aircraft gun vehicle, which is judged on the aircraft it brings down. */
   threats: readonly ThreatTankId[]
   /** How the army weighs a bid. The five add up to 100. */
   weights: Record<ScoreAxis, number>
@@ -35,7 +35,7 @@ export interface Tender {
   luck: number
 }
 
-export const TENDER_IDS = ['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'scout2004', 'spg2008', 'tank2016'] as const
+export const TENDER_IDS = ['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'scout2004', 'spg2008', 'aa2012', 'tank2016'] as const
 export type TenderId = (typeof TENDER_IDS)[number]
 
 export const TENDERS: Record<TenderId, Tender> = {
@@ -150,6 +150,25 @@ export const TENDERS: Record<TenderId, Tender> = {
     luck: 4,
   },
   /**
+   * Four years on: the army wants an anti-aircraft gun vehicle to guard its
+   * tanks from fast jets, helicopters and drones. Only the twin 35 mm cannon
+   * is accepted, on tracks or wheels. It is judged on the air defence trial in
+   * place of the tank shoots and duels, and keeps to the roads behind the
+   * tanks, so it is not asked to cross the trench. Generation two parts.
+   * Firepower counts for most; its armour need only keep out a raiding
+   * carrier's cannon.
+   */
+  aa2012: {
+    year: 2012,
+    limits: { ...PACT_LIMITS_GEN1, generation: 2, maxMassT: 38, maxUnitCostKr: 3_600_000, allowedCalibresMm: [35], wheels: true },
+    marks: MARKS_AA,
+    threats: [],
+    weights: { protection: 5, firepower: 45, mobility: 15, reliability: 15, cost: 20 },
+    grantKr: 26_000_000,
+    rivalRevisions: 3,
+    luck: 7,
+  },
+  /**
    * Fifteen years on again: generation three. The Pact's bridges carry
    * more, but the army has a whole fleet to replace: it wants a tank it can
    * buy in numbers and keep running, so cost and reliability count for most.
@@ -214,6 +233,15 @@ export const SCORING = {
      */
     scout: {
       foundShare: 0.7,
+    },
+    /**
+     * For an anti-aircraft gun vehicle, all from the air defence trial: the
+     * share of the raiders brought down, and the rest how quickly it opened
+     * fire, nothing at the tender's mark and full marks at `bestReactionS`.
+     */
+    air: {
+      downedShare: 0.7,
+      bestReactionS: 1,
     },
   },
   mobility: {

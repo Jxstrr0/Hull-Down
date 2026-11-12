@@ -53,6 +53,14 @@ const SCOUT = tank((spec) => {
     spec.era[zone] = 0
   }
 })
+const FLAK = tank((spec) => {
+  spec.hull.size = 'light'
+  spec.gun = 'twin35'
+  spec.loading = 'loader'
+  spec.ammo.rounds = 40
+  spec.fireControl.searchRadar = true
+  spec.turret.ringMm = gunRingMm(spec)
+})
 type Career = Parameters<typeof nextTender>[0]
 /** On from the first tender, through the tank destroyer's of 1991 and the infantry fighting vehicle's of 1996, to the tender of 2001. */
 const to2001 = (career: Career) =>
@@ -64,7 +72,7 @@ describe('the tank destroyer tender of 1991', () => {
   const T = TENDERS.destroyer1991
 
   it('comes second, ten years after the first, with the same parts and a casemate allowed', () => {
-    expect(TENDER_IDS).toEqual(['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'scout2004', 'spg2008', 'tank2016'])
+    expect(TENDER_IDS).toEqual(['improvedType1', 'destroyer1991', 'ifv1996', 'tank2001', 'scout2004', 'spg2008', 'aa2012', 'tank2016'])
     expect(T.year).toBe(1991)
     expect(T.limits.generation ?? 1).toBe(1)
     expect(T.limits.casemate).toBe(true)
@@ -87,7 +95,7 @@ describe('the tank destroyer tender of 1991', () => {
   }, SLOW)
 
   it('has luck of its own, and leaves the other tenders\' luck as it was before it came in', () => {
-    expect(TENDER_IDS.map((id) => TENDERS[id].luck)).toEqual([0, 3, 5, 1, 6, 4, 2])
+    expect(TENDER_IDS.map((id) => TENDERS[id].luck)).toEqual([0, 3, 5, 1, 6, 4, 7, 2])
   })
 })
 
@@ -163,7 +171,10 @@ describe('going on to the next tender', () => {
     const spg = nextTender(enterTender(buildPrototype(scout, SCOUT), 1))
     expect(tenderIdOf(spg)).toBe('spg2008')
     expect(tendersLeft(spg)).toBe(true)
-    const third = nextTender(enterTender(buildPrototype(spg, HOWITZER), 1))
+    const aa = nextTender(enterTender(buildPrototype(spg, HOWITZER), 1))
+    expect(tenderIdOf(aa)).toBe('aa2012')
+    expect(tendersLeft(aa)).toBe(true)
+    const third = nextTender(enterTender(buildPrototype(aa, FLAK), 1))
     expect(tenderIdOf(third)).toBe('tank2016')
     expect(tendersLeft(third)).toBe(false)
     const done = enterTender(buildPrototype(third, THERMAL), 1)
