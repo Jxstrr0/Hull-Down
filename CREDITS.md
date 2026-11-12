@@ -21,6 +21,14 @@ the plan names these fonts.
 | `public/icons/icon-512.png` | The same icon, larger. |
 | `public/icons/icon-maskable-512.png` | The same icon on square paper, for phones that cut icons to their own shape. |
 | `public/icons/apple-touch-icon.png` | The same icon on square paper, for the iPhone home screen. |
+| `public/sketches/gun-rifled100.png` | Sketch of the 100 mm gun, modelled and drawn in Blender for this game (`art/part-sketches.py`). |
+| `public/sketches/gun-smooth115.png` | Sketch of the 115 mm gun, made the same way. |
+| `public/sketches/gun-smooth125.png` | Sketch of the 125 mm gun, made the same way. |
+| `public/sketches/gun-rifled120.png` | Sketch of the 120 mm gun, made the same way. |
+| `public/sketches/engine-diesel580.png` | Sketch of the 580 hp diesel, made the same way. |
+| `public/sketches/engine-diesel780.png` | Sketch of the 780 hp diesel, made the same way. |
+| `public/sketches/engine-multiFuel700.png` | Sketch of the 700 hp multi-fuel engine, made the same way. |
+| `public/sketches/engine-turbine1000.png` | Sketch of the 1,000 hp gas turbine, made the same way. |
 | `public/manifest.webmanifest` | Tells a phone how to add Hull Down to the home screen. Written for this game. |
 
 ## Fonts (npm packages, self-hosted in the build)
