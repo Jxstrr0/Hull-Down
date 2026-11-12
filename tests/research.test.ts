@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { RESEARCH, RESEARCH_IDS } from '../src/data/research'
 import { STRINGS } from '../src/data/strings'
+import { TENDER_IDS } from '../src/data/tenders'
 import { LATER_PARTS } from '../src/data/tech'
 import { cleanCareer } from '../src/persist/careerCodec'
 import {
@@ -19,7 +20,7 @@ function tank(change: (spec: VehicleSpec) => void): VehicleSpec {
 
 /** A career put on the tender of 2001 with money in hand. */
 function secondTender(budgetKr = 40_000_000): Career {
-  return { ...newCareer(3), tenderNo: 1, budgetKr }
+  return { ...newCareer(3), tenderNo: TENDER_IDS.indexOf('tank2001'), budgetKr }
 }
 
 const codes = (spec: VehicleSpec, career: Career) => buildStatSheet(spec, careerLimits(career)).issues.map((issue) => issue.code)
@@ -40,10 +41,12 @@ describe('the research table', () => {
 })
 
 describe('research in a career', () => {
-  it('offers nothing in the first tender, and the generation-two projects in the second', () => {
+  it('offers nothing in the first two tenders, and the generation-two projects in the tender of 2001', () => {
     const first = newCareer(3)
     expect(researchOpen(first)).toEqual([])
     expect(researchBlock(first, 'digitalComputer')).toBe('tooNew')
+    const destroyer = { ...first, tenderNo: TENDER_IDS.indexOf('destroyer1991') }
+    expect(researchOpen(destroyer)).toEqual([])
     // Hard-kill protection and the unmanned turret are generation three: it waits for the tender of 2016.
     expect(researchOpen(secondTender())).toEqual(RESEARCH_IDS.filter((id) => id !== 'hardKill' && id !== 'unmannedTurret'))
   })

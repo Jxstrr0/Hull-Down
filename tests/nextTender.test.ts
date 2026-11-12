@@ -21,14 +21,48 @@ function tank(change: (spec: VehicleSpec) => void): VehicleSpec {
 }
 const NIGHT = tank((spec) => { spec.fireControl.night = 'imageIntensifier' })
 const THERMAL = tank((spec) => { spec.fireControl.night = 'thermal' })
-/** The next tender, with the thermal sight researched. */
-const onward = (career: Parameters<typeof nextTender>[0]) => research(research(nextTender(career), 'digitalComputer'), 'thermalSight')
+type Career = Parameters<typeof nextTender>[0]
+/** On from the first tender, through the tank destroyer's of 1991, to the tender of 2001. */
+const to2001 = (career: Career) => nextTender(enterTender(buildPrototype(nextTender(career), NIGHT), 1))
+/** The tender of 2001, with the thermal sight researched. */
+const onward = (career: Career) => research(research(to2001(career), 'digitalComputer'), 'thermalSight')
+
+describe('the tank destroyer tender of 1991', () => {
+  const T = TENDERS.destroyer1991
+
+  it('comes second, ten years after the first, with the same parts and a casemate allowed', () => {
+    expect(TENDER_IDS).toEqual(['improvedType1', 'destroyer1991', 'tank2001', 'tank2016'])
+    expect(T.year).toBe(1991)
+    expect(T.limits.generation ?? 1).toBe(1)
+    expect(T.limits.casemate).toBe(true)
+    expect(TENDER_IDS.filter((id) => TENDERS[id].limits.casemate)).toEqual(['destroyer1991'])
+    expect(T.limits.maxUnitCostKr).toBeLessThan(TENDERS.improvedType1.limits.maxUnitCostKr)
+    expect(Object.values(T.weights).reduce((sum, each) => sum + each, 0)).toBe(100)
+    expect(Math.max(...Object.values(T.weights))).toBe(T.weights.firepower)
+    expect(STRINGS.tenders.destroyer1991.name).not.toBe('')
+  })
+
+  it('takes a casemate the other tenders would not', () => {
+    const casemate = tank((spec) => { spec.turret.shape = 'casemate' })
+    const refused = (limits: typeof T.limits) => buildStatSheet(casemate, limits).issues.some((issue) => issue.code === 'casemateNotAllowed')
+    expect(refused(T.limits)).toBe(false)
+    for (const id of TENDER_IDS) if (id !== 'destroyer1991') expect(refused(TENDERS[id].limits), id).toBe(true)
+  })
+
+  it('lets every rival bureau put in a legal bid', () => {
+    for (const bureau of BUREAU_IDS) expect(rivalBid(bureau, T, 5).score.legal, bureau).toBe(true)
+  }, SLOW)
+
+  it('has luck of its own, and leaves the other tenders\' luck as it was before it came in', () => {
+    expect(TENDER_IDS.map((id) => TENDERS[id].luck)).toEqual([0, 3, 1, 2])
+  })
+})
 
 describe('the tender of 2001', () => {
   const T = TENDERS.tank2001
 
-  it('comes after the first, twenty years on, with generation two allowed', () => {
-    expect(TENDER_IDS.slice(0, 2)).toEqual(['improvedType1', 'tank2001'])
+  it('comes after the tank destroyer, twenty years on from the first, with generation two allowed', () => {
+    expect(TENDER_IDS.indexOf('tank2001')).toBe(TENDER_IDS.indexOf('destroyer1991') + 1)
     expect(T.year).toBe(2001)
     expect(T.limits.generation).toBe(2)
     expect(T.marks).toBe(MARKS_GEN2)
@@ -75,8 +109,8 @@ describe('going on to the next tender', () => {
 
   it('opens the next tender with the grant added to what is left', () => {
     const next = nextTender(decided)
-    expect(tenderIdOf(next)).toBe('tank2001')
-    expect(next.budgetKr).toBe(decided.budgetKr + TENDERS.tank2001.grantKr)
+    expect(tenderIdOf(next)).toBe('destroyer1991')
+    expect(next.budgetKr).toBe(decided.budgetKr + TENDERS.destroyer1991.grantKr)
     expect(next.prototypes).toEqual([])
     expect(next.outcome).toBeNull()
     expect(next.reputation).toEqual(decided.reputation)
@@ -100,6 +134,7 @@ describe('going on to the next tender', () => {
   it('builds a generation-two prototype only once the tender allows it and the research is done', () => {
     expect(buildBlock(start, THERMAL)).toBe('illegal')
     expect(buildBlock(nextTender(decided), THERMAL)).toBe('illegal')
+    expect(buildBlock(to2001(decided), THERMAL)).toBe('illegal')
     expect(buildBlock(onward(decided), THERMAL)).toBeNull()
   }, SLOW)
 
@@ -111,10 +146,39 @@ describe('going on to the next tender', () => {
   }, SLOW)
 
   it('lets a tank in service take today\'s technology in a package, inside its own limits', () => {
-    const next = nextTender(decided)
+    const next = to2001(decided)
     const tank = { tender: 'improvedType1' } as Parameters<typeof upgradeLimits>[1]
     expect(upgradeLimits(decided, tank).generation ?? 1).toBe(1)
+    expect(upgradeLimits(nextTender(decided), tank).generation ?? 1).toBe(1)
     expect(upgradeLimits(next, tank).generation).toBe(2)
     expect(upgradeLimits(next, tank).maxUnitCostKr).toBe(TENDERS.improvedType1.limits.maxUnitCostKr)
+  }, SLOW)
+})
+
+describe('a career saved before the tank destroyer tender came in', () => {
+  const old = (tenderNo: number) => cleanCareer({ ...JSON.parse(JSON.stringify(newCareer(11))), format: 1, tenderNo })!
+
+  it('stays on the first tender, and moves on one place from any later one', () => {
+    expect(tenderIdOf(old(0))).toBe('improvedType1')
+    expect(tenderIdOf(old(1))).toBe('tank2001')
+    expect(tenderIdOf(old(2))).toBe('tank2016')
+  })
+
+  it('is saved in the new format, so it is moved only once', () => {
+    const moved = old(1)
+    expect(moved.format).toBe(2)
+    expect(tenderIdOf(cleanCareer(JSON.parse(JSON.stringify(moved)))!)).toBe('tank2001')
+  })
+
+  it('keeps the trial luck it had', () => {
+    // The tender of 2001 was second, number one; its luck is still one.
+    const moved = old(1)
+    expect(trialSeed(moved)).toBe(trialSeed({ ...newCareer(11), tenderNo: TENDER_IDS.indexOf('tank2001') }))
+    expect(TENDERS[tenderIdOf(moved)].luck).toBe(1)
+  })
+
+  it('goes from the first tender to the tank destroyer\'s', () => {
+    const first = enterTender(buildPrototype(old(0), NIGHT), 1)
+    expect(tenderIdOf(nextTender(first))).toBe('destroyer1991')
   }, SLOW)
 })

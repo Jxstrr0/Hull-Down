@@ -34,7 +34,7 @@ describe('intelligence files', () => {
 
   it('always hold the truth inside every range, whatever the career', () => {
     for (let seed = 1; seed <= 40; seed++) {
-      for (const tenderNo of [0, 1]) {
+      for (const tenderNo of [0, 1, 2, 3]) {
         const career = { ...newCareer(seed), tenderNo }
         for (const threat of THREAT_TANK_IDS) {
           const file = intelFile(career, threat)
@@ -63,8 +63,11 @@ describe('intelligence files', () => {
   it('sharpen from tender to tender', () => {
     const next = { ...start, tenderNo: 1 }
     expect(intelGrade(next, 'palisade')).toBe('assessed')
-    expect(intelGrade(next, 'palisadeB')).toBe('rumour')
-    expect(intelFiles(next).map((file) => file.threat)).toEqual(['palisade', 'palisadeB'])
+    expect(intelGrade(next, 'palisadeB')).toBeNull()
+    expect(intelFiles(next).map((file) => file.threat)).toEqual(['warden', 'palisade'])
+    const later = { ...start, tenderNo: 2 }
+    expect(intelGrade(later, 'palisadeB')).toBe('rumour')
+    expect(intelFiles(later).map((file) => file.threat)).toEqual(['palisade', 'palisadeB'])
   })
 
   it('are the same every time for the same career, and differ between careers', () => {

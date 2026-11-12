@@ -1,3 +1,4 @@
+import { TENDER_IDS } from '../src/data/tenders'
 import { describe, expect, it } from 'vitest'
 import { BASELINE_SPEC } from '../src/data/baseline'
 import { CUSTOMER_IDS, CUSTOMERS, EXPORT_DESK, NEED_IDS, NEED_KINDS } from '../src/data/export'
@@ -147,7 +148,7 @@ describe('selling abroad', () => {
     expect(variantBlock(career, 0, 'dahrat', short)).toBe('needs')
     const secret = desert()
     secret.ammo.shaped = 'tandem'
-    const lab = { ...career, tenderNo: 1, researched: ['tandemRound' as const] }
+    const lab = { ...career, tenderNo: TENDER_IDS.indexOf('tank2001'), researched: ['tandemRound' as const] }
     expect(variantBlock(lab, 0, 'dahrat', secret)).toBe('secret')
     expect(variantBlock(career, 0, 'dahrat', secret)).toBe('illegal')
     expect(variantBlock({ ...career, budgetKr: 0 }, 0, 'dahrat', desert())).toBe('noMoney')

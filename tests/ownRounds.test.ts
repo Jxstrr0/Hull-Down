@@ -1,4 +1,5 @@
 // The bureau's own ammunition: long rod, tandem warhead, gun-launched missile.
+import { TENDER_IDS } from '../src/data/tenders'
 import { describe, expect, it } from 'vitest'
 import { KINETIC_ISSUES, OWN_ROUNDS, SHAPED_ISSUES } from '../src/data/ammo'
 import { BASELINE_SPEC } from '../src/data/baseline'
@@ -90,7 +91,7 @@ describe('the bureau\'s own rounds', () => {
   it('are generation two, and have to be researched', () => {
     const rod = tank((spec) => { spec.ammo.kinetic = 'longRod' })
     expect(codes(rod, PACT_LIMITS_GEN1)).toContain('notYetAvailable')
-    const second: Career = { ...newCareer(2), tenderNo: 1, budgetKr: 40_000_000 }
+    const second: Career = { ...newCareer(2), tenderNo: TENDER_IDS.indexOf('tank2001'), budgetKr: 40_000_000 }
     expect(codes(rod, careerLimits(second))).toContain('notResearched')
     expect(codes(rod, careerLimits(research(second, 'longRodRound')))).not.toContain('notResearched')
   })

@@ -27,9 +27,15 @@ export interface Tender {
   grantKr: number
   /** Revisions each rival bureau makes after its first prototype. */
   rivalRevisions: number
+  /**
+   * Names this tender's own luck at the proving ground. Fixed for each tender,
+   * not its place in the career, so a tender put in between never changes
+   * another's trials.
+   */
+  luck: number
 }
 
-export const TENDER_IDS = ['improvedType1', 'tank2001', 'tank2016'] as const
+export const TENDER_IDS = ['improvedType1', 'destroyer1991', 'tank2001', 'tank2016'] as const
 export type TenderId = (typeof TENDER_IDS)[number]
 
 export const TENDERS: Record<TenderId, Tender> = {
@@ -49,6 +55,25 @@ export const TENDERS: Record<TenderId, Tender> = {
     weights: { protection: 15, firepower: 35, mobility: 25, reliability: 15, cost: 10 },
     grantKr: 22_000_000,
     rivalRevisions: 0,
+    luck: 0,
+  },
+  /**
+   * Ten years on: the army wants a tank destroyer to stand beside its tanks.
+   * The same generation one parts and the same bridges, but a casemate is
+   * allowed in place of a turret: a big gun on a cheap, light, low hull.
+   * Firepower counts for most, then cost; it is meant to wait hull down for
+   * the Accord's tanks, not to fight its way forward.
+   */
+  destroyer1991: {
+    year: 1991,
+    limits: { ...PACT_LIMITS_GEN1, maxUnitCostKr: 2_800_000, casemate: true },
+    // It waits with its hull already pointed down the likely line, so the first shot may come a little later.
+    marks: { ...MARKS_GEN1, firstShotS: 26 },
+    threats: ['warden', 'palisade'],
+    weights: { protection: 10, firepower: 40, mobility: 15, reliability: 10, cost: 25 },
+    grantKr: 18_000_000,
+    rivalRevisions: 2,
+    luck: 3,
   },
   /**
    * Twenty years on: a tank for the new century. Generation two technology
@@ -64,6 +89,7 @@ export const TENDERS: Record<TenderId, Tender> = {
     weights: { protection: 30, firepower: 30, mobility: 10, reliability: 15, cost: 15 },
     grantKr: 40_000_000,
     rivalRevisions: 3,
+    luck: 1,
   },
   /**
    * Fifteen years on again: generation three. The Pact's bridges carry
@@ -78,6 +104,7 @@ export const TENDERS: Record<TenderId, Tender> = {
     weights: { protection: 10, firepower: 15, mobility: 10, reliability: 25, cost: 40 },
     grantKr: 60_000_000,
     rivalRevisions: 3,
+    luck: 2,
   },
 }
 

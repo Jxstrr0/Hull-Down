@@ -54,6 +54,9 @@ export interface DailyChallenge {
   tender: Tender
 }
 
+/** The tank tenders a challenge is built on. The tank destroyer's is left out, so the days stay as they were. */
+const DAILY_BASES = TENDER_IDS.filter((id) => !TENDERS[id].limits.casemate)
+
 function pick<T>(list: readonly T[], seed: number, key: number): T {
   return list[Math.floor(unit(seed, key) * list.length)]!
 }
@@ -61,7 +64,7 @@ function pick<T>(list: readonly T[], seed: number, key: number): T {
 /** The challenge for one day. The same day always gives the same challenge. */
 export function dailyChallenge(day: number): DailyChallenge {
   const seed = hash32(DAILY.salt, day)
-  const basis = pick(TENDER_IDS, seed, 1)
+  const basis = pick(DAILY_BASES, seed, 1)
   const wish = pick(WISH_IDS, seed, 2)
   const massCutT = pick(DAILY.massCutsT, seed, 3)
   const costShare = pick(DAILY.costShares, seed, 4)

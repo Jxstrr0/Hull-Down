@@ -1468,6 +1468,10 @@ export const STRINGS = {
       name: 'A tank for a watched battlefield',
       brief: 'Fifteen years on. The Palisade B is still what the Accord fields, but the army has watched what small wars abroad do to tanks, and the range now drops a bomblet from a drone on the hull roof and the turret roof, and both must hold. A top-attack missile is fired at the turret roof for the record. But the army has a whole fleet to replace. Above all it wants a tank it can buy in numbers and keep running: cost counts for most, then reliability. The Pact has rebuilt its bridges to carry 48 t. Generation three parts are allowed as the bureau works them up.',
     },
+    destroyer1991: {
+      name: 'A tank destroyer',
+      brief: 'Ten years on. The Accord still fields the Warden and the Palisade, and the army wants something to stand beside its tanks and stop them: a tank destroyer. It need not have a turret. A casemate, the gun fixed in a low box on the hull, is allowed for the first time, and lets a big gun ride on a light, cheap tank. It is meant to wait hull down for the enemy, not to lead the advance: firepower counts for most, then cost. The same bridges and the same generation one parts as before.',
+    },
     tank2001: {
       name: 'A tank for the new century',
       brief: 'Twenty years on. The Accord has rebuilt its Palisade around a long-rod round and a thermal sight, and its infantry carry tandem warheads that set off reactive tiles before the main charge arrives. The army wants a tank that can meet both, shoots as well by night as by day, and still crosses a Pact bridge. Protection and firepower count for most. Generation two parts are allowed.',

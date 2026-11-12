@@ -20,7 +20,8 @@ import { decide, scoreBid, trialBid, type BidScore, type Trialled } from './scor
 import { fieldReport, serviceUnitCostKr, type FieldReport } from './service'
 import { askMeasure, fixedPartsChanged, massCeilingT, type Upgrade, type UpgradeAsk } from './upgrade'
 
-export const CAREER_FORMAT = 1
+/** Two since the tank destroyer tender of 1991 came in second (src/persist/careerCodec.ts moves older careers on). */
+export const CAREER_FORMAT = 2
 
 /** A prototype the bureau paid for. The first is number one; each after it is a revision. */
 export interface Prototype {
@@ -141,7 +142,7 @@ export function tenderOf(career: Career): Tender {
 
 /** The luck of this tender's trials: the same for every bidder and every prototype. */
 export function trialSeed(career: Career): number {
-  return hash32(career.seed, TRIAL, career.tenderNo)
+  return hash32(career.seed, TRIAL, tenderOf(career).luck)
 }
 
 export function newCareer(seed: number): Career {
