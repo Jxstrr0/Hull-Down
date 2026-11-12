@@ -14,7 +14,7 @@ import type { Geometry, VehicleSpec } from '../sim/vehicle'
 import { momentOf, type BattleMoment } from '../ui/battleReplay'
 import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot } from './battleDirector'
 import { createFrameMeter } from './frameMeter'
-import { Dust, Kit } from './rangeScene'
+import { Dust, Kit, Working, exhaustDeckX } from './rangeScene'
 import { DustTrail } from './dust'
 import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, tonesOf } from './tankModel'
 import { battleMud } from './mud'
@@ -63,6 +63,12 @@ interface TankParts {
   /** The back of each track, from the middle of the tank. */
   rearM: number
   sideM: number
+  /** Its exhaust: where it leaves the deck, how often, and whether the engine is working hard. */
+  deck: { x: number; y: number; pipeM: number }
+  fumes: DustTrail
+  working: Working
+  pipes: number
+  lastS: number | null
 }
 
 export interface BattleStage {
@@ -140,6 +146,12 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
     return {
       group, turret, flash, strike, screen, wreck, last: null,
       travelledM: 0, trail: new DustTrail(), rearM: -shape.lengthM / 2 - RENDER.dust.behindM, sideM: shape.track.centreZM,
+      deck: {
+        x: exhaustDeckX(shape, (tank.side === 0 ? mine : theirs).spec.hull.engineAt),
+        y: shape.turret.baseM + RENDER.dust.exhaust.upM,
+        pipeM: shape.track.centreZM * RENDER.dust.exhaust.pipeShare,
+      },
+      fumes: new DustTrail(), working: new Working(), pipes: 0, lastS: null,
     }
   })
 
@@ -191,18 +203,40 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     // How far it has come along its own nose since last time: backing up runs the links the other way.
     const at = { x: parts.group.position.x, z: parts.group.position.z }
     const turn = parts.group.rotation.y
+    let speedMs = 0
     if (parts.last) {
       rollTracks(parts.group, (at.x - parts.last.x) * Math.cos(turn) - (at.z - parts.last.z) * Math.sin(turn))
-      parts.travelledM += Math.hypot(at.x - parts.last.x, at.z - parts.last.z)
+      const moved = Math.hypot(at.x - parts.last.x, at.z - parts.last.z)
+      parts.travelledM += moved
+      const passedS = parts.lastS === null ? 0 : t - parts.lastS
+      if (passedS > 0) speedMs = moved / passedS
     }
     parts.last = at
+    parts.lastS = t
     // Earth thrown up from the back of both tracks, turned the way the tank faces.
-    const puffs = tank.state === 'out' ? 0 : parts.trail.due(parts.travelledM, 'earth')
+    const watchedS = t / RENDER.battle.rate
+    const earth = RENDER.dust.kinds.earth
+    const fighting = tank.state !== 'out'
+    const puffs = fighting ? parts.trail.due(parts.travelledM, earth.everyM) : 0
+    // A point on the tank, from its middle, out in the field.
+    const place = (x: number, z: number): { x: number; z: number } => ({
+      x: at.x + x * Math.cos(turn) + z * Math.sin(turn),
+      z: at.z - x * Math.sin(turn) + z * Math.cos(turn),
+    })
     for (let i = 0; i < puffs; i++) {
       for (const side of [-1, 1]) {
-        const z = side * parts.sideM
-        stage.dust.kick(at.x + parts.rearM * Math.cos(turn) + z * Math.sin(turn), 0, at.z - parts.rearM * Math.sin(turn) + z * Math.cos(turn), 'earth', t / RENDER.battle.rate)
+        const spot = place(parts.rearM, side * parts.sideM)
+        stage.dust.kick(spot.x, 0, spot.z, earth, watchedS)
       }
+    }
+    // Exhaust off the engine deck, blown back, thick and dark while it pulls away.
+    const ex = RENDER.dust.exhaust
+    const hard = fighting && parts.working.at(t, speedMs, 0)
+    const fumes = fighting ? parts.fumes.due(watchedS, hard ? ex.hardEveryS : ex.everyS) : 0
+    for (let i = 0; i < fumes; i++) {
+      const spot = place(parts.deck.x, (parts.pipes++ % 2 === 0 ? 1 : -1) * parts.deck.pipeM)
+      const back = place(-ex.driftM, 0)
+      stage.dust.kick(spot.x, parts.deck.y, spot.z, hard ? ex.hard : ex.light, watchedS, { x: back.x - at.x, z: back.z - at.z })
     }
     if (parts.turret) parts.turret.rotation.y = -rad((guns[index] ?? tank.headingDeg) - tank.headingDeg)
     parts.screen.visible = tank.state === 'smoke'

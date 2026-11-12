@@ -6,10 +6,16 @@ import { RENDER } from '../data/render'
 const K = RENDER.dust
 export type DustKind = keyof typeof K.kinds
 
+/** How a puff looks: its colour, and how big and how high it goes against the plain earth puff. */
+export interface PuffLook {
+  colour: string
+  size: number
+  rise: number
+}
+
 /** A puff `ageS` into its life: how far it has risen and how wide it is, or null once it is gone (or not yet born). */
-export function dustAt(ageS: number, kind: DustKind): { riseM: number; sizeM: number } | null {
+export function dustAt(ageS: number, k: PuffLook): { riseM: number; sizeM: number } | null {
   if (ageS < 0 || ageS >= K.lifeS) return null
-  const k = K.kinds[kind]
   const life = ageS / K.lifeS
   const swell = K.fromM + (K.toM - K.fromM) * Math.sqrt(life)
   const fade = Math.min(1, (1 - life) / K.fadeShare)
@@ -17,22 +23,22 @@ export function dustAt(ageS: number, kind: DustKind): { riseM: number; sizeM: nu
 }
 
 /**
- * How many puffs a tank throws for going on to `distanceM`: one every `everyM`,
- * no more than a few a picture. Going back (a seek) starts it afresh.
+ * How many puffs are due for getting on to `at` (metres driven, or seconds
+ * gone): one every `every`, no more than a few a picture. Going back (a seek)
+ * starts it afresh.
  */
 export class DustTrail {
   private lastM: number | null = null
   private owedM = 0
 
-  due(distanceM: number, kind: DustKind): number {
-    const moved = this.lastM === null ? 0 : distanceM - this.lastM
-    this.lastM = distanceM
+  due(at: number, every: number): number {
+    const moved = this.lastM === null ? 0 : at - this.lastM
+    this.lastM = at
     if (moved < 0) {
       this.owedM = 0
       return 0
     }
     this.owedM += moved
-    const every = K.kinds[kind].everyM
     const puffs = Math.floor(this.owedM / every)
     this.owedM -= puffs * every
     if (puffs > K.mostPerFrame) this.owedM = 0
