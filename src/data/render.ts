@@ -198,13 +198,25 @@ export const RENDER = {
    * The endurance time-lapse throws none.
    */
   dust: {
-    trials: 48, battle: 96, mostPerFrame: 2,
+    trials: 64, battle: 128, mostPerFrame: 2,
     lifeS: 1.6, fromM: 0.3, toM: 1.3, riseM: 0.9, fadeShare: 0.4, opacity: 0.38, sides: 8, rings: 5,
     behindM: 0.25, spreadM: 0.6, sizeSpread: 0.45, driftM: 0.8,
     kinds: {
       concrete: { colour: '#bdb7aa', everyM: 5, size: 0.7, rise: 0.6 },
       earth: { colour: '#a38c68', everyM: 1.8, size: 1, rise: 1 },
       mud: { colour: '#4d3d29', everyM: 0.8, size: 0.75, rise: 1.6 },
+    },
+    /**
+     * Exhaust from the engine deck, `deckShare` of the hull's length from its middle
+     * and `upM` above the roof: a thin grey puff every `everyS` watched seconds,
+     * thick and dark every `hardEveryS` while the tank speeds up by more than
+     * `hardAccelMs2` or climbs steeper than `climbRad`. It drifts `driftM` back.
+     */
+    exhaust: {
+      everyS: 0.18, hardEveryS: 0.09, hardAccelMs2: 0.8, climbRad: 0.06,
+      deckShare: 0.32, upM: 0.1, pipeShare: 0.5, driftM: 1.4,
+      light: { colour: '#85847e', size: 0.7, rise: 1.8 },
+      hard: { colour: '#3b3a37', size: 0.8, rise: 2.3 },
     },
   },
   battle: {

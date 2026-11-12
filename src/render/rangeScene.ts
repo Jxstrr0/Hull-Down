@@ -22,7 +22,7 @@ import type { Camo } from './camo'
 import { createFrameMeter } from './frameMeter'
 import { rangeScenery } from './scenery'
 import { buildSolids, buildTank, rollTracks, setMud, tonesOf } from './tankModel'
-import { DustTrail, dustAt, type DustKind } from './dust'
+import { DustTrail, dustAt, type DustKind, type PuffLook } from './dust'
 import { courseMud, enduranceMud } from './mud'
 import { trackLinkPixels } from './trackLinks'
 import { tankShapeOf, type TankShape } from './tankShape'
@@ -658,6 +658,10 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   const dust = new Dust(kit, RENDER.dust.trials)
   scene.add(dust.mesh)
   const trail = new DustTrail()
+  const fumes = new DustTrail()
+  const working = new Working()
+  const deckX = exhaustDeckX(shape, args.spec.hull.engineAt)
+  let pipes = 0
 
   /** Put the tank and the camera where the run has them at `timeS`, and draw. */
   function draw(): boolean {
@@ -667,10 +671,23 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     setMud(tank, now.mudShare)
     // Puffs at the back of both tracks, aged in watched seconds so a sped-up run does not blink them away.
     const watchedS = timeS / show.rate
-    const puffs = now.dust ? trail.due(now.frame.distanceM, now.dust) : 0
+    const ground = now.dust ? RENDER.dust.kinds[now.dust] : null
+    const puffs = ground ? trail.due(now.frame.distanceM, ground.everyM) : 0
     for (let i = 0; i < puffs; i++) {
       for (const side of [-1, 1]) {
-        dust.kick(now.pose.x - shape.lengthM / 2 - RENDER.dust.behindM, now.pose.y - now.sinkM, side * shape.track.centreZM, now.dust!, watchedS)
+        dust.kick(now.pose.x - shape.lengthM / 2 - RENDER.dust.behindM, now.pose.y - now.sinkM, side * shape.track.centreZM, ground!, watchedS)
+      }
+    }
+    // Exhaust off the engine deck, thick and dark while it pulls away or climbs.
+    if (now.dust) {
+      const speedMs = now.frame.speedKmh / 3.6
+      const hard = working.at(timeS, speedMs, now.pose.pitchRad)
+      const ex = RENDER.dust.exhaust
+      const look = hard ? ex.hard : ex.light
+      const due = fumes.due(watchedS, hard ? ex.hardEveryS : ex.everyS)
+      for (let i = 0; i < due; i++) {
+        const pipe = (pipes++ % 2 === 0 ? 1 : -1) * shape.track.centreZM * ex.pipeShare
+        dust.kick(now.pose.x + deckX, now.pose.y - now.sinkM + shape.turret.baseM + ex.upM, pipe, look, watchedS, { x: -ex.driftM, z: 0 })
       }
     }
     dust.show(watchedS)
@@ -769,7 +786,7 @@ interface Puff {
   y: number
   z: number
   bornS: number
-  kind: DustKind
+  look: PuffLook
   /** How much bigger or smaller than the rest, and which way it drifts off the track. */
   scale: number
   driftX: number
@@ -797,20 +814,24 @@ export class Dust {
     this.mesh.frustumCulled = false
   }
 
-  /** Leave a puff here, now. It is spread a little about the spot, the same way every time. */
-  kick(x: number, y: number, z: number, kind: DustKind, nowS: number): void {
+  /**
+   * Leave a puff here, now. It is spread a little about the spot, the same way
+   * every time, and drifts the way `drift` points (metres over its life), or
+   * else out from the tank's middle line.
+   */
+  kick(x: number, y: number, z: number, look: PuffLook, nowS: number, drift?: { x: number; z: number }): void {
     const k = RENDER.dust
     const n = this.thrown++
     // A number from -1 to 1 for each puff and each use, the same every time.
     const jitter = (seed: number): number => (((Math.sin((n + 1) * 12.9898 + seed * 78.233) * 43758.5453) % 1) + 1) % 1 * 2 - 1
     const out = Math.sign(z) || 1
     this.puffs[this.next] = {
-      x: x + jitter(1) * k.spreadM, y, z: z + jitter(2) * k.spreadM * 0.5, bornS: nowS, kind,
+      x: x + jitter(1) * k.spreadM * (drift ? 0.3 : 1), y, z: z + jitter(2) * k.spreadM * (drift ? 0.15 : 0.5), bornS: nowS, look,
       scale: 1 + jitter(3) * k.sizeSpread,
-      driftX: jitter(4) * k.driftM * 0.5,
-      driftZ: out * (0.5 + 0.5 * Math.abs(jitter(5))) * k.driftM,
+      driftX: drift ? drift.x * (1 + 0.3 * jitter(4)) : jitter(4) * k.driftM * 0.5,
+      driftZ: drift ? drift.z * (1 + 0.3 * jitter(5)) : out * (0.5 + 0.5 * Math.abs(jitter(5))) * k.driftM,
     }
-    this.mesh.setColorAt(this.next, this.colour.set(k.kinds[kind].colour))
+    this.mesh.setColorAt(this.next, this.colour.set(look.colour))
     if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true
     this.next = (this.next + 1) % this.puffs.length
   }
@@ -820,7 +841,7 @@ export class Dust {
     if (this.lastS !== null && nowS < this.lastS) this.puffs.fill(null)
     this.lastS = nowS
     this.puffs.forEach((puff, i) => {
-      const at = puff ? dustAt(nowS - puff.bornS, puff.kind) : null
+      const at = puff ? dustAt(nowS - puff.bornS, puff.look) : null
       if (!puff || !at) {
         this.puffs[i] = null
         this.mesh.setMatrixAt(i, this.matrix.makeScale(0, 0, 0))
@@ -837,5 +858,29 @@ export class Dust {
   /** How many puffs are in the air. */
   get showing(): number {
     return this.puffs.filter((puff) => puff !== null).length
+  }
+}
+
+/** Where the exhaust leaves the engine deck, along the tank from its middle. */
+export function exhaustDeckX(shape: TankShape, engineAt: 'rear' | 'front'): number {
+  return (engineAt === 'front' ? 1 : -1) * shape.lengthM * RENDER.dust.exhaust.deckShare
+}
+
+/** Whether the engine is working hard: speeding up fast, or climbing. Times are seconds of the run. */
+export class Working {
+  private lastS: number | null = null
+  private lastMs = 0
+  private pulling = false
+
+  at(timeS: number, speedMs: number, pitchRad: number): boolean {
+    const ex = RENDER.dust.exhaust
+    const passedS = this.lastS === null ? 0 : timeS - this.lastS
+    // The same moment again (a redraw) keeps its answer; going back starts afresh.
+    if (passedS !== 0 || this.lastS === null) {
+      this.pulling = passedS > 0 && (speedMs - this.lastMs) / passedS > ex.hardAccelMs2
+      this.lastS = timeS
+      this.lastMs = speedMs
+    }
+    return this.pulling || pitchRad > ex.climbRad
   }
 }
