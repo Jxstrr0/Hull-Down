@@ -39,6 +39,18 @@ describe('the tank kit, read without three.js', () => {
     expect(mirrored).toBeCloseTo(plain, 6)
   })
 
+  it('keeps a turned piece facing outward, and turns it where it is told', () => {
+    const tiles = kit.get('era-tiles')!
+    const all = [...tiles.body, ...tiles.dark]
+    const plain = volume(placeCorners(all, { x: 1, y: 1, z: 1 }, { x: 0, y: 0, z: 0 }))
+    // Laid on a plate facing out along +z: its own x along the tank, its y out, its z down.
+    const axes = { x: { x: 1, y: 0, z: 0 }, y: { x: 0, y: 0, z: 1 }, z: { x: 0, y: -1, z: 0 } }
+    const turned = placeCorners(all, { x: 1, y: 1, z: 1 }, { x: 0, y: 0, z: 0 }, axes)
+    expect(volume(turned)).toBeCloseTo(plain, 6)
+    const zs = turned.filter((_, i) => i % 3 === 2)
+    expect(Math.max(...zs)).toBeCloseTo(0.07, 3)
+  })
+
   it('draws the simple shapes when the kit has not come', async () => {
     const { Kit } = await import('../src/render/rangeScene')
     const { buildTank } = await import('../src/render/tankModel')

@@ -131,7 +131,9 @@ function toneCorners(part: Solid, tone: Tone): Partial<Record<Tone, number[]>> {
   if (part.kind === 'piece') {
     const piece = kitPiece(part.piece)
     if (!piece) return { [tone]: part.fallback.flatMap((plain) => partCorners(plain)) }
-    return { body: placeCorners(piece.body, part.scale, part.at), dark: placeCorners(piece.dark, part.scale, part.at) }
+    // A tile panel's tiles are painted the tile colour; its frame stays dark.
+    const main = tone === 'tile' ? 'tile' : 'body'
+    return { [main]: placeCorners(piece.body, part.scale, part.at, part.axes), dark: placeCorners(piece.dark, part.scale, part.at, part.axes) }
   }
   return { [tone]: partCorners(part) }
 }

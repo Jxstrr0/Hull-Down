@@ -80,18 +80,38 @@ export function pieceTriangles(piece: PieceCorners): number {
   return (piece.body.length + piece.dark.length) / 9
 }
 
+export interface Vec {
+  x: number
+  y: number
+  z: number
+}
+
+/** The piece's own x, y and z, as directions on the tank. Unturned, they are the tank's own. */
+export interface Axes {
+  x: Vec
+  y: Vec
+  z: Vec
+}
+
+export const UNTURNED: Axes = { x: { x: 1, y: 0, z: 0 }, y: { x: 0, y: 1, z: 0 }, z: { x: 0, y: 0, z: 1 } }
+
 /**
- * A piece's corners moved into place: scaled along each axis, then shifted.
- * A negative scale mirrors the piece; its triangles are turned back round so
- * they still face outward.
+ * A piece's corners moved into place: scaled along each of its own axes,
+ * turned so those axes point along `axes`, then shifted. A negative scale
+ * mirrors the piece; its triangles are turned back round so they still face outward.
  */
-export function placeCorners(corners: readonly number[], scale: { x: number; y: number; z: number }, at: { x: number; y: number; z: number }): number[] {
+export function placeCorners(corners: readonly number[], scale: Vec, at: Vec, axes: Axes = UNTURNED): number[] {
   const out: number[] = []
-  const flip = scale.x * scale.y * scale.z < 0
+  const { x: a, y: b, z: c } = axes
+  const turn = a.x * (b.y * c.z - b.z * c.y) - a.y * (b.x * c.z - b.z * c.x) + a.z * (b.x * c.y - b.y * c.x)
+  const flip = scale.x * scale.y * scale.z * turn < 0
+  const order = flip ? [0, 6, 3] : [0, 3, 6]
   for (let i = 0; i < corners.length; i += 9) {
-    const order = flip ? [0, 6, 3] : [0, 3, 6]
     for (const k of order) {
-      out.push(corners[i + k]! * scale.x + at.x, corners[i + k + 1]! * scale.y + at.y, corners[i + k + 2]! * scale.z + at.z)
+      const px = corners[i + k]! * scale.x
+      const py = corners[i + k + 1]! * scale.y
+      const pz = corners[i + k + 2]! * scale.z
+      out.push(at.x + px * a.x + py * b.x + pz * c.x, at.y + px * a.y + py * b.y + pz * c.y, at.z + px * a.z + py * b.z + pz * c.z)
     }
   }
   return out
