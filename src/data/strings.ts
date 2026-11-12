@@ -42,6 +42,10 @@ export const STRINGS = {
       top: 'Long {l} m · Wide {w} m',
       front: 'Wide {w} m · High {h} m',
     },
+    fold: {
+      show: 'Drawing ▾',
+      showLabel: 'Show the drawing again',
+    },
     cutaway: {
       button: 'Inside',
       buttonLabel: 'Show what is inside the armour',

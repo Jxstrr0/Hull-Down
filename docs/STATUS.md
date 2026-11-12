@@ -4,6 +4,8 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
 
 ## Waiting on Kelbo
 
+- **Build screen, Scrapline style (1.1.1.0).** Your picks from the pitch: Idea A, one row open at a time, descriptions only on the fitted option. Step 1 of 3 is in. I chose: the drawing folds after about a thumb's flick (48 px) and comes back only when you tap Drawing, so it never jumps under your finger; the name, weight bar and numbers stay on screen; held sideways nothing folds. Switches (smoke, sandbox) keep their description, as they have only one option.
+
 - **The ☰ menu (1.1.0.0).** I read "housing setting" as "the menu holds the settings", so Sound and the Paper/Blueprint switch moved off the top bar into the menu; say if you meant something else. Graphics stays on the Trials tab and the menu links to it. Restart is still on the Bureau tab too.
 
 - **Hull Down 1.0 (1.0.0.0).** Bumped to 1.0 as you asked, at the end of stage 18. Still yours: the cover, from the prompt Claude wrote. Not done: a short card clip recorded from the live game; Claude can record one with a test browser if you want it, say where it should go.
@@ -471,6 +473,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.1.1.0, a shorter build screen (1 of 3).** Each part option is now one line: its name, then the weight and cost it changes, with the description shown only for the fitted one. On a phone held upright the drawing folds away once you scroll the parts, so the list gets about twice the room; tap Drawing to bring it back.
 - **1.1.0.0, the ☰ menu.** A menu button in the top bar opens a sheet that holds the settings (sound, paper or blueprint look, a way to the graphics settings), quick ways to the bureau, saves and credits, and "start a new career" (tap twice). Opening it pauses any trial or battle that is playing.
 - **1.0.0.0, PR 18: Hull Down 1.0.** The launch version. Crash screen, credits, brand check and releases (PR 18a to 18c) are in; the studio site already lists the game. This merge publishes the v1.0.0.0 release.
 - **0.18.2.0, PR 18c: brand check and releases.** `tests/brand.test.ts` holds the studio pieces to the Longlight brand: the official logo files unchanged, the splash in brand colours and Space Grotesk, the credit line, the full studio name and the studio link. `publish-release.yml` publishes a GitHub Release (`v<VERSION>`) each time the version changes on `main`, with that version's line from this log as its notes; a test now fails if a version has no log line.

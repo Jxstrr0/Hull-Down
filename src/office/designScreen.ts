@@ -2,6 +2,7 @@
 // read the faults and jump to the part that fixes them.
 // The blueprint on top is drawn from the same spec, and tapping it opens a part.
 import { SANDBOX, SANDBOX_LIMIT_IDS } from '../data/sandbox'
+import { OFFICE } from '../data/office'
 import { loadSandbox, saveSandbox } from '../persist/sandboxStore'
 import { createDaily, type Daily } from './dailyBox'
 import { sandboxLimits } from '../sim/vehicle/sandbox'
@@ -183,7 +184,12 @@ export function renderDesignScreen(first: Tender): Office {
   const projectLine = el('p', 'office-project')
   const nameLine = el('h2', 'office-name')
   titles.append(projectLine, nameLine)
-  head.append(titles, viewSwitch)
+  // While the drawing is folded away, this brings it back. It stands where the view switch was.
+  const foldButton = el('button', 'view fold-show', O.fold.show)
+  foldButton.type = 'button'
+  foldButton.dataset.key = 'fold:show'
+  foldButton.setAttribute('aria-label', O.fold.showLabel)
+  head.append(titles, viewSwitch, foldButton)
   const blueprint = el('div', 'bp')
   const reset = el('button', 'btn', O.reset)
   reset.type = 'button'
@@ -302,6 +308,29 @@ export function renderDesignScreen(first: Tender): Office {
   /** The proving ground takes over the whole screen while it is open. */
   const range = el('div', 'range-holder')
   root.append(top, tabList, panel, range)
+
+  // --- Folding drawing ----------------------------------------------------
+  // On a phone held upright the drawing folds away once the parts are scrolled
+  // down, so the list gets the screen; the weight bar and numbers stay. It comes
+  // back only when asked, so it never jumps while a finger is on the list.
+  // (Held sideways the drawing has its own column, and the style sheet ignores the fold.)
+  let folded = false
+  /** The highest point the list has been scrolled to since the drawing last opened. */
+  let foldFrom = 0
+  const setFolded = (on: boolean): void => {
+    folded = on
+    root.classList.toggle('office-folded', on)
+    foldFrom = panel.scrollTop
+  }
+  panel.addEventListener('scroll', () => {
+    if (folded) return
+    foldFrom = Math.min(foldFrom, panel.scrollTop)
+    if (panel.scrollTop - foldFrom > OFFICE.foldAfterPx) setFolded(true)
+  }, { passive: true })
+  foldButton.addEventListener('click', () => {
+    setFolded(false)
+    viewButtons[VIEWS.indexOf(view)]?.focus({ preventScroll: true })
+  })
 
   // --- Drawing ------------------------------------------------------------
   function issuesFor(id: string): Issue[] {
@@ -473,7 +502,12 @@ export function renderDesignScreen(first: Tender): Office {
     drawPanel()
   }
 
-  function optionButton(key: string, on: boolean, text: { name: string; note: string }, change: Preview | undefined): HTMLButtonElement {
+  /**
+   * One option on a single line: its name, then the change it makes or "fitted". The note shows
+   * only where `withNote` asks (the fitted option of a choice, and every switch), so a list of
+   * options stays short. What it would break always shows.
+   */
+  function optionButton(key: string, on: boolean, text: { name: string; note: string }, change: Preview | undefined, withNote = on): HTMLButtonElement {
     const button = el('button', on ? 'opt opt-on' : 'opt')
     button.type = 'button'
     button.dataset.key = key
@@ -481,13 +515,11 @@ export function renderDesignScreen(first: Tender): Office {
     const headRow = el('span', 'opt-head')
     headRow.append(el('span', 'opt-name', text.name))
     if (on) headRow.append(el('span', 'opt-tag', O.fitted))
+    else if (change) headRow.append(el('span', 'opt-delta', deltaText(change)))
     button.append(headRow)
-    if (text.note) button.append(el('span', 'opt-note', text.note))
-    if (change) {
-      button.append(el('span', 'opt-delta', deltaText(change)))
-      const first = change.newErrors[0]
-      if (first) button.append(el('span', 'opt-warn', fill(O.wouldCause, { issue: issueText(first) })))
-    }
+    if (withNote && text.note) button.append(el('span', 'opt-note', text.note))
+    const first = change?.newErrors[0]
+    if (first) button.append(el('span', 'opt-warn', fill(O.wouldCause, { issue: issueText(first) })))
     return button
   }
 
@@ -547,7 +579,7 @@ export function renderDesignScreen(first: Tender): Office {
     const box = frame(control)
     const on = control.get(spec)
     const change = preview(spec, limits, sheet, (copy) => control.set(copy, !on))
-    const button = optionButton(control.id, on, control.text, change)
+    const button = optionButton(control.id, on, control.text, change, true)
     if (!on) button.querySelector('.opt-head')?.append(el('span', 'opt-tag opt-tag-off', O.notFitted))
     button.setAttribute('role', 'switch')
     button.addEventListener('click', () => commit((s) => control.set(s, !on)))
@@ -1152,7 +1184,7 @@ export function renderDesignScreen(first: Tender): Office {
       marks = marksNow(tenderOf(bureau.career()).marks)
       commit(() => undefined)
     }
-    const toggle = optionButton('sandbox-switch', sandbox.on, X.switch, undefined)
+    const toggle = optionButton('sandbox-switch', sandbox.on, X.switch, undefined, true)
     toggle.querySelector('.opt-tag')?.remove()
     toggle.querySelector('.opt-head')?.append(el('span', sandbox.on ? 'opt-tag' : 'opt-tag opt-tag-off', sandbox.on ? X.on : X.off))
     toggle.setAttribute('role', 'switch')
