@@ -56,32 +56,26 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   first guess: tell me what is too loud, too quiet or just wrong and I
   will retune `src/data/audio.ts`. Still to come in PR 16: battles,
   then the office.
-- **Range officer voice: the quote you asked for.** Nothing has been
-  generated. The script sheet, 12 short lines, one speaker:
-
-  | Line | Speaker | Text | File | Characters |
-  | --- | --- | --- | --- | --- |
-  | RO-01 | Range officer | Range is clear. Carry on. | `public/audio/voice/ro-01-range-clear.mp3` | 25 |
-  | RO-02 | Range officer | Target up. | `public/audio/voice/ro-02-target-up.mp3` | 10 |
-  | RO-03 | Range officer | Hit. | `public/audio/voice/ro-03-hit.mp3` | 4 |
-  | RO-04 | Range officer | Miss. Short. | `public/audio/voice/ro-04-miss-short.mp3` | 12 |
-  | RO-05 | Range officer | Miss. Over. | `public/audio/voice/ro-05-miss-over.mp3` | 11 |
-  | RO-06 | Range officer | Miss. Left. | `public/audio/voice/ro-06-miss-left.mp3` | 11 |
-  | RO-07 | Range officer | Miss. Right. | `public/audio/voice/ro-07-miss-right.mp3` | 12 |
-  | RO-08 | Range officer | Target down. No shot fired. | `public/audio/voice/ro-08-no-shot.mp3` | 27 |
-  | RO-09 | Range officer | Target not seen. | `public/audio/voice/ro-09-not-seen.mp3` | 16 |
-  | RO-10 | Range officer | Stoppage. The loader has a jam. | `public/audio/voice/ro-10-jam.mp3` | 31 |
-  | RO-11 | Range officer | Cease fire. Shoot complete. | `public/audio/voice/ro-11-cease-fire.mp3` | 27 |
-  | RO-12 | Range officer | Breakdown on the lane. Recovery is on its way. | `public/audio/voice/ro-12-breakdown.mp3` | 46 |
-
-  That is 232 characters. ElevenLabs charges about one credit a
-  character on its standard voice models, so **about 232 credits for
-  one take of every line, about 464 if it makes its usual two takes
-  to choose from**, out of your 2,700. I would pick one stock voice (no
-  credits to pick) and ask for one take first. The exact figure shows
-  before anything is spent; if it is more than 464 I stop and ask
-  again. Say yes, change the lines, or say no and the range stays
-  wordless.
+- **Range officer voice** (1.8.3.0): in. Twelve lines in the stock
+  voice Rolando, one take each, 239 credits. He speaks only during the 3D
+  playbacks, and only with the sound on: "Target up" as each target comes
+  up (or the jam instead, when the loader jams on that round), "Hit" or
+  "Miss" with the way it went as each round lands, "Target not seen" and
+  "Target down, no shot fired" for a target that drew no shot, "Cease
+  fire" at the end of a shoot, "Range is clear" at the start of a drive,
+  and "Breakdown on the lane" at each stop on the endurance run. As you
+  asked, I checked the sync: I cut the pauses inside each line (about
+  0.4 s down to 0.18 s) so every call fits in the 1.4 s the picture holds
+  on a strike and "Target up" ends before the gun fires; a test plays
+  every shoot of 42 runs at 60 frames a second and checks each call
+  starts within a quarter of a second of its round landing, the right
+  call, one line at a time. A line that would start more than 0.6 s late
+  is dropped (under 5 % of them). The files are 164 KB; the page asks for
+  them only when you first open a 3D view, and the offline cache keeps
+  them, like the other sounds. **I cannot hear them from here**: tell me if
+  he is too loud, too quiet, or if a line lands wrong. One thing for you
+  to check: they are used under ElevenLabs' own terms, which depend on
+  your plan; a paid plan allows use in a game.
 - **Picture quality** (0.15.3.0): a setting on the Trials tab, Auto,
   High, Medium or Low, as you chose. On Auto the game times each 3D
   playback and steps down a tier if it runs under 40 frames a second
@@ -381,8 +375,6 @@ Newest first. One line per PR, plus anything waiting on Kelbo.
   names (1.8.2.0) and kept the Accord tanks'. Still open: whether three
   rivals is right, and whether the Palisade should be in from the start or
   held back as a later surprise.
-- **Voice** is still open: the plan says to decide it after the first
-  playable. Nothing is generated without a quote and your yes.
 - **The cover image** for the hidden studio listing: free from the game's
   own blueprint, or one Higgsfield picture (the account showed 0 credits
   and no price could be quoted without submitting).
@@ -485,6 +477,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.8.3.0, The range officer speaks.** Your pick: the twelve range officer lines, generated with ElevenLabs in the voice Rolando (239 credits), now play in the 3D playbacks with the sound on: target up, hit or miss and which way, not seen, no shot, a jam, cease fire, range clear and a breakdown. I cut the pauses inside each line so each call fits the 1.4 s the picture holds on a strike, and a new test plays 42 shoots frame by frame to check each call starts within a quarter of a second of its round landing, one line at a time. The files (164 KB) are asked for only when a 3D view first opens, and the offline cache keeps them like the other sounds; each has its line in CREDITS.md and the in-game credits.
 - **1.8.2.0, New names for the rivals and the chief engineer.** Your picks: the rival bureaus are now Pelnik Heavy Machine Works, Dravec Tractor Works and Sokolin Ordnance Institute (were Heavy Machine Plant No. 2, Tractor Works No. 7 and Ordnance Institute No. 4); the chief engineer is Pavel Sedlar (was Radek Stanek); the Accord tanks keep Warden, Palisade and Palisade B. You also kept the seven export buyers' names, the project numbers and the "Model 81" designations. Only the names change; saves keep working, as they store the bureau, not its name.
 - **1.8.1.0, four new customers.** Export desk step 2, the last. Four new customers abroad, one for each new kind of vehicle: the Republic of Ekunde buys infantry fighting vehicles with room for eight soldiers; the Principality of Orvenn self-propelled guns light and powerful enough for the mountain passes; the Federation of Zamuri scout cars that run cool and far in the desert; and the Sultanate of Qasirah anti-aircraft gun vehicles that keep up on desert roads. Each tries a troop on its own ground before ordering, and none buys a vehicle as the army has it: each needs a version reworked for it. The desk now talks of vehicles, not only tanks.
 - **1.8.0.0, each customer buys one kind of vehicle.** Export desk step 1. Every tender now names the kind of vehicle it asks for, and every customer abroad the kind it buys. Dahrat, Ilandu and Tolmar buy tanks only (a tank destroyer counts as one), so the desk no longer offers them an infantry fighting vehicle, self-propelled gun, scout car or anti-aircraft gun vehicle. Under each customer the desk says what it buys and lists only those. New customers for the new vehicles come next.

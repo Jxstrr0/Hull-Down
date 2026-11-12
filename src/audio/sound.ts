@@ -3,8 +3,8 @@
 // Nothing is made until the player first taps something that makes a noise:
 // browsers only allow sound to start from a tap. Where there is no sound at
 // all (an old browser, a test), every call here quietly does nothing.
-import { AUDIO, type CueId, type CueLayer } from '../data/audio'
-import { gunShape, type Drone, type TankVoice } from './cues'
+import { AUDIO, type CueId, type CueLayer, type VoiceLineId } from '../data/audio'
+import { createVoiceQueue, gunShape, type Drone, type TankVoice } from './cues'
 
 /** The steady sounds of one tank, and how to set them. */
 interface DroneNodes {
@@ -48,6 +48,10 @@ export interface Sound {
   air(): void
   /** Stop the engine, the tracks and the wind and give them back. */
   still(): void
+  /** Fetch the range officer's lines, once. Call it when a trial is opened, not before: most visits never hear him. */
+  loadVoice(): void
+  /** The range officer says a line, after any he is still saying. Nothing until the lines have arrived. */
+  say(line: VoiceLineId): void
 }
 
 type ContextMaker = () => AudioContext | null
@@ -89,6 +93,10 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
   /** The engine recordings that have arrived, by file. */
   const engineTapes = new Map<string, AudioBuffer>()
   let trackTape: AudioBuffer | null = null
+  /** The range officer's lines that have arrived, and whether they have been asked for. */
+  const voiced = new Map<VoiceLineId, AudioBuffer>()
+  let voiceAsked = false
+  const speaker = createVoiceQueue()
 
   function ready(): AudioContext | null {
     if (context || failed) return context
@@ -135,6 +143,40 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     } catch {
       // The synth clatter plays alone.
     }
+  }
+
+  function loadVoice(): void {
+    if (voiceAsked) return
+    const ctx = ready()
+    if (!ctx) return
+    voiceAsked = true
+    void (async () => {
+      for (const [line, each] of Object.entries(AUDIO.voice.lines)) {
+        try {
+          const bytes = await load(each.file)
+          if (bytes) voiced.set(line as VoiceLineId, await ctx.decodeAudioData(bytes))
+        } catch {
+          // That line goes unsaid.
+        }
+      }
+    })()
+  }
+
+  function say(line: VoiceLineId): void {
+    if (!enabled) return
+    const ctx = context
+    const tape = voiced.get(line)
+    if (!ctx || !master || !tape || ctx.state !== 'running') return
+    // The table's length, which a test holds to the file's.
+    const at = speaker.slot(ctx.currentTime, AUDIO.voice.lines[line].speechS)
+    if (at === null) return
+    const source = ctx.createBufferSource()
+    source.buffer = tape
+    const level = ctx.createGain()
+    level.gain.value = AUDIO.voice.gain
+    source.connect(level)
+    level.connect(master)
+    source.start(at)
   }
 
   /** Lay a recording into a running engine, going round and round its middle. */
@@ -425,5 +467,5 @@ export function createSound(startOn: boolean, makeContext: ContextMaker = browse
     if (nodes.trackTapeOut) hold(nodes.trackTapeOut.gain, levels.trackGain * AUDIO.tracks.gain * AUDIO.trackTape.gain)
   }
 
-  return { on: () => enabled, setOn, wake, cue, drone, air, still }
+  return { on: () => enabled, setOn, wake, cue, drone, air, still, loadVoice, say }
 }

@@ -14,7 +14,7 @@ import { footprintControl, type Limits, type StatSheet, type VehicleSpec } from 
 import { VIEWS, type ViewId } from '../render/director'
 import type { RangeView, RunSource } from '../render/rangeScene'
 import type { ReelFrame } from '../render/shootReel'
-import { createShootEar, droneAt, voiceOf } from '../audio/cues'
+import { createRunOfficer, createShootEar, createShootOfficer, droneAt, voiceOf } from '../audio/cues'
 import { sound } from '../audio/gameSound'
 import { afterActionCard } from './afterAction'
 import { armourCards } from './armourCards'
@@ -235,7 +235,11 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
     closeView()
     // Opened by a tap, which is when a browser lets sound begin.
     sound.wake()
+    // The range officer's lines come only now, the first time a trial is watched.
+    sound.loadVoice()
     const ear = createShootEar()
+    const officer = createShootOfficer()
+    const driveOfficer = createRunOfficer()
     const test = source.test
     const box = el('div', 'rg-view')
     const stage = el('div', 'rg-view-stage')
@@ -367,7 +371,12 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
             sound.drone(voice, droneAt(voice, frame.speedKmh))
             sound.air()
           }
-          if ('fire' in source && frame.shoot) for (const cue of ear.hear(source.run, frame.shoot, playing)) sound.cue(cue, { calibreMm: voice.calibreMm })
+          if ('fire' in source && frame.shoot) {
+            for (const cue of ear.hear(source.run, frame.shoot, playing)) sound.cue(cue, { calibreMm: voice.calibreMm })
+            for (const line of officer.hear(source.run, frame.shoot, playing)) sound.say(line)
+          } else {
+            for (const line of driveOfficer.hear(frame.timeS, playing, frame.lapse?.event ?? null)) sound.say(line)
+          }
           if (source.test === 'endurance' && frame.lapse) {
             const lapse = frame.lapse
             const km = fixed(lapse.km, 0)
