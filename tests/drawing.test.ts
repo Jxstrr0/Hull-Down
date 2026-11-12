@@ -29,6 +29,7 @@ const VARIANTS: ((spec: VehicleSpec) => void)[] = [
   (s) => { s.turret.ringMm = 2400 },
   (s) => { s.runningGear.trackWidthMm = 700 },
   (s) => { s.runningGear.roadWheels = 7 },
+  (s) => { s.runningGear.skirts = true },
   (s) => { s.loading = 'loader'; s.fireControl.commanderSight = true },
 ]
 
@@ -37,6 +38,23 @@ function arcs(drawing: Drawing): number {
 }
 
 describe('blueprint drawing', () => {
+  it('hangs side skirts over the wheels, which go behind them as hidden lines', () => {
+    const rims = (d: Drawing) => d.shapes.filter((shape) => shape.line === 'solid' && shape.d.includes('A')).length
+    const hidden = (d: Drawing) => d.shapes.filter((shape) => shape.line === 'hidden').length
+    const bare = draw('side')
+    const skirted = draw('side', (s) => { s.runningGear.skirts = true })
+    // The wheels' solid rims give way to the plates, and one hidden shape holds every wheel behind them.
+    expect(hidden(skirted)).toBe(hidden(bare) + 1)
+    expect(rims(bare)).toBe(BASELINE_SPEC.runningGear.roadWheels)
+    expect(rims(skirted)).toBe(0)
+    for (const view of ['front', 'top'] as const) {
+      const before = draw(view)
+      const after = draw(view, (s) => { s.runningGear.skirts = true })
+      expect(after.shapes.length).toBe(before.shapes.length + 2)
+      expect(after.box.w * after.box.h).toBeGreaterThanOrEqual(before.box.w * before.box.h)
+    }
+  })
+
   it('draws every view of every variant with real numbers, inside its box', () => {
     for (const view of VIEWS) {
       for (const change of VARIANTS) {
