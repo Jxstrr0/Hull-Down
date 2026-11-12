@@ -55,6 +55,7 @@ export function failedTests(range: RangeReport): string[] {
   if (!range.armour.passed) out.push(R.armour.title)
   if (tank && !range.berm.passed) out.push(R.berm.title)
   if (range.fireMission && !range.fireMission.passed) out.push(R.fireMission.title)
+  if (range.squad && !range.squad.passed) out.push(R.squad.title)
   return out
 }
 

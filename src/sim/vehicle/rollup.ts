@@ -31,6 +31,8 @@ export interface Rollup {
   capacityM3: number
   unitCostKr: number
   crewCount: number
+  /** Soldiers carried in the back. */
+  troops: number
   /** Rounds held in the autoloader. */
   readyRounds: number
   /** Rounds in racks or bins. */
@@ -174,6 +176,7 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
     capacityM3: hull.internalM3 + geo.turretVolumeM3 - glacisLoss - engineLoss,
     unitCostKr: sum(costKr),
     crewCount,
+    troops,
     readyRounds,
     stowedRounds,
     stations,

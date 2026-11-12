@@ -24,6 +24,7 @@ import { fixed } from './format'
 import { placeOf } from './gunneryAdvice'
 import { gunneryCards } from './gunneryCards'
 import { missionCards } from './missionCard'
+import { squadCards } from './squadCard'
 import { runRange } from './rangeRunner'
 import { cardFacts, shareBlock } from './shareCard'
 
@@ -607,6 +608,7 @@ export function renderRangeScreen(args: RangeScreenArgs): HTMLElement {
       // A self-propelled gun is judged on its fire mission, not on the tank shoots, the drill or the berm.
       ...(report.selfPropelled ? [] : gunneryCards(report, sheet, args.spec, { card, line, fixButton, watch })),
       ...missionCards(report, sheet.fire.mission.reachKm, { card, line, fixButton, watch }),
+      ...squadCards(report, { card, line, fixButton, watch }),
       ...armourCards(report, sheet, args.spec, { card, line, fixButton, watch, fixZone }).slice(0, report.selfPropelled ? 1 : 2),
     )
     const after = afterAction(report.armour, args.spec)
