@@ -158,6 +158,7 @@ describe('a built tank', () => {
     for (const tiles of [false, true]) {
       const spec = structuredClone(BASELINE_SPEC)
       if (tiles) for (const zone of ZONES) spec.era[zone] = allTiles(zone)
+      spec.runningGear.skirts = tiles
       const shape = tankShapeOf(spec, buildStatSheet(spec, PACT_LIMITS_GEN1).geometry)
       const kit = new Kit()
       const tank = buildTank(kit, shape)

@@ -56,6 +56,8 @@ export const KIT = {
     /** The engine deck: its plate's length and width, and its height with the slats on. */
     engineDeckM: { x: 1.6, y: 0.045, z: 2.0 },
     /** A panel of reactive tiles: its length and width, the middle of its face, and its back, which sits on the plate. */
+    /** A skirt plate runs from its front edge back along x, hangs from its top to its bottom, and is this thick across. */
+    skirtPanelM: { long: 1.2, top: 0.55, bottom: -0.12, thick: 0.04 },
     eraTilesM: { x: 1.06, z: 0.5, middle: { x: 0.34, z: -0.12 }, backY: -0.02 },
   },
   /**

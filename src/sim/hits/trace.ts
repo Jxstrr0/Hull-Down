@@ -203,7 +203,8 @@ export function traceShot(target: Target, shot: Incoming, spent?: Set<string>): 
   // What the round goes through when it arrives.
   const margin = shot.luck ? TUNING.protection.marginShare * (2 * roll(PEN) - 1) : 0
   const arrives = penetrationAt(shot.round, shot.rangeM) * (1 + margin)
-  const penMm = Math.max(0, arrives - (track ? HITS.trackMm[shot.round.kind] : 0))
+  const skirts = track && spec.runningGear.skirts ? HITS.skirtMm[shot.round.kind] : 0
+  const penMm = Math.max(0, arrives - (track ? HITS.trackMm[shot.round.kind] : 0) - skirts)
 
   const place = tilePlaceAt(shell, zone, entry)
   let tile = shot.tile ?? false

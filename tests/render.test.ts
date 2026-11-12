@@ -9,7 +9,7 @@ import { VIEWS, shotAt } from '../src/render/director'
 import { courseOutline, coursePath, mudPatch, pointAt, poseAt, stripPath, trenchPit } from '../src/render/path'
 import { frameAt, lengthS, type RunRecord } from '../src/render/playback'
 import { below, partTriangles, tankShapeOf, tankTriangles } from '../src/render/tankShape'
-import { TURRETS, type TurretId } from '../src/data/parts'
+import { HULLS, TURRETS, type TurretId } from '../src/data/parts'
 import { ZONES } from '../src/data/materials'
 import { allTiles } from '../src/sim/vehicle/era'
 import { heightAt, legGround, placeOnLeg } from '../src/render/terrain'
@@ -514,11 +514,16 @@ describe('the grey-box tank', () => {
 
 describe('the parts the tank is built from', () => {
   const shapes = Object.keys(TURRETS) as TurretId[]
-  const built = (turret: TurretId, tiles: boolean) => {
+  // Everything on: tiles all over, side skirts, and as many wheels as the hull takes.
+  const built = (turret: TurretId, tiles: boolean, skirts = false) => {
     const { spec, sheet } = sheetOf((s) => {
       s.turret.shape = turret
       s.fireControl.commanderSight = true
       if (tiles) for (const zone of ZONES) s.era[zone] = allTiles(zone)
+      if (skirts) {
+        s.runningGear.skirts = true
+        s.runningGear.roadWheels = HULLS[s.hull.size].maxWheels
+      }
     })
     return tankShapeOf(spec, sheet.geometry)
   }
@@ -606,9 +611,29 @@ describe('the parts the tank is built from', () => {
     expect(tankShapeOf(withThem.spec, withThem.sheet.geometry).parts.length).toBe(bare + 2)
   })
 
+  it('hangs side skirts outside the wheels, the length of the track, only when the design has them', () => {
+    const plates = (shape: ReturnType<typeof built>) => shape.parts.filter((part) => part.kind === 'piece' && part.piece === 'skirt-panel')
+    expect(plates(built('castDome', false))).toHaveLength(0)
+    const shape = built('castDome', false, true)
+    const all = plates(shape)
+    const plate = KIT.reference.skirtPanelM
+    const perSide = Math.ceil(shape.track.lengthM / plate.long)
+    expect(all).toHaveLength(2 * perSide)
+    let covered = 0
+    for (const part of all) {
+      if (part.kind !== 'piece') continue
+      // Outside the track, and hung below the top of it.
+      expect(Math.abs(part.at.z)).toBeGreaterThan(shape.track.centreZM + shape.track.widthM / 2)
+      expect(part.at.y + plate.bottom * part.scale.y).toBeLessThan(shape.track.topM)
+      if (part.at.z > 0) covered += plate.long * part.scale.x
+    }
+    expect(covered).toBeGreaterThan(shape.track.lengthM * 0.95)
+    expect(covered).toBeLessThanOrEqual(shape.track.lengthM)
+  })
+
   it('keeps every part a real size and inside the budget for a phone', () => {
     for (const turret of shapes) {
-      const shape = built(turret, true)
+      const shape = built(turret, true, true)
       for (const part of shape.parts) {
         expect(partTriangles(part)).toBeGreaterThan(0)
         if (part.kind === 'box') for (const side of [part.size.x, part.size.y, part.size.z]) expect(side).toBeGreaterThan(0)

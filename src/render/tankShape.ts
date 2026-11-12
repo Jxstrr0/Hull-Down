@@ -241,6 +241,29 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     fallback: [{ kind: 'box', size: { x: grille.x, y: t.grilleThickM, z: grille.z }, at: { x: grilleX, y: m.roof + t.grilleThickM / 2, z: 0 } }],
   })
 
+  // Side skirts, hung from the deck outside the wheels, in a row of the kit's plates.
+  const sk = t.skirts
+  const skirtZ = m.halfWidth + sk.outM
+  if (spec.runningGear.skirts) {
+    const plate = ref.skirtPanelM
+    const drop = deck - m.trackTop * sk.bottomShare
+    const plates = Math.max(1, Math.ceil(track.lengthM / plate.long))
+    const each = track.lengthM / plates
+    const sx = (each - sk.gapM) / plate.long
+    const sy = drop / (plate.top - plate.bottom)
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < plates; i++) {
+        // Each plate runs forward from its back edge.
+        const back = x1 + i * each + sk.gapM / 2
+        parts.push({
+          ...hull('body'), kind: 'piece', piece: 'skirt-panel',
+          scale: { x: sx, y: sy, z: -side }, at: { x: back, y: deck - plate.top * sy, z: side * skirtZ },
+          fallback: [{ kind: 'box', size: { x: each - sk.gapM, y: drop, z: plate.thick }, at: { x: back + (each - sk.gapM) / 2, y: deck - drop / 2, z: side * skirtZ } }],
+        })
+      }
+    }
+  }
+
   // Reactive tiles on the hull: panels laid up the glacis, and panels hung over the tracks.
   const panels = t.tilePanels
   const glacis = tileShare(spec, 'upperGlacis')
@@ -266,7 +289,7 @@ export function tankShapeOf(spec: VehicleSpec, geometry: Geometry): TankShape {
     for (const side of [-1, 1]) {
       parts.push(...tilePlate(hull('tile'), {
         // Tiles go on from the nose backward, and from the middle backward.
-        middle: { x: way > 0 ? half - long / 2 - half * (1 - t.tile.cover) / 2 : -long / 2, y: sideY, z: side * m.halfWidth },
+        middle: { x: way > 0 ? half - long / 2 - half * (1 - t.tile.cover) / 2 : -long / 2, y: sideY, z: side * (spec.runningGear.skirts ? skirtZ + ref.skirtPanelM.thick / 2 : m.halfWidth) },
         along: { x: 1, y: 0, z: 0 }, out: { x: 0, y: 0, z: side },
         longM: long, wideM: sideHigh, ...panels.hullSide,
       }))

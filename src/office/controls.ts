@@ -146,6 +146,8 @@ export const CONTROLS: readonly Control[] = [
     (s) => s.runningGear.roadWheels, (s, v) => { s.runningGear.roadWheels = v }),
   number('runningGear.trackWidthMm', 'runningGear', L.trackWidthMm, L.trackStepMm, 'mm',
     (s) => s.runningGear.trackWidthMm, (s, v) => { s.runningGear.trackWidthMm = v }),
+  toggle('runningGear.skirts', 'runningGear', P.skirts,
+    (s) => s.runningGear.skirts, (s, v) => { s.runningGear.skirts = v }),
 
   choice('crew.comfort', 'crew', texts(COMFORT, P.comfort), (s) => s.crew.comfort, (s, v) => { s.crew.comfort = v }),
   toggle('protection.smokeLaunchers', 'crew', P.smokeLaunchers,

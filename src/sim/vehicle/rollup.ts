@@ -3,7 +3,7 @@ import { LOAD_SHARE, OWN_ROUNDS } from '../../data/ammo'
 import { MATERIALS, ZONES, type ZoneId } from '../../data/materials'
 import {
   ACTIVE, APU, BARRELS, COMFORT, COMMANDER_SIGHT, COMPUTERS, COOLING, ENGINES, FIRE_SUPPRESSION, GUNS, HULLS, LOADING,
-  NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, SMOKE_LAUNCHERS, SPALL_LINER, STABILISERS, STOWAGE, SUSPENSIONS,
+  NIGHT_SIGHTS, RANGEFINDERS, RECOILS, SIGHTS, SKIRTS, SMOKE_LAUNCHERS, SPALL_LINER, STABILISERS, STOWAGE, SUSPENSIONS,
   TRANSMISSIONS, TURRETS, type Part,
 } from '../../data/parts'
 import { TUNING } from '../../data/tuning'
@@ -132,6 +132,7 @@ export function rollupOf(spec: VehicleSpec, geo: Geometry): Rollup {
   volumeM3.runningGear += stations * suspension.volumePerStationM3
   costKr.runningGear +=
     trackM * TUNING.cost.trackKrPerM * trackScale + stations * (TUNING.cost.roadWheelKr + suspension.costPerStationKr)
+  if (spec.runningGear.skirts) add('runningGear', SKIRTS)
 
   // Protection systems
   if (spec.protection.smokeLaunchers) add('systems', SMOKE_LAUNCHERS)
