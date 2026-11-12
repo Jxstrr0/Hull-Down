@@ -3,7 +3,7 @@
 // when the player first asks to watch a run, never before.
 import {
   BoxGeometry, BufferGeometry, Color, DataTexture, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, Fog,
-  Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, RepeatWrapping,
+  Group, HemisphereLight, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, RepeatWrapping,
   Scene, Shape, SphereGeometry, SRGBColorSpace, WebGLRenderer, type Material, type Texture,
 } from 'three'
 import { GUNNERY } from '../data/gunnery'
@@ -22,6 +22,7 @@ import type { Camo } from './camo'
 import { createFrameMeter } from './frameMeter'
 import { rangeScenery } from './scenery'
 import { buildSolids, buildTank, rollTracks, setMud, tonesOf } from './tankModel'
+import { DustTrail, dustAt, type DustKind } from './dust'
 import { courseMud, enduranceMud } from './mud'
 import { trackLinkPixels } from './trackLinks'
 import { tankShapeOf, type TankShape } from './tankShape'
@@ -147,6 +148,12 @@ export class Kit {
   }
 
   private wheelCount = 0
+
+  /** Many copies of one shape in one flat, see-through material, each placed and coloured on its own: one thing to draw. */
+  instanced(geometry: BufferGeometry, opacity: number, count: number): InstancedMesh {
+    this.geometries.push(geometry)
+    return new InstancedMesh(geometry, this.paint('#ffffff', opacity), count)
+  }
   private mudCount = 0
 
   /**
@@ -374,6 +381,8 @@ interface Moment {
   sinkM: number
   /** How muddy the tank is by now, nought to one. */
   mudShare: number
+  /** What the tracks throw up behind it, if anything. */
+  dust: DustKind | null
   where: Where
   frame: Omit<ViewFrame, 'timeS'>
   done: boolean
@@ -404,6 +413,8 @@ function driveShow(kit: Kit, scene: Scene, test: 'acceleration' | 'obstacles', r
         sinkM: frame.sinkM,
         // The strip is concrete; the course is earth, and the pit leaves its mark.
         mudShare: pit ? courseMud(pose.x, pit) : 0,
+        // Concrete dust on the strip, earth on the course, and mud flung up in the pit.
+        dust: test === 'acceleration' ? 'concrete' : pit && pose.x >= pit.fromX && pose.x <= pit.toX ? 'mud' : 'earth',
         where: test === 'acceleration' ? { test, s: frame.s } : { test, s: frame.s, path },
         frame: { speedKmh: frame.vMs * 3.6, distanceM: frame.s },
         done: frame.done,
@@ -452,6 +463,8 @@ function enduranceShow(kit: Kit, scene: Scene, run: EnduranceRun, shape: TankSha
         pose,
         sinkM: 0,
         mudShare: enduranceMud(frame.km),
+        // A lap is hours long: puffs would be gone before they were seen.
+        dust: null,
         where: { test: 'endurance', leg: ground.id },
         frame: { speedKmh: frame.speedKmh, distanceM: frame.km * 1000, lapse: frame },
         done: frame.done,
@@ -566,6 +579,7 @@ function shootShow(kit: Kit, scene: Scene, run: GunneryRun, fire: Fire, shape: T
         pose: { x: frame.tankM, y: 0, pitchRad: 0 },
         sinkM: 0,
         mudShare: 0,
+        dust: 'earth',
         where: {
           test: 'shoot',
           board: { x: frame.boardM, y: centreY, z: 0 },
@@ -641,6 +655,9 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   let meter = createFrameMeter()
 
   let lastDistanceM: number | null = null
+  const dust = new Dust(kit, RENDER.dust.trials)
+  scene.add(dust.mesh)
+  const trail = new DustTrail()
 
   /** Put the tank and the camera where the run has them at `timeS`, and draw. */
   function draw(): boolean {
@@ -648,6 +665,15 @@ export function openRangeView(args: RangeViewArgs): RangeView {
     if (lastDistanceM !== null) rollTracks(tank, now.frame.distanceM - lastDistanceM)
     lastDistanceM = now.frame.distanceM
     setMud(tank, now.mudShare)
+    // Puffs at the back of both tracks, aged in watched seconds so a sped-up run does not blink them away.
+    const watchedS = timeS / show.rate
+    const puffs = now.dust ? trail.due(now.frame.distanceM, now.dust) : 0
+    for (let i = 0; i < puffs; i++) {
+      for (const side of [-1, 1]) {
+        dust.kick(now.pose.x - shape.lengthM / 2 - RENDER.dust.behindM, now.pose.y - now.sinkM, side * shape.track.centreZM, now.dust!, watchedS)
+      }
+    }
+    dust.show(watchedS)
     tank.position.set(now.pose.x, now.pose.y - now.sinkM, 0)
     tank.rotation.z = now.pose.pitchRad
     const shot = shotAt(view, now.where, now.pose)
@@ -736,4 +762,80 @@ export function openRangeView(args: RangeViewArgs): RangeView {
   watcher.observe(args.host)
   play()
   return { lengthS: endS, play, pause, seek, setView, setQuality, dispose }
+}
+
+interface Puff {
+  x: number
+  y: number
+  z: number
+  bornS: number
+  kind: DustKind
+  /** How much bigger or smaller than the rest, and which way it drifts off the track. */
+  scale: number
+  driftX: number
+  driftZ: number
+}
+
+/** A pool of dust puffs, every one a copy of one mesh so a cloud is one thing to draw; the oldest given up for the newest. Times are seconds of watching. */
+export class Dust {
+  readonly mesh: InstancedMesh
+  private readonly puffs: (Puff | null)[]
+  private next = 0
+  private lastS: number | null = null
+  private thrown = 0
+  private readonly matrix = new Matrix4()
+  private readonly colour = new Color()
+
+  constructor(kit: Kit, capacity: number) {
+    this.mesh = kit.instanced(new SphereGeometry(0.5, RENDER.dust.sides, RENDER.dust.rings), RENDER.dust.opacity, capacity)
+    this.puffs = Array.from({ length: capacity }, () => null)
+    const white = new Color('#ffffff')
+    for (let i = 0; i < capacity; i++) {
+      this.mesh.setColorAt(i, white)
+      this.mesh.setMatrixAt(i, this.matrix.makeScale(0, 0, 0))
+    }
+    this.mesh.frustumCulled = false
+  }
+
+  /** Leave a puff here, now. It is spread a little about the spot, the same way every time. */
+  kick(x: number, y: number, z: number, kind: DustKind, nowS: number): void {
+    const k = RENDER.dust
+    const n = this.thrown++
+    // A number from -1 to 1 for each puff and each use, the same every time.
+    const jitter = (seed: number): number => (((Math.sin((n + 1) * 12.9898 + seed * 78.233) * 43758.5453) % 1) + 1) % 1 * 2 - 1
+    const out = Math.sign(z) || 1
+    this.puffs[this.next] = {
+      x: x + jitter(1) * k.spreadM, y, z: z + jitter(2) * k.spreadM * 0.5, bornS: nowS, kind,
+      scale: 1 + jitter(3) * k.sizeSpread,
+      driftX: jitter(4) * k.driftM * 0.5,
+      driftZ: out * (0.5 + 0.5 * Math.abs(jitter(5))) * k.driftM,
+    }
+    this.mesh.setColorAt(this.next, this.colour.set(k.kinds[kind].colour))
+    if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true
+    this.next = (this.next + 1) % this.puffs.length
+  }
+
+  /** Swell, lift and shrink every puff to how it is at `nowS`. Going back in time clears the air. */
+  show(nowS: number): void {
+    if (this.lastS !== null && nowS < this.lastS) this.puffs.fill(null)
+    this.lastS = nowS
+    this.puffs.forEach((puff, i) => {
+      const at = puff ? dustAt(nowS - puff.bornS, puff.kind) : null
+      if (!puff || !at) {
+        this.puffs[i] = null
+        this.mesh.setMatrixAt(i, this.matrix.makeScale(0, 0, 0))
+        return
+      }
+      const size = at.sizeM * puff.scale
+      const life = (nowS - puff.bornS) / RENDER.dust.lifeS
+      this.matrix.makeScale(size, size * 0.8, size).setPosition(puff.x + puff.driftX * life, puff.y + size * 0.35 + at.riseM, puff.z + puff.driftZ * life)
+      this.mesh.setMatrixAt(i, this.matrix)
+    })
+    this.mesh.instanceMatrix.needsUpdate = true
+  }
+
+  /** How many puffs are in the air. */
+  get showing(): number {
+    return this.puffs.filter((puff) => puff !== null).length
+  }
 }

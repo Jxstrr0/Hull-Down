@@ -163,6 +163,22 @@ describe('the stage at a moment', () => {
     expect(offsets().some((x) => x !== 0)).toBe(true)
     kit.dispose()
   })
+
+  it('leaves dust behind the tanks that move, and none on the first look', () => {
+    const battle = battles[0]!
+    const kit = new Kit()
+    const stage = buildBattleStage(kit, battle, look(me), look(warden))
+    const at = (t: number): void => {
+      const moment = momentOf(battle, t)
+      poseStage(stage, battle, moment, gunWays(battle, moment))
+    }
+    at(0)
+    expect(stage.dust.showing).toBe(0)
+    for (let t = 0.1; t <= 6; t += 0.1) at(t)
+    expect(stage.dust.showing).toBeGreaterThan(0)
+    expect(stage.dust.showing).toBeLessThanOrEqual(RENDER.dust.battle)
+    kit.dispose()
+  })
 })
 
 describe('a built tank', () => {
