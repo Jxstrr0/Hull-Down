@@ -2,7 +2,7 @@
 // fought: nothing here decides a result. This file and three.js are loaded
 // when the player first asks to watch a battle, never before.
 import {
-  BoxGeometry, Color, ConeGeometry, DirectionalLight, Fog, Group, HemisphereLight, Mesh, PerspectiveCamera,
+  BoxGeometry, Color, ConeGeometry, DirectionalLight, Fog, Group, HemisphereLight, InstancedMesh, Mesh, PerspectiveCamera,
   PlaneGeometry, Scene, SphereGeometry, WebGLRenderer, type Object3D,
 } from 'three'
 import { BATTLE } from '../data/battle'
@@ -14,7 +14,8 @@ import type { Geometry, VehicleSpec } from '../sim/vehicle'
 import { momentOf, type BattleMoment } from '../ui/battleReplay'
 import { aimOf, cameraFor, cutAt, directorCuts, type Cut, type Look, type Spot } from './battleDirector'
 import { createFrameMeter } from './frameMeter'
-import { Kit } from './rangeScene'
+import { Dust, Kit } from './rangeScene'
+import { DustTrail } from './dust'
 import { THEIR_TONES, TURRET, buildTank, rollTracks, setMud, tonesOf } from './tankModel'
 import { battleMud } from './mud'
 import { tankShapeOf } from './tankShape'
@@ -56,12 +57,19 @@ interface TankParts {
   wreck: Mesh[]
   /** Where the tank stood last time it was posed, to run its links round by how far it has come. */
   last: { x: number; z: number } | null
+  /** How far it has gone all told, either way, and the puffs that is owed. */
+  travelledM: number
+  trail: DustTrail
+  /** The back of each track, from the middle of the tank. */
+  rearM: number
+  sideM: number
 }
 
 export interface BattleStage {
   root: Group
   tanks: TankParts[]
   tracers: Mesh[]
+  dust: Dust
 }
 
 /**
@@ -129,7 +137,10 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
     }
     group.add(strike, screen)
     root.add(group)
-    return { group, turret, flash, strike, screen, wreck, last: null }
+    return {
+      group, turret, flash, strike, screen, wreck, last: null,
+      travelledM: 0, trail: new DustTrail(), rearM: -shape.lengthM / 2 - RENDER.dust.behindM, sideM: shape.track.centreZM,
+    }
   })
 
   const tracers: Mesh[] = []
@@ -139,7 +150,9 @@ export function buildBattleStage(kit: Kit, battle: BattleResult, mine: TankLook,
     tracers.push(tracer)
     root.add(tracer)
   }
-  return { root, tanks, tracers }
+  const dust = new Dust(kit, RENDER.dust.battle)
+  root.add(dust.mesh)
+  return { root, tanks, tracers, dust }
 }
 
 /** How much the stage asks of a phone: triangles and separate pieces. */
@@ -151,7 +164,9 @@ export function stageCost(stage: BattleStage): { triangles: number; meshes: numb
     meshes++
     const geometry = node.geometry
     const index = geometry.getIndex()
-    triangles += (index ? index.count : geometry.getAttribute('position').count) / 3
+    // Every copy of an instanced shape is drawn, so each counts.
+    const copies = node instanceof InstancedMesh ? node.count : 1
+    triangles += (copies * (index ? index.count : geometry.getAttribute('position').count)) / 3
   })
   return { triangles, meshes }
 }
@@ -175,11 +190,20 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     parts.group.rotation.y = rad(90 - tank.headingDeg)
     // How far it has come along its own nose since last time: backing up runs the links the other way.
     const at = { x: parts.group.position.x, z: parts.group.position.z }
+    const turn = parts.group.rotation.y
     if (parts.last) {
-      const turn = parts.group.rotation.y
       rollTracks(parts.group, (at.x - parts.last.x) * Math.cos(turn) - (at.z - parts.last.z) * Math.sin(turn))
+      parts.travelledM += Math.hypot(at.x - parts.last.x, at.z - parts.last.z)
     }
     parts.last = at
+    // Earth thrown up from the back of both tracks, turned the way the tank faces.
+    const puffs = tank.state === 'out' ? 0 : parts.trail.due(parts.travelledM, 'earth')
+    for (let i = 0; i < puffs; i++) {
+      for (const side of [-1, 1]) {
+        const z = side * parts.sideM
+        stage.dust.kick(at.x + parts.rearM * Math.cos(turn) + z * Math.sin(turn), 0, at.z - parts.rearM * Math.sin(turn) + z * Math.cos(turn), 'earth', t / RENDER.battle.rate)
+      }
+    }
     if (parts.turret) parts.turret.rotation.y = -rad((guns[index] ?? tank.headingDeg) - tank.headingDeg)
     parts.screen.visible = tank.state === 'smoke'
     for (const puff of parts.wreck) puff.visible = tank.state === 'out'
@@ -207,6 +231,7 @@ export function poseStage(stage: BattleStage, battle: BattleResult, moment: Batt
     tracer.position.set(east(x), 2, south(y))
     tracer.rotation.y = rad(90 - wayTo({ x: round.fromX, y: round.fromY }, { x: round.toX, y: round.toY }))
   })
+  stage.dust.show(t / RENDER.battle.rate)
 }
 
 export interface BattleFrame {

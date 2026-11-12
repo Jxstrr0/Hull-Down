@@ -189,6 +189,24 @@ export const RENDER = {
     nightLight: 0.22,
   },
   /** A platoon battle, played back. Up to eight tanks on the ground at once. */
+  /**
+   * Dust thrown up behind a moving tank, and mud flung from the course's pit: puffs left at the back of each
+   * track, one for every `everyM` the tank goes on that ground (no more than `mostPerFrame` a picture, so a
+   * fast run or a jump in time does not bury the tank). Each puff lives `lifeS` seconds of watching, swells
+   * from `fromM` to `toM` across, `size` times over, rises `riseM` times `rise`, and shrinks away over the
+   * last `fadeShare` of its life. One mesh holds every puff: `trials` of them at a trial, `battle` in battle.
+   * The endurance time-lapse throws none.
+   */
+  dust: {
+    trials: 48, battle: 96, mostPerFrame: 2,
+    lifeS: 1.6, fromM: 0.3, toM: 1.3, riseM: 0.9, fadeShare: 0.4, opacity: 0.38, sides: 8, rings: 5,
+    behindM: 0.25, spreadM: 0.6, sizeSpread: 0.45, driftM: 0.8,
+    kinds: {
+      concrete: { colour: '#bdb7aa', everyM: 5, size: 0.7, rise: 0.6 },
+      earth: { colour: '#a38c68', everyM: 1.8, size: 1, rise: 1 },
+      mud: { colour: '#4d3d29', everyM: 0.8, size: 0.75, rise: 1.6 },
+    },
+  },
   battle: {
     /** Seconds of battle shown in each second of watching. */
     rate: 3,
