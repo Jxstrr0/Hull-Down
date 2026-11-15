@@ -5,8 +5,7 @@ any name. Hull Down is its own world, separate from every other Longlight game.
 
 **Do not use:** Kestrel, Kessel, Kessler, Harbourline, Hollis, Lantern,
 Halyard, Sable, Ember, Kite, Harrow, Corvid, Tidewater, Northwind, Courier,
-Ledger, Nimbus, Heron, any new country starting with V, or any Red Skies
-aircraft or weapon name.
+Ledger, Nimbus, Heron, or any new country starting with V.
 
 ## Places and powers
 

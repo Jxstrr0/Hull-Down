@@ -122,13 +122,12 @@ gore. This is an engineering game about trade-offs.
   ("out of action"), never graphically.
 - **Names:** check section 8 of the catalogue before adding any name. Avoid
   Kestrel, Kessel, Harbourline, Hollis, Lantern, Halyard, Sable, Ember, Kite,
-  Harrow, and any new country starting with V. Red Skies already has aircraft
-  and weapon names; don't reuse them. Keep a running `docs/NAMES.md`.
+  Harrow, and any new country starting with V. Keep a running `docs/NAMES.md`.
 - **Real terms:** generic engineering terms are used as they are (smoothbore,
   autoloader, composite armour, ERA, APFSDS, HEAT, thermal sight, active
   protection). Vehicles, guns, makers and people are fictional.
 
-This is its own world, separate from Varenna, Velmark and Mostograd.
+This is its own world, separate from Velmark and Mostograd.
 
 ---
 

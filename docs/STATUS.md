@@ -469,6 +469,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.8.5.2, Studio catalogue.** The copy of the studio catalogue is brought up to date, and the name notes no longer point at a game that has been taken down. Nothing changes in the game.
 - **1.8.5.1, Studio catalogue.** The copy of the studio catalogue is brought up to date. Nothing changes in the game.
 - **1.8.5.0, The cover and the card clip.** Your picks: cover D of the second ElevenLabs run (GPT Image 2.6 at 2K, two images, 874 credits), with "TRIAL" lettered into its empty stamp in the game's own Archivo Narrow; and a short clip of the live game for the listing card. Both are in `docs/media/`, ready for when the studio listing is un-hidden: the cover at 640×480 and 1280×960, and 17 s of the moving shoot in 3D (the Type 1 in three-colour camouflage, firing at four boards), 640×480, recorded with a test browser from this build. Neither ships with the game. The cover has its line in CREDITS.md.
 - **1.8.4.0, Credits in the ☰ menu.** Your pick: the credits list now sits at the foot of the ☰ menu, folded shut, in place of the Credits link that sent you to the Saves tab; the Saves tab no longer has it. You also chose to keep every GitHub Release, old ones included, so that question is closed. Its opening line now says some of it was made by a tool for the game (the range officer's voice), and each line names its licence or terms.
