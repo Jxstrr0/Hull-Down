@@ -23,13 +23,13 @@ jobs:
   bake:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false # nothing here pushes, so the checkout keeps no token
 
       - name: Cache Blender
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.BLENDER }}
           key: ${{ env.BLENDER }}
@@ -48,7 +48,7 @@ jobs:
       - name: Export the kit
         run: ./$BLENDER/blender --background --factory-startup --python art/tank-kit.py -- export baked/tank-kit.glb
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: tank-kit
           path: baked/tank-kit.glb
