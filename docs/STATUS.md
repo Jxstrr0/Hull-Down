@@ -469,6 +469,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.8.5.4, Visit counter fixed.** From the studio security cycle: the visit counter never counted anything, because Cloudflare refused the token it used (the zone-wide analytics site appears to take only pages Cloudflare itself serves; the game is on GitHub Pages). Hull Down now has its own Web Analytics site in Cloudflare (`hulldown.longlight.games`) and `index.html` carries its token. Still cookieless: visits and load speed, nothing about the player or the saves. Nothing changes in the game.
 - **1.8.5.3, Workflows pinned.** Every GitHub Action the build and deploy use is locked to an exact commit instead of a moving tag, so a changed action can't slip into the build. Nothing changes in the game.
 - **1.8.5.2, Studio catalogue.** The copy of the studio catalogue is brought up to date, and the name notes no longer point at a game that has been taken down. Nothing changes in the game.
 - **1.8.5.1, Studio catalogue.** The copy of the studio catalogue is brought up to date. Nothing changes in the game.
