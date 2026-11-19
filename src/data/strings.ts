@@ -21,6 +21,7 @@ export const STRINGS = {
       scrap: 'Scrap this design',
       scrapConfirm: 'Tap again to scrap it for good',
       full: 'The plan chest is full. Scrap a design to make room.',
+      thisDesign: 'This design',
       listTitle: 'Designs on file',
       listCount: '{n} of {max}',
       onTheBoard: 'On the board',
@@ -2158,6 +2159,7 @@ export const STRINGS = {
       load: 'Load',
       saved: 'Saved in slot {n}.',
       unreadable: 'That slot could not be read.',
+      summary: '{n} of {max} in use',
     },
     backup: {
       heading: 'Backup file',
@@ -2173,6 +2175,7 @@ export const STRINGS = {
       loadAbout: 'Choosing a file loads it at once and replaces what is here now.',
       persisted: 'The browser has agreed to keep the game\'s storage.',
       notPersisted: 'The browser has not promised to keep the game\'s storage. Take a backup now and then.',
+      due: 'Time for one',
     },
     code: {
       heading: 'Save code',
@@ -2318,6 +2321,10 @@ export const STRINGS = {
     toBlueprint: 'Blueprint',
     switchTo: 'Switch to the {name} look',
   },
+  /** The rows of a folding page (Saves, the menu). */
+  fold: {
+    flag: '!',
+  },
   menu: {
     button: '☰',
     open: 'Open the menu',
@@ -2422,6 +2429,13 @@ export const STRINGS = {
   },
   offline: {
     heading: 'Offline and home screen',
+    /** The shut row's summary. */
+    short: {
+      getting: 'Getting ready',
+      ready: 'Works offline',
+      cannot: 'Needs a signal',
+      installed: 'On the home screen',
+    },
     about: 'Once it has loaded, Hull Down opens with no signal. A new version downloads quietly and is used the next time the game is opened.',
     kept: {
       getting: 'Getting a copy ready for playing offline.',

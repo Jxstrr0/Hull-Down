@@ -10,7 +10,8 @@ import type { KeyValue } from '../persist/designs'
 import { decodeSave, encodeSave, type SaveFile } from '../persist/saveCode'
 import { listSlots, openBackend, readSlot, writeSlot, type SlotBackend, type SlotInfo } from '../persist/slots'
 import { el } from '../ui/dom'
-import { drawOffline } from '../ui/offline'
+import type { Fold } from '../ui/fold'
+import { drawOffline, offlineSummary } from '../ui/offline'
 import { slotLine } from '../ui/saveWords'
 
 const S = STRINGS.saves
@@ -25,7 +26,14 @@ export interface SavesOptions {
 }
 
 export interface Saves {
-  draw: () => HTMLElement
+  /** The Saves page's own rows, after the designs: slots, backup, code, offline. */
+  folds: () => Fold[]
+  /** The backup reminder for the top of the page, when one is due. */
+  reminder: () => HTMLElement | null
+  /** What the last action came to, for the top of the open row. */
+  status: () => HTMLElement | null
+  /** Forget what the last action came to: another row has opened. */
+  quiet: () => void
   /** True when it is time to remind the player to take a backup. */
   due: () => boolean
 }
@@ -56,6 +64,14 @@ export function createSaves(options: SavesOptions): Saves {
   async function refresh(): Promise<void> {
     slots = await listSlots(await open())
     options.redraw()
+  }
+
+  /** Read the slots the first time they are wanted. */
+  let reading = false
+  function readOnce(): void {
+    if (reading) return
+    reading = true
+    void refresh()
   }
 
   /** The first time something is saved, ask the browser not to throw it away. */
@@ -104,10 +120,10 @@ export function createSaves(options: SavesOptions): Saves {
 
   function drawSlots(): HTMLElement {
     const box = el('section', 'bu')
-    box.append(el('h3', 'ds-group-title', S.slots.heading), el('p', 'ctl-note', S.slots.about))
+    box.append(el('p', 'ctl-note', S.slots.about))
     if (slots === null) {
       box.append(el('p', 'bu-busy', S.slots.reading))
-      void refresh()
+      readOnce()
       return box
     }
     const list = el('ul', 'bu-protos')
@@ -149,7 +165,7 @@ export function createSaves(options: SavesOptions): Saves {
   function drawCode(): HTMLElement {
     const X = S.code
     const box = el('section', 'bu')
-    box.append(el('h3', 'ds-group-title', X.heading), el('p', 'ctl-note', X.about))
+    box.append(el('p', 'ctl-note', X.about))
     const show = button('code:show', X.show)
     show.addEventListener('click', () => {
       void (async () => {
@@ -207,7 +223,7 @@ export function createSaves(options: SavesOptions): Saves {
   function drawBackup(): HTMLElement {
     const B = S.backup
     const box = el('section', 'bu')
-    box.append(el('h3', 'ds-group-title', B.heading), el('p', 'ctl-note', B.about))
+    box.append(el('p', 'ctl-note', B.about))
     const days = daysSinceBackup(storage, new Date())
     if (days !== null) box.append(el('p', 'ctl-note', fill(days === 1 ? B.oneDay : B.days, { n: String(days) })))
     const take = button('backup:take', B.take, 'btn btn-go')
@@ -249,18 +265,40 @@ export function createSaves(options: SavesOptions): Saves {
     return box
   }
 
-  function draw(): HTMLElement {
-    const box = el('div', 'bureau')
-    const reminder = drawReminder()
-    if (reminder) box.append(reminder)
-    if (said) {
-      const line = el('p', said.bad ? 'ctl-issue' : 'sv-said', said.text)
-      line.setAttribute('role', 'status')
-      box.append(line)
-    }
-    box.append(drawSlots(), drawBackup(), drawCode(), drawOffline(options.redraw))
-    return box
+  function status(): HTMLElement | null {
+    if (!said) return null
+    const line = el('p', said.bad ? 'ctl-issue' : 'sv-said', said.text)
+    line.setAttribute('role', 'status')
+    return line
   }
 
-  return { draw, due: () => backupDue(storage, new Date()) }
+  /** How many slots hold a save, once they have been read. */
+  function slotsSummary(): string {
+    if (slots === null) {
+      readOnce()
+      return ''
+    }
+    return fill(S.slots.summary, { n: String(slots.filter(Boolean).length), max: String(slots.length) })
+  }
+
+  function folds(): Fold[] {
+    const due = backupDue(storage, new Date())
+    return [
+      { key: 'slots', title: S.slots.heading, summary: slotsSummary(), draw: () => [drawSlots()] },
+      { key: 'backup', title: S.backup.heading, summary: due ? S.backup.due : '', flag: due, draw: () => [drawBackup()] },
+      { key: 'code', title: S.code.heading, draw: () => [drawCode()] },
+      { key: 'offline', title: STRINGS.offline.heading, summary: offlineSummary(), draw: () => [drawOffline(options.redraw)] },
+    ]
+  }
+
+  return {
+    folds,
+    reminder: drawReminder,
+    status,
+    quiet: () => {
+      said = null
+      armed = null
+    },
+    due: () => backupDue(storage, new Date()),
+  }
 }

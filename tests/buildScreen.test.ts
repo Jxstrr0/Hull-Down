@@ -64,8 +64,9 @@ describe('the design list and the bar along the bottom', () => {
     expect(STRINGS.office.navLabel).not.toBe('')
   })
 
-  it('keeps the saved designs on the Saves page', () => {
-    expect(source).toContain("else if (page === 'saves') parts.push(drawDesigns(), saves.draw())")
+  it('keeps the saved designs on the Saves page, as folding rows with This design open first', () => {
+    expect(source).toContain("else if (page === 'saves') parts.push(...drawSaves())")
+    expect(source).toContain("const savesFold: FoldState = { open: 'design' }")
   })
 
   it('has words for the shut rows of Faults and Readouts', () => {

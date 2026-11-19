@@ -86,11 +86,16 @@ export function startOffline(): void {
   void register()
 }
 
+/** Whether the game can open with no signal, in a word or two for the shut row. */
+export function offlineSummary(): string {
+  return standalone() ? S.short.installed : S.short[kept]
+}
+
 /** The offline section of the Saves tab. `again` redraws the tab when something changes. */
 export function drawOffline(again: () => void): HTMLElement {
   redraw = again
   const box = el('section', 'bu')
-  box.append(el('h3', 'ds-group-title', S.heading), el('p', 'ctl-note', S.about))
+  box.append(el('p', 'ctl-note', S.about))
   const status = el('p', 'ctl-note', S.kept[kept])
   status.dataset.key = 'offline:kept'
   box.append(status)

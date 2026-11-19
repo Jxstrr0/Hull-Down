@@ -318,6 +318,12 @@ body {
 .sys-body { display: flex; flex-direction: column; gap: 8px; padding: 8px; }
 .sys-body > .ctl-row + .ctl-row { margin-top: 0; }
 .sys-row.ctl-open { border-width: 2.5px; }
+/* A folding page (Saves, the menu): the same rows, one open at a time, each holding a short stack. */
+.folds { display: flex; flex-direction: column; gap: 8px; }
+.folds > .sys-row + .sys-row { margin-top: 0; }
+.fold { scroll-margin-top: 8px; }
+.fold-body { display: flex; flex-direction: column; gap: 14px; padding: 12px 12px 14px; }
+.fold-body > .sv-said, .fold-body > .ctl-issue { margin: 0; }
 
 /* The bar along the bottom: Design, Trials, Bureau, Saves. */
 .office-nav { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 2px solid var(--ink); background: var(--paper); }
@@ -1359,8 +1365,7 @@ body {
 .crash-sum:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
 
 /* Credits, folded away at the foot of the Saves tab. */
-.crd { align-self: stretch; margin-top: 8px; border-top: 1px solid var(--grid); }
-.crd[open] { display: flex; flex-direction: column; gap: 6px; padding-bottom: 12px; }
+.crd { display: flex; flex-direction: column; gap: 6px; }
 .crd-studio { margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 500; }
 .crd .sv-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; }
 .crd-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); }
@@ -1396,7 +1401,7 @@ body {
   text-transform: uppercase;
 }
 .mn-back { min-height: 44px; }
-.mn-group { margin-top: 18px; padding-top: 10px; border-top: 1.5px solid var(--ink); }
+.mn-sheet > .folds { margin-top: 14px; }
 .mn-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; }
 .mn-label { font-weight: 600; }
 .mn-btn { min-height: 44px; }
