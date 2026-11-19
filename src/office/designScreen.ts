@@ -17,6 +17,7 @@ import {
   wheelsOf, type StatSheet, type VehicleSpec,
 } from '../sim/vehicle'
 import { el } from '../ui/dom'
+import { drawFolds, type FoldState } from '../ui/fold'
 import { pageTextOf, renderGlossary, type GlossaryState } from '../ui/glossary'
 import { renderGuide } from '../ui/guide'
 import { GUIDE } from '../data/guide'
@@ -167,6 +168,8 @@ export function renderDesignScreen(first: Tender): Office {
   }
 
   const glossaryState: GlossaryState = { open: undefined, all: false }
+  /** The open row on Saves. This design is open to begin with; the last one opened is kept while the game is open. */
+  const savesFold: FoldState = { open: 'design' }
   /** True when the first-contract guide has been put away. */
   let guideHidden = loadGuideHidden(storage)
   // How finely the 3D views draw. A view reports its frame rate here, and is told the tier to carry on at.
@@ -1192,9 +1195,8 @@ export function renderDesignScreen(first: Tender): Office {
     return count === 1 ? X.oneFault : fill(X.manyFaults, { n: String(count) })
   }
 
-  function drawDesigns(): HTMLElement {
-    const box = el('div', 'designs')
-
+  /** This design on Saves: its name, and new, copy and scrap. */
+  function drawThisDesign(): HTMLElement[] {
     const naming = el('section', 'ctl')
     const label = el('label', 'ctl-label', X.nameLabel)
     label.htmlFor = 'design-name'
@@ -1248,10 +1250,11 @@ export function renderDesignScreen(first: Tender): Office {
     })
     actions.append(fresh, copy, scrap)
     if (full) actions.append(el('p', 'ctl-issue', X.full))
+    return [naming, actions]
+  }
 
-    const list = el('section', 'ctl')
-    const title = el('h3', 'ctl-label', X.listTitle)
-    title.append(el('span', 'num-value', fill(X.listCount, { n: String(store.designs.length), max: String(MAX_DESIGNS) })))
+  /** Every design in the plan chest, to put one on the board. */
+  function drawDesignList(): HTMLElement[] {
     const rows = el('div', 'opts')
     for (const item of store.designs) {
       const on = item.projectNo === design.projectNo
@@ -1276,10 +1279,28 @@ export function renderDesignScreen(first: Tender): Office {
       })
       rows.append(row)
     }
-    list.append(title, rows)
+    return [rows]
+  }
 
-    box.append(naming, actions, list)
-    return box
+  /** Saves: one row open at a time, This design first. */
+  function drawSaves(): HTMLElement[] {
+    const reminder = saves.reminder()
+    const list = drawFolds({
+      folds: [
+        { key: 'design', title: X.thisDesign, summary: spec.name || X.unnamed, draw: drawThisDesign },
+        {
+          key: 'designs', title: X.listTitle, draw: drawDesignList,
+          summary: fill(X.listCount, { n: String(store.designs.length), max: String(MAX_DESIGNS) }),
+        },
+        ...saves.folds(),
+      ],
+      state: savesFold,
+      redraw: drawPanel,
+      scroller: panel,
+      status: saves.status(),
+      changed: saves.quiet,
+    })
+    return reminder ? [reminder, list] : [list]
   }
 
   /** The first-contract guide, for the top of the page. Null after the first tender. */
@@ -1424,7 +1445,7 @@ export function renderDesignScreen(first: Tender): Office {
       parts.push(daily.draw(), drawSandbox())
       parts.push(daily.on() ? el('p', 'ctl-note', STRINGS.daily.waits) : sandbox.on ? el('p', 'ctl-note', O.sandbox.waits) : bureau.draw())
     }
-    else if (page === 'saves') parts.push(drawDesigns(), saves.draw())
+    else if (page === 'saves') parts.push(...drawSaves())
     else for (const id of SYSTEMS) parts.push(drawSystem(id))
     // The words on this page that want explaining, for someone new to tanks.
     const words = renderGlossary(pageTextOf(parts), glossaryState)

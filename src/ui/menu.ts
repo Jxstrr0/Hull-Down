@@ -1,13 +1,14 @@
 // The page menu: the ☰ button in the top bar opens a sheet that holds the
 // settings (sound, look, graphics), quick ways to the bureau and saves,
-// "start a new career", and the credits. Opening it holds any trial that is
+// "start a new career", and the credits, as rows that open one at a time. Opening it holds any trial that is
 // playing, so it doubles as the pause screen.
 
 import { STRINGS, fill } from '../data/strings'
 import { sound, switchSound } from '../audio/gameSound'
 import type { Office } from '../office/designScreen'
-import { drawCredits } from './credits'
+import { drawCreditsBody } from './credits'
 import { el } from './dom'
+import { drawFolds, type FoldState } from './fold'
 import { holdAll } from './hold'
 import { applyTheme, loadTheme, otherTheme, type Theme } from './theme'
 
@@ -48,6 +49,8 @@ export function createMenu(office: Office): HTMLElement {
   let theme = loadTheme()
   applyTheme(theme)
   let restartArmed = false
+  /** The open row. Settings is open to begin with; the last one opened is kept while the game is open. */
+  const fold: FoldState = { open: 'settings' }
 
   const close = (): void => {
     if (veil.hidden) return
@@ -71,56 +74,66 @@ export function createMenu(office: Office): HTMLElement {
     head.append(title, back)
 
     // Settings.
-    const settings = el('section', 'mn-group')
-    settings.append(el('h3', 'ds-group-title', M.settings))
-    const mute = button('menu:sound', sound.on() ? STRINGS.sound.on : STRINGS.sound.off)
-    mute.setAttribute('aria-pressed', String(sound.on()))
-    mute.setAttribute('aria-label', sound.on() ? STRINGS.sound.turnOff : STRINGS.sound.turnOn)
-    mute.addEventListener('click', () => {
-      switchSound(!sound.on())
-      redraw('menu:sound')
-    })
-    const look = button('menu:look', fill(M.lookNow, { name: themeName(theme), other: themeName(otherTheme(theme)) }))
-    look.setAttribute('aria-label', fill(STRINGS.theme.switchTo, { name: themeName(otherTheme(theme)) }))
-    look.addEventListener('click', () => {
-      theme = otherTheme(theme)
-      applyTheme(theme)
-      redraw('menu:look')
-    })
-    const graphics = button('menu:graphics', M.graphicsGo)
-    graphics.addEventListener('click', () => go(() => office.openTab('trials')))
-    settings.append(row(M.sound, mute), row(M.look, look), row(M.graphics, graphics), el('p', 'ctl-note', M.graphicsNote))
+    const settings = (): HTMLElement[] => {
+      const mute = button('menu:sound', sound.on() ? STRINGS.sound.on : STRINGS.sound.off)
+      mute.setAttribute('aria-pressed', String(sound.on()))
+      mute.setAttribute('aria-label', sound.on() ? STRINGS.sound.turnOff : STRINGS.sound.turnOn)
+      mute.addEventListener('click', () => {
+        switchSound(!sound.on())
+        redraw('menu:sound')
+      })
+      const look = button('menu:look', fill(M.lookNow, { name: themeName(theme), other: themeName(otherTheme(theme)) }))
+      look.setAttribute('aria-label', fill(STRINGS.theme.switchTo, { name: themeName(otherTheme(theme)) }))
+      look.addEventListener('click', () => {
+        theme = otherTheme(theme)
+        applyTheme(theme)
+        redraw('menu:look')
+      })
+      const graphics = button('menu:graphics', M.graphicsGo)
+      graphics.addEventListener('click', () => go(() => office.openTab('trials')))
+      return [row(M.sound, mute), row(M.look, look), row(M.graphics, graphics), el('p', 'ctl-note', M.graphicsNote)]
+    }
 
     // Quick ways round the office.
-    const places = el('section', 'mn-group')
-    places.append(el('h3', 'ds-group-title', M.goTo))
-    const bureau = button('menu:bureau', M.bureau)
-    bureau.addEventListener('click', () => go(() => office.openTab('bureau')))
-    const saves = button('menu:saves', M.saves)
-    saves.addEventListener('click', () => go(() => office.openTab('saves')))
-    const links = el('div', 'mn-links')
-    links.append(bureau, saves)
-    places.append(links)
+    const places = (): HTMLElement[] => {
+      const bureau = button('menu:bureau', M.bureau)
+      bureau.addEventListener('click', () => go(() => office.openTab('bureau')))
+      const saves = button('menu:saves', M.saves)
+      saves.addEventListener('click', () => go(() => office.openTab('saves')))
+      const links = el('div', 'mn-links')
+      links.append(bureau, saves)
+      return [links]
+    }
 
     // The career: tap twice to throw it away.
-    const career = el('section', 'mn-group')
-    career.append(el('h3', 'ds-group-title', M.career), el('p', 'ctl-note', C.about))
-    const again = button('menu:restart', restartArmed ? C.confirm : C.button, restartArmed ? 'btn mn-btn btn-armed' : 'btn mn-btn')
-    again.addEventListener('click', () => {
-      if (!restartArmed) {
-        restartArmed = true
-        redraw('menu:restart')
-        return
-      }
-      go(() => office.restartCareer())
+    const career = (): HTMLElement[] => {
+      const again = button('menu:restart', restartArmed ? C.confirm : C.button, restartArmed ? 'btn mn-btn btn-armed' : 'btn mn-btn')
+      again.addEventListener('click', () => {
+        if (!restartArmed) {
+          restartArmed = true
+          redraw('menu:restart')
+          return
+        }
+        go(() => office.restartCareer())
+      })
+      return [el('p', 'ctl-note', C.about), again]
+    }
+
+    const rows = drawFolds({
+      folds: [
+        { key: 'settings', title: M.settings, summary: `${sound.on() ? STRINGS.sound.on : STRINGS.sound.off} · ${themeName(theme)}`, draw: settings },
+        { key: 'goTo', title: M.goTo, draw: places },
+        { key: 'career', title: M.career, draw: career },
+        // Who made it.
+        { key: 'credits', title: STRINGS.credits.heading, draw: drawCreditsBody },
+      ],
+      state: fold,
+      redraw: draw,
+      scroller: sheet,
+      changed: () => { restartArmed = false },
     })
-    career.append(again)
 
-    // Who made it: folded shut until asked for.
-    const credits = el('section', 'mn-group')
-    credits.append(drawCredits())
-
-    sheet.replaceChildren(head, el('p', 'ctl-note mn-held', M.held), settings, places, career, credits)
+    sheet.replaceChildren(head, el('p', 'ctl-note mn-held', M.held), rows)
   }
 
   /** Draw the sheet again and put the finger's focus back where it was. */
