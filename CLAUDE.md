@@ -34,6 +34,7 @@ trade-offs.
   Live at `https://hulldown.longlight.games/` (the old
   `https://jxstrr0.github.io/Hull-Down/` address redirects there).
 - No backend, accounts, ads or API keys. No analytics except the cookieless Cloudflare Web Analytics beacon at the end of `index.html`, which counts visits and load speed (Kelbo, 2026-11-12).
+- The built page carries a Content-Security-Policy (1.8.6.3): `scripts/page-policy.mjs` writes it into `dist/index.html` after every build, with the page's own inline scripts allowed by fingerprint. The browser refuses anything not on it, so a new outside address, or a new kind of thing the page loads (WebAssembly, an outside font, a frame), must be added there in the same PR and played through at phone size. `npm run dev` has no policy; check such a change with `npm run build` and `npm run preview`.
 
 ## Folders
 

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "postbuild": "node scripts/make-sw.mjs && node scripts/check-bundle.mjs",
+    "postbuild": "node scripts/page-policy.mjs && node scripts/make-sw.mjs && node scripts/check-bundle.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "sim": "node scripts/sim.mjs",
