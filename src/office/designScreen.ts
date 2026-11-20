@@ -58,6 +58,7 @@ import { careerLimits, tenderOf } from '../sim/career/career'
 import { createSaves } from './savesTab'
 import { dropCareer, loadGuideHidden, saveCareer, saveGuideHidden } from '../persist/careerStore'
 import { SAVE_FORMAT } from '../persist/saveCode'
+import { pageUrl } from './pageUrl'
 
 const O = STRINGS.office
 const D = STRINGS.dataSheet
@@ -593,7 +594,8 @@ export function renderDesignScreen(first: Tender): Office {
     const sketch = on ? SKETCHES[key] : undefined
     if (sketch) {
       const picture = el('span', 'opt-sketch')
-      picture.style.setProperty('--sketch', `url("${sketch}")`)
+      // A full address: a relative one in a CSS variable is looked up beside the stylesheet.
+      picture.style.setProperty('--sketch', `url("${pageUrl(sketch, document.baseURI)}")`)
       picture.setAttribute('aria-hidden', 'true')
       button.append(picture)
     }
