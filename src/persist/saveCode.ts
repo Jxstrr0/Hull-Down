@@ -19,8 +19,21 @@ export interface SaveFile {
   designs: DesignStore
 }
 
-export const SAVE_ERRORS = ['notACode', 'damaged', 'newer'] as const
-/** Why a code could not be read: not one of ours, spoiled in copying, or from a later version of the game. */
+/**
+ * How big a code may be. A real save is about 15 kB unpacked and a few
+ * thousand characters as a code, so these are hundreds of times past any
+ * real one. Without them a small made-up code could unpack to hundreds of
+ * megabytes and stall or close the page (1.8.6.6).
+ */
+export const SAVE_LIMITS = {
+  /** The longest text read as a code or a backup file, in characters. */
+  codeChars: 2_000_000,
+  /** The most a code may unpack to, in bytes. */
+  plainBytes: 8 * 1024 * 1024,
+} as const
+
+export const SAVE_ERRORS = ['notACode', 'damaged', 'newer', 'tooBig'] as const
+/** Why a code could not be read: not one of ours, spoiled in copying, from a later version of the game, or far too big to be a save. */
 export type SaveError = (typeof SAVE_ERRORS)[number]
 
 export type Decoded = { ok: true; save: SaveFile } | { ok: false; error: SaveError }
@@ -95,12 +108,40 @@ export function checksum(bytes: Uint8Array): string {
   return (h >>> 0).toString(16).padStart(8, '0')
 }
 
-async function pipe(bytes: Uint8Array, stream: { readable: ReadableStream<Uint8Array>; writable: WritableStream<BufferSource> }): Promise<Uint8Array> {
+/** Thrown by `pipe` when what comes out passes the limit it was given. */
+class TooBig extends Error {}
+
+/**
+ * Sends the bytes through a packing or unpacking stream. With a `limit`,
+ * it stops reading as soon as more than that many bytes have come out, so
+ * a code built to unpack to something huge is dropped early, not held whole.
+ */
+async function pipe(bytes: Uint8Array, stream: { readable: ReadableStream<Uint8Array>; writable: WritableStream<BufferSource> }, limit: number = Infinity): Promise<Uint8Array> {
   const writer = stream.writable.getWriter()
   // Errors on the write side also show on the read side, which is the one awaited.
   void writer.write(bytes as BufferSource).catch(() => undefined)
   void writer.close().catch(() => undefined)
-  return new Uint8Array(await new Response(stream.readable).arrayBuffer())
+  const reader = stream.readable.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    total += value.length
+    if (total > limit) {
+      void reader.cancel().catch(() => undefined)
+      void writer.abort().catch(() => undefined)
+      throw new TooBig()
+    }
+    chunks.push(value)
+  }
+  const out = new Uint8Array(total)
+  let at = 0
+  for (const chunk of chunks) {
+    out.set(chunk, at)
+    at += chunk.length
+  }
+  return out
 }
 
 function canDeflate(): boolean {
@@ -118,6 +159,7 @@ export async function encodeSave(save: SaveFile, deflate: boolean = canDeflate()
 
 /** Reads a code. Spaces and line breaks picked up in copying are ignored. */
 export async function decodeSave(text: string): Promise<Decoded> {
+  if (text.length > SAVE_LIMITS.codeChars) return { ok: false, error: 'tooBig' }
   const code = text.replace(/\s+/g, '')
   if (!code.startsWith(SAVE_PREFIX)) return { ok: false, error: 'notACode' }
   const parts = code.slice(SAVE_PREFIX.length).split('.')
@@ -129,11 +171,12 @@ export async function decodeSave(text: string): Promise<Decoded> {
   if (kind === 'd') {
     if (!canDeflate()) return { ok: false, error: 'damaged' }
     try {
-      plain = await pipe(bytes, new DecompressionStream('deflate-raw'))
-    } catch {
-      return { ok: false, error: 'damaged' }
+      plain = await pipe(bytes, new DecompressionStream('deflate-raw'), SAVE_LIMITS.plainBytes)
+    } catch (err) {
+      return { ok: false, error: err instanceof TooBig ? 'tooBig' : 'damaged' }
     }
   }
+  if (plain.length > SAVE_LIMITS.plainBytes) return { ok: false, error: 'tooBig' }
   if (checksum(plain) !== sum) return { ok: false, error: 'damaged' }
   let raw: unknown
   try {

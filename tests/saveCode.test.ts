@@ -6,7 +6,7 @@ import { BODIES } from '../src/data/career'
 import { cleanCareer } from '../src/persist/careerCodec'
 import { FIRST_PROJECT_NO, newStore } from '../src/persist/designs'
 import {
-  SAVE_FORMAT, SAVE_PREFIX, checksum, decodeSave, encodeSave, fromBase64Url, readSave, toBase64Url, type SaveFile,
+  SAVE_FORMAT, SAVE_LIMITS, SAVE_PREFIX, checksum, decodeSave, encodeSave, fromBase64Url, readSave, toBase64Url, type SaveFile,
 } from '../src/persist/saveCode'
 import { buildPrototype, enterTender, newCareer, type Career } from '../src/sim/career/career'
 
@@ -86,6 +86,44 @@ describe('the save code', () => {
     const sum = code.slice(-8)
     const wrongSum = code.slice(0, -8) + (sum === '00000000' ? '00000001' : '00000000')
     expect(await decodeSave(wrongSum)).toEqual({ ok: false, error: 'damaged' })
+  })
+})
+
+describe('a code far too big to be a save (1.8.6.6)', () => {
+  /** A well-formed code, checksum and all, that unpacks to `bytes` of padding round a tiny save. */
+  async function bomb(bytes: number): Promise<string> {
+    const plain = new TextEncoder().encode(`{"format":1,"career":null,"designs":null,"pad":"${'0'.repeat(bytes)}"}`)
+    const stream = new CompressionStream('deflate-raw')
+    const writer = stream.writable.getWriter()
+    void writer.write(plain)
+    void writer.close()
+    const packed = new Uint8Array(await new Response(stream.readable).arrayBuffer())
+    return `${SAVE_PREFIX}d.${toBase64Url(packed)}.${checksum(plain)}`
+  }
+
+  it('refuses a small code that unpacks past the limit, without reading it all', async () => {
+    const code = await bomb(SAVE_LIMITS.plainBytes * 4)
+    // The code itself is short: only what it unpacks to is big.
+    expect(code.length).toBeLessThan(SAVE_LIMITS.codeChars / 10)
+    expect(await decodeSave(code)).toEqual({ ok: false, error: 'tooBig' })
+  })
+
+  it('refuses an unpacked code past the limit, and text longer than any code', async () => {
+    const plain = new TextEncoder().encode(`{"format":1,"pad":"${'0'.repeat(SAVE_LIMITS.plainBytes)}"}`)
+    // Too long as text: turned away before anything else is looked at.
+    expect(await decodeSave(`${SAVE_PREFIX}p.${toBase64Url(plain)}.${checksum(plain)}`)).toEqual({ ok: false, error: 'tooBig' })
+    expect(await decodeSave('x'.repeat(SAVE_LIMITS.codeChars + 1))).toEqual({ ok: false, error: 'tooBig' })
+  })
+
+  it('still reads a code with padding that stays inside the limit', async () => {
+    const read = await decodeSave(await bomb(100_000))
+    expect(read.ok).toBe(true)
+  })
+
+  it('leaves real saves hundreds of times inside both limits', async () => {
+    const code = await encodeSave(SAVE)
+    expect(code.length * 100).toBeLessThan(SAVE_LIMITS.codeChars)
+    expect(JSON.stringify(SAVE).length * 100).toBeLessThan(SAVE_LIMITS.plainBytes)
   })
 })
 
