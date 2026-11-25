@@ -7,7 +7,7 @@ import {
   askToPersist, backupDue, backupFileName, backupFileText, codeIn, daysSinceBackup, downloadText, noteBackup, noteFirstPlayed,
 } from '../persist/backup'
 import type { KeyValue } from '../persist/designs'
-import { decodeSave, encodeSave, type SaveFile } from '../persist/saveCode'
+import { decodeSave, encodeSave, SAVE_LIMITS, type SaveFile } from '../persist/saveCode'
 import { listSlots, openBackend, readSlot, writeSlot, type SlotBackend, type SlotInfo } from '../persist/slots'
 import { el } from '../ui/dom'
 import type { Fold } from '../ui/fold'
@@ -107,6 +107,8 @@ export function createSaves(options: SavesOptions): Saves {
   }
 
   async function loadCode(text: string): Promise<void> {
+    // Far past any real save: turned away before the text is even searched for a code.
+    if (text.length > SAVE_LIMITS.codeChars) return say(S.errors.tooBig, true)
     const read = await decodeSave(codeIn(text))
     if (read.ok) load(read.save)
     else say(S.errors[read.error], true)
@@ -252,6 +254,8 @@ export function createSaves(options: SavesOptions): Saves {
     file.addEventListener('change', () => {
       const picked = file.files?.[0]
       if (!picked) return
+      // A file's size is in bytes, and a letter can take up to four: a file past this is never read in.
+      if (picked.size > SAVE_LIMITS.codeChars * 4) return say(S.errors.tooBig, true)
       void (async () => {
         try {
           await loadCode(await picked.text())

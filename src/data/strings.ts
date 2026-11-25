@@ -2140,6 +2140,7 @@ export const STRINGS = {
       notACode: 'That is not a Hull Down save code. A code starts with HD1:.',
       damaged: 'The code is damaged: part of it is missing or was changed in copying. Copy it again from the start to the end.',
       newer: 'That save is from a newer version of the game. Reload the page to get the latest version, then try again.',
+      tooBig: 'That is far too big to be a Hull Down save, so it was not read. A real code is a few thousand characters.',
     },
     slots: {
       heading: 'Save slots',
