@@ -471,6 +471,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.8.6.7, Studio catalogue recopied.** Kelbo deleted The Whip, so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
 - **1.8.6.6, A size limit on save codes.** The studio's security test of 25 November built a save code of 350,000 characters that unpacked to 256 MB; the game read all of it and held about a gigabyte while it did. A real save is about 15 kB. Now a pasted code or backup file longer than 2 million characters, or one that unpacks past 8 MB, is turned away with its own message ("far too big to be a Hull Down save"), and the unpacking stops as soon as it passes the limit. `SAVE_LIMITS` in `src/persist/saveCode.ts`. Real saves and old codes load as before.
 - **1.8.6.5, Studio catalogue recopied.** Outwash, a new Longlight game, was added to the studio site (hidden), so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
 - **1.8.6.4, Studio catalogue recopied.** Kelbo deleted a retired game's repo, so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
