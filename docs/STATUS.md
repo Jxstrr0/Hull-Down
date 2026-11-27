@@ -471,6 +471,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.8.6.12, Studio catalogue recopied.** Bump Stop is now listed on the studio site, so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
 - **1.8.6.11, Studio catalogue recopied.** Kelbo deleted Mainline, so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
 - **1.8.6.10, Studio catalogue recopied.** Kelbo deleted Outwash, so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
 - **1.8.6.9, Dependabot watches the actions.** A guard from the studio's supply-chain test of 26 November (Kelbo picked it). The workflows' GitHub Actions are pinned to exact commits, which keeps them safe from tampering but means a fix never arrives by itself. Dependabot now opens one grouped pull request a month for them, after the same one-week wait as for packages. Nothing changes in the game.
