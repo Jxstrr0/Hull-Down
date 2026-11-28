@@ -471,6 +471,7 @@ Done: GitHub Pages is on and `hulldown.longlight.games` is live (checked
 
 ## Log
 
+- **1.8.6.13, Studio catalogue recopied.** Kelbo deleted Crumple, so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
 - **1.8.6.12, Studio catalogue recopied.** Bump Stop is now listed on the studio site, so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
 - **1.8.6.11, Studio catalogue recopied.** Kelbo deleted Mainline, so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
 - **1.8.6.10, Studio catalogue recopied.** Kelbo deleted Outwash, so the studio catalogue copy in `.github/` is refreshed from the master on the studio site. Nothing changes in the game.
